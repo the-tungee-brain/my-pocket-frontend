@@ -26,12 +26,12 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          "flex h-12 w-full items-center justify-center cursor-pointer gap-2 rounded-full px-5 text-base font-semibold transition-colors",
+          "flex h-12 w-full items-center justify-center cursor-pointer gap-2 rounded-xl px-5 text-sm font-semibold transition-colors",
 
           variant === "default" &&
             "bg-foreground text-background hover:bg-[#383838] dark:hover:bg-[#ccc]",
           variant === "outline" &&
-            "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+            "border border-input bg-background hover:bg-neutral-800 hover:text-white hover:border-neutral-400",
           variant === "ghost" && "hover:bg-accent hover:text-accent-foreground",
           variant === "destructive" &&
             "bg-destructive text-destructive-foreground hover:bg-destructive/90",
