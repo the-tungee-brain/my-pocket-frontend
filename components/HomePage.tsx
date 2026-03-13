@@ -1,12 +1,23 @@
 "use client";
 
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Button } from "./ui/Button";
+import { apiFetch } from "@/lib/apiClient";
 
 export default function HomePage() {
+  const { data: session } = useSession();
+
+  const handleAuthorizeSchwab = async () => {
+    await apiFetch("/auth/schwab/connect", {
+      method: "POST",
+      body: JSON.stringify({}),
+      accessToken: session?.accessToken,
+    });
+  };
+
   return (
     <main className="min-h-screen text-foreground flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-3xl border border-neutral-800 bg-neutral-950/60 p-6 sm:p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+      <div className="w-full max-w-md bg-secondary rounded-3xl border border-neutral-800 bg-neutral-950/60 p-6 sm:p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
         <div className="space-y-2 mb-6">
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">
             Connect your Schwab account
@@ -18,7 +29,7 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-3">
-          <Button className="w-full sm:w-auto" onClick={() => {}}>
+          <Button className="w-full sm:w-auto" onClick={handleAuthorizeSchwab}>
             Authorize with Schwab
           </Button>
 

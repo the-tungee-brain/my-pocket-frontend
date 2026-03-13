@@ -16,7 +16,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     {
       className,
       variant = "default",
-      size = "default",
+      size = "sm",
       isLoading = false,
       children,
       ...props
@@ -26,7 +26,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          "flex h-12 w-full items-center justify-center cursor-pointer gap-2 rounded-xl px-5 text-sm font-semibold transition-colors",
+          "flex h-12 w-full items-center justify-center cursor-pointer gap-2 rounded-xl px-5 text-base font-semibold transition-colors",
 
           variant === "default" &&
             "bg-foreground text-background hover:bg-[#383838] dark:hover:bg-[#ccc]",
@@ -36,7 +36,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           variant === "destructive" &&
             "bg-destructive text-destructive-foreground hover:bg-destructive/90",
 
-          size === "sm" && "h-9 rounded-md px-3",
+          size === "sm" && "h-9 rounded-md px-3 text-sm",
           size === "lg" && "h-14 rounded-full px-8 text-lg",
           size === "default" && "h-12",
 
