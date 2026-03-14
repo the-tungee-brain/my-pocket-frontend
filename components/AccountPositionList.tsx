@@ -129,15 +129,17 @@ export function AccountPositionList() {
                     </button>
                   </div>
 
-                  <table className="w-full text-sm">
+                  <table className="w-full table-fixed text-sm">
                     <thead className="bg-neutral-900 text-neutral-300">
                       <tr>
-                        <th className="px-4 py-2 text-left hidden sm:table-cell">
+                        <th className="w-2/5 px-4 py-2 text-left hidden sm:table-cell">
                           Name
                         </th>
-                        <th className="px-4 py-2 text-right">Qty</th>
-                        <th className="px-4 py-2 text-right">Market value</th>
-                        <th className="px-4 py-2 text-right hidden sm:table-cell">
+                        <th className="w-1/5 px-4 py-2 text-right">Qty</th>
+                        <th className="w-1/5 px-4 py-2 text-right">
+                          Market value
+                        </th>
+                        <th className="w-1/5 px-4 py-2 text-right hidden sm:table-cell">
                           Today P/L
                         </th>
                       </tr>
@@ -151,16 +153,16 @@ export function AccountPositionList() {
                             key={`${symbol}-${idx}-${p.longQuantity}-${p.shortQuantity}`}
                             className="border-t border-neutral-800 hover:bg-neutral-800/40"
                           >
-                            <td className="px-4 py-2 text-left text-neutral-400 hidden sm:table-cell">
+                            <td className="w-2/5 px-4 py-2 text-left text-neutral-400 hidden sm:table-cell">
                               {p.instrument.description ?? "EQUITY"}
                             </td>
-                            <td className="px-4 py-2 text-right">
+                            <td className="w-1/5 px-4 py-2 text-right">
                               {qty.toLocaleString()}
                             </td>
-                            <td className="px-4 py-2 text-right">
+                            <td className="w-1/5 px-4 py-2 text-right">
                               ${p.marketValue.toLocaleString()}
                             </td>
-                            <td className="px-4 py-2 text-right hidden sm:table-cell">
+                            <td className="w-1/5 px-4 py-2 text-right hidden sm:table-cell">
                               {p.currentDayProfitLoss >= 0 ? "+" : ""}
                               {p.currentDayProfitLoss.toLocaleString()} (
                               {p.currentDayProfitLossPercentage.toFixed(2)}%)
