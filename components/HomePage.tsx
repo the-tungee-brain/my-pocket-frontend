@@ -8,10 +8,15 @@ export default function HomePage() {
   const { data: session } = useSession();
 
   const handleAuthorizeSchwab = async () => {
-    await apiFetch("/auth/schwab/connect", {
+    const res = await apiFetch("/auth/schwab/connect", {
       method: "GET",
       accessToken: session?.accessToken,
     });
+
+    if (!res.ok) return;
+
+    const data = (await res.json()) as { auth_url: string };
+    window.location.href = data.auth_url;
   };
 
   return (
