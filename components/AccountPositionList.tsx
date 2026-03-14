@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/apiClient";
 import { Loader2, MessageCircle } from "lucide-react";
@@ -34,6 +34,7 @@ type Position = {
 
 type PositionMap = Record<string, Position[]>;
 
+// ---- new chat types ----
 type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -49,6 +50,7 @@ type SymbolChatState = {
 };
 
 type ChatStateMap = Record<string, SymbolChatState>;
+// ------------------------
 
 export function AccountPositionList() {
   const { data: session } = useSession();
@@ -56,10 +58,9 @@ export function AccountPositionList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ---- new chat state ----
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
-
-  // single ref that points to the bottom of the currently open chat
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  // ------------------------
 
   useEffect(() => {
     if (!session?.accessToken) return;
@@ -93,16 +94,6 @@ export function AccountPositionList() {
     load();
   }, [session?.accessToken]);
 
-  // auto-scroll to bottom when chat state (messages) changes
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
-    }
-  }, [chatBySymbol]); // any change in messages or open state triggers scroll [web:507][web:512]
-
   if (!session?.accessToken) return null;
 
   const hasNoPositions =
@@ -110,10 +101,13 @@ export function AccountPositionList() {
     positionMap &&
     Object.values(positionMap).every((arr) => arr.length === 0);
 
+  // ---- mock analyze & chat handlers ----
+
   const handleAnalyzeSymbol = (symbol: string, positions: Position[]) => {
     setChatBySymbol((prev) => {
       const existing = prev[symbol];
 
+      // If already open and has messages, just toggle open/close
       if (existing && existing.isOpen && existing.messages.length > 0) {
         return {
           ...prev,
@@ -186,6 +180,7 @@ export function AccountPositionList() {
       };
     });
 
+    // Fake AI response
     setTimeout(() => {
       setChatBySymbol((prev) => {
         const state = prev[symbol];
@@ -214,6 +209,8 @@ export function AccountPositionList() {
       });
     }, 800);
   };
+
+  // --------------------------------------
 
   return (
     <section className="w-full px-4 py-6">
@@ -329,7 +326,7 @@ export function AccountPositionList() {
                         AI insights for {symbol} (Mock)
                       </div>
 
-                      <div className="mb-3 max-h-96 space-y-2 overflow-y-auto pr-1 scrollbar-dark">
+                      <div className="mb-3 max-h-100 space-y-2 overflow-y-auto pr-1 scrollbar-dark">
                         {chatState.messages.map((m) => (
                           <div
                             key={m.id}
@@ -350,7 +347,6 @@ export function AccountPositionList() {
                             </div>
                           </div>
                         ))}
-                        <div ref={messagesEndRef} />
                       </div>
 
                       {chatState.error && (
