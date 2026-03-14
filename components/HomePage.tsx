@@ -9,7 +9,7 @@ export default function HomePage() {
 
   const handleAuthorizeSchwab = async () => {
     await apiFetch("/auth/schwab/connect", {
-      method: "POST",
+      method: "GET",
       body: JSON.stringify({}),
       accessToken: session?.accessToken,
     });
