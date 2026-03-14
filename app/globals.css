@@ -18,6 +18,10 @@
     --background: #171615;
     --foreground: #d6d5d5;
     --secondary : #1d1c1b;
+
+    --scrollbar-track      : var(--background);
+    --scrollbar-thumb      : #3a3a39;
+    --scrollbar-thumb-hover: #5a5a59;
   }
 }
 
@@ -25,4 +29,28 @@ body {
   background : var(--background);
   color      : var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Firefox */
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+.scrollbar-dark::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius   : 9999px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
 }
