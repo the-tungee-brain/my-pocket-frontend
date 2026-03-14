@@ -382,7 +382,7 @@ export function AccountPositionList() {
                         </button>
                       </form>
 
-                      <p className="mt-1 text-[10px] text-neutral-500">
+                      <p className="mt-2 text-[10px] text-neutral-500">
                         Mock demo only. In production, this would call your AI
                         backend with this position and conversation history.
                       </p>
