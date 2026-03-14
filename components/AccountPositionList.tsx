@@ -145,31 +145,38 @@ export function AccountPositionList() {
                       </tr>
                     </thead>
                     <tbody>
-                      {positions.map((p, idx) => {
-                        const qty = p.longQuantity - p.shortQuantity;
+                      {positions
+                        .slice()
+                        .sort((a, b) => {
+                          const qtyA = a.longQuantity - a.shortQuantity;
+                          const qtyB = b.longQuantity - b.shortQuantity;
+                          return qtyB - qtyA;
+                        })
+                        .map((p, idx) => {
+                          const qty = p.longQuantity - p.shortQuantity;
 
-                        return (
-                          <tr
-                            key={`${symbol}-${idx}-${p.longQuantity}-${p.shortQuantity}`}
-                            className="border-t border-neutral-800 hover:bg-neutral-800/40"
-                          >
-                            <td className="w-2/5 px-4 py-2 text-left text-neutral-400 hidden sm:table-cell">
-                              {p.instrument.description ?? "EQUITY"}
-                            </td>
-                            <td className="w-1/5 px-4 py-2 text-right">
-                              {qty.toLocaleString()}
-                            </td>
-                            <td className="w-1/5 px-4 py-2 text-right">
-                              ${p.marketValue.toLocaleString()}
-                            </td>
-                            <td className="w-1/5 px-4 py-2 text-right hidden sm:table-cell">
-                              {p.currentDayProfitLoss >= 0 ? "+" : ""}
-                              {p.currentDayProfitLoss.toLocaleString()} (
-                              {p.currentDayProfitLossPercentage.toFixed(2)}%)
-                            </td>
-                          </tr>
-                        );
-                      })}
+                          return (
+                            <tr
+                              key={`${symbol}-${idx}-${p.longQuantity}-${p.shortQuantity}`}
+                              className="border-t border-neutral-800 hover:bg-neutral-800/40"
+                            >
+                              <td className="w-2/5 px-4 py-2 text-left text-neutral-400 hidden sm:table-cell">
+                                {p.instrument.description ?? "EQUITY"}
+                              </td>
+                              <td className="w-1/5 px-4 py-2 text-right">
+                                {qty.toLocaleString()}
+                              </td>
+                              <td className="w-1/5 px-4 py-2 text-right">
+                                ${p.marketValue.toLocaleString()}
+                              </td>
+                              <td className="w-1/5 px-4 py-2 text-right hidden sm:table-cell">
+                                {p.currentDayProfitLoss >= 0 ? "+" : ""}
+                                {p.currentDayProfitLoss.toLocaleString()} (
+                                {p.currentDayProfitLossPercentage.toFixed(2)}%)
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>
