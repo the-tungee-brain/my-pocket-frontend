@@ -374,11 +374,11 @@ export default function HomePage() {
                 />
 
                 {selectedSymbol && (
-                  <div className="mx-auto mt-4 max-w-3xl px-4 py-3 text-sm">
-                    <div className="mb-2 text-xs font-semibold text-foreground">
+                  <div className="mx-auto mt-4 max-w-3xl px-4 py-3">
+                    <div className="mb-3 text-xs font-semibold text-foreground tracking-wide uppercase">
                       Conversation for {selectedSymbol}
                     </div>
-                    <div className="space-y-8 pr-1">
+                    <div className="space-y-6 pr-1">
                       {(currentChat?.messages ?? []).map((m) => {
                         const isAssistant = m.role === "assistant";
 
@@ -394,20 +394,64 @@ export default function HomePage() {
                             <div
                               className={
                                 isAssistant
-                                  ? "w-full max-w-3xl text-sm text-foreground"
-                                  : "inline-block max-w-[80%] rounded-lg bg-secondary px-3 py-2 text-foreground text-sm"
+                                  ? "w-full max-w-3xl rounded-2xl bg-transparent text-base leading-relaxed text-foreground"
+                                  : "inline-block max-w-[80%] rounded-2xl bg-secondary px-4 py-3 text-base leading-relaxed text-foreground"
                               }
                             >
                               <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 components={{
+                                  h1: ({ children }) => (
+                                    <h1 className="mb-3 text-xl font-semibold tracking-tight">
+                                      {children}
+                                    </h1>
+                                  ),
+                                  h2: ({ children }) => (
+                                    <h2 className="mt-4 mb-2 text-lg font-semibold tracking-tight">
+                                      {children}
+                                    </h2>
+                                  ),
+                                  h3: ({ children }) => (
+                                    <h3 className="mt-3 mb-1.5 text-base font-semibold tracking-tight text-neutral-200">
+                                      {children}
+                                    </h3>
+                                  ),
                                   p: ({ children }) => (
-                                    <p className="whitespace-pre-wrap break-all">
+                                    <p className="whitespace-pre-wrap break-words text-base leading-relaxed tracking-wide mb-2">
                                       {children}
                                     </p>
                                   ),
-                                  code: ({ children }) => (
-                                    <code className="whitespace-pre-wrap break-all">
+                                  ul: ({ children }) => (
+                                    <ul className="my-2 ml-5 list-disc space-y-1 text-base leading-relaxed">
+                                      {children}
+                                    </ul>
+                                  ),
+                                  ol: ({ children }) => (
+                                    <ol className="my-2 ml-5 list-decimal space-y-1 text-base leading-relaxed">
+                                      {children}
+                                    </ol>
+                                  ),
+                                  li: ({ children }) => <li>{children}</li>,
+                                  a: ({ href, children }) => (
+                                    <a
+                                      href={href}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-sky-400 underline decoration-sky-500/60 underline-offset-2 hover:text-sky-300"
+                                    >
+                                      {children}
+                                    </a>
+                                  ),
+                                  blockquote: ({ children }) => (
+                                    <blockquote className="my-3 border-l-2 border-neutral-700 pl-3 text-sm text-neutral-300 italic">
+                                      {children}
+                                    </blockquote>
+                                  ),
+                                  code: ({ children, ...props }) => (
+                                    <code
+                                      {...props}
+                                      className="whitespace-pre-wrap break-words text-sm leading-relaxed tracking-wide bg-neutral-900/40 px-1.5 py-0.5 rounded"
+                                    >
                                       {children}
                                     </code>
                                   ),
@@ -430,7 +474,7 @@ export default function HomePage() {
 
           {selectedSymbol && (
             <div className="sticky bottom-0 z-20 px-4 pb-4 pt-3 scrollbar-dark">
-              <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 rounded-2xl border border-border bg-secondary p-4">
+              <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 rounded-2xl border border-border bg-secondary/95 p-4 backdrop-blur">
                 <div className="flex flex-col">
                   <form
                     className="flex flex-col gap-3 text-foreground"
@@ -441,7 +485,7 @@ export default function HomePage() {
                   >
                     <textarea
                       rows={inputRows}
-                      className="w-full resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-neutral-500"
+                      className="w-full resize-none bg-transparent text-base leading-relaxed tracking-wide text-foreground outline-none placeholder:text-neutral-500"
                       placeholder={`Ask anything about your ${selectedSymbol} position…`}
                       value={currentChat?.input ?? ""}
                       onChange={(e) => handleChatInputChange(e.target.value)}
@@ -465,7 +509,7 @@ export default function HomePage() {
                           currentChat?.loading ||
                           !(currentChat?.input ?? "").trim()
                         }
-                        className="rounded-full bg-foreground px-3 py-1 text-xs font-medium text-neutral-900 disabled:opacity-60"
+                        className="rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-neutral-900 disabled:opacity-60"
                       >
                         {currentChat?.loading ? "Analyzing…" : "Send"}
                       </button>
