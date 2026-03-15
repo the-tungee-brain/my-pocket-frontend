@@ -404,7 +404,7 @@ export default function HomePage() {
                               className={
                                 isAssistant
                                   ? "w-full max-w-3xl rounded-2xl bg-transparent text-base leading-relaxed text-foreground"
-                                  : "inline-block max-w-[80%] rounded-2xl bg-secondary px-4 py-3 text-base leading-relaxed text-foreground"
+                                  : "inline-block max-w-[80%] rounded-2xl bg-secondary px-4 pt-3 text-base leading-relaxed text-foreground"
                               }
                             >
                               <MarkdownRenderer content={m.content} />
