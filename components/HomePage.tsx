@@ -36,7 +36,6 @@ export default function HomePage() {
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
   const [inputRows, setInputRows] = useState(MIN_ROWS);
 
-  // NEW: mobile sidebar state
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
@@ -198,7 +197,6 @@ export default function HomePage() {
 
   return (
     <main className="flex min-h-screen text-neutral-50">
-      {/* Desktop sidebar */}
       <aside className="hidden md:sticky md:top-0 md:flex md:h-screen md:w-56 md:flex-col border-r border-border bg-secondary">
         <div className="px-4 py-3 text-xs uppercase tracking-wide text-neutral-400">
           Holdings
@@ -234,16 +232,13 @@ export default function HomePage() {
         </nav>
       </aside>
 
-      {/* Mobile drawer sidebar */}
       {mobileNavOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
-          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/40"
             onClick={() => setMobileNavOpen(false)}
           />
 
-          {/* Drawer panel */}
           <aside className="relative z-50 flex h-full w-64 flex-col border-r border-border bg-secondary">
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-xs uppercase tracking-wide text-neutral-400">
@@ -297,7 +292,7 @@ export default function HomePage() {
       )}
 
       <section className="flex min-h-screen flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-secondary md:hidden">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3 md:hidden">
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
@@ -308,7 +303,7 @@ export default function HomePage() {
           <SchwabConnectCard />
         </div>
 
-        <div className="hidden border-b border-border px-4 py-3 bg-secondary md:block">
+        <div className="hidden border-b border-border px-4 py-3 md:block">
           <SchwabConnectCard />
         </div>
 
