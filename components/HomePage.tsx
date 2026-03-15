@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SchwabConnectCard } from "@/components/SchwabConnectCard";
-import { apiFetch } from "@/lib/apiClient";
+import { apiFetch, streamAnalysis } from "@/lib/apiClient";
 import {
   AccountPositionList,
   Position,
@@ -102,6 +102,13 @@ export default function HomePage() {
     ...base,
   });
 
+  const currentChat = selectedSymbol ? chatBySymbol[selectedSymbol] : undefined;
+
+  useEffect(() => {
+    if (!currentChat?.messages.length) return;
+    conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [currentChat?.messages.length, selectedSymbol]);
+
   const handleChatInputChange = (value: string) => {
     if (!selectedSymbol) return;
 
@@ -118,28 +125,31 @@ export default function HomePage() {
     setInputRows(nextRows);
   };
 
-  const handleSendMessage = () => {
-    if (!selectedSymbol) return;
+  const handleSendMessage = async () => {
+    if (!selectedSymbol || !session?.accessToken) return;
 
-    const symbolForTimeout = selectedSymbol;
+    const symbol = selectedSymbol;
+    const positions = positionMap[symbol] ?? [];
+    if (!positions.length) return;
+
+    let userInput: string | undefined;
 
     setChatBySymbol((prev) => {
-      const state = ensureSymbolChatState(
-        symbolForTimeout,
-        prev[symbolForTimeout],
-      );
+      const state = ensureSymbolChatState(symbol, prev[symbol]);
       const trimmed = state.input.trim();
       if (!trimmed || state.loading) return prev;
 
+      userInput = trimmed;
+
       const userMessage: ChatMessage = {
-        id: `user-${symbolForTimeout}-${Date.now()}`,
+        id: `user-${symbol}-${Date.now()}`,
         role: "user",
         content: trimmed,
       };
 
       return {
         ...prev,
-        [symbolForTimeout]: {
+        [symbol]: {
           ...state,
           messages: [...state.messages, userMessage],
           input: "",
@@ -150,33 +160,79 @@ export default function HomePage() {
 
     setInputRows(MIN_ROWS);
 
-    setTimeout(() => {
+    try {
+      let assistantContent = "";
+
+      await streamAnalysis(
+        {
+          positions,
+          prompt: userInput ?? null,
+        },
+        session.accessToken,
+        (chunk) => {
+          assistantContent += chunk;
+
+          setChatBySymbol((prev) => {
+            const state = ensureSymbolChatState(symbol, prev[symbol]);
+            const messages = [...state.messages];
+            const last = messages[messages.length - 1];
+
+            if (last && last.role === "assistant") {
+              messages[messages.length - 1] = {
+                ...last,
+                content: assistantContent,
+              };
+            } else {
+              messages.push({
+                id: `assistant-${symbol}-${Date.now()}`,
+                role: "assistant",
+                content: assistantContent,
+              });
+            }
+
+            return {
+              ...prev,
+              [symbol]: {
+                ...state,
+                messages,
+              },
+            };
+          });
+        },
+      );
+    } catch (e) {
       setChatBySymbol((prev) => {
-        const state = prev[symbolForTimeout];
-        if (!state) return prev;
-
-        const lastUser = [...state.messages]
-          .reverse()
-          .find((m) => m.role === "user");
-
-        const assistantMessage: ChatMessage = {
-          id: `assistant-${symbolForTimeout}-${Date.now()}`,
-          role: "assistant",
-          content: lastUser?.content
-            ? `Mock AI: “${lastUser.content}” is a great question. In a real app, I’d use your ${symbolForTimeout} position, entries, and volatility to answer in depth.`
-            : "Mock AI: here’s where a detailed analysis of this position would go.",
-        };
-
+        const state = ensureSymbolChatState(symbol, prev[symbol]);
         return {
           ...prev,
-          [symbolForTimeout]: {
+          [symbol]: {
             ...state,
             loading: false,
-            messages: [...state.messages, assistantMessage],
+            messages: [
+              ...state.messages,
+              {
+                id: `error-${symbol}-${Date.now()}`,
+                role: "assistant",
+                content:
+                  "Sorry, something went wrong while analyzing this position.",
+              },
+            ],
           },
         };
       });
-    }, 800);
+      return;
+    }
+
+    setChatBySymbol((prev) => {
+      const state = ensureSymbolChatState(symbol, prev[symbol]);
+      return {
+        ...prev,
+        [symbol]: {
+          ...state,
+          loading: false,
+        },
+      };
+    });
   };
 
   if (!session?.accessToken) {
@@ -188,13 +244,6 @@ export default function HomePage() {
       </main>
     );
   }
-
-  const currentChat = selectedSymbol ? chatBySymbol[selectedSymbol] : undefined;
-
-  useEffect(() => {
-    if (!currentChat?.messages.length) return;
-    conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [currentChat?.messages.length, selectedSymbol]);
 
   return (
     <main className="flex min-h-screen text-neutral-50">
@@ -291,7 +340,7 @@ export default function HomePage() {
       )}
 
       <section className="flex min-h-screen flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-secondary md:hidden">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-secondary md:hidden space-x-4">
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
@@ -327,7 +376,7 @@ export default function HomePage() {
                 {selectedSymbol && (
                   <div className="mx-auto mt-4 max-w-3xl px-4 py-3 text-sm">
                     <div className="mb-2 text-xs font-semibold text-foreground">
-                      Conversation for {selectedSymbol} (Mock)
+                      Conversation for {selectedSymbol}
                     </div>
                     <div className="space-y-8 pr-1">
                       {(currentChat?.messages ?? []).map((m) => {
@@ -387,7 +436,7 @@ export default function HomePage() {
                     className="flex flex-col gap-3 text-foreground"
                     onSubmit={(e) => {
                       e.preventDefault();
-                      handleSendMessage();
+                      void handleSendMessage();
                     }}
                   >
                     <textarea
@@ -403,7 +452,7 @@ export default function HomePage() {
                             !currentChat?.loading &&
                             (currentChat?.input ?? "").trim().length > 0
                           ) {
-                            handleSendMessage();
+                            void handleSendMessage();
                           }
                         }
                       }}
@@ -418,7 +467,7 @@ export default function HomePage() {
                         }
                         className="rounded-full bg-foreground px-3 py-1 text-xs font-medium text-neutral-900 disabled:opacity-60"
                       >
-                        Send
+                        {currentChat?.loading ? "Analyzing…" : "Send"}
                       </button>
                     </div>
                   </form>
