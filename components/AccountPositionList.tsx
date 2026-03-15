@@ -40,7 +40,7 @@ export function AccountPositionList({
 }: AccountPositionListProps) {
   if (!selectedSymbol) {
     return (
-      <section className="w-full px-4 py-4">
+      <section className="w-full py-4">
         <p className="text-sm text-neutral-400">
           Select a symbol on the left to view its positions.
         </p>
@@ -50,7 +50,7 @@ export function AccountPositionList({
 
   if (!positionsForSelectedSymbol || positionsForSelectedSymbol.length === 0) {
     return (
-      <section className="w-full px-4 py-4">
+      <section className="w-full py-4">
         <p className="text-sm text-neutral-400">
           No positions found for {selectedSymbol}.
         </p>
@@ -65,7 +65,7 @@ export function AccountPositionList({
   });
 
   return (
-    <section className="w-full px-4 py-4">
+    <section className="w-full py-4">
       <div className="mx-auto max-w-3xl">
         <h2 className="mb-4 text-lg font-semibold">
           Positions for {selectedSymbol}

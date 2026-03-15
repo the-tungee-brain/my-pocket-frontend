@@ -11,6 +11,7 @@ import {
   Position,
   PositionMap,
 } from "./AccountPositionList";
+import { Insights } from "./Insights";
 
 type ChatMessage = {
   id: string;
@@ -373,8 +374,14 @@ export default function HomePage() {
                   selectedSymbol={selectedSymbol}
                 />
 
+                <Insights
+                  symbol={selectedSymbol}
+                  positions={positionsForSelectedSymbol}
+                  accessToken={session.accessToken}
+                />
+
                 {selectedSymbol && (
-                  <div className="mx-auto mt-4 max-w-3xl px-4 py-3">
+                  <div className="mx-auto mt-4 max-w-3xl py-3">
                     <div className="mb-3 text-xs font-semibold text-foreground tracking-wide uppercase">
                       Conversation for {selectedSymbol}
                     </div>
