@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { SchwabConnectCard } from "@/components/SchwabConnectCard";
 import { apiFetch } from "@/lib/apiClient";
 import {
@@ -35,7 +37,6 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
   const [inputRows, setInputRows] = useState(MIN_ROWS);
-
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
@@ -238,7 +239,6 @@ export default function HomePage() {
             className="fixed inset-0 bg-black/40"
             onClick={() => setMobileNavOpen(false)}
           />
-
           <aside className="relative z-50 flex h-full w-64 flex-col border-r border-border bg-secondary">
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-xs uppercase tracking-wide text-neutral-400">
@@ -252,7 +252,6 @@ export default function HomePage() {
                 Close
               </button>
             </div>
-
             <nav className="flex-1 overflow-y-auto">
               {loading && (
                 <div className="px-4 py-2 text-xs text-neutral-500">
@@ -292,7 +291,7 @@ export default function HomePage() {
       )}
 
       <section className="flex min-h-screen flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3 md:hidden">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-secondary md:hidden">
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
@@ -303,7 +302,7 @@ export default function HomePage() {
           <SchwabConnectCard />
         </div>
 
-        <div className="hidden border-b border-border px-4 py-3 md:block">
+        <div className="hidden border-b border-border px-4 py-3 bg-secondary md:block">
           <SchwabConnectCard />
         </div>
 
@@ -330,21 +329,48 @@ export default function HomePage() {
                     <div className="mb-2 text-xs font-semibold text-foreground">
                       Conversation for {selectedSymbol} (Mock)
                     </div>
-                    <div className="space-y-2 pr-1">
-                      {(currentChat?.messages ?? []).map((m) => (
-                        <div
-                          key={m.id}
-                          className={
-                            m.role === "assistant"
-                              ? "flex justify-start"
-                              : "flex justify-end"
-                          }
-                        >
-                          <div className="inline-block max-w-[80%] rounded-lg bg-neutral-800 px-3 py-2 text-foreground">
-                            {m.content}
+                    <div className="space-y-8 pr-1">
+                      {(currentChat?.messages ?? []).map((m) => {
+                        const isAssistant = m.role === "assistant";
+
+                        return (
+                          <div
+                            key={m.id}
+                            className={
+                              isAssistant
+                                ? "flex justify-start"
+                                : "flex justify-end"
+                            }
+                          >
+                            <div
+                              className={
+                                isAssistant
+                                  ? "w-full max-w-3xl text-sm text-foreground"
+                                  : "inline-block max-w-[80%] rounded-lg bg-secondary px-3 py-2 text-foreground text-sm"
+                              }
+                            >
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  p: ({ children }) => (
+                                    <p className="whitespace-pre-wrap break-all">
+                                      {children}
+                                    </p>
+                                  ),
+                                  code: ({ children }) => (
+                                    <code className="whitespace-pre-wrap break-all">
+                                      {children}
+                                    </code>
+                                  ),
+                                }}
+                              >
+                                {m.content}
+                              </ReactMarkdown>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
+
                       <div ref={conversationEndRef} />
                     </div>
                   </div>
