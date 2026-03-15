@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { SchwabConnectCard } from "@/components/SchwabConnectCard";
 import { apiFetch, streamAnalysis } from "@/lib/apiClient";
 import {
@@ -12,6 +10,7 @@ import {
   PositionMap,
 } from "./AccountPositionList";
 import { Insights } from "./Insights";
+import { MarkdownRenderer } from "./ui/MarkdownRenderer";
 
 type ChatMessage = {
   id: string;
@@ -79,7 +78,7 @@ export default function HomePage() {
       }
     };
 
-    load();
+    void load();
   }, [session?.accessToken]);
 
   const symbols = useMemo(() => Object.keys(positionMap).sort(), [positionMap]);
@@ -133,26 +132,28 @@ export default function HomePage() {
     const positions = positionMap[symbol] ?? [];
     if (!positions.length) return;
 
-    let userInput: string | undefined;
+    // 1) Read current state once and derive prompt
+    const state = ensureSymbolChatState(symbol, chatBySymbol[symbol]);
+    const trimmed = state.input.trim();
+    if (!trimmed || state.loading) return;
 
+    const userInput = trimmed; // stable prompt value
+
+    // 2) Push user message, clear input, set loading
     setChatBySymbol((prev) => {
-      const state = ensureSymbolChatState(symbol, prev[symbol]);
-      const trimmed = state.input.trim();
-      if (!trimmed || state.loading) return prev;
-
-      userInput = trimmed;
+      const prevState = ensureSymbolChatState(symbol, prev[symbol]);
 
       const userMessage: ChatMessage = {
         id: `user-${symbol}-${Date.now()}`,
         role: "user",
-        content: trimmed,
+        content: userInput,
       };
 
       return {
         ...prev,
         [symbol]: {
-          ...state,
-          messages: [...state.messages, userMessage],
+          ...prevState,
+          messages: [...prevState.messages, userMessage],
           input: "",
           loading: true,
         },
@@ -161,6 +162,7 @@ export default function HomePage() {
 
     setInputRows(MIN_ROWS);
 
+    // 3) Call streamAnalysis with userInput as prompt
     try {
       let assistantContent = "";
 
@@ -174,8 +176,8 @@ export default function HomePage() {
           assistantContent += chunk;
 
           setChatBySymbol((prev) => {
-            const state = ensureSymbolChatState(symbol, prev[symbol]);
-            const messages = [...state.messages];
+            const prevState = ensureSymbolChatState(symbol, prev[symbol]);
+            const messages = [...prevState.messages];
             const last = messages[messages.length - 1];
 
             if (last && last.role === "assistant") {
@@ -194,7 +196,7 @@ export default function HomePage() {
             return {
               ...prev,
               [symbol]: {
-                ...state,
+                ...prevState,
                 messages,
               },
             };
@@ -203,14 +205,14 @@ export default function HomePage() {
       );
     } catch (e) {
       setChatBySymbol((prev) => {
-        const state = ensureSymbolChatState(symbol, prev[symbol]);
+        const prevState = ensureSymbolChatState(symbol, prev[symbol]);
         return {
           ...prev,
           [symbol]: {
-            ...state,
+            ...prevState,
             loading: false,
             messages: [
-              ...state.messages,
+              ...prevState.messages,
               {
                 id: `error-${symbol}-${Date.now()}`,
                 role: "assistant",
@@ -225,11 +227,11 @@ export default function HomePage() {
     }
 
     setChatBySymbol((prev) => {
-      const state = ensureSymbolChatState(symbol, prev[symbol]);
+      const prevState = ensureSymbolChatState(symbol, prev[symbol]);
       return {
         ...prev,
         [symbol]: {
-          ...state,
+          ...prevState,
           loading: false,
         },
       };
@@ -405,67 +407,7 @@ export default function HomePage() {
                                   : "inline-block max-w-[80%] rounded-2xl bg-secondary px-4 py-3 text-base leading-relaxed text-foreground"
                               }
                             >
-                              <ReactMarkdown
-                                remarkPlugins={[remarkGfm]}
-                                components={{
-                                  h1: ({ children }) => (
-                                    <h1 className="mb-3 text-xl font-semibold tracking-tight">
-                                      {children}
-                                    </h1>
-                                  ),
-                                  h2: ({ children }) => (
-                                    <h2 className="mt-4 mb-2 text-lg font-semibold tracking-tight">
-                                      {children}
-                                    </h2>
-                                  ),
-                                  h3: ({ children }) => (
-                                    <h3 className="mt-3 mb-1.5 text-base font-semibold tracking-tight text-neutral-200">
-                                      {children}
-                                    </h3>
-                                  ),
-                                  p: ({ children }) => (
-                                    <p className="whitespace-pre-wrap break-words text-base leading-relaxed tracking-wide mb-2">
-                                      {children}
-                                    </p>
-                                  ),
-                                  ul: ({ children }) => (
-                                    <ul className="my-2 ml-5 list-disc space-y-1 text-base leading-relaxed">
-                                      {children}
-                                    </ul>
-                                  ),
-                                  ol: ({ children }) => (
-                                    <ol className="my-2 ml-5 list-decimal space-y-1 text-base leading-relaxed">
-                                      {children}
-                                    </ol>
-                                  ),
-                                  li: ({ children }) => <li>{children}</li>,
-                                  a: ({ href, children }) => (
-                                    <a
-                                      href={href}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="text-sky-400 underline decoration-sky-500/60 underline-offset-2 hover:text-sky-300"
-                                    >
-                                      {children}
-                                    </a>
-                                  ),
-                                  blockquote: ({ children }) => (
-                                    <blockquote className="my-3 border-l-2 border-neutral-700 pl-3 text-sm text-neutral-300 italic">
-                                      {children}
-                                    </blockquote>
-                                  ),
-                                  code: ({ children, ...props }) => (
-                                    <code
-                                      {...props}
-                                      className="whitespace-pre-wrap break-words text-sm leading-relaxed tracking-wide bg-neutral-900/40 px-1.5 py-0.5 rounded"
-                                    >
-                                      {children}
-                                    </code>
-                                  ),
-                                }}
-                              >
-                                {m.content}
-                              </ReactMarkdown>
+                              <MarkdownRenderer content={m.content} />
                             </div>
                           </div>
                         );

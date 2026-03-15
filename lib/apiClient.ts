@@ -41,7 +41,6 @@ export async function streamAnalysis(
   onChunk: (text: string) => void,
 ): Promise<void> {
   const url = `${API_BASE_URL}/analyze-positions-by-symbol`;
-
   let res: Response;
   try {
     res = await fetch(url, {
