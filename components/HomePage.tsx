@@ -297,7 +297,6 @@ export default function HomePage() {
       )}
 
       <section className="flex min-h-screen flex-1 flex-col">
-        {/* Mobile top bar (with menu button) */}
         <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-secondary md:hidden">
           <button
             type="button"
@@ -309,7 +308,6 @@ export default function HomePage() {
           <SchwabConnectCard />
         </div>
 
-        {/* Desktop top bar */}
         <div className="hidden border-b border-border px-4 py-3 bg-secondary md:block">
           <SchwabConnectCard />
         </div>
@@ -377,6 +375,17 @@ export default function HomePage() {
                       placeholder={`Ask anything about your ${selectedSymbol} position…`}
                       value={currentChat?.input ?? ""}
                       onChange={(e) => handleChatInputChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          if (
+                            !currentChat?.loading &&
+                            (currentChat?.input ?? "").trim().length > 0
+                          ) {
+                            handleSendMessage();
+                          }
+                        }
+                      }}
                     />
 
                     <div className="flex justify-end">
