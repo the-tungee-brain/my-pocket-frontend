@@ -195,7 +195,7 @@ export default function HomePage() {
 
   return (
     <main className="flex min-h-screen text-neutral-50">
-      <aside className="sticky top-0 flex h-screen w-56 flex-col border-r border-neutral-800 bg-secondary">
+      <aside className="sticky top-0 flex h-screen w-56 flex-col border-r border-border bg-secondary">
         <div className="px-4 py-3 text-xs uppercase tracking-wide text-neutral-400">
           Holdings
         </div>
@@ -231,7 +231,7 @@ export default function HomePage() {
       </aside>
 
       <section className="flex min-h-screen flex-1 flex-col">
-        <div className="border-b border-neutral-800 px-4 py-3">
+        <div className="border-b border-border px-4 py-3 bg-secondary">
           <SchwabConnectCard />
         </div>
 
