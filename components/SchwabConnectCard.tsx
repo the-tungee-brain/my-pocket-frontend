@@ -34,8 +34,8 @@ export function SchwabConnectCard() {
   const showLoading = authorized === null;
 
   return (
-    <div className="w-full overflow-hidden border-b border-neutral-800 bg-neutral-950/60">
-      <div className="p-6 sm:p-8 bg-secondary">
+    <div className="w-full overflow-hidden">
+      <div className="p-6 sm:p-8">
         <div className="space-y-2 mb-6">
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">
             {authorized
