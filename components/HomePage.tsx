@@ -167,7 +167,7 @@ export default function HomePage() {
       await streamAnalysis(
         {
           positions,
-          prompt: userInput ?? null,
+          prompt: userInput,
         },
         session.accessToken,
         (chunk) => {
