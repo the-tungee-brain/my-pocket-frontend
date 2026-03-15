@@ -36,6 +36,9 @@ export default function HomePage() {
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
   const [inputRows, setInputRows] = useState(MIN_ROWS);
 
+  // NEW: mobile sidebar state
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -195,7 +198,8 @@ export default function HomePage() {
 
   return (
     <main className="flex min-h-screen text-neutral-50">
-      <aside className="sticky top-0 flex h-screen w-56 flex-col border-r border-border bg-secondary">
+      {/* Desktop sidebar */}
+      <aside className="hidden md:sticky md:top-0 md:flex md:h-screen md:w-56 md:flex-col border-r border-border bg-secondary">
         <div className="px-4 py-3 text-xs uppercase tracking-wide text-neutral-400">
           Holdings
         </div>
@@ -230,8 +234,83 @@ export default function HomePage() {
         </nav>
       </aside>
 
+      {/* Mobile drawer sidebar */}
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-40 flex md:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40"
+            onClick={() => setMobileNavOpen(false)}
+          />
+
+          {/* Drawer panel */}
+          <aside className="relative z-50 flex h-full w-64 flex-col border-r border-border bg-secondary">
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-xs uppercase tracking-wide text-neutral-400">
+                Holdings
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(false)}
+                className="text-xs text-neutral-400"
+              >
+                Close
+              </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto">
+              {loading && (
+                <div className="px-4 py-2 text-xs text-neutral-500">
+                  Loading symbols…
+                </div>
+              )}
+              {!loading && symbols.length === 0 && (
+                <div className="px-4 py-2 text-xs text-neutral-500">
+                  No symbols yet.
+                </div>
+              )}
+              {symbols.map((sym) => {
+                const isActive = sym === selectedSymbol;
+                return (
+                  <button
+                    key={sym}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSymbol(sym);
+                      setMobileNavOpen(false);
+                    }}
+                    className={[
+                      "w-full px-4 py-2 text-left text-sm transition-colors",
+                      "hover:bg-neutral-800",
+                      isActive
+                        ? "bg-neutral-800 text-white"
+                        : "text-neutral-300",
+                    ].join(" ")}
+                  >
+                    {sym}
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
+        </div>
+      )}
+
       <section className="flex min-h-screen flex-1 flex-col">
-        <div className="border-b border-border px-4 py-3 bg-secondary">
+        {/* Mobile top bar (with menu button) */}
+        <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-secondary md:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            className="rounded-md border border-border px-2 py-1 text-xs"
+          >
+            Menu
+          </button>
+          <SchwabConnectCard />
+        </div>
+
+        {/* Desktop top bar */}
+        <div className="hidden border-b border-border px-4 py-3 bg-secondary md:block">
           <SchwabConnectCard />
         </div>
 
@@ -254,7 +333,7 @@ export default function HomePage() {
                 />
 
                 {selectedSymbol && (
-                  <div className="mx-auto mt-4 max-w-4xl rounded-2xl px-4 py-3 text-sm">
+                  <div className="mx-auto mt-4 max-w-3xl px-4 py-3 text-sm">
                     <div className="mb-2 text-xs font-semibold text-foreground">
                       Conversation for {selectedSymbol} (Mock)
                     </div>

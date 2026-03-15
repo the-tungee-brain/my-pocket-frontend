@@ -66,7 +66,7 @@ export function AccountPositionList({
 
   return (
     <section className="w-full px-4 py-4">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-3xl">
         <h2 className="mb-4 text-lg font-semibold">
           Positions for {selectedSymbol}
         </h2>
