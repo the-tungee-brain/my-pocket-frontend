@@ -1,4 +1,3 @@
-// components/ui/MarkdownRenderer.tsx
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -85,30 +84,32 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           />
         ),
         hr: () => <hr className="my-6 border-neutral-800" />,
+
         table: ({ children }) => (
-          <div className="my-4 overflow-x-auto">
-            <table className="min-w-full border-collapse text-sm">
+          <div className="my-4 overflow-hidden rounded-2xl border border-border bg-secondary">
+            <table className="w-full table-fixed text-sm markdown-table">
               {children}
             </table>
           </div>
         ),
         thead: ({ children }) => (
-          <thead className="bg-neutral-900/70 text-neutral-100">
-            {children}
-          </thead>
+          <thead className="bg-secondary text-foreground">{children}</thead>
         ),
-        tbody: ({ children }) => (
-          <tbody className="divide-y divide-neutral-800/80">{children}</tbody>
-        ),
+        tbody: ({ children }) => <tbody>{children}</tbody>,
         tr: ({ children }) => (
-          <tr className="hover:bg-neutral-900/40">{children}</tr>
+          <tr className="border-t border-border hover:bg-neutral-800/40">
+            {children}
+          </tr>
         ),
         th: ({ children }) => (
-          <th className="px-3 py-2 text-left font-semibold">{children}</th>
+          <th className="px-4 py-2 text-left text-[13px] font-semibold text-neutral-200">
+            {children}
+          </th>
         ),
         td: ({ children }) => (
-          <td className="px-3 py-2 align-top text-neutral-200">{children}</td>
+          <td className="px-4 py-2 text-[13px] text-neutral-300">{children}</td>
         ),
+
         strong: ({ children }) => (
           <strong className="font-semibold text-neutral-50">{children}</strong>
         ),
