@@ -11,6 +11,7 @@ import {
 } from "./AccountPositionList";
 import { Insights } from "./Insights";
 import { MarkdownRenderer } from "./ui/MarkdownRenderer";
+import { ThinkingSpinner } from "./ui/ThinkingSpinner";
 
 type ChatMessage = {
   id: string;
@@ -132,14 +133,12 @@ export default function HomePage() {
     const positions = positionMap[symbol] ?? [];
     if (!positions.length) return;
 
-    // 1) Read current state once and derive prompt
     const state = ensureSymbolChatState(symbol, chatBySymbol[symbol]);
     const trimmed = state.input.trim();
     if (!trimmed || state.loading) return;
 
-    const userInput = trimmed; // stable prompt value
+    const userInput = trimmed;
 
-    // 2) Push user message, clear input, set loading
     setChatBySymbol((prev) => {
       const prevState = ensureSymbolChatState(symbol, prev[symbol]);
 
@@ -162,7 +161,6 @@ export default function HomePage() {
 
     setInputRows(MIN_ROWS);
 
-    // 3) Call streamAnalysis with userInput as prompt
     try {
       let assistantContent = "";
 
@@ -412,6 +410,8 @@ export default function HomePage() {
                           </div>
                         );
                       })}
+
+                      {currentChat?.loading && <ThinkingSpinner />}
 
                       <div ref={conversationEndRef} />
                     </div>

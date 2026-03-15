@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { streamAnalysis } from "@/lib/apiClient";
 import type { Position } from "./AccountPositionList";
 import { MarkdownRenderer } from "./ui/MarkdownRenderer";
+import { ThinkingSpinner } from "./ui/ThinkingSpinner";
 
 type Props = {
   symbol: string | null;
@@ -60,16 +61,7 @@ export function Insights({ symbol, positions, accessToken }: Props) {
         Insights
       </h2>
 
-      {loading && (
-        <div className="mt-1 flex items-center gap-2 text-sm text-neutral-400">
-          <span>Analyzing this position</span>
-          <span className="flex items-center gap-1">
-            <span className="h-1.25 w-1.25 animate-bounce rounded-full bg-neutral-400 [animation-delay:-0.3s]" />
-            <span className="h-1.25 w-1.25 animate-bounce rounded-full bg-neutral-400 [animation-delay:-0.15s]" />
-            <span className="h-1.25 w-1.25 animate-bounce rounded-full bg-neutral-400" />
-          </span>
-        </div>
-      )}
+      {loading && <ThinkingSpinner message={"Analyzing this position"} />}
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 
