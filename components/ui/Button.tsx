@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline" | "ghost" | "destructive";
-  size?: "sm" | "default" | "lg";
+  size?: "xs" | "sm" | "default" | "lg";
   isLoading?: boolean;
   children: React.ReactNode;
 }
@@ -26,8 +26,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          "flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 text-base font-semibold transition-colors",
+          // base
+          "inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors",
+          "disabled:cursor-not-allowed disabled:opacity-50",
 
+          // variants
           variant === "default" &&
             "bg-foreground text-background hover:bg-[#383838] dark:hover:bg-[#ccc]",
           variant === "outline" &&
@@ -36,19 +39,21 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           variant === "destructive" &&
             "bg-destructive text-destructive-foreground hover:bg-destructive/90",
 
-          size === "sm" && "h-9 rounded-md px-3 text-sm",
-          size === "lg" && "h-14 rounded-full px-8 text-lg",
-          size === "default" && "h-12",
+          // sizes
+          size === "xs" && "h-7 px-2 text-[11px] rounded-md",
+          size === "sm" && "h-9 px-3 text-sm rounded-md",
+          size === "default" && "h-10 px-4 text-sm rounded-lg",
+          size === "lg" && "h-12 px-6 text-base rounded-xl",
 
-          isLoading && "cursor-not-allowed opacity-50",
           className,
         )}
         ref={ref}
-        disabled={isLoading}
+        disabled={isLoading || props.disabled}
         {...props}
       >
-        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        {children}
+        {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+        {!isLoading && children}
+        {isLoading && !children && <span className="sr-only">Loading</span>}
       </button>
     );
   },

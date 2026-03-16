@@ -76,19 +76,21 @@ export function PositionsLayout({
       />
 
       <section className="flex min-h-screen flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-border bg-secondary px-4 py-3 md:hidden space-x-4">
-          <button
-            type="button"
-            onClick={() => setMobileNavOpen(true)}
-            className="rounded-md border border-border px-2 py-1 text-xs"
-          >
-            Menu
-          </button>
-          <SchwabConnectCard />
-        </div>
+        <div className="sticky top-0 z-30 border-b border-border bg-secondary">
+          <div className="flex items-center justify-between px-4 py-3 md:hidden space-x-4">
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              className="rounded-md border border-border px-2 py-1 text-xs"
+            >
+              Menu
+            </button>
+            <SchwabConnectCard />
+          </div>
 
-        <div className="hidden border-b border-border bg-secondary px-4 py-3 md:block">
-          <SchwabConnectCard />
+          <div className="hidden px-4 py-3 md:block">
+            <SchwabConnectCard />
+          </div>
         </div>
 
         <div className="flex flex-1 flex-col">

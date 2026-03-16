@@ -21,7 +21,7 @@ export function DesktopNav({
   setSelectedView,
 }: DesktopNavProps) {
   return (
-    <aside className="hidden w-56 border-r border-border bg-secondary/60 p-3 text-sm text-foreground md:flex md:flex-col">
+    <aside className="sticky top-0 hidden h-screen w-48 border-r border-border bg-secondary p-3 text-sm text-foreground md:flex md:flex-col">
       <NavList
         loading={loading}
         symbols={symbols}
@@ -29,7 +29,7 @@ export function DesktopNav({
         setSelectedSymbol={setSelectedSymbol}
         selectedView={selectedView}
         setSelectedView={setSelectedView}
-        containerClassName="flex-1 flex flex-col gap-2"
+        containerClassName="flex-1 flex flex-col gap-2 overflow-y-auto"
         portfolioButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors"
         symbolButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm transition-colors"
       />

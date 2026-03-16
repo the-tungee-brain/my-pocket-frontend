@@ -5,7 +5,11 @@ import { useEffect, useState } from "react";
 import { Button } from "./ui/Button";
 import { apiFetch } from "@/lib/apiClient";
 
-export function SchwabConnectCard() {
+type Props = {
+  compact?: boolean;
+};
+
+export function SchwabConnectCard({ compact = true }: Props) {
   const { data: session } = useSession();
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
@@ -32,6 +36,57 @@ export function SchwabConnectCard() {
   };
 
   const showLoading = authorized === null;
+
+  if (compact) {
+    return (
+      <div className="flex w-full items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              Schwab
+            </span>
+            <span
+              className={
+                authorized
+                  ? "inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-[2px] text-[10px] font-medium text-emerald-400"
+                  : "inline-flex items-center rounded-full bg-amber-500/10 px-2 py-[2px] text-[10px] font-medium text-amber-400"
+              }
+            >
+              {authorized ? "Connected" : "Not connected"}
+            </span>
+          </div>
+          <p className="truncate text-[11px] text-neutral-400">
+            {authorized
+              ? "Syncing positions and balances."
+              : showLoading
+                ? "Checking Schwab status…"
+                : "Connect to load your positions."}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          {!authorized && (
+            <Button
+              size="xs"
+              className="hidden sm:inline-flex"
+              onClick={handleAuthorizeSchwab}
+              disabled={showLoading}
+            >
+              {showLoading ? "Checking…" : "Connect"}
+            </Button>
+          )}
+          <Button
+            size="xs"
+            variant="ghost"
+            className="text-[11px] text-neutral-400 hover:text-neutral-100"
+            onClick={() => signOut()}
+          >
+            Log out
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full overflow-hidden mx-auto max-w-3xl">
