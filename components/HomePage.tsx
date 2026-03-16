@@ -18,6 +18,8 @@ type SymbolChatState = {
 
 type ChatStateMap = Record<string, SymbolChatState>;
 
+type MainView = "portfolio" | "symbol";
+
 const MIN_ROWS = 1;
 const MAX_ROWS = 24;
 
@@ -25,6 +27,7 @@ export default function HomePage() {
   const { data: session } = useSession();
   const [positionMap, setPositionMap] = useState<PositionMap>({});
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+  const [selectedView, setSelectedView] = useState<MainView>("portfolio");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
@@ -69,9 +72,11 @@ export default function HomePage() {
         const map = data.schwab_positions ?? {};
         setPositionMap(map);
 
-        const symbols = Object.keys(map).sort();
+        const symbolsOnly = Object.keys(map).sort();
         setSelectedSymbol((current) =>
-          current && symbols.includes(current) ? current : (symbols[0] ?? null),
+          current && symbolsOnly.includes(current)
+            ? current
+            : (symbolsOnly[0] ?? null),
         );
       } catch {
         setError("Failed to load positions");
@@ -85,22 +90,35 @@ export default function HomePage() {
     void load();
   }, [session?.accessToken]);
 
+  const allPositions: Position[] = useMemo(
+    () => Object.values(positionMap).flat().filter(Boolean) as Position[],
+    [positionMap],
+  );
+
   const symbols = useMemo(() => Object.keys(positionMap).sort(), [positionMap]);
 
   const positionsForSelectedSymbol: Position[] | null = useMemo(() => {
+    if (selectedView === "portfolio") return allPositions;
     if (!selectedSymbol) return null;
     return positionMap[selectedSymbol] ?? null;
-  }, [positionMap, selectedSymbol]);
+  }, [selectedView, selectedSymbol, positionMap, allPositions]);
 
-  const currentChat = selectedSymbol ? chatBySymbol[selectedSymbol] : undefined;
+  // key for chat: "portfolio" or real symbol
+  const activeChatKey =
+    selectedView === "portfolio"
+      ? "__PORTFOLIO_CHAT__"
+      : (selectedSymbol ?? "__NONE__");
+
+  const currentChat =
+    activeChatKey === "__NONE__" ? undefined : chatBySymbol[activeChatKey];
 
   const handleChatInputChange = (value: string) => {
-    if (!selectedSymbol) return;
+    if (activeChatKey === "__NONE__") return;
 
     setChatBySymbol((prev) => ({
       ...prev,
-      [selectedSymbol]: {
-        ...ensureSymbolChatState(selectedSymbol, prev[selectedSymbol]),
+      [activeChatKey]: {
+        ...ensureSymbolChatState(activeChatKey, prev[activeChatKey]),
         input: value,
       },
     }));
@@ -111,16 +129,16 @@ export default function HomePage() {
   };
 
   const handleModelChange = (model: string) => {
-    if (!selectedSymbol) return;
+    if (activeChatKey === "__NONE__") return;
 
     setChatBySymbol((prev) => {
       const prevState = ensureSymbolChatState(
-        selectedSymbol,
-        prev[selectedSymbol],
+        activeChatKey,
+        prev[activeChatKey],
       );
       return {
         ...prev,
-        [selectedSymbol]: {
+        [activeChatKey]: {
           ...prevState,
           model,
         },
@@ -129,15 +147,15 @@ export default function HomePage() {
   };
 
   const toggleModelMenu = () => {
-    if (!selectedSymbol) return;
+    if (activeChatKey === "__NONE__") return;
     setChatBySymbol((prev) => {
       const prevState = ensureSymbolChatState(
-        selectedSymbol,
-        prev[selectedSymbol],
+        activeChatKey,
+        prev[activeChatKey],
       );
       return {
         ...prev,
-        [selectedSymbol]: {
+        [activeChatKey]: {
           ...prevState,
           modelMenuOpen: !prevState.modelMenuOpen,
         },
@@ -146,15 +164,15 @@ export default function HomePage() {
   };
 
   const closeModelMenu = () => {
-    if (!selectedSymbol) return;
+    if (activeChatKey === "__NONE__") return;
     setChatBySymbol((prev) => {
       const prevState = ensureSymbolChatState(
-        selectedSymbol,
-        prev[selectedSymbol],
+        activeChatKey,
+        prev[activeChatKey],
       );
       return {
         ...prev,
-        [selectedSymbol]: {
+        [activeChatKey]: {
           ...prevState,
           modelMenuOpen: false,
         },
@@ -164,7 +182,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (!selectedSymbol) return;
+      if (activeChatKey === "__NONE__") return;
       if (
         modelMenuRef.current &&
         !modelMenuRef.current.contains(event.target as Node)
@@ -177,33 +195,35 @@ export default function HomePage() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [selectedSymbol]);
+  }, [activeChatKey]);
 
   const sendPrompt = async (prompt: string) => {
-    if (!selectedSymbol || !session?.accessToken) return;
+    if (!session?.accessToken) return;
+    if (!positionsForSelectedSymbol?.length) return;
+    if (activeChatKey === "__NONE__") return;
 
-    const symbol = selectedSymbol;
-    const positions = positionMap[symbol] ?? [];
-    if (!positions.length) return;
-
-    const state = chatBySymbol[symbol] ?? ensureSymbolChatState(symbol);
+    const state =
+      chatBySymbol[activeChatKey] ?? ensureSymbolChatState(activeChatKey);
     if (state.loading) return;
 
     const userInput = prompt.trim();
     if (!userInput) return;
 
     setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(symbol, prev[symbol]);
+      const prevState = ensureSymbolChatState(
+        activeChatKey,
+        prev[activeChatKey],
+      );
 
       const userMessage: ChatMessage = {
-        id: `user-${symbol}-${Date.now()}`,
+        id: `user-${activeChatKey}-${Date.now()}`,
         role: "user",
         content: userInput,
       };
 
       return {
         ...prev,
-        [symbol]: {
+        [activeChatKey]: {
           ...prevState,
           messages: [...prevState.messages, userMessage],
           input: "",
@@ -215,13 +235,18 @@ export default function HomePage() {
     setInputRows(MIN_ROWS);
     closeModelMenu();
 
+    const symbolForApi =
+      selectedView === "portfolio"
+        ? "PORTFOLIO"
+        : (selectedSymbol ?? "UNKNOWN");
+
     try {
       let assistantContent = "";
 
       await streamAnalysis(
         {
-          positions,
-          symbol,
+          positions: positionsForSelectedSymbol,
+          symbol: symbolForApi,
           action: "free-form",
           prompt: userInput,
           model: state.model,
@@ -231,7 +256,10 @@ export default function HomePage() {
           assistantContent += chunk;
 
           setChatBySymbol((prev) => {
-            const prevState = ensureSymbolChatState(symbol, prev[symbol]);
+            const prevState = ensureSymbolChatState(
+              activeChatKey,
+              prev[activeChatKey],
+            );
             const messages = [...prevState.messages];
             const last = messages[messages.length - 1];
 
@@ -242,7 +270,7 @@ export default function HomePage() {
               };
             } else {
               messages.push({
-                id: `assistant-${symbol}-${Date.now()}`,
+                id: `assistant-${activeChatKey}-${Date.now()}`,
                 role: "assistant",
                 content: assistantContent,
               });
@@ -250,7 +278,7 @@ export default function HomePage() {
 
             return {
               ...prev,
-              [symbol]: {
+              [activeChatKey]: {
                 ...prevState,
                 messages,
               },
@@ -260,16 +288,19 @@ export default function HomePage() {
       );
     } catch {
       setChatBySymbol((prev) => {
-        const prevState = ensureSymbolChatState(symbol, prev[symbol]);
+        const prevState = ensureSymbolChatState(
+          activeChatKey,
+          prev[activeChatKey],
+        );
         return {
           ...prev,
-          [symbol]: {
+          [activeChatKey]: {
             ...prevState,
             loading: false,
             messages: [
               ...prevState.messages,
               {
-                id: `error-${symbol}-${Date.now()}`,
+                id: `error-${activeChatKey}-${Date.now()}`,
                 role: "assistant",
                 content:
                   "Sorry, something went wrong while analyzing this position.",
@@ -282,10 +313,13 @@ export default function HomePage() {
     }
 
     setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(symbol, prev[symbol]);
+      const prevState = ensureSymbolChatState(
+        activeChatKey,
+        prev[activeChatKey],
+      );
       return {
         ...prev,
-        [symbol]: {
+        [activeChatKey]: {
           ...prevState,
           loading: false,
         },
@@ -294,28 +328,35 @@ export default function HomePage() {
   };
 
   const sendQuickAction = async (actionId: string) => {
-    if (!selectedSymbol || !session?.accessToken) return;
+    if (!session?.accessToken) return;
+    if (!positionsForSelectedSymbol?.length) return;
+    if (activeChatKey === "__NONE__") return;
 
-    const symbol = selectedSymbol;
-    const positions = positionMap[symbol] ?? [];
-    if (!positions.length) return;
-
-    const state = chatBySymbol[symbol] ?? ensureSymbolChatState(symbol);
+    const state =
+      chatBySymbol[activeChatKey] ?? ensureSymbolChatState(activeChatKey);
     if (state.loading) return;
 
+    const label =
+      selectedView === "portfolio"
+        ? "portfolio"
+        : (selectedSymbol ?? "position");
+
     const userMessage: ChatMessage = {
-      id: `user-${symbol}-${actionId}-${Date.now()}`,
+      id: `user-${activeChatKey}-${actionId}-${Date.now()}`,
       role: "user",
       content: `${actionId
         .replace(/-/g, " ")
-        .replace(/^./, (c) => c.toUpperCase())} analysis for ${symbol}`,
+        .replace(/^./, (c) => c.toUpperCase())} analysis for ${label}`,
     };
 
     setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(symbol, prev[symbol]);
+      const prevState = ensureSymbolChatState(
+        activeChatKey,
+        prev[activeChatKey],
+      );
       return {
         ...prev,
-        [symbol]: {
+        [activeChatKey]: {
           ...prevState,
           messages: [...prevState.messages, userMessage],
           loading: true,
@@ -326,13 +367,18 @@ export default function HomePage() {
     setInputRows(MIN_ROWS);
     closeModelMenu();
 
+    const symbolForApi =
+      selectedView === "portfolio"
+        ? "PORTFOLIO"
+        : (selectedSymbol ?? "UNKNOWN");
+
     try {
       let assistantContent = "";
 
       await streamAnalysis(
         {
-          positions,
-          symbol,
+          positions: positionsForSelectedSymbol,
+          symbol: symbolForApi,
           action: actionId,
           prompt: null,
           model: state.model,
@@ -342,7 +388,10 @@ export default function HomePage() {
           assistantContent += chunk;
 
           setChatBySymbol((prev) => {
-            const prevState = ensureSymbolChatState(symbol, prev[symbol]);
+            const prevState = ensureSymbolChatState(
+              activeChatKey,
+              prev[activeChatKey],
+            );
             const messages = [...prevState.messages];
             const last = messages[messages.length - 1];
 
@@ -353,7 +402,7 @@ export default function HomePage() {
               };
             } else {
               messages.push({
-                id: `assistant-${symbol}-${actionId}-${Date.now()}`,
+                id: `assistant-${activeChatKey}-${actionId}-${Date.now()}`,
                 role: "assistant",
                 content: assistantContent,
               });
@@ -361,7 +410,7 @@ export default function HomePage() {
 
             return {
               ...prev,
-              [symbol]: {
+              [activeChatKey]: {
                 ...prevState,
                 messages,
               },
@@ -371,16 +420,19 @@ export default function HomePage() {
       );
     } catch {
       setChatBySymbol((prev) => {
-        const prevState = ensureSymbolChatState(symbol, prev[symbol]);
+        const prevState = ensureSymbolChatState(
+          activeChatKey,
+          prev[activeChatKey],
+        );
         return {
           ...prev,
-          [symbol]: {
+          [activeChatKey]: {
             ...prevState,
             loading: false,
             messages: [
               ...prevState.messages,
               {
-                id: `error-${symbol}-${actionId}-${Date.now()}`,
+                id: `error-${activeChatKey}-${actionId}-${Date.now()}`,
                 role: "assistant",
                 content:
                   "Sorry, something went wrong while analyzing this position.",
@@ -393,10 +445,13 @@ export default function HomePage() {
     }
 
     setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(symbol, prev[symbol]);
+      const prevState = ensureSymbolChatState(
+        activeChatKey,
+        prev[activeChatKey],
+      );
       return {
         ...prev,
-        [symbol]: {
+        [activeChatKey]: {
           ...prevState,
           loading: false,
         },
@@ -428,20 +483,24 @@ export default function HomePage() {
       symbols={symbols}
       selectedSymbol={selectedSymbol}
       setSelectedSymbol={setSelectedSymbol}
+      selectedView={selectedView}
+      setSelectedView={setSelectedView}
       positionsForSelectedSymbol={positionsForSelectedSymbol}
+      allPositions={allPositions}
       accessToken={session.accessToken}
       mobileNavOpen={mobileNavOpen}
       setMobileNavOpen={setMobileNavOpen}
       topChildren={
         <ConversationPane
-          symbol={selectedSymbol}
+          symbol={selectedView === "portfolio" ? "PORTFOLIO" : selectedSymbol}
           messages={currentChat?.messages ?? []}
           loading={!!currentChat?.loading}
         />
       }
       bottomChildren={
-        selectedSymbol && (
+        (selectedView === "portfolio" || selectedSymbol) && (
           <ChatBox
+            mode={selectedView}
             selectedSymbol={selectedSymbol}
             currentChat={currentChat}
             inputRows={inputRows}

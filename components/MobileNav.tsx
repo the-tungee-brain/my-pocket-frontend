@@ -1,6 +1,7 @@
 "use client";
 
 import { Dispatch, SetStateAction } from "react";
+import { NavList, MainView } from "@/components/NavList";
 
 interface MobileNavProps {
   mobileNavOpen: boolean;
@@ -9,6 +10,8 @@ interface MobileNavProps {
   symbols: string[];
   selectedSymbol: string | null;
   setSelectedSymbol: Dispatch<SetStateAction<string | null>>;
+  selectedView: MainView;
+  setSelectedView: Dispatch<SetStateAction<MainView>>;
 }
 
 export function MobileNav({
@@ -18,8 +21,21 @@ export function MobileNav({
   symbols,
   selectedSymbol,
   setSelectedSymbol,
+  selectedView,
+  setSelectedView,
 }: MobileNavProps) {
   if (!mobileNavOpen) return null;
+
+  const handleSetView = (v: MainView) => {
+    setSelectedView(v);
+    setMobileNavOpen(false);
+  };
+
+  const handleSetSymbol = (s: string | null) => {
+    setSelectedSymbol(s);
+    setSelectedView("symbol");
+    setMobileNavOpen(false);
+  };
 
   return (
     <div className="fixed inset-0 z-40 flex md:hidden">
@@ -29,9 +45,7 @@ export function MobileNav({
       />
       <aside className="relative z-50 flex h-full w-64 flex-col border-r border-border bg-secondary">
         <div className="flex items-center justify-between px-4 py-3">
-          <span className="text-xs uppercase tracking-wide text-neutral-400">
-            Holdings
-          </span>
+          <div />
           <button
             type="button"
             onClick={() => setMobileNavOpen(false)}
@@ -40,37 +54,19 @@ export function MobileNav({
             Close
           </button>
         </div>
-        <nav className="flex-1 overflow-y-auto">
-          {loading && (
-            <div className="px-4 py-2 text-xs text-neutral-500">
-              Loading symbols…
-            </div>
-          )}
-          {!loading && symbols.length === 0 && (
-            <div className="px-4 py-2 text-xs text-neutral-500">
-              No symbols yet.
-            </div>
-          )}
-          {symbols.map((sym) => {
-            const isActive = sym === selectedSymbol;
-            return (
-              <button
-                key={sym}
-                type="button"
-                onClick={() => {
-                  setSelectedSymbol(sym);
-                  setMobileNavOpen(false);
-                }}
-                className={[
-                  "w-full px-4 py-2 text-left text-sm transition-colors",
-                  "hover:bg-neutral-800",
-                  isActive ? "bg-neutral-800 text-white" : "text-neutral-300",
-                ].join(" ")}
-              >
-                {sym}
-              </button>
-            );
-          })}
+
+        <nav className="flex-1 overflow-y-auto px-2 pb-3">
+          <NavList
+            loading={loading}
+            symbols={symbols}
+            selectedSymbol={selectedSymbol}
+            setSelectedSymbol={handleSetSymbol}
+            selectedView={selectedView}
+            setSelectedView={handleSetView}
+            containerClassName="flex flex-col gap-2"
+            portfolioButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors"
+            symbolButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm transition-colors"
+          />
         </nav>
       </aside>
     </div>

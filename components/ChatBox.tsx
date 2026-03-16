@@ -13,13 +13,16 @@ type SymbolChatState = {
   modelMenuOpen: boolean;
 };
 
+type MainView = "portfolio" | "symbol";
+
 const MODEL_OPTIONS = [
   { id: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
   { id: "gpt-4.1", label: "GPT-4.1" },
 ];
 
 interface ChatBoxProps {
-  selectedSymbol: string;
+  mode: MainView;
+  selectedSymbol: string | null;
   currentChat: SymbolChatState | undefined;
   inputRows: number;
   modelMenuRef: RefObject<HTMLDivElement | null>;
@@ -31,6 +34,7 @@ interface ChatBoxProps {
 }
 
 export function ChatBox({
+  mode,
   selectedSymbol,
   currentChat,
   inputRows,
@@ -41,11 +45,18 @@ export function ChatBox({
   onToggleModelMenu,
   onModelChange,
 }: ChatBoxProps) {
+  const placeholderLabel =
+    mode === "portfolio"
+      ? "your portfolio"
+      : selectedSymbol
+        ? `your ${selectedSymbol} position`
+        : "this position";
+
   return (
     <div className="sticky bottom-0 z-20 px-4 pb-4 pt-3 scrollbar-dark">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 rounded-2xl border border-border bg-secondary/95 p-4 backdrop-blur">
         <QuickAnalysisBar
-          symbol={selectedSymbol}
+          symbol={mode === "portfolio" ? "PORTFOLIO" : (selectedSymbol ?? "")}
           loading={!!currentChat?.loading}
           onRunAction={(id) => void onSendQuickAction(id)}
         />
@@ -60,7 +71,7 @@ export function ChatBox({
           <textarea
             rows={inputRows}
             className="w-full resize-none bg-transparent text-base leading-relaxed tracking-wide text-foreground outline-none placeholder:text-neutral-500"
-            placeholder={`Ask anything about your ${selectedSymbol} position…`}
+            placeholder={`Ask anything about ${placeholderLabel}…`}
             value={currentChat?.input ?? ""}
             onChange={(e) => onChangeInput(e.target.value)}
             onKeyDown={(e) => {

@@ -1,4 +1,3 @@
-// Insights.tsx
 import { useEffect, useState } from "react";
 import { streamAnalysis } from "@/lib/apiClient";
 import type { Position } from "./AccountPositionList";
@@ -9,15 +8,21 @@ type Props = {
   symbol: string | null;
   positions: Position[] | null;
   accessToken?: string;
+  thinkingMessage?: string;
 };
 
-export function Insights({ symbol, positions, accessToken }: Props) {
+export function Insights({
+  symbol,
+  positions,
+  accessToken,
+  thinkingMessage = "Analyzing",
+}: Props) {
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!symbol || !positions?.length || !accessToken) return;
+    if (!positions?.length || !accessToken) return;
 
     let cancelled = false;
     let buffer = "";
@@ -61,7 +66,7 @@ export function Insights({ symbol, positions, accessToken }: Props) {
         Insights
       </h2>
 
-      {loading && <ThinkingSpinner message={"Analyzing this position"} />}
+      {loading && <ThinkingSpinner message={thinkingMessage} />}
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 

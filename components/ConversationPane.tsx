@@ -11,6 +11,7 @@ export type ChatMessage = {
 };
 
 interface ConversationPaneProps {
+  // pass "PORTFOLIO" when showing portfolio view, otherwise the symbol
   symbol: string | null;
   messages: ChatMessage[];
   loading: boolean;
@@ -33,20 +34,30 @@ export function ConversationPane({
 
     if (lastUserIndex == null) return;
 
-    lastUserRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = lastUserRef.current;
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    setTimeout(() => {
+      const scroller = el.closest(".overflow-y-auto");
+      if (!scroller) return;
+      scroller.scrollTop = scroller.scrollTop - 80;
+    }, 300);
   }, [messages.length, messages]);
 
   if (!symbol) return null;
 
+  const label = symbol === "PORTFOLIO" ? "portfolio" : symbol;
+
   return (
     <div className="mx-auto mt-4 max-w-3xl py-3">
-      <div className="mb-3 text-xs font-semibold text-foreground tracking-wide uppercase">
-        Conversation for {symbol}
+      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-foreground">
+        Conversation for {label}
       </div>
       <div className="space-y-6 pr-1">
         {messages.map((m, idx) => {
           const isAssistant = m.role === "assistant";
-
           const isLastUser =
             m.role === "user" &&
             messages.findLastIndex((mm) => mm.role === "user") === idx;

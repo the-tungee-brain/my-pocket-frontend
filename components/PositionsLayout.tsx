@@ -10,6 +10,9 @@ import {
   PositionMap,
 } from "@/components/AccountPositionList";
 import { Insights } from "@/components/Insights";
+import { PortfolioOverview } from "@/components/PortfolioOverview";
+
+type MainView = "portfolio" | "symbol";
 
 interface PositionsLayoutProps {
   loading: boolean;
@@ -18,12 +21,15 @@ interface PositionsLayoutProps {
   symbols: string[];
   selectedSymbol: string | null;
   setSelectedSymbol: React.Dispatch<React.SetStateAction<string | null>>;
+  selectedView: MainView;
+  setSelectedView: React.Dispatch<React.SetStateAction<MainView>>;
   positionsForSelectedSymbol: Position[] | null;
+  allPositions: Position[];
   accessToken: string;
   mobileNavOpen: boolean;
   setMobileNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  topChildren?: ReactNode; // conversation
-  bottomChildren?: ReactNode; // chat box (sticky)
+  topChildren?: ReactNode;
+  bottomChildren?: ReactNode;
 }
 
 export function PositionsLayout({
@@ -33,7 +39,10 @@ export function PositionsLayout({
   symbols,
   selectedSymbol,
   setSelectedSymbol,
+  selectedView,
+  setSelectedView,
   positionsForSelectedSymbol,
+  allPositions,
   accessToken,
   mobileNavOpen,
   setMobileNavOpen,
@@ -51,6 +60,8 @@ export function PositionsLayout({
         symbols={symbols}
         selectedSymbol={selectedSymbol}
         setSelectedSymbol={setSelectedSymbol}
+        selectedView={selectedView}
+        setSelectedView={setSelectedView}
       />
 
       <MobileNav
@@ -60,10 +71,12 @@ export function PositionsLayout({
         symbols={symbols}
         selectedSymbol={selectedSymbol}
         setSelectedSymbol={setSelectedSymbol}
+        selectedView={selectedView}
+        setSelectedView={setSelectedView}
       />
 
       <section className="flex min-h-screen flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-secondary md:hidden space-x-4">
+        <div className="flex items-center justify-between border-b border-border bg-secondary px-4 py-3 md:hidden space-x-4">
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
@@ -74,7 +87,7 @@ export function PositionsLayout({
           <SchwabConnectCard />
         </div>
 
-        <div className="hidden border-b border-border px-4 py-3 bg-secondary md:block">
+        <div className="hidden border-b border-border bg-secondary px-4 py-3 md:block">
           <SchwabConnectCard />
         </div>
 
@@ -91,18 +104,36 @@ export function PositionsLayout({
 
             {!hasNoPositions && (
               <>
-                <AccountPositionList
-                  positionsForSelectedSymbol={positionsForSelectedSymbol}
-                  selectedSymbol={selectedSymbol}
-                />
+                {selectedView === "portfolio" ? (
+                  <>
+                    <PortfolioOverview />
 
-                <Insights
-                  symbol={selectedSymbol}
-                  positions={positionsForSelectedSymbol}
-                  accessToken={accessToken}
-                />
+                    <Insights
+                      symbol={null}
+                      positions={allPositions}
+                      accessToken={accessToken}
+                      thinkingMessage="Analyzing this portfolio"
+                    />
 
-                {topChildren}
+                    {topChildren}
+                  </>
+                ) : (
+                  <>
+                    <AccountPositionList
+                      positionsForSelectedSymbol={positionsForSelectedSymbol}
+                      selectedSymbol={selectedSymbol}
+                    />
+
+                    <Insights
+                      symbol={selectedSymbol}
+                      positions={positionsForSelectedSymbol}
+                      accessToken={accessToken}
+                      thinkingMessage={`Analyzing your ${selectedSymbol} positions`}
+                    />
+
+                    {topChildren}
+                  </>
+                )}
               </>
             )}
           </div>
