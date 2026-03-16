@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, RefObject } from "react";
+import { useEffect, useRef } from "react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 
@@ -14,19 +14,27 @@ interface ConversationPaneProps {
   symbol: string | null;
   messages: ChatMessage[];
   loading: boolean;
-  conversationEndRef: RefObject<HTMLDivElement | null>;
 }
 
 export function ConversationPane({
   symbol,
   messages,
   loading,
-  conversationEndRef,
 }: ConversationPaneProps) {
+  const lastUserRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (!messages.length) return;
-    conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, conversationEndRef]);
+
+    const lastUserIndex = [...messages]
+      .map((m, i) => ({ ...m, i }))
+      .filter((m) => m.role === "user")
+      .at(-1)?.i;
+
+    if (lastUserIndex == null) return;
+
+    lastUserRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [messages.length, messages]);
 
   if (!symbol) return null;
 
@@ -36,11 +44,17 @@ export function ConversationPane({
         Conversation for {symbol}
       </div>
       <div className="space-y-6 pr-1">
-        {messages.map((m) => {
+        {messages.map((m, idx) => {
           const isAssistant = m.role === "assistant";
+
+          const isLastUser =
+            m.role === "user" &&
+            messages.findLastIndex((mm) => mm.role === "user") === idx;
+
           return (
             <div
               key={m.id}
+              ref={isLastUser ? lastUserRef : null}
               className={
                 isAssistant ? "flex justify-start" : "flex justify-end"
               }
@@ -60,7 +74,7 @@ export function ConversationPane({
 
         {loading && <ThinkingSpinner />}
 
-        <div ref={conversationEndRef} />
+        <div />
       </div>
     </div>
   );

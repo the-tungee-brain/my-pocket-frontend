@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { apiFetch, streamAnalysis } from "@/lib/apiClient";
-import { Position, PositionMap } from "./AccountPositionList"; // adjust path if needed
+import { Position, PositionMap } from "./AccountPositionList";
 import { PositionsLayout } from "@/components/PositionsLayout";
 import { ConversationPane, ChatMessage } from "@/components/ConversationPane";
 import { ChatBox } from "@/components/ChatBox";
@@ -31,7 +31,6 @@ export default function HomePage() {
   const [inputRows, setInputRows] = useState(MIN_ROWS);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const conversationEndRef = useRef<HTMLDivElement | null>(null);
   const modelMenuRef = useRef<HTMLDivElement | null>(null);
 
   const ensureSymbolChatState = (
@@ -438,7 +437,6 @@ export default function HomePage() {
           symbol={selectedSymbol}
           messages={currentChat?.messages ?? []}
           loading={!!currentChat?.loading}
-          conversationEndRef={conversationEndRef}
         />
       }
       bottomChildren={
