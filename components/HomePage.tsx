@@ -501,7 +501,7 @@ export default function HomePage() {
                           currentChat?.loading ||
                           !(currentChat?.input ?? "").trim()
                         }
-                        className="ml-1 rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-neutral-900 disabled:opacity-60"
+                        className="ml-1 cursor-pointer rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-neutral-900 disabled:opacity-60"
                       >
                         {currentChat?.loading ? "Analyzing…" : "Send"}
                       </button>
