@@ -26,7 +26,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          "flex h-12 w-full items-center justify-center cursor-pointer gap-2 rounded-xl px-5 text-base font-semibold transition-colors",
+          "flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 text-base font-semibold transition-colors",
 
           variant === "default" &&
             "bg-foreground text-background hover:bg-[#383838] dark:hover:bg-[#ccc]",

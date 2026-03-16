@@ -105,8 +105,13 @@ export function AccountPositionList({
                     </td>
                     <td className="hidden w-1/5 px-4 py-2 text-right sm:table-cell">
                       {p.currentDayProfitLoss >= 0 ? "+" : ""}
-                      {p.currentDayProfitLoss.toLocaleString()} (
-                      {p.currentDayProfitLossPercentage.toFixed(2)}%)
+                      {p.currentDayProfitLoss.toLocaleString("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      ({p.currentDayProfitLossPercentage.toFixed(2)}%)
                     </td>
                   </tr>
                 );

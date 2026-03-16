@@ -39,7 +39,7 @@ export function Dropdown({
                 onClose();
               }}
               className={[
-                "flex w-full items-center cursor-pointer justify-between rounded-md px-3 py-2 text-left",
+                "flex w-full items-center justify-between rounded-md px-3 py-2 text-left",
                 "hover:bg-neutral-800/80 text-foreground",
                 "transition-all duration-200 ease-out",
                 isActive ? "bg-neutral-800/80 border border-border" : "",
