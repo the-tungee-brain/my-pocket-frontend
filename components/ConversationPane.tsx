@@ -11,7 +11,6 @@ export type ChatMessage = {
 };
 
 interface ConversationPaneProps {
-  // pass "PORTFOLIO" when showing portfolio view, otherwise the symbol
   symbol: string | null;
   messages: ChatMessage[];
   loading: boolean;
@@ -37,13 +36,14 @@ export function ConversationPane({
     const el = lastUserRef.current;
     if (!el) return;
 
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    const paddingTop = 80;
+    const rect = el.getBoundingClientRect();
+    const absoluteTop = rect.top + window.scrollY;
 
-    setTimeout(() => {
-      const scroller = el.closest(".overflow-y-auto");
-      if (!scroller) return;
-      scroller.scrollTop = scroller.scrollTop - 80;
-    }, 300);
+    window.scrollTo({
+      top: absoluteTop - paddingTop,
+      behavior: "smooth",
+    });
   }, [messages.length, messages]);
 
   if (!symbol) return null;
