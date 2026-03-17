@@ -100,7 +100,6 @@ function AllocationList({
 export function PortfolioOverview() {
   const p = MOCK_PORTFOLIO;
 
-  // simple derived stats
   const stockPct =
     p.byAssetClass
       .filter((a) => a.name.toLowerCase().includes("stock"))
@@ -116,7 +115,6 @@ export function PortfolioOverview() {
 
   return (
     <div className="mx-auto mb-4 mt-2 max-w-3xl rounded-2xl py-4 text-sm text-foreground shadow-sm">
-      {/* Header */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
@@ -133,7 +131,6 @@ export function PortfolioOverview() {
           </div>
         </div>
 
-        {/* Key chips */}
         <div className="flex flex-wrap gap-2 text-[11px]">
           <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-emerald-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -154,15 +151,13 @@ export function PortfolioOverview() {
         </div>
       </div>
 
-      {/* Allocations */}
       <div className="grid gap-4 md:grid-cols-3">
         <AllocationList title="By asset class" items={p.byAssetClass} />
         <AllocationList title="By sector" items={p.bySector} />
         <AllocationList title="By region" items={p.byRegion} />
       </div>
 
-      {/* AI summary */}
-      <div className="mt-5 rounded-2xl border border-neutral-800/80 bg-neutral-950/60 p-3.5">
+      <div className="mt-5 rounded-2xl border border-neutral-800/80 bg-secondary p-3.5">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/20 text-[11px] text-sky-300">
