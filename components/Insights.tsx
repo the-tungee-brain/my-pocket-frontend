@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { streamAnalysis } from "@/lib/apiClient";
 import type { Position } from "./AccountPositionList";
 import { MarkdownRenderer } from "./ui/MarkdownRenderer";
@@ -21,8 +21,16 @@ export function Insights({
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // track if we've already called streamAnalysis for this mount
+  const hasRunRef = useRef(false);
+
   useEffect(() => {
+    // wait until data is ready
     if (!positions?.length || !accessToken) return;
+
+    // ensure we only run once
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
 
     let cancelled = false;
     let buffer = "";
@@ -58,7 +66,7 @@ export function Insights({
     return () => {
       cancelled = true;
     };
-  }, [symbol, positions, accessToken]);
+  }, [positions, accessToken]); // re-evaluate when these become non-null/ready[web:10][web:17]
 
   return (
     <section className="mx-auto mt-6 max-w-3xl rounded-xl border border-border bg-secondary/60 px-4 py-3">
