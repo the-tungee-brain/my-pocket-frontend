@@ -7,9 +7,9 @@ interface DesktopNavProps {
   loading: boolean;
   symbols: string[];
   selectedSymbol: string | null;
-  setSelectedSymbol: React.Dispatch<React.SetStateAction<string | null>>;
+  setSelectedSymbol: (s: string | null) => void;
   selectedView: MainView;
-  setSelectedView: React.Dispatch<React.SetStateAction<MainView>>;
+  setSelectedView: (v: MainView) => void;
 }
 
 export function DesktopNav({

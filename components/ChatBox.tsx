@@ -1,3 +1,4 @@
+// components/ChatBox.tsx
 "use client";
 
 import { RefObject } from "react";
@@ -53,7 +54,7 @@ export function ChatBox({
         : "this position";
 
   return (
-    <div className="sticky bottom-0 z-20 px-4 pb-4 scrollbar-dark bg-background">
+    <div className="px-4 pb-4 scrollbar-dark bg-background">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 rounded-2xl border border-border bg-secondary/95 p-4 backdrop-blur">
         <QuickAnalysisBar
           symbol={mode === "portfolio" ? "PORTFOLIO" : (selectedSymbol ?? "")}

@@ -9,9 +9,9 @@ interface MobileNavProps {
   loading: boolean;
   symbols: string[];
   selectedSymbol: string | null;
-  setSelectedSymbol: Dispatch<SetStateAction<string | null>>;
+  setSelectedSymbol: (s: string | null) => void;
   selectedView: MainView;
-  setSelectedView: Dispatch<SetStateAction<MainView>>;
+  setSelectedView: (v: MainView) => void;
 }
 
 export function MobileNav({

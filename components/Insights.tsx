@@ -1,64 +1,39 @@
-import { useEffect, useState } from "react";
-import { streamAnalysis } from "@/lib/apiClient";
+"use client";
+
+import { useMemo } from "react";
 import type { Position } from "./AccountPositionList";
 import { MarkdownRenderer } from "./ui/MarkdownRenderer";
 import { ThinkingSpinner } from "./ui/ThinkingSpinner";
+import { usePositionsContext } from "@/app/Providers";
 
 type Props = {
   symbol: string | null;
   positions: Position[] | null;
-  accessToken?: string;
   thinkingMessage?: string;
 };
 
 export function Insights({
   symbol,
   positions,
-  accessToken,
   thinkingMessage = "Analyzing",
 }: Props) {
-  const [loading, setLoading] = useState(false);
-  const [content, setContent] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { insightsByKey, buildInsightKey } = usePositionsContext();
 
-  useEffect(() => {
-    if (!positions?.length || !accessToken) return;
+  const key = useMemo(() => {
+    if (!positions?.length) return null;
+    const label = symbol ?? "PORTFOLIO";
+    return buildInsightKey(label, positions);
+  }, [symbol, positions, buildInsightKey]);
 
-    let cancelled = false;
-    let buffer = "";
+  const insight = key ? insightsByKey[key] : null;
 
-    const run = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        setContent(null);
+  const loading = !!key && (!insight || insight.loading);
+  const error = insight?.error ?? null;
+  const content = insight?.content ?? null;
 
-        await streamAnalysis(
-          { positions, prompt: null },
-          accessToken,
-          (chunk) => {
-            if (cancelled) return;
-            buffer += chunk;
-            setContent(buffer);
-          },
-        );
-
-        if (!cancelled) {
-          setLoading(false);
-        }
-      } catch {
-        if (cancelled) return;
-        setLoading(false);
-        setError("Failed to load insights for this position.");
-      }
-    };
-
-    void run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [symbol, positions, accessToken]);
+  if (!positions?.length) {
+    return null;
+  }
 
   return (
     <section className="mx-auto mt-6 max-w-3xl rounded-xl border border-border bg-secondary/60 px-4 py-3">

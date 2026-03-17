@@ -113,7 +113,6 @@ export function PositionsLayout({
                     <Insights
                       symbol={null}
                       positions={allPositions}
-                      accessToken={accessToken}
                       thinkingMessage="Analyzing this portfolio"
                     />
 
@@ -129,7 +128,6 @@ export function PositionsLayout({
                     <Insights
                       symbol={selectedSymbol}
                       positions={positionsForSelectedSymbol}
-                      accessToken={accessToken}
                       thinkingMessage={`Analyzing your ${selectedSymbol} positions`}
                     />
 

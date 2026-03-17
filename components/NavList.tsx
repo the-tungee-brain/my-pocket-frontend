@@ -1,11 +1,13 @@
 "use client";
 
+import { useRouter, usePathname } from "next/navigation";
+
 export type MainView = "portfolio" | "symbol";
 
 interface NavListProps {
   loading: boolean;
   symbols: string[];
-  selectedSymbol: string | null;
+  selectedSymbol: string | null; // can keep for now if used elsewhere
   setSelectedSymbol: (s: string | null) => void;
   selectedView: MainView;
   setSelectedView: (v: MainView) => void;
@@ -25,20 +27,33 @@ export function NavList({
   portfolioButtonClassName = "",
   symbolButtonClassName = "",
 }: NavListProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const isPortfolio = pathname === "/portfolio";
+  const activeSymbol = pathname.startsWith("/positions/")
+    ? pathname.split("/").at(-1)
+    : null;
+
   return (
     <div
       className={[
-        "flex h-full flex-col rounded-2xl  bg-secondary/60 py-3",
+        "flex h-full flex-col rounded-2xl bg-secondary/60 py-3",
         containerClassName,
       ].join(" ")}
     >
+      {/* Portfolio tab */}
       <button
         type="button"
         disabled={loading}
-        onClick={() => setSelectedView("portfolio")}
+        onClick={() => {
+          setSelectedView("portfolio");
+          setSelectedSymbol(null);
+          router.push("/portfolio");
+        }}
         className={[
           "group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
-          selectedView === "portfolio"
+          isPortfolio
             ? "bg-neutral-800 text-neutral-50 shadow-inner"
             : "text-neutral-300 hover:bg-neutral-800/60",
           portfolioButtonClassName,
@@ -47,7 +62,7 @@ export function NavList({
         <span
           className={[
             "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
-            selectedView === "portfolio"
+            isPortfolio
               ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-300"
               : "border-neutral-700 bg-neutral-900/60 text-neutral-300",
           ].join(" ")}
@@ -60,7 +75,7 @@ export function NavList({
             Overview
           </span>
         </div>
-        {selectedView === "portfolio" && (
+        {isPortfolio && (
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
         )}
       </button>
@@ -92,7 +107,7 @@ export function NavList({
 
       <div className="mt-1 space-y-1 overflow-y-auto pr-1">
         {symbols.map((sym) => {
-          const isActive = selectedView === "symbol" && selectedSymbol === sym;
+          const isActive = activeSymbol === sym;
 
           return (
             <button
@@ -100,8 +115,9 @@ export function NavList({
               type="button"
               disabled={loading}
               onClick={() => {
-                setSelectedSymbol(sym);
                 setSelectedView("symbol");
+                setSelectedSymbol(sym);
+                router.push(`/positions/${sym}`);
               }}
               className={[
                 "group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs transition-all",

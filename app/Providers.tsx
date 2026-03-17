@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { apiFetch, streamAnalysis } from "@/lib/apiClient";
-import { Position, PositionMap } from "./AccountPositionList";
-import { PositionsLayout } from "@/components/PositionsLayout";
-import { ConversationPane, ChatMessage } from "@/components/ConversationPane";
-import { ChatBox } from "@/components/ChatBox";
+import type { Position, PositionMap } from "@/components/AccountPositionList";
+import type { ChatMessage } from "@/components/ConversationPane";
+
+type MainView = "portfolio" | "symbol";
 
 type SymbolChatState = {
   loading: boolean;
@@ -18,12 +18,70 @@ type SymbolChatState = {
 
 type ChatStateMap = Record<string, SymbolChatState>;
 
-type MainView = "portfolio" | "symbol";
+type InsightResult = {
+  loading: boolean;
+  error: string | null;
+  content: string | null;
+};
 
-const MIN_ROWS = 1;
-const MAX_ROWS = 24;
+type PositionsContextValue = {
+  sessionAccessToken: string;
+  loading: boolean;
+  error: string | null;
+  positionMap: PositionMap;
+  symbols: string[];
+  allPositions: Position[];
+  selectedSymbol: string | null;
+  setSelectedSymbol: (s: string | null) => void;
+  selectedView: MainView;
+  setSelectedView: (v: MainView) => void;
+  positionsForSelectedSymbol: Position[] | null;
+  chatBySymbol: ChatStateMap;
+  setChatBySymbol: React.Dispatch<React.SetStateAction<ChatStateMap>>;
+  ensureSymbolChatState: (
+    key: string,
+    base?: Partial<SymbolChatState>,
+  ) => SymbolChatState;
+  sendPrompt: (opts: {
+    activeChatKey: string;
+    selectedView: MainView;
+    selectedSymbol: string | null;
+    positionsForSelectedSymbol: Position[] | null;
+    prompt: string;
+  }) => Promise<void>;
+  sendQuickAction: (opts: {
+    activeChatKey: string;
+    selectedView: MainView;
+    selectedSymbol: string | null;
+    positionsForSelectedSymbol: Position[] | null;
+    actionId: string;
+  }) => Promise<void>;
+  insightsByKey: Record<string, InsightResult>;
+  buildInsightKey: (label: string, positions: Position[]) => string;
+};
 
-export default function HomePage() {
+const PositionsContext = createContext<PositionsContextValue | null>(null);
+
+export function usePositionsContext() {
+  const ctx = useContext(PositionsContext);
+  if (!ctx)
+    throw new Error(
+      "usePositionsContext must be used within PositionsProvider",
+    );
+  return ctx;
+}
+
+const buildInsightKey = (label: string, positions: Position[]) =>
+  JSON.stringify({
+    label,
+    positions: positions.map((p) => ({
+      symbol: p.instrument.symbol,
+      longQuantity: p.longQuantity,
+      shortQuantity: p.shortQuantity,
+    })),
+  });
+
+export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const [positionMap, setPositionMap] = useState<PositionMap>({});
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
@@ -31,13 +89,13 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
-  const [inputRows, setInputRows] = useState(MIN_ROWS);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
-  const modelMenuRef = useRef<HTMLDivElement | null>(null);
+  const [insightsByKey, setInsightsByKey] = useState<
+    Record<string, InsightResult>
+  >({});
+  const accessToken = session?.accessToken ?? "";
 
   const ensureSymbolChatState = (
-    symbol: string,
+    key: string,
     base?: Partial<SymbolChatState>,
   ): SymbolChatState => ({
     loading: false,
@@ -49,7 +107,7 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    if (!session?.accessToken) return;
+    if (!accessToken) return;
 
     const load = async () => {
       try {
@@ -58,7 +116,7 @@ export default function HomePage() {
 
         const res = await apiFetch("/get-account-positions", {
           method: "GET",
-          accessToken: session.accessToken,
+          accessToken,
         });
 
         if (!res.ok) {
@@ -78,6 +136,10 @@ export default function HomePage() {
             ? current
             : (symbolsOnly[0] ?? null),
         );
+
+        if (Object.keys(map).length) {
+          void prefetchInsights(map, accessToken);
+        }
       } catch {
         setError("Failed to load positions");
         setPositionMap({});
@@ -88,7 +150,72 @@ export default function HomePage() {
     };
 
     void load();
-  }, [session?.accessToken]);
+  }, [accessToken]);
+
+  const prefetchInsights = async (map: PositionMap, token: string) => {
+    const entries: Array<{
+      label: string;
+      key: string;
+      positions: Position[];
+    }> = [];
+
+    const portfolioPositions = Object.values(map).flat() as Position[];
+    if (portfolioPositions.length) {
+      const label = "PORTFOLIO";
+      entries.push({
+        label,
+        key: buildInsightKey(label, portfolioPositions),
+        positions: portfolioPositions,
+      });
+    }
+
+    for (const [sym, positions] of Object.entries(map)) {
+      if (!positions?.length) continue;
+      const label = sym;
+      entries.push({
+        label,
+        key: buildInsightKey(label, positions),
+        positions,
+      });
+    }
+
+    for (const { key, positions } of entries) {
+      setInsightsByKey((prev) =>
+        prev[key]
+          ? prev
+          : {
+              ...prev,
+              [key]: { loading: true, error: null, content: null },
+            },
+      );
+
+      let buffer = "";
+
+      try {
+        await streamAnalysis({ positions, prompt: null }, token, (chunk) => {
+          buffer += chunk;
+          setInsightsByKey((prev) => ({
+            ...prev,
+            [key]: { loading: true, error: null, content: buffer },
+          }));
+        });
+
+        setInsightsByKey((prev) => ({
+          ...prev,
+          [key]: { loading: false, error: null, content: buffer },
+        }));
+      } catch {
+        setInsightsByKey((prev) => ({
+          ...prev,
+          [key]: {
+            loading: false,
+            error: "Failed to load insights.",
+            content: null,
+          },
+        }));
+      }
+    }
+  };
 
   const allPositions: Position[] = useMemo(
     () => Object.values(positionMap).flat().filter(Boolean) as Position[],
@@ -103,102 +230,14 @@ export default function HomePage() {
     return positionMap[selectedSymbol] ?? null;
   }, [selectedView, selectedSymbol, positionMap, allPositions]);
 
-  // key for chat: "portfolio" or real symbol
-  const activeChatKey =
-    selectedView === "portfolio"
-      ? "__PORTFOLIO_CHAT__"
-      : (selectedSymbol ?? "__NONE__");
-
-  const currentChat =
-    activeChatKey === "__NONE__" ? undefined : chatBySymbol[activeChatKey];
-
-  const handleChatInputChange = (value: string) => {
-    if (activeChatKey === "__NONE__") return;
-
-    setChatBySymbol((prev) => ({
-      ...prev,
-      [activeChatKey]: {
-        ...ensureSymbolChatState(activeChatKey, prev[activeChatKey]),
-        input: value,
-      },
-    }));
-
-    const lines = value.split("\n").length;
-    const nextRows = Math.min(MAX_ROWS, Math.max(MIN_ROWS, lines));
-    setInputRows(nextRows);
-  };
-
-  const handleModelChange = (model: string) => {
-    if (activeChatKey === "__NONE__") return;
-
-    setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(
-        activeChatKey,
-        prev[activeChatKey],
-      );
-      return {
-        ...prev,
-        [activeChatKey]: {
-          ...prevState,
-          model,
-        },
-      };
-    });
-  };
-
-  const toggleModelMenu = () => {
-    if (activeChatKey === "__NONE__") return;
-    setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(
-        activeChatKey,
-        prev[activeChatKey],
-      );
-      return {
-        ...prev,
-        [activeChatKey]: {
-          ...prevState,
-          modelMenuOpen: !prevState.modelMenuOpen,
-        },
-      };
-    });
-  };
-
-  const closeModelMenu = () => {
-    if (activeChatKey === "__NONE__") return;
-    setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(
-        activeChatKey,
-        prev[activeChatKey],
-      );
-      return {
-        ...prev,
-        [activeChatKey]: {
-          ...prevState,
-          modelMenuOpen: false,
-        },
-      };
-    });
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (activeChatKey === "__NONE__") return;
-      if (
-        modelMenuRef.current &&
-        !modelMenuRef.current.contains(event.target as Node)
-      ) {
-        closeModelMenu();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [activeChatKey]);
-
-  const sendPrompt = async (prompt: string) => {
-    if (!session?.accessToken) return;
+  const sendPrompt: PositionsContextValue["sendPrompt"] = async ({
+    activeChatKey,
+    selectedView,
+    selectedSymbol,
+    positionsForSelectedSymbol,
+    prompt,
+  }) => {
+    if (!accessToken) return;
     if (!positionsForSelectedSymbol?.length) return;
     if (activeChatKey === "__NONE__") return;
 
@@ -214,7 +253,6 @@ export default function HomePage() {
         activeChatKey,
         prev[activeChatKey],
       );
-
       const userMessage: ChatMessage = {
         id: `user-${activeChatKey}-${Date.now()}`,
         role: "user",
@@ -232,9 +270,6 @@ export default function HomePage() {
       };
     });
 
-    setInputRows(MIN_ROWS);
-    closeModelMenu();
-
     const symbolForApi =
       selectedView === "portfolio"
         ? "PORTFOLIO"
@@ -251,7 +286,7 @@ export default function HomePage() {
           prompt: userInput,
           model: state.model,
         },
-        session.accessToken,
+        accessToken,
         (chunk) => {
           assistantContent += chunk;
 
@@ -327,8 +362,14 @@ export default function HomePage() {
     });
   };
 
-  const sendQuickAction = async (actionId: string) => {
-    if (!session?.accessToken) return;
+  const sendQuickAction: PositionsContextValue["sendQuickAction"] = async ({
+    activeChatKey,
+    selectedView,
+    selectedSymbol,
+    positionsForSelectedSymbol,
+    actionId,
+  }) => {
+    if (!accessToken) return;
     if (!positionsForSelectedSymbol?.length) return;
     if (activeChatKey === "__NONE__") return;
 
@@ -364,9 +405,6 @@ export default function HomePage() {
       };
     });
 
-    setInputRows(MIN_ROWS);
-    closeModelMenu();
-
     const symbolForApi =
       selectedView === "portfolio"
         ? "PORTFOLIO"
@@ -383,7 +421,7 @@ export default function HomePage() {
           prompt: null,
           model: state.model,
         },
-        session.accessToken,
+        accessToken,
         (chunk) => {
           assistantContent += chunk;
 
@@ -459,60 +497,30 @@ export default function HomePage() {
     });
   };
 
-  const handleSendMessage = async () => {
-    const input = (currentChat?.input ?? "").trim();
-    if (!input) return;
-    await sendPrompt(input);
+  const value: PositionsContextValue = {
+    sessionAccessToken: accessToken,
+    loading,
+    error,
+    positionMap,
+    symbols,
+    allPositions,
+    selectedSymbol,
+    setSelectedSymbol,
+    selectedView,
+    setSelectedView,
+    positionsForSelectedSymbol,
+    chatBySymbol,
+    setChatBySymbol,
+    ensureSymbolChatState,
+    sendPrompt,
+    sendQuickAction,
+    insightsByKey,
+    buildInsightKey,
   };
 
-  if (!session?.accessToken) {
-    return (
-      <main className="flex min-h-screen items-center justify-center text-neutral-50">
-        <p className="text-sm text-neutral-400">
-          Please connect your Schwab account to view positions.
-        </p>
-      </main>
-    );
-  }
-
   return (
-    <PositionsLayout
-      loading={loading}
-      error={error}
-      positionMap={positionMap}
-      symbols={symbols}
-      selectedSymbol={selectedSymbol}
-      setSelectedSymbol={setSelectedSymbol}
-      selectedView={selectedView}
-      setSelectedView={setSelectedView}
-      positionsForSelectedSymbol={positionsForSelectedSymbol}
-      allPositions={allPositions}
-      accessToken={session.accessToken}
-      mobileNavOpen={mobileNavOpen}
-      setMobileNavOpen={setMobileNavOpen}
-      topChildren={
-        <ConversationPane
-          symbol={selectedView === "portfolio" ? "PORTFOLIO" : selectedSymbol}
-          messages={currentChat?.messages ?? []}
-          loading={!!currentChat?.loading}
-        />
-      }
-      bottomChildren={
-        (selectedView === "portfolio" || selectedSymbol) && (
-          <ChatBox
-            mode={selectedView}
-            selectedSymbol={selectedSymbol}
-            currentChat={currentChat}
-            inputRows={inputRows}
-            modelMenuRef={modelMenuRef}
-            onChangeInput={handleChatInputChange}
-            onSendPrompt={() => void handleSendMessage()}
-            onSendQuickAction={(id) => void sendQuickAction(id)}
-            onToggleModelMenu={toggleModelMenu}
-            onModelChange={handleModelChange}
-          />
-        )
-      }
-    />
+    <PositionsContext.Provider value={value}>
+      {children}
+    </PositionsContext.Provider>
   );
 }
