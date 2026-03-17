@@ -6,13 +6,8 @@ import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { Insights } from "@/components/Insights";
 
 export default function PortfolioPage() {
-  const {
-    sessionAccessToken,
-    error,
-    allPositions,
-    selectedView,
-    setSelectedView,
-  } = usePositionsContext();
+  const { error, allPositions, selectedView, setSelectedView } =
+    usePositionsContext();
 
   useEffect(() => {
     if (selectedView !== "portfolio") {
