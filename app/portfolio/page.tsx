@@ -29,7 +29,6 @@ export default function PortfolioPage() {
       <Insights
         symbol={null}
         positions={allPositions}
-        accessToken={sessionAccessToken}
         thinkingMessage="Analyzing this portfolio"
       />
     </>
