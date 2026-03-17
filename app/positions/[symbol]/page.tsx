@@ -37,7 +37,6 @@ export default function SymbolPage() {
       <Insights
         symbol={symbol}
         positions={positionsForSelectedSymbol}
-        accessToken={sessionAccessToken}
         thinkingMessage={
           symbol ? `Analyzing your ${symbol} positions` : "Analyzing"
         }
