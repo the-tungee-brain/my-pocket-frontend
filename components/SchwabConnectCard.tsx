@@ -35,6 +35,10 @@ export function SchwabConnectCard({ compact = true }: Props) {
     window.location.href = data.auth_url;
   };
 
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/" });
+  };
+
   const showLoading = authorized === null;
 
   if (compact) {
@@ -79,7 +83,7 @@ export function SchwabConnectCard({ compact = true }: Props) {
             size="xs"
             variant="ghost"
             className="text-[11px] text-neutral-400 hover:text-neutral-100"
-            onClick={() => signOut()}
+            onClick={handleSignOut}
           >
             Log out
           </Button>
@@ -120,7 +124,7 @@ export function SchwabConnectCard({ compact = true }: Props) {
           <Button
             variant="outline"
             className="w-full sm:w-auto"
-            onClick={() => signOut()}
+            onClick={handleSignOut}
           >
             Log out
           </Button>
