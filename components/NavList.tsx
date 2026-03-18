@@ -31,7 +31,7 @@ export function NavList({
   const pathname = usePathname();
 
   const isPortfolio = pathname === "/portfolio";
-  const activeSymbol = pathname.startsWith("/positions/")
+  const activeSymbol = pathname.startsWith("/portfolio/positions/")
     ? pathname.split("/").at(-1)
     : null;
 
