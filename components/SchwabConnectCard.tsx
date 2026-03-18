@@ -48,8 +48,8 @@ export function SchwabConnectCard({ compact = true }: Props) {
             <span
               className={
                 authorized
-                  ? "inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-[2px] text-[10px] font-medium text-emerald-400"
-                  : "inline-flex items-center rounded-full bg-amber-500/10 px-2 py-[2px] text-[10px] font-medium text-amber-400"
+                  ? "inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400"
+                  : "inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400"
               }
             >
               {authorized ? "Connected" : "Not connected"}

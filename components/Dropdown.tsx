@@ -23,7 +23,7 @@ export function Dropdown({
   if (!open) return null;
 
   return (
-    <div className="absolute bottom-full right-0 mb-2 min-w-[220px] rounded-2xl border border-border bg-secondary p-1 text-xs shadow-2xl backdrop-blur">
+    <div className="absolute bottom-full right-0 mb-2 min-w-55 rounded-2xl border border-border bg-secondary p-1 text-xs shadow-2xl backdrop-blur">
       <div className="px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
         Models
       </div>

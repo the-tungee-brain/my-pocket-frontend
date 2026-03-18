@@ -6,11 +6,11 @@ import { DesktopNav } from "@/components/DesktopNav";
 import { MobileNav } from "@/components/MobileNav";
 import {
   AccountPositionList,
-  Position,
   PositionMap,
 } from "@/components/AccountPositionList";
 import { Insights } from "@/components/Insights";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
+import { Position } from "@/app/types/schwab";
 
 type MainView = "portfolio" | "symbol";
 

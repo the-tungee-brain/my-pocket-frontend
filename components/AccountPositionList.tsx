@@ -1,31 +1,6 @@
 "use client";
 
-type Instrument = {
-  symbol: string;
-  description?: string;
-};
-
-export type Position = {
-  shortQuantity: number;
-  averagePrice: number;
-  currentDayProfitLoss: number;
-  currentDayProfitLossPercentage: number;
-  longQuantity: number;
-  settledLongQuantity: number;
-  settledShortQuantity: number;
-  instrument: Instrument;
-  marketValue: number;
-  maintenanceRequirement: number;
-  averageLongPrice?: number | null;
-  taxLotAverageLongPrice?: number | null;
-  longOpenProfitLoss?: number | null;
-  previousSessionLongQuantity?: number | null;
-  averageShortPrice?: number | null;
-  taxLotAverageShortPrice?: number | null;
-  shortOpenProfitLoss?: number | null;
-  previousSessionShortQuantity?: number | null;
-  currentDayCost: number;
-};
+import { Position } from "@/app/types/schwab";
 
 export type PositionMap = Record<string, Position[]>;
 

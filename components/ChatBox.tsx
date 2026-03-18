@@ -108,7 +108,7 @@ export function ChatBox({
                     : "hover:bg-neutral-800/90",
                 ].join(" ")}
               >
-                <span className="max-w-[120px] truncate text-neutral-200">
+                <span className="max-w-30 truncate text-neutral-200">
                   {MODEL_OPTIONS.find(
                     (m) => m.id === (currentChat?.model || "gpt-4.1-mini"),
                   )?.label ?? "GPT-4.1 Mini"}

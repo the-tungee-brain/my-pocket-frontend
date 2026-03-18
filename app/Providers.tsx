@@ -3,8 +3,9 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { apiFetch, streamAnalysis } from "@/lib/apiClient";
-import type { Position, PositionMap } from "@/components/AccountPositionList";
+import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
+import { Position, SchwabAccounts } from "./types/schwab";
 
 type MainView = "portfolio" | "symbol";
 
@@ -58,6 +59,7 @@ type PositionsContextValue = {
   }) => Promise<void>;
   insightsByKey: Record<string, InsightResult>;
   buildInsightKey: (label: string, positions: Position[]) => string;
+  account: SchwabAccounts | null;
 };
 
 const PositionsContext = createContext<PositionsContextValue | null>(null);
@@ -84,6 +86,7 @@ const buildInsightKey = (label: string, positions: Position[]) =>
 export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const [positionMap, setPositionMap] = useState<PositionMap>({});
+  const [account, setAccount] = useState<SchwabAccounts | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [selectedView, setSelectedView] = useState<MainView>("portfolio");
   const [loading, setLoading] = useState(false);
@@ -122,13 +125,18 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         if (!res.ok) {
           setError("Failed to load positions");
           setPositionMap({});
+          setAccount(null);
           setSelectedSymbol(null);
           return;
         }
 
-        const data = (await res.json()) as { schwab_positions: PositionMap };
+        const data = (await res.json()) as {
+          schwab_positions: PositionMap;
+          account: SchwabAccounts;
+        };
         const map = data.schwab_positions ?? {};
         setPositionMap(map);
+        setAccount(data.account ?? null);
 
         const symbolsOnly = Object.keys(map).sort();
         setSelectedSymbol((current) =>
@@ -138,11 +146,12 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         );
 
         if (Object.keys(map).length) {
-          void prefetchInsights(map, accessToken);
+          void prefetchInsights(map, accessToken, data.account ?? null);
         }
       } catch {
         setError("Failed to load positions");
         setPositionMap({});
+        setAccount(null);
         setSelectedSymbol(null);
       } finally {
         setLoading(false);
@@ -152,7 +161,11 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     void load();
   }, [accessToken]);
 
-  const prefetchInsights = async (map: PositionMap, token: string) => {
+  const prefetchInsights = async (
+    map: PositionMap,
+    token: string,
+    account: SchwabAccounts | null,
+  ) => {
     const entries: Array<{
       label: string;
       key: string;
@@ -192,7 +205,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       let buffer = "";
 
       try {
-        await streamAnalysis({ positions, prompt: null }, token, (chunk) => {
+        await streamAnalysis({ account, positions }, token, (chunk) => {
           buffer += chunk;
           setInsightsByKey((prev) => ({
             ...prev,
@@ -280,6 +293,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
       await streamAnalysis(
         {
+          account: account,
           positions: positionsForSelectedSymbol,
           symbol: symbolForApi,
           action: "free-form",
@@ -415,6 +429,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
       await streamAnalysis(
         {
+          account: account,
           positions: positionsForSelectedSymbol,
           symbol: symbolForApi,
           action: actionId,
@@ -516,6 +531,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     sendQuickAction,
     insightsByKey,
     buildInsightKey,
+    account,
   };
 
   return (

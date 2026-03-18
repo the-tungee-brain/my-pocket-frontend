@@ -26,7 +26,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           </h3>
         ),
         p: ({ children }) => (
-          <p className="mb-3 whitespace-pre-wrap break-words text-[15px] leading-relaxed tracking-normal text-neutral-100">
+          <p className="mb-3 whitespace-pre-wrap wrap-break-word text-[15px] leading-relaxed tracking-normal text-neutral-100">
             {children}
           </p>
         ),
@@ -80,7 +80,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           <img
             src={src ?? ""}
             alt={alt ?? ""}
-            className="my-4 max-h-[400px] w-full rounded-md object-contain"
+            className="my-4 max-h-100 w-full rounded-md object-contain"
           />
         ),
         hr: () => <hr className="my-6 border-neutral-800" />,

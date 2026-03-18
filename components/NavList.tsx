@@ -87,7 +87,7 @@ export function NavList({
           Positions
         </span>
         {symbols.length > 0 && (
-          <span className="rounded-full bg-neutral-900/70 px-2 py-[1px] text-[10px] text-neutral-400">
+          <span className="rounded-full bg-neutral-900/70 px-2 py-px text-[10px] text-neutral-400">
             {symbols.length}
           </span>
         )}

@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Position } from "./AccountPositionList";
 import { MarkdownRenderer } from "./ui/MarkdownRenderer";
 import { ThinkingSpinner } from "./ui/ThinkingSpinner";
 import { usePositionsContext } from "@/app/Providers";
+import { Position } from "@/app/types/schwab";
 
 type Props = {
   symbol: string | null;
