@@ -36,7 +36,7 @@ export async function apiFetch(
 }
 
 export async function streamAnalysis(
-  body: unknown,
+  body: any,
   accessToken: string,
   onChunk: (text: string) => void,
 ): Promise<void> {

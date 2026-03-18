@@ -205,13 +205,17 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       let buffer = "";
 
       try {
-        await streamAnalysis({ account, positions }, token, (chunk) => {
-          buffer += chunk;
-          setInsightsByKey((prev) => ({
-            ...prev,
-            [key]: { loading: true, error: null, content: buffer },
-          }));
-        });
+        await streamAnalysis(
+          { account, positions, symbol: selectedSymbol },
+          token,
+          (chunk) => {
+            buffer += chunk;
+            setInsightsByKey((prev) => ({
+              ...prev,
+              [key]: { loading: true, error: null, content: buffer },
+            }));
+          },
+        );
 
         setInsightsByKey((prev) => ({
           ...prev,
@@ -284,9 +288,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     });
 
     const symbolForApi =
-      selectedView === "portfolio"
-        ? "PORTFOLIO"
-        : (selectedSymbol ?? "UNKNOWN");
+      selectedView === "portfolio" ? null : (selectedSymbol ?? "UNKNOWN");
 
     try {
       let assistantContent = "";
@@ -420,9 +422,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     });
 
     const symbolForApi =
-      selectedView === "portfolio"
-        ? "PORTFOLIO"
-        : (selectedSymbol ?? "UNKNOWN");
+      selectedView === "portfolio" ? null : (selectedSymbol ?? "UNKNOWN");
 
     try {
       let assistantContent = "";
