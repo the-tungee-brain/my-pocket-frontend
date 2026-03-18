@@ -42,7 +42,6 @@ export function NavList({
         containerClassName,
       ].join(" ")}
     >
-      {/* Portfolio tab */}
       <button
         type="button"
         disabled={loading}
@@ -117,7 +116,7 @@ export function NavList({
               onClick={() => {
                 setSelectedView("symbol");
                 setSelectedSymbol(sym);
-                router.push(`/positions/${sym}`);
+                router.push(`/portfolio/positions/${sym}`);
               }}
               className={[
                 "group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs transition-all",

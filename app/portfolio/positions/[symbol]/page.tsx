@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
-import { usePositionsContext } from "../../Providers";
+import { usePositionsContext } from "@/app/Providers";
 import { AccountPositionList } from "@/components/AccountPositionList";
 import { Insights } from "@/components/Insights";
 
