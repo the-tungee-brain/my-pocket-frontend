@@ -192,7 +192,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       });
     }
 
-    for (const { key, positions } of entries) {
+    for (const { label, key, positions } of entries) {
       setInsightsByKey((prev) =>
         prev[key]
           ? prev
@@ -204,9 +204,11 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
       let buffer = "";
 
+      const symbolForApi = label === "PORTFOLIO" ? null : label;
+
       try {
         await streamAnalysis(
-          { account, positions, symbol: selectedSymbol },
+          { account, positions, symbol: symbolForApi },
           token,
           (chunk) => {
             buffer += chunk;
