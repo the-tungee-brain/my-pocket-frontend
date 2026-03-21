@@ -116,6 +116,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         em: ({ children }) => (
           <em className="italic text-neutral-200">{children}</em>
         ),
+        del: ({ children, ...props }) => <span {...props}>{children}</span>,
       }}
     >
       {content}
