@@ -2,20 +2,31 @@
 
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { usePositionsContext } from "@/app/Providers";
 import { AccountPositionList } from "@/components/AccountPositionList";
 import { Insights } from "@/components/Insights";
+import { useCompanyNews } from "@/app/hooks/useCompanyNews";
+import { CompanyNews } from "@/components/CompanyNews";
 
 export default function SymbolPage() {
   const { symbol } = useParams<{ symbol: string }>();
-
   const { error, positionMap, setSelectedView, setSelectedSymbol } =
     usePositionsContext();
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
 
   useEffect(() => {
     setSelectedView("symbol");
     setSelectedSymbol(symbol ?? null);
   }, [symbol, setSelectedView, setSelectedSymbol]);
+
+  const {
+    news,
+    isLoading,
+    error: newsError,
+    refetch,
+  } = useCompanyNews(symbol, accessToken);
 
   const positionsForSelectedSymbol =
     symbol && positionMap[symbol] ? positionMap[symbol] : null;
@@ -27,6 +38,14 @@ export default function SymbolPage() {
       <AccountPositionList
         positionsForSelectedSymbol={positionsForSelectedSymbol}
         selectedSymbol={symbol}
+      />
+
+      <CompanyNews
+        symbol={symbol}
+        news={news}
+        isLoading={isLoading}
+        error={newsError}
+        onRetry={refetch}
       />
 
       <Insights
