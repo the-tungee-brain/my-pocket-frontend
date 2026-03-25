@@ -6,7 +6,6 @@ import { apiFetch, streamAnalysis } from "@/lib/apiClient";
 import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
 import { Position, SchwabAccounts } from "./types/schwab";
-import { TabProvider } from "./contexts/TabContext";
 
 type MainView = "portfolio" | "symbol";
 
@@ -539,7 +538,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <PositionsContext.Provider value={value}>
-      <TabProvider>{children}</TabProvider>
+      {children}
     </PositionsContext.Provider>
   );
 }

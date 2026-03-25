@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { PositionsProvider } from "./Providers";
+import { TabProvider } from "./contexts/TabContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
         <SessionProvider>
-          <PositionsProvider>{children}</PositionsProvider>
+          <TabProvider>
+            <PositionsProvider>{children}</PositionsProvider>
+          </TabProvider>
         </SessionProvider>
       </body>
     </html>
