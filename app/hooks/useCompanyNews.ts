@@ -44,6 +44,14 @@ type UseCompanyNewsResult = {
 
 const newsCache = new Map<string, StockNewsView>();
 
+type Listener = (data?: StockNewsView, error?: string) => void;
+
+type InFlightNewsEntry = {
+  listeners: Set<Listener>;
+};
+
+const inFlightNews = new Map<string, InFlightNewsEntry>();
+
 export function useCompanyNews(
   symbol: string | undefined,
   accessToken?: string,
@@ -53,12 +61,10 @@ export function useCompanyNews(
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchNews = async () => {
-    if (!accessToken || !symbol) return;
+  const key = symbol?.toUpperCase();
 
-    setIsLoading(true);
-
-    const key = symbol.toUpperCase();
+  useEffect(() => {
+    if (!key || !accessToken || activeTab !== "news") return;
 
     const cached = newsCache.get(key);
     if (cached) {
@@ -68,39 +74,117 @@ export function useCompanyNews(
       return;
     }
 
-    try {
-      setError(null);
+    let cancelled = false;
 
-      const res = await apiFetch(
-        `/get-company-news?symbol=${encodeURIComponent(key)}`,
-        {
-        method: "GET",
-        accessToken,
-        },
-      );
+    let entry = inFlightNews.get(key);
+    if (entry) {
+      setIsLoading(true);
+      const listener: Listener = (data, err) => {
+        if (cancelled) return;
+        if (err) {
+          setError(err);
+          setIsLoading(false);
+          return;
+        }
+        if (data) {
+          setAnalytics(data);
+          setError(null);
+          setIsLoading(false);
+        }
+      };
+      entry.listeners.add(listener);
 
-      if (!res.ok) throw new Error("Failed to fetch news analytics");
-
-      const data: StockNewsView = await res.json();
-      newsCache.set(key, data);
-      setAnalytics(data);
-    } catch (e: any) {
-      setError(e?.message ?? "Error fetching news analytics");
-    } finally {
-      setIsLoading(false);
+      return () => {
+        cancelled = true;
+        entry?.listeners.delete(listener);
+      };
     }
-  };
 
-  useEffect(() => {
-    if (!symbol || !accessToken || activeTab !== 'news') return;
-    void fetchNews();
-  }, [symbol, accessToken, activeTab]);
+    entry = { listeners: new Set<Listener>() };
+    inFlightNews.set(key, entry);
+
+    setIsLoading(true);
+    setError(null);
+
+    const listener: Listener = (data, err) => {
+      if (cancelled) return;
+      if (err) {
+        setError(err);
+        setIsLoading(false);
+        return;
+      }
+      if (data) {
+        setAnalytics(data);
+        setError(null);
+        setIsLoading(false);
+      }
+    };
+
+    entry.listeners.add(listener);
+
+    (async () => {
+      try {
+        const res = await apiFetch(
+          `/get-company-news?symbol=${encodeURIComponent(key!)}`,
+          {
+            method: "GET",
+            accessToken,
+          },
+        );
+
+        if (!res.ok) throw new Error("Failed to fetch news analytics");
+
+        const data: StockNewsView = await res.json();
+        newsCache.set(key!, data);
+
+        for (const l of entry!.listeners) {
+          l(data);
+        }
+      } catch (e: any) {
+        const msg = e?.message ?? "Error fetching news analytics";
+        for (const l of entry!.listeners) {
+          l(undefined, msg);
+        }
+      } finally {
+        inFlightNews.delete(key!);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      entry.listeners.delete(listener);
+    };
+  }, [key, accessToken, activeTab]);
 
   const refetch = () => {
-    if (!symbol) return;
-    const key = symbol.toUpperCase();
+    if (!key || !accessToken) return;
     newsCache.delete(key);
-    void fetchNews();
+    inFlightNews.delete(key);
+
+    (async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const res = await apiFetch(
+          `/get-company-news?symbol=${encodeURIComponent(key)}`,
+          {
+            method: "GET",
+            accessToken,
+          },
+        );
+
+        if (!res.ok) throw new Error("Failed to fetch news analytics");
+
+        const data: StockNewsView = await res.json();
+        newsCache.set(key, data);
+        setAnalytics(data);
+      } catch (e: any) {
+        setError(e?.message ?? "Error fetching news analytics");
+      } finally {
+        setIsLoading(false);
+      }
+    })();
   };
 
   return { analytics, isLoading, error, refetch };

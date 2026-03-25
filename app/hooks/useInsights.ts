@@ -10,7 +10,16 @@ type InsightState = {
   content: string | null;
 };
 
+type Listener = (chunk: string, done: boolean, error?: string) => void;
+
+type InFlightEntry = {
+  buffer: string;
+  listeners: Set<Listener>;
+};
+
 const cache = new Map<string, { content: string }>();
+
+const inFlight = new Map<string, InFlightEntry>();
 
 function makeKey(label: string, positions: Position[]): string {
   return JSON.stringify({
@@ -54,9 +63,60 @@ export function useInsights(
     }
 
     let cancelled = false;
-    let buffer = "";
+
+    let entry = inFlight.get(key);
+    if (entry) {
+      setState({
+        loading: true,
+        error: null,
+        content: entry.buffer || null,
+      });
+
+      const listener: Listener = (chunk, done, error) => {
+        if (cancelled) return;
+        if (error) {
+          setState({ loading: false, error, content: null });
+          return;
+        }
+        const next = (entry!.buffer += chunk);
+        setState({
+          loading: !done,
+          error: null,
+          content: next,
+        });
+      };
+
+      entry.listeners.add(listener);
+
+      return () => {
+        cancelled = true;
+        entry?.listeners.delete(listener);
+      };
+    }
+
+    entry = {
+      buffer: "",
+      listeners: new Set<Listener>(),
+    };
+    inFlight.set(key, entry);
 
     setState({ loading: true, error: null, content: null });
+
+    const listener: Listener = (chunk, done, error) => {
+      if (cancelled) return;
+      if (error) {
+        setState({ loading: false, error, content: null });
+        return;
+      }
+      const next = (entry!.buffer += chunk);
+      setState({
+        loading: !done,
+        error: null,
+        content: next,
+      });
+    };
+
+    entry.listeners.add(listener);
 
     (async () => {
       try {
@@ -71,29 +131,31 @@ export function useInsights(
           },
           accessToken,
           (chunk) => {
-            if (cancelled) return;
-            buffer += chunk;
-            setState({ loading: true, error: null, content: buffer });
+            entry!.buffer += chunk;
+
+            for (const l of entry!.listeners) {
+              l(chunk, false);
+            }
           },
         );
 
-        if (!cancelled) {
-          cache.set(key, { content: buffer });
-          setState({ loading: false, error: null, content: buffer });
+        cache.set(key, { content: entry!.buffer });
+
+        for (const l of entry!.listeners) {
+          l("", true);
         }
       } catch {
-        if (!cancelled) {
-          setState({
-            loading: false,
-            error: "Failed to load insights.",
-            content: null,
-          });
+        for (const l of entry!.listeners) {
+          l("", true, "Failed to load insights.");
         }
+      } finally {
+        inFlight.delete(key);
       }
     })();
 
     return () => {
       cancelled = true;
+      entry.listeners.delete(listener);
     };
   }, [label, positions, account, accessToken, model]);
 
