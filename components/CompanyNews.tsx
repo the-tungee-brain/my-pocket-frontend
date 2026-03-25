@@ -34,7 +34,7 @@ export function CompanyNews({
           <NewsAnalytics analytics={analytics} isLoading={isLoading} />
         )}
 
-        <div className="mb-3 mt-4 flex items-center justify-between">
+        {/* <div className="mb-3 mt-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-200">
             Latest news for {symbol}
           </h2>
@@ -114,7 +114,7 @@ export function CompanyNews({
               </article>
             ))}
           </div>
-        )}
+        )} */}
       </div>
     </section>
   );

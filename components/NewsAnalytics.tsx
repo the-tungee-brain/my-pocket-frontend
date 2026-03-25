@@ -56,7 +56,6 @@ type Props = {
 export default function NewsAnalytics({ analytics, isLoading }: Props) {
   const data = analytics;
 
-  // nothing at all if no data and not loading (e.g. first mount with no news yet)
   if (!data && !isLoading) return null;
 
   const sentimentClass = data
@@ -65,7 +64,6 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
 
   return (
     <div className="mt-4 flex w-full flex-col gap-4">
-      {/* Top summary card */}
       <div
         className={`w-full rounded-xl px-4 py-3 text-sm shadow-sm backdrop-blur ${sentimentClass}`}
       >
@@ -100,7 +98,7 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
                   key={idx}
                   className="flex items-start gap-2 rounded-lg bg-black/20 px-3 py-2 text-xs text-white/80"
                 >
-                  <span className="mt-[3px] inline-block h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                  <span className="mt-0.75 inline-block h-1.5 w-1.5 rounded-full bg-emerald-300" />
                   <span>{insight}</span>
                 </div>
               ))
@@ -123,7 +121,7 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
                   key={idx}
                   className="flex items-start gap-2 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-100"
                 >
-                  <span className="mt-[3px] inline-block h-1.5 w-1.5 rounded-full bg-rose-300" />
+                  <span className="mt-0.75 inline-block h-1.5 w-1.5 rounded-full bg-rose-300" />
                   <span>{risk}</span>
                 </div>
               ))}
@@ -132,9 +130,8 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
         )}
       </div>
 
-      {/* Per-article list */}
-      <div className="w-full rounded-xl border border-neutral-800 bg-neutral-950/70">
-        <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-2">
+      <div className="w-full">
+        <div className="flex items-center justify-between border-b border-neutral-800 py-2">
           <div className="text-xs font-medium uppercase tracking-wide text-neutral-400">
             Recent news flow
           </div>
@@ -148,13 +145,24 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
             data.items.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-col gap-1 px-4 py-3 text-sm text-neutral-100 sm:flex-row sm:items-start sm:justify-between sm:gap-3"
+                className="flex flex-col gap-1 py-3 text-sm text-neutral-100 sm:flex-row sm:items-start sm:justify-between sm:gap-3"
               >
                 <div className="flex-1">
                   <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-neutral-50">
-                      {item.headline}
-                    </span>
+                    {item.url ? (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-neutral-50 underline-offset-2 hover:text-white hover:underline"
+                      >
+                        {item.headline}
+                      </a>
+                    ) : (
+                      <span className="font-medium text-neutral-50">
+                        {item.headline}
+                      </span>
+                    )}
                     <span
                       className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${sentimentColor(
                         item.sentiment,
