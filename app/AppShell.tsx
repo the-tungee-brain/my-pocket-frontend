@@ -7,6 +7,8 @@ import { SchwabConnectCard } from "@/components/SchwabConnectCard";
 import { usePositionsContext } from "./Providers";
 import { ChatBox } from "@/components/ChatBox";
 import { ConversationPane } from "@/components/ConversationPane";
+import { Button } from "@/components/ui/Button";
+import { useTabs } from "./contexts/TabContext";
 
 const MIN_ROWS = 1;
 const MAX_ROWS = 24;
@@ -27,6 +29,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     sendPrompt,
     sendQuickAction,
   } = usePositionsContext();
+
+  const { activeTab } = useTabs();
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [inputRows, setInputRows] = useState(MIN_ROWS);
@@ -153,18 +157,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <section className="flex min-h-screen flex-1 flex-col">
         <div className="sticky top-0 z-30 border-b border-border bg-secondary">
-          <div className="flex items-center justify-between px-4 py-3 md:hidden space-x-4">
-            <button
-              type="button"
+          <div className="flex items-center justify-between px-4 md:hidden space-x-4">
+            <Button
               onClick={() => setMobileNavOpen(true)}
-              className="rounded-md border border-border px-2 py-1 text-xs"
+              size="xs"
+              variant="ghost"
+              className="text-[11px] text-neutral-400 hover:text-neutral-100"
             >
               Menu
-            </button>
+            </Button>
             <SchwabConnectCard />
           </div>
 
-          <div className="hidden px-4 py-3 md:block">
+          <div className="hidden px-4 md:block">
             <SchwabConnectCard />
           </div>
         </div>
@@ -173,7 +178,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex-1 overflow-y-auto px-4 pt-3 pb-4">
             {children}
 
-            {labelSymbol && (
+            {activeTab === "assistant" && labelSymbol && (
               <ConversationPane
                 symbol={labelSymbol}
                 messages={currentChat?.messages ?? []}

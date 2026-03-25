@@ -8,9 +8,11 @@ import { AccountPositionList } from "@/components/AccountPositionList";
 import { Insights } from "@/components/Insights";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
 import { CompanyNews } from "@/components/CompanyNews";
+import { useTabs } from "@/app/contexts/TabContext";
 
 export default function SymbolPage() {
   const { symbol } = useParams<{ symbol: string }>();
+  const { activeTab } = useTabs();
   const { error, positionMap, setSelectedView, setSelectedSymbol } =
     usePositionsContext();
   const { data: session } = useSession();
@@ -35,26 +37,31 @@ export default function SymbolPage() {
     <>
       {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
 
-      <AccountPositionList
-        positionsForSelectedSymbol={positionsForSelectedSymbol}
-        selectedSymbol={symbol}
-      />
+      {activeTab === "assistant" ? (
+        <>
+          <AccountPositionList
+            positionsForSelectedSymbol={positionsForSelectedSymbol}
+            selectedSymbol={symbol}
+          />
+          <Insights
+            symbol={symbol}
+            positions={positionsForSelectedSymbol}
+            thinkingMessage={
+              symbol ? `Analyzing your ${symbol} positions` : "Analyzing"
+            }
+          />
+        </>
+      ) : null}
 
-      <CompanyNews
-        symbol={symbol}
-        news={news}
-        isLoading={isLoading}
-        error={newsError}
-        onRetry={refetch}
-      />
-
-      <Insights
-        symbol={symbol}
-        positions={positionsForSelectedSymbol}
-        thinkingMessage={
-          symbol ? `Analyzing your ${symbol} positions` : "Analyzing"
-        }
-      />
+      {activeTab === "news" ? (
+        <CompanyNews
+          symbol={symbol}
+          news={news}
+          isLoading={isLoading}
+          error={newsError}
+          onRetry={refetch}
+        />
+      ) : null}
     </>
   );
 }

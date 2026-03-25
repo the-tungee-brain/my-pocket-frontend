@@ -28,6 +28,7 @@ export function useCompanyNews(symbol: string | undefined, accessToken?: string)
   const [error, setError] = useState<string | null>(null);
 
   const fetchNews = async () => {
+    if (!accessToken) return;
     if (!symbol) return;
     try {
       setIsLoading(true);
@@ -40,9 +41,9 @@ export function useCompanyNews(symbol: string | undefined, accessToken?: string)
           accessToken,
         },
       );
-
+      
       if (!res.ok) throw new Error("Failed to fetch news");
-
+      
       const data: NewsItem[] = await res.json();
       setNews(data);
     } catch (e: any) {

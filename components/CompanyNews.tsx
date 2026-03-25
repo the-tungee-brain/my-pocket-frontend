@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { NewsItem } from "@/app/hooks/useCompanyNews";
 
 type Props = {
@@ -18,8 +17,6 @@ export function CompanyNews({
   onRetry,
   symbol,
 }: Props) {
-  const router = useRouter();
-
   if (!symbol) return null;
 
   const handleCardClick = (url: string) => {

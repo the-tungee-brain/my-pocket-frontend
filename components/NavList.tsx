@@ -1,13 +1,17 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
+import { apiFetch } from "@/lib/apiClient";
+import { Button } from "./ui/Button";
 
 export type MainView = "portfolio" | "symbol";
 
 interface NavListProps {
   loading: boolean;
   symbols: string[];
-  selectedSymbol: string | null; // can keep for now if used elsewhere
+  selectedSymbol: string | null;
   setSelectedSymbol: (s: string | null) => void;
   selectedView: MainView;
   setSelectedView: (v: MainView) => void;
@@ -19,9 +23,7 @@ interface NavListProps {
 export function NavList({
   loading,
   symbols,
-  selectedSymbol,
   setSelectedSymbol,
-  selectedView,
   setSelectedView,
   containerClassName = "",
   portfolioButtonClassName = "",
@@ -29,11 +31,31 @@ export function NavList({
 }: NavListProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const { authorized: schwabAuthorized, loading: schwabLoading } =
+    useSchwabStatus();
 
   const isPortfolio = pathname === "/portfolio";
   const activeSymbol = pathname.startsWith("/portfolio/positions/")
     ? pathname.split("/").at(-1)
     : null;
+
+  const showSchwabStatus =
+    schwabAuthorized !== null && schwabAuthorized !== undefined;
+
+  const handleConnectSchwab = async () => {
+    if (!session?.accessToken) return;
+    try {
+      const res = await apiFetch("/auth/schwab/connect", {
+        method: "GET",
+        accessToken: session.accessToken,
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { auth_url: string };
+      window.location.href = data.auth_url;
+    } catch {}
+  };
 
   return (
     <div
@@ -104,7 +126,7 @@ export function NavList({
         </div>
       )}
 
-      <div className="mt-1 space-y-1 overflow-y-auto pr-1">
+      <div className="mt-1 flex-1 space-y-1 overflow-y-auto pr-1">
         {symbols.map((sym) => {
           const isActive = activeSymbol === sym;
 
@@ -137,6 +159,43 @@ export function NavList({
           );
         })}
       </div>
+
+      {showSchwabStatus && (
+        <>
+          <div className="mt-3 h-px bg-neutral-800/80" />
+          <div className="mt-2 px-4 text-[11px]">
+            <div className="mb-2 flex justify-center items-center gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                Schwab
+              </span>
+              <span
+                className={
+                  schwabAuthorized
+                    ? "inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400"
+                    : "inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400"
+                }
+              >
+                {schwabLoading
+                  ? "Checking…"
+                  : schwabAuthorized
+                    ? "Connected"
+                    : "Not connected"}
+              </span>
+            </div>
+
+            {!schwabAuthorized && !schwabLoading && (
+              <Button
+                size="xs"
+                variant="outline"
+                className="w-full"
+                onClick={handleConnectSchwab}
+              >
+                Connect
+              </Button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
