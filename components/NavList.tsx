@@ -70,7 +70,7 @@ export function NavList({
         onClick={() => {
           setSelectedView("portfolio");
           setSelectedSymbol(null);
-          router.push("/portfolio");
+          router.replace("/portfolio");
         }}
         className={[
           "group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
@@ -138,7 +138,7 @@ export function NavList({
               onClick={() => {
                 setSelectedView("symbol");
                 setSelectedSymbol(sym);
-                router.push(`/portfolio/positions/${sym}`);
+                router.replace(`/portfolio/positions/${sym}`);
               }}
               className={[
                 "group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs transition-all",

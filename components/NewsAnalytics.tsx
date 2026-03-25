@@ -6,6 +6,9 @@ import type {
   OverallSentiment,
 } from "@/app/hooks/useCompanyNews";
 import { ThinkingSpinner } from "./ui/ThinkingSpinner";
+import { useEffect } from "react";
+import { useTabs } from "@/app/contexts/TabContext";
+import { usePositionsContext } from "@/app/Providers";
 
 function sentimentColor(sentiment: Sentiment) {
   switch (sentiment) {

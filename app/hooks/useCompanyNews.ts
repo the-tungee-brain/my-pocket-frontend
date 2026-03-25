@@ -54,6 +54,8 @@ export function useCompanyNews(
   const fetchNews = async () => {
     if (!accessToken || !symbol) return;
 
+    setIsLoading(true);
+
     const key = symbol.toUpperCase();
 
     const cached = newsCache.get(key);
@@ -65,7 +67,6 @@ export function useCompanyNews(
     }
 
     try {
-      setIsLoading(true);
       setError(null);
 
       const res = await apiFetch(
