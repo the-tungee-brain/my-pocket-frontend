@@ -145,9 +145,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
             : (symbolsOnly[0] ?? null),
         );
 
-        // if (Object.keys(map).length) {
-        //   void prefetchInsights(map, accessToken, data.account ?? null);
-        // }
+        if (Object.keys(map).length) {
+          void prefetchInsights(map, accessToken, data.account ?? null);
+        }
       } catch {
         setError("Failed to load positions");
         setPositionMap({});
