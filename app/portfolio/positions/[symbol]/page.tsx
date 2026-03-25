@@ -24,7 +24,7 @@ export default function SymbolPage() {
   }, [symbol, setSelectedView, setSelectedSymbol]);
 
   const {
-    news,
+    analytics,
     isLoading,
     error: newsError,
     refetch,
@@ -56,7 +56,7 @@ export default function SymbolPage() {
       {activeTab === "news" ? (
         <CompanyNews
           symbol={symbol}
-          news={news}
+          analytics={analytics}
           isLoading={isLoading}
           error={newsError}
           onRetry={refetch}

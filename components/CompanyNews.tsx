@@ -1,9 +1,10 @@
 "use client";
 
-import { NewsItem } from "@/app/hooks/useCompanyNews";
+import { StockNewsView } from "@/app/hooks/useCompanyNews";
+import NewsAnalytics from "./NewsAnalytics";
 
 type Props = {
-  news: NewsItem[] | null;
+  analytics: StockNewsView | null;
   isLoading: boolean;
   error: string | null;
   onRetry: () => void;
@@ -11,7 +12,7 @@ type Props = {
 };
 
 export function CompanyNews({
-  news,
+  analytics,
   isLoading,
   error,
   onRetry,
@@ -19,21 +20,28 @@ export function CompanyNews({
 }: Props) {
   if (!symbol) return null;
 
-  const handleCardClick = (url: string) => {
+  const news = analytics?.items ?? [];
+
+  const handleCardClick = (url?: string | null) => {
+    if (!url) return;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
     <section className="mt-6 flex justify-center">
       <div className="w-full max-w-3xl">
-        <div className="mb-3 flex items-center justify-between">
+        {analytics && (
+          <NewsAnalytics analytics={analytics} isLoading={isLoading} />
+        )}
+
+        <div className="mb-3 mt-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-200">
             Latest news for {symbol}
           </h2>
-          {news && news.length > 0 && (
+          {news.length > 0 && (
             <button
               onClick={onRetry}
-              className="text-xs text-foreground/80 hover:text-foreground transition-all"
+              className="text-xs text-foreground/80 transition-all hover:text-foreground"
             >
               Refresh
             </button>
@@ -58,13 +66,13 @@ export function CompanyNews({
           </div>
         )}
 
-        {!isLoading && !error && news && news.length === 0 && (
+        {!isLoading && !error && analytics && news.length === 0 && (
           <p className="text-xs text-gray-500">
-            No news for {symbol} so far today.
+            No news for {symbol} in the selected window.
           </p>
         )}
 
-        {!isLoading && !error && news && news.length > 0 && (
+        {!isLoading && !error && analytics && news.length > 0 && (
           <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-3">
             {news.map((n) => (
               <article

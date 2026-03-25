@@ -3,27 +3,49 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
 
-export type NewsItem = {
-  category: string;
+export type Sentiment = "bullish" | "bearish" | "neutral";
+export type OverallSentiment =
+  | "strongly_bullish"
+  | "bullish"
+  | "neutral"
+  | "bearish"
+  | "strongly_bearish";
+
+export type EnrichedNewsItem = {
+  id: number;
   datetime: string;
   headline: string;
-  id: number;
-  image: string | null;
-  related: string;
   source: string;
+  original_summary: string;
+  sentiment: Sentiment;
+  confidence: number;
   summary: string;
-  url: string;
+  topics: string[];
+  url?: string | null;
+  image?: string | null;
+};
+
+export type StockNewsView = {
+  symbol: string;
+  overall_sentiment: OverallSentiment;
+  summary: string;
+  insights: string[];
+  risks: string[];
+  items: EnrichedNewsItem[];
 };
 
 type UseCompanyNewsResult = {
-  news: NewsItem[] | null;
+  analytics: StockNewsView | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
 };
 
-export function useCompanyNews(symbol: string | undefined, accessToken?: string): UseCompanyNewsResult {
-  const [news, setNews] = useState<NewsItem[] | null>(null);
+export function useCompanyNews(
+  symbol: string | undefined,
+  accessToken?: string
+): UseCompanyNewsResult {
+  const [analytics, setAnalytics] = useState<StockNewsView | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,15 +61,15 @@ export function useCompanyNews(symbol: string | undefined, accessToken?: string)
         {
           method: "GET",
           accessToken,
-        },
+        }
       );
-      
-      if (!res.ok) throw new Error("Failed to fetch news");
-      
-      const data: NewsItem[] = await res.json();
-      setNews(data);
+
+      if (!res.ok) throw new Error("Failed to fetch news analytics");
+
+      const data: StockNewsView = await res.json();
+      setAnalytics(data);
     } catch (e: any) {
-      setError(e?.message ?? "Error fetching news");
+      setError(e?.message ?? "Error fetching news analytics");
     } finally {
       setIsLoading(false);
     }
@@ -57,5 +79,5 @@ export function useCompanyNews(symbol: string | undefined, accessToken?: string)
     fetchNews();
   }, [symbol, accessToken]);
 
-  return { news, isLoading, error, refetch: fetchNews };
+  return { analytics, isLoading, error, refetch: fetchNews };
 }
