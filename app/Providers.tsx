@@ -19,12 +19,6 @@ type SymbolChatState = {
 
 type ChatStateMap = Record<string, SymbolChatState>;
 
-type InsightResult = {
-  loading: boolean;
-  error: string | null;
-  content: string | null;
-};
-
 type PositionsContextValue = {
   sessionAccessToken: string;
   loading: boolean;
@@ -57,8 +51,6 @@ type PositionsContextValue = {
     positionsForSelectedSymbol: Position[] | null;
     actionId: string;
   }) => Promise<void>;
-  insightsByKey: Record<string, InsightResult>;
-  buildInsightKey: (label: string, positions: Position[]) => string;
   account: SchwabAccounts | null;
 };
 
@@ -73,16 +65,6 @@ export function usePositionsContext() {
   return ctx;
 }
 
-const buildInsightKey = (label: string, positions: Position[]) =>
-  JSON.stringify({
-    label,
-    positions: positions.map((p) => ({
-      symbol: p.instrument.symbol,
-      longQuantity: p.longQuantity,
-      shortQuantity: p.shortQuantity,
-    })),
-  });
-
 export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const [positionMap, setPositionMap] = useState<PositionMap>({});
@@ -92,9 +74,6 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
-  const [insightsByKey, setInsightsByKey] = useState<
-    Record<string, InsightResult>
-  >({});
   const accessToken = session?.accessToken ?? "";
 
   const ensureSymbolChatState = (
@@ -144,10 +123,6 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
             ? current
             : (symbolsOnly[0] ?? null),
         );
-
-        if (Object.keys(map).length) {
-          void prefetchInsights(map, accessToken, data.account ?? null);
-        }
       } catch {
         setError("Failed to load positions");
         setPositionMap({});
@@ -160,81 +135,6 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
     void load();
   }, [accessToken]);
-
-  const prefetchInsights = async (
-    map: PositionMap,
-    token: string,
-    account: SchwabAccounts | null,
-  ) => {
-    const entries: Array<{
-      label: string;
-      key: string;
-      positions: Position[];
-    }> = [];
-
-    const portfolioPositions = Object.values(map).flat() as Position[];
-    if (portfolioPositions.length) {
-      const label = "PORTFOLIO";
-      entries.push({
-        label,
-        key: buildInsightKey(label, portfolioPositions),
-        positions: portfolioPositions,
-      });
-    }
-
-    for (const [sym, positions] of Object.entries(map)) {
-      if (!positions?.length) continue;
-      const label = sym;
-      entries.push({
-        label,
-        key: buildInsightKey(label, positions),
-        positions,
-      });
-    }
-
-    for (const { label, key, positions } of entries) {
-      setInsightsByKey((prev) =>
-        prev[key]
-          ? prev
-          : {
-              ...prev,
-              [key]: { loading: true, error: null, content: null },
-            },
-      );
-
-      let buffer = "";
-
-      const symbolForApi = label === "PORTFOLIO" ? null : label;
-
-      try {
-        await streamAnalysis(
-          { account, positions, symbol: symbolForApi },
-          token,
-          (chunk) => {
-            buffer += chunk;
-            setInsightsByKey((prev) => ({
-              ...prev,
-              [key]: { loading: true, error: null, content: buffer },
-            }));
-          },
-        );
-
-        setInsightsByKey((prev) => ({
-          ...prev,
-          [key]: { loading: false, error: null, content: buffer },
-        }));
-      } catch {
-        setInsightsByKey((prev) => ({
-          ...prev,
-          [key]: {
-            loading: false,
-            error: "Failed to load insights.",
-            content: null,
-          },
-        }));
-      }
-    }
-  };
 
   const allPositions: Position[] = useMemo(
     () => Object.values(positionMap).flat().filter(Boolean) as Position[],
@@ -531,8 +431,6 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     ensureSymbolChatState,
     sendPrompt,
     sendQuickAction,
-    insightsByKey,
-    buildInsightKey,
     account,
   };
 

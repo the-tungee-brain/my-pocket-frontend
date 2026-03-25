@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { MarkdownRenderer } from "./ui/MarkdownRenderer";
 import { ThinkingSpinner } from "./ui/ThinkingSpinner";
 import { usePositionsContext } from "@/app/Providers";
+import { useInsights } from "@/app/hooks/useInsights";
 import { Position } from "@/app/types/schwab";
 
 type Props = {
@@ -17,23 +18,24 @@ export function Insights({
   positions,
   thinkingMessage = "Analyzing",
 }: Props) {
-  const { insightsByKey, buildInsightKey } = usePositionsContext();
+  const { account, sessionAccessToken } = usePositionsContext();
 
-  const key = useMemo(() => {
-    if (!positions?.length) return null;
-    const label = symbol ?? "PORTFOLIO";
-    return buildInsightKey(label, positions);
-  }, [symbol, positions, buildInsightKey]);
+  const label = useMemo(
+    () => (positions?.length ? (symbol ?? "PORTFOLIO") : null),
+    [symbol, positions],
+  );
 
-  const insight = key ? insightsByKey[key] : null;
+  const { loading, error, content } = useInsights(
+    {
+      label,
+      positions,
+      account,
+      accessToken: sessionAccessToken || null,
+    },
+    "gpt-4.1-mini",
+  );
 
-  const loading = !!key && (!insight || insight.loading);
-  const error = insight?.error ?? null;
-  const content = insight?.content ?? null;
-
-  if (!positions?.length) {
-    return null;
-  }
+  if (!positions?.length) return null;
 
   return (
     <section className="mx-auto mt-6 max-w-3xl rounded-xl border border-border bg-secondary/60 px-4 py-3">
