@@ -28,7 +28,7 @@ export default function SymbolPage() {
     isLoading,
     error: newsError,
     refetch,
-  } = useCompanyNews(symbol, accessToken);
+  } = useCompanyNews(symbol, accessToken, activeTab);
 
   const positionsForSelectedSymbol =
     symbol && positionMap[symbol] ? positionMap[symbol] : null;

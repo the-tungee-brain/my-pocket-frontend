@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
+import { TabId } from "../contexts/TabContext";
 
 export type Sentiment = "bullish" | "bearish" | "neutral";
 export type OverallSentiment =
@@ -46,9 +47,10 @@ const newsCache = new Map<string, StockNewsView>();
 export function useCompanyNews(
   symbol: string | undefined,
   accessToken?: string,
+  activeTab?: TabId,
 ): UseCompanyNewsResult {
   const [analytics, setAnalytics] = useState<StockNewsView | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchNews = async () => {
@@ -90,9 +92,9 @@ export function useCompanyNews(
   };
 
   useEffect(() => {
-    if (!symbol || !accessToken) return;
+    if (!symbol || !accessToken || activeTab !== 'news') return;
     void fetchNews();
-  }, [symbol, accessToken]);
+  }, [symbol, accessToken, activeTab]);
 
   const refetch = () => {
     if (!symbol) return;

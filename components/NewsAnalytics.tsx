@@ -5,10 +5,6 @@ import type {
   Sentiment,
   OverallSentiment,
 } from "@/app/hooks/useCompanyNews";
-import { ThinkingSpinner } from "./ui/ThinkingSpinner";
-import { useEffect } from "react";
-import { useTabs } from "@/app/contexts/TabContext";
-import { usePositionsContext } from "@/app/Providers";
 
 function sentimentColor(sentiment: Sentiment) {
   switch (sentiment) {
@@ -67,7 +63,6 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
     : "bg-slate-700/40 text-slate-200 border border-slate-600/40";
   return (
     <div className="mt-4 flex w-full flex-col gap-4">
-      {isLoading && <ThinkingSpinner message="Analyzing" />}
       <div
         className={`w-full rounded-xl px-4 py-3 text-sm shadow-sm backdrop-blur ${sentimentClass}`}
       >
