@@ -41,32 +41,45 @@ type UseCompanyNewsResult = {
   refetch: () => void;
 };
 
+const newsCache = new Map<string, StockNewsView>();
+
 export function useCompanyNews(
   symbol: string | undefined,
-  accessToken?: string
+  accessToken?: string,
 ): UseCompanyNewsResult {
   const [analytics, setAnalytics] = useState<StockNewsView | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchNews = async () => {
-    if (!accessToken) return;
-    if (!symbol) return;
+    if (!accessToken || !symbol) return;
+
+    const key = symbol.toUpperCase();
+
+    const cached = newsCache.get(key);
+    if (cached) {
+      setAnalytics(cached);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
       const res = await apiFetch(
-        `/get-company-news?symbol=${encodeURIComponent(symbol)}`,
+        `/get-company-news?symbol=${encodeURIComponent(key)}`,
         {
-          method: "GET",
-          accessToken,
-        }
+        method: "GET",
+        accessToken,
+        },
       );
 
       if (!res.ok) throw new Error("Failed to fetch news analytics");
 
       const data: StockNewsView = await res.json();
+      newsCache.set(key, data);
       setAnalytics(data);
     } catch (e: any) {
       setError(e?.message ?? "Error fetching news analytics");
@@ -76,8 +89,16 @@ export function useCompanyNews(
   };
 
   useEffect(() => {
-    fetchNews();
+    if (!symbol || !accessToken) return;
+    void fetchNews();
   }, [symbol, accessToken]);
 
-  return { analytics, isLoading, error, refetch: fetchNews };
+  const refetch = () => {
+    if (!symbol) return;
+    const key = symbol.toUpperCase();
+    newsCache.delete(key);
+    void fetchNews();
+  };
+
+  return { analytics, isLoading, error, refetch };
 }
