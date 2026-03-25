@@ -36,7 +36,7 @@ export function ConversationPane({
     const el = lastUserRef.current;
     if (!el) return;
 
-    const paddingTop = 80;
+    const paddingTop = 50;
     const rect = el.getBoundingClientRect();
     const absoluteTop = rect.top + window.scrollY;
 

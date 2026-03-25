@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useSession } from "next-auth/react";
 import { apiFetch, streamAnalysis } from "@/lib/apiClient";
 import type { PositionMap } from "@/components/AccountPositionList";
@@ -76,17 +83,17 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
   const accessToken = session?.accessToken ?? "";
 
-  const ensureSymbolChatState = (
-    key: string,
-    base?: Partial<SymbolChatState>,
-  ): SymbolChatState => ({
-    loading: false,
-    input: "",
-    messages: [],
-    model: "gpt-4.1-mini",
-    modelMenuOpen: false,
-    ...base,
-  });
+  const ensureSymbolChatState = useCallback(
+    (key: string, base?: Partial<SymbolChatState>): SymbolChatState => ({
+      loading: false,
+      input: "",
+      messages: [],
+      model: "gpt-4.1-mini",
+      modelMenuOpen: false,
+      ...base,
+    }),
+    [],
+  );
 
   useEffect(() => {
     if (!accessToken) return;
@@ -149,97 +156,260 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     return positionMap[selectedSymbol] ?? null;
   }, [selectedView, selectedSymbol, positionMap, allPositions]);
 
-  const sendPrompt: PositionsContextValue["sendPrompt"] = async ({
-    activeChatKey,
-    selectedView,
-    selectedSymbol,
-    positionsForSelectedSymbol,
-    prompt,
-  }) => {
-    if (!accessToken) return;
-    if (!positionsForSelectedSymbol?.length) return;
-    if (activeChatKey === "__NONE__") return;
+  const sendPrompt: PositionsContextValue["sendPrompt"] = useCallback(
+    async ({
+      activeChatKey,
+      selectedView,
+      selectedSymbol,
+      positionsForSelectedSymbol,
+      prompt,
+    }) => {
+      if (!accessToken) return;
+      if (!positionsForSelectedSymbol?.length) return;
+      if (activeChatKey === "__NONE__") return;
 
-    const state =
-      chatBySymbol[activeChatKey] ?? ensureSymbolChatState(activeChatKey);
-    if (state.loading) return;
+      const state =
+        chatBySymbol[activeChatKey] ?? ensureSymbolChatState(activeChatKey);
+      if (state.loading) return;
 
-    const userInput = prompt.trim();
-    if (!userInput) return;
+      const userInput = prompt.trim();
+      if (!userInput) return;
 
-    setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(
-        activeChatKey,
-        prev[activeChatKey],
-      );
+      setChatBySymbol((prev) => {
+        const prevState = ensureSymbolChatState(
+          activeChatKey,
+          prev[activeChatKey],
+        );
+        const userMessage: ChatMessage = {
+          id: `user-${activeChatKey}-${Date.now()}`,
+          role: "user",
+          content: userInput,
+        };
+
+        return {
+          ...prev,
+          [activeChatKey]: {
+            ...prevState,
+            messages: [...prevState.messages, userMessage],
+            input: "",
+            loading: true,
+          },
+        };
+      });
+
+      const symbolForApi =
+        selectedView === "portfolio" ? null : (selectedSymbol ?? "UNKNOWN");
+
+      try {
+        let assistantContent = "";
+
+        await streamAnalysis(
+          {
+            account: account,
+            positions: positionsForSelectedSymbol,
+            symbol: symbolForApi,
+            action: "free-form",
+            prompt: userInput,
+            model: state.model,
+          },
+          accessToken,
+          (chunk) => {
+            assistantContent += chunk;
+
+            setChatBySymbol((prev) => {
+              const prevState = ensureSymbolChatState(
+                activeChatKey,
+                prev[activeChatKey],
+              );
+              const messages = [...prevState.messages];
+              const last = messages[messages.length - 1];
+
+              if (last && last.role === "assistant") {
+                messages[messages.length - 1] = {
+                  ...last,
+                  content: assistantContent,
+                };
+              } else {
+                messages.push({
+                  id: `assistant-${activeChatKey}-${Date.now()}`,
+                  role: "assistant",
+                  content: assistantContent,
+                });
+              }
+
+              return {
+                ...prev,
+                [activeChatKey]: {
+                  ...prevState,
+                  messages,
+                },
+              };
+            });
+          },
+        );
+      } catch {
+        setChatBySymbol((prev) => {
+          const prevState = ensureSymbolChatState(
+            activeChatKey,
+            prev[activeChatKey],
+          );
+          return {
+            ...prev,
+            [activeChatKey]: {
+              ...prevState,
+              loading: false,
+              messages: [
+                ...prevState.messages,
+                {
+                  id: `error-${activeChatKey}-${Date.now()}`,
+                  role: "assistant",
+                  content:
+                    "Sorry, something went wrong while analyzing this position.",
+                },
+              ],
+            },
+          };
+        });
+        return;
+      }
+
+      setChatBySymbol((prev) => {
+        const prevState = ensureSymbolChatState(
+          activeChatKey,
+          prev[activeChatKey],
+        );
+        return {
+          ...prev,
+          [activeChatKey]: {
+            ...prevState,
+            loading: false,
+          },
+        };
+      });
+    },
+    [accessToken, account, chatBySymbol, ensureSymbolChatState],
+  );
+
+  const sendQuickAction: PositionsContextValue["sendQuickAction"] = useCallback(
+    async ({
+      activeChatKey,
+      selectedView,
+      selectedSymbol,
+      positionsForSelectedSymbol,
+      actionId,
+    }) => {
+      if (!accessToken) return;
+      if (!positionsForSelectedSymbol?.length) return;
+      if (activeChatKey === "__NONE__") return;
+
+      const state =
+        chatBySymbol[activeChatKey] ?? ensureSymbolChatState(activeChatKey);
+      if (state.loading) return;
+
+      const label =
+        selectedView === "portfolio"
+          ? "portfolio"
+          : (selectedSymbol ?? "position");
+
       const userMessage: ChatMessage = {
-        id: `user-${activeChatKey}-${Date.now()}`,
+        id: `user-${activeChatKey}-${actionId}-${Date.now()}`,
         role: "user",
-        content: userInput,
+        content: `${actionId
+          .replace(/-/g, " ")
+          .replace(/^./, (c) => c.toUpperCase())} analysis for ${label}`,
       };
 
-      return {
-        ...prev,
-        [activeChatKey]: {
-          ...prevState,
-          messages: [...prevState.messages, userMessage],
-          input: "",
-          loading: true,
-        },
-      };
-    });
+      setChatBySymbol((prev) => {
+        const prevState = ensureSymbolChatState(
+          activeChatKey,
+          prev[activeChatKey],
+        );
+        return {
+          ...prev,
+          [activeChatKey]: {
+            ...prevState,
+            messages: [...prevState.messages, userMessage],
+            loading: true,
+          },
+        };
+      });
 
-    const symbolForApi =
-      selectedView === "portfolio" ? null : (selectedSymbol ?? "UNKNOWN");
+      const symbolForApi =
+        selectedView === "portfolio" ? null : (selectedSymbol ?? "UNKNOWN");
 
-    try {
-      let assistantContent = "";
+      try {
+        let assistantContent = "";
 
-      await streamAnalysis(
-        {
-          account: account,
-          positions: positionsForSelectedSymbol,
-          symbol: symbolForApi,
-          action: "free-form",
-          prompt: userInput,
-          model: state.model,
-        },
-        accessToken,
-        (chunk) => {
-          assistantContent += chunk;
+        await streamAnalysis(
+          {
+            account: account,
+            positions: positionsForSelectedSymbol,
+            symbol: symbolForApi,
+            action: actionId,
+            prompt: null,
+            model: state.model,
+          },
+          accessToken,
+          (chunk) => {
+            assistantContent += chunk;
 
-          setChatBySymbol((prev) => {
-            const prevState = ensureSymbolChatState(
-              activeChatKey,
-              prev[activeChatKey],
-            );
-            const messages = [...prevState.messages];
-            const last = messages[messages.length - 1];
+            setChatBySymbol((prev) => {
+              const prevState = ensureSymbolChatState(
+                activeChatKey,
+                prev[activeChatKey],
+              );
+              const messages = [...prevState.messages];
+              const last = messages[messages.length - 1];
 
-            if (last && last.role === "assistant") {
-              messages[messages.length - 1] = {
-                ...last,
-                content: assistantContent,
+              if (last && last.role === "assistant") {
+                messages[messages.length - 1] = {
+                  ...last,
+                  content: assistantContent,
+                };
+              } else {
+                messages.push({
+                  id: `assistant-${activeChatKey}-${actionId}-${Date.now()}`,
+                  role: "assistant",
+                  content: assistantContent,
+                });
+              }
+
+              return {
+                ...prev,
+                [activeChatKey]: {
+                  ...prevState,
+                  messages,
+                },
               };
-            } else {
-              messages.push({
-                id: `assistant-${activeChatKey}-${Date.now()}`,
-                role: "assistant",
-                content: assistantContent,
-              });
-            }
+            });
+          },
+        );
+      } catch {
+        setChatBySymbol((prev) => {
+          const prevState = ensureSymbolChatState(
+            activeChatKey,
+            prev[activeChatKey],
+          );
+          return {
+            ...prev,
+            [activeChatKey]: {
+              ...prevState,
+              loading: false,
+              messages: [
+                ...prevState.messages,
+                {
+                  id: `error-${activeChatKey}-${actionId}-${Date.now()}`,
+                  role: "assistant",
+                  content:
+                    "Sorry, something went wrong while analyzing this position.",
+                },
+              ],
+            },
+          };
+        });
+        return;
+      }
 
-            return {
-              ...prev,
-              [activeChatKey]: {
-                ...prevState,
-                messages,
-              },
-            };
-          });
-        },
-      );
-    } catch {
       setChatBySymbol((prev) => {
         const prevState = ensureSymbolChatState(
           activeChatKey,
@@ -250,189 +420,50 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           [activeChatKey]: {
             ...prevState,
             loading: false,
-            messages: [
-              ...prevState.messages,
-              {
-                id: `error-${activeChatKey}-${Date.now()}`,
-                role: "assistant",
-                content:
-                  "Sorry, something went wrong while analyzing this position.",
-              },
-            ],
           },
         };
       });
-      return;
-    }
+    },
+    [accessToken, account, chatBySymbol, ensureSymbolChatState],
+  );
 
-    setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(
-        activeChatKey,
-        prev[activeChatKey],
-      );
-      return {
-        ...prev,
-        [activeChatKey]: {
-          ...prevState,
-          loading: false,
-        },
-      };
-    });
-  };
-
-  const sendQuickAction: PositionsContextValue["sendQuickAction"] = async ({
-    activeChatKey,
-    selectedView,
-    selectedSymbol,
-    positionsForSelectedSymbol,
-    actionId,
-  }) => {
-    if (!accessToken) return;
-    if (!positionsForSelectedSymbol?.length) return;
-    if (activeChatKey === "__NONE__") return;
-
-    const state =
-      chatBySymbol[activeChatKey] ?? ensureSymbolChatState(activeChatKey);
-    if (state.loading) return;
-
-    const label =
-      selectedView === "portfolio"
-        ? "portfolio"
-        : (selectedSymbol ?? "position");
-
-    const userMessage: ChatMessage = {
-      id: `user-${activeChatKey}-${actionId}-${Date.now()}`,
-      role: "user",
-      content: `${actionId
-        .replace(/-/g, " ")
-        .replace(/^./, (c) => c.toUpperCase())} analysis for ${label}`,
-    };
-
-    setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(
-        activeChatKey,
-        prev[activeChatKey],
-      );
-      return {
-        ...prev,
-        [activeChatKey]: {
-          ...prevState,
-          messages: [...prevState.messages, userMessage],
-          loading: true,
-        },
-      };
-    });
-
-    const symbolForApi =
-      selectedView === "portfolio" ? null : (selectedSymbol ?? "UNKNOWN");
-
-    try {
-      let assistantContent = "";
-
-      await streamAnalysis(
-        {
-          account: account,
-          positions: positionsForSelectedSymbol,
-          symbol: symbolForApi,
-          action: actionId,
-          prompt: null,
-          model: state.model,
-        },
-        accessToken,
-        (chunk) => {
-          assistantContent += chunk;
-
-          setChatBySymbol((prev) => {
-            const prevState = ensureSymbolChatState(
-              activeChatKey,
-              prev[activeChatKey],
-            );
-            const messages = [...prevState.messages];
-            const last = messages[messages.length - 1];
-
-            if (last && last.role === "assistant") {
-              messages[messages.length - 1] = {
-                ...last,
-                content: assistantContent,
-              };
-            } else {
-              messages.push({
-                id: `assistant-${activeChatKey}-${actionId}-${Date.now()}`,
-                role: "assistant",
-                content: assistantContent,
-              });
-            }
-
-            return {
-              ...prev,
-              [activeChatKey]: {
-                ...prevState,
-                messages,
-              },
-            };
-          });
-        },
-      );
-    } catch {
-      setChatBySymbol((prev) => {
-        const prevState = ensureSymbolChatState(
-          activeChatKey,
-          prev[activeChatKey],
-        );
-        return {
-          ...prev,
-          [activeChatKey]: {
-            ...prevState,
-            loading: false,
-            messages: [
-              ...prevState.messages,
-              {
-                id: `error-${activeChatKey}-${actionId}-${Date.now()}`,
-                role: "assistant",
-                content:
-                  "Sorry, something went wrong while analyzing this position.",
-              },
-            ],
-          },
-        };
-      });
-      return;
-    }
-
-    setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(
-        activeChatKey,
-        prev[activeChatKey],
-      );
-      return {
-        ...prev,
-        [activeChatKey]: {
-          ...prevState,
-          loading: false,
-        },
-      };
-    });
-  };
-
-  const value: PositionsContextValue = {
-    sessionAccessToken: accessToken,
-    loading,
-    error,
-    positionMap,
-    symbols,
-    allPositions,
-    selectedSymbol,
-    setSelectedSymbol,
-    selectedView,
-    setSelectedView,
-    positionsForSelectedSymbol,
-    chatBySymbol,
-    setChatBySymbol,
-    ensureSymbolChatState,
-    sendPrompt,
-    sendQuickAction,
-    account,
-  };
+  const value: PositionsContextValue = useMemo(
+    () => ({
+      sessionAccessToken: accessToken,
+      loading,
+      error,
+      positionMap,
+      symbols,
+      allPositions,
+      selectedSymbol,
+      setSelectedSymbol,
+      selectedView,
+      setSelectedView,
+      positionsForSelectedSymbol,
+      chatBySymbol,
+      setChatBySymbol,
+      ensureSymbolChatState,
+      sendPrompt,
+      sendQuickAction,
+      account,
+    }),
+    [
+      accessToken,
+      loading,
+      error,
+      positionMap,
+      symbols,
+      allPositions,
+      selectedSymbol,
+      selectedView,
+      positionsForSelectedSymbol,
+      chatBySymbol,
+      ensureSymbolChatState,
+      sendPrompt,
+      sendQuickAction,
+      account,
+    ],
+  );
 
   return (
     <PositionsContext.Provider value={value}>
