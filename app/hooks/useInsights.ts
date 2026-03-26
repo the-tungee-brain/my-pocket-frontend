@@ -10,7 +10,7 @@ type InsightState = {
   content: string | null;
 };
 
-type Listener = (chunk: string, done: boolean, error?: string) => void;
+type Listener = (done: boolean, error?: string) => void;
 
 type InFlightEntry = {
   buffer: string;
@@ -18,7 +18,6 @@ type InFlightEntry = {
 };
 
 const cache = new Map<string, { content: string }>();
-
 const inFlight = new Map<string, InFlightEntry>();
 
 function makeKey(label: string, positions: Position[]): string {
@@ -72,18 +71,17 @@ export function useInsights(
         content: entry.buffer || null,
       });
 
-      const listener: Listener = (chunk, done, error) => {
+      const listener: Listener = (done, error) => {
         if (cancelled) return;
         if (error) {
           setState({ loading: false, error, content: null });
-          return;
+        } else {
+          setState({
+            loading: !done,
+            error: null,
+            content: entry!.buffer || null,
+          });
         }
-        const next = (entry!.buffer += chunk);
-        setState({
-          loading: !done,
-          error: null,
-          content: next,
-        });
       };
 
       entry.listeners.add(listener);
@@ -99,21 +97,19 @@ export function useInsights(
       listeners: new Set<Listener>(),
     };
     inFlight.set(key, entry);
-
     setState({ loading: true, error: null, content: null });
 
-    const listener: Listener = (chunk, done, error) => {
+    const listener: Listener = (done, error) => {
       if (cancelled) return;
       if (error) {
         setState({ loading: false, error, content: null });
-        return;
+      } else {
+        setState({
+          loading: !done,
+          error: null,
+          content: entry!.buffer || null,
+        });
       }
-      const next = (entry!.buffer += chunk);
-      setState({
-        loading: !done,
-        error: null,
-        content: next,
-      });
     };
 
     entry.listeners.add(listener);
@@ -134,7 +130,7 @@ export function useInsights(
             entry!.buffer += chunk;
 
             for (const l of entry!.listeners) {
-              l(chunk, false);
+              l(false);
             }
           },
         );
@@ -142,11 +138,11 @@ export function useInsights(
         cache.set(key, { content: entry!.buffer });
 
         for (const l of entry!.listeners) {
-          l("", true);
+          l(true);
         }
       } catch {
         for (const l of entry!.listeners) {
-          l("", true, "Failed to load insights.");
+          l(true, "Failed to load insights.");
         }
       } finally {
         inFlight.delete(key);
@@ -155,7 +151,7 @@ export function useInsights(
 
     return () => {
       cancelled = true;
-      entry.listeners.delete(listener);
+      entry!.listeners.delete(listener);
     };
   }, [label, positions, account, accessToken, model]);
 

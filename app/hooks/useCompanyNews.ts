@@ -42,6 +42,7 @@ type UseCompanyNewsResult = {
   refetch: () => void;
 };
 
+// Simple per-symbol cache
 const newsCache = new Map<string, StockNewsView>();
 
 type Listener = (data?: StockNewsView, error?: string) => void;
@@ -50,6 +51,7 @@ type InFlightNewsEntry = {
   listeners: Set<Listener>;
 };
 
+// Tracks in-flight fetches by symbol key
 const inFlightNews = new Map<string, InFlightNewsEntry>();
 
 export function useCompanyNews(
@@ -66,6 +68,7 @@ export function useCompanyNews(
   useEffect(() => {
     if (!key || !accessToken || activeTab !== "news") return;
 
+    // 1. Cache hit
     const cached = newsCache.get(key);
     if (cached) {
       setAnalytics(cached);
@@ -76,30 +79,32 @@ export function useCompanyNews(
 
     let cancelled = false;
 
+    // 2. Attach to in-flight if exists
     let entry = inFlightNews.get(key);
     if (entry) {
       setIsLoading(true);
+
       const listener: Listener = (data, err) => {
         if (cancelled) return;
         if (err) {
           setError(err);
           setIsLoading(false);
-          return;
-        }
-        if (data) {
+        } else if (data) {
           setAnalytics(data);
           setError(null);
           setIsLoading(false);
         }
       };
+
       entry.listeners.add(listener);
 
       return () => {
         cancelled = true;
-        entry?.listeners.delete(listener);
+        entry!.listeners.delete(listener);
       };
     }
 
+    // 3. Start new request
     entry = { listeners: new Set<Listener>() };
     inFlightNews.set(key, entry);
 
@@ -111,9 +116,7 @@ export function useCompanyNews(
       if (err) {
         setError(err);
         setIsLoading(false);
-        return;
-      }
-      if (data) {
+      } else if (data) {
         setAnalytics(data);
         setError(null);
         setIsLoading(false);
@@ -125,7 +128,7 @@ export function useCompanyNews(
     (async () => {
       try {
         const res = await apiFetch(
-          `/get-company-news?symbol=${encodeURIComponent(key!)}`,
+          `/get-company-news?symbol=${encodeURIComponent(key)}`,
           {
             method: "GET",
             accessToken,
@@ -135,7 +138,7 @@ export function useCompanyNews(
         if (!res.ok) throw new Error("Failed to fetch news analytics");
 
         const data: StockNewsView = await res.json();
-        newsCache.set(key!, data);
+        newsCache.set(key, data);
 
         for (const l of entry!.listeners) {
           l(data);
@@ -146,18 +149,19 @@ export function useCompanyNews(
           l(undefined, msg);
         }
       } finally {
-        inFlightNews.delete(key!);
+        inFlightNews.delete(key);
       }
     })();
 
     return () => {
       cancelled = true;
-      entry.listeners.delete(listener);
+      entry!.listeners.delete(listener);
     };
   }, [key, accessToken, activeTab]);
 
   const refetch = () => {
     if (!key || !accessToken) return;
+
     newsCache.delete(key);
     inFlightNews.delete(key);
 
