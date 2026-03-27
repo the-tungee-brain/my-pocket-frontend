@@ -59,7 +59,9 @@ export default function SymbolPage() {
           )}
 
           {stockLoading ? (
-            <ThinkingSpinner message={`Loading ${symbol} chart`} />
+            <div className="max-w-3xl mx-auto mt-4">
+              <ThinkingSpinner message={`Loading ${symbol} chart`} />
+            </div>
           ) : stockData ? (
             <StockChart data={stockData.data} symbol={stockData.symbol} />
           ) : null}

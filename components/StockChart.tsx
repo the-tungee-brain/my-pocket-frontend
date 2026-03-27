@@ -136,7 +136,7 @@ export function StockChart({ data, symbol }: Props) {
   }, [data]);
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
+    <div className="w-full max-w-3xl mx-auto mt-4">
       <h2
         className="mb-2 text-lg font-semibold"
         style={{ color: "var(--color-foreground)" }}
