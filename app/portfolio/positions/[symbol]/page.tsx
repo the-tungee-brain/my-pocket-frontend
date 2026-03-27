@@ -9,6 +9,9 @@ import { Insights } from "@/components/Insights";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
 import { CompanyNews } from "@/components/CompanyNews";
 import { useTabs } from "@/app/contexts/TabContext";
+import { StockChart } from "@/components/StockChart";
+import { useStockData } from "@/app/hooks/useStockData";
+import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 
 export default function SymbolPage() {
   const { symbol } = useParams<{ symbol: string }>();
@@ -30,12 +33,38 @@ export default function SymbolPage() {
     refetch,
   } = useCompanyNews(symbol, accessToken, activeTab);
 
+  const {
+    data: stockData,
+    loading: stockLoading,
+    error: stockError,
+  } = useStockData({
+    symbol: symbol ?? null,
+    accessToken: accessToken ?? null,
+    enabled: !!symbol && !!accessToken,
+  });
+
   const positionsForSelectedSymbol =
     symbol && positionMap[symbol] ? positionMap[symbol] : null;
 
   return (
     <>
       {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
+
+      {symbol && (
+        <div className="mb-6">
+          {stockError && (
+            <p className="mb-3 text-sm text-red-400">
+              Failed to load chart: {stockError.message}
+            </p>
+          )}
+
+          {stockLoading ? (
+            <ThinkingSpinner message={`Loading ${symbol} chart`} />
+          ) : stockData ? (
+            <StockChart data={stockData.data} symbol={stockData.symbol} />
+          ) : null}
+        </div>
+      )}
 
       {activeTab === "assistant" ? (
         <>
