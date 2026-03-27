@@ -22,22 +22,38 @@ export type StockResponse = {
 type UseStockDataOptions = {
   symbol?: string | null;
   accessToken?: string | null;
-  baseUrl?: string;
   enabled?: boolean;
+  period?: string;   // "1d" | "5d" | "1mo" | "3mo" | ...
+  interval?: string; // "1m" | "15m" | "1d" | ...
 };
+
+// Shared in-memory cache across hook instances
+const stockCache = new Map<string, StockResponse>();
 
 export function useStockData({
   symbol,
   accessToken,
   enabled = true,
+  period = "3mo",
+  interval = "1d",
 }: UseStockDataOptions) {
   const [data, setData] = useState<StockResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!enabled || !symbol) {
+    if (!enabled || !symbol || !accessToken) {
       setData(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    const key = `${symbol}:${period}:${interval}`;
+
+    const cached = stockCache.get(key);
+    if (cached) {
+      setData(cached);
       setError(null);
       setLoading(false);
       return;
@@ -50,16 +66,20 @@ export function useStockData({
     const controller = new AbortController();
 
     async function fetchStock() {
-        if (!accessToken) return;
+        if (!symbol || !accessToken) return
         try {
-            const res = await apiFetch(`/get-stock-data?symbol=${symbol}`,
-            {
-                method: "GET",
-                accessToken: accessToken,
-                signal: controller.signal,
-                cache: "no-store",
-            }
-            );
+            const params = new URLSearchParams({
+            symbol,
+            period,
+            interval,
+            });
+
+            const res = await apiFetch(`/get-stock-data?${params.toString()}`, {
+            method: "GET",
+            accessToken,
+            signal: controller.signal,
+            cache: "no-store",
+            });
 
             if (!res.ok) {
             const text = await res.text().catch(() => "");
@@ -69,6 +89,7 @@ export function useStockData({
             const json: StockResponse = await res.json();
 
             if (!cancelled) {
+            stockCache.set(key, json);
             setData(json);
             setError(null);
             }
@@ -91,7 +112,7 @@ export function useStockData({
         cancelled = true;
         controller.abort();
         };
-    }, [symbol, accessToken, enabled]);
+    }, [symbol, accessToken, enabled, period, interval]);
 
     return { data, loading, error };
 }

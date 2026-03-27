@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { usePositionsContext } from "@/app/Providers";
 import { AccountPositionList } from "@/components/AccountPositionList";
@@ -20,6 +20,10 @@ export default function SymbolPage() {
     usePositionsContext();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
+
+  // Chart controls state
+  const [period, setPeriod] = useState<string>("3mo");
+  const [interval, setInterval] = useState<string>("1d");
 
   useEffect(() => {
     setSelectedView("symbol");
@@ -41,10 +45,20 @@ export default function SymbolPage() {
     symbol: symbol ?? null,
     accessToken: accessToken ?? null,
     enabled: !!symbol && !!accessToken,
+    period,
+    interval,
   });
 
   const positionsForSelectedSymbol =
     symbol && positionMap[symbol] ? positionMap[symbol] : null;
+
+  const handlePeriodChange = (newPeriod: string) => {
+    setPeriod(newPeriod);
+  };
+
+  const handleIntervalChange = (newInterval: string) => {
+    setInterval(newInterval);
+  };
 
   return (
     <>
@@ -63,7 +77,14 @@ export default function SymbolPage() {
               <ThinkingSpinner message={`Loading ${symbol} chart`} />
             </div>
           ) : stockData ? (
-            <StockChart data={stockData.data} symbol={stockData.symbol} />
+            <StockChart
+              data={stockData.data}
+              symbol={stockData.symbol}
+              period={period}
+              interval={interval}
+              onPeriodChange={handlePeriodChange}
+              onIntervalChange={handleIntervalChange}
+            />
           ) : null}
         </div>
       )}
