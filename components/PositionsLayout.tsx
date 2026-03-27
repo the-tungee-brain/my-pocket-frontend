@@ -108,7 +108,7 @@ export function PositionsLayout({
               <>
                 {selectedView === "portfolio" ? (
                   <>
-                    <PortfolioOverview />
+                    {/* <PortfolioOverview /> */}
 
                     <Insights
                       symbol={null}

@@ -19,7 +19,7 @@ export default function PortfolioPage() {
     <>
       {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
 
-      <PortfolioOverview />
+      {/* <PortfolioOverview /> */}
 
       <Insights
         symbol={null}
