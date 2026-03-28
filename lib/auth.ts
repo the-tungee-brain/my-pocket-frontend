@@ -3,9 +3,9 @@ import Google from 'next-auth/providers/google'
 import type { Session } from 'next-auth'
 import type { JWT } from 'next-auth/jwt'
 
-console.log('AUTH_URL:', process.env.AUTH_URL)
-console.log('AUTH_TRUST_HOST:', process.env.AUTH_TRUST_HOST)
-console.log('AUTH_SECRET set:', !!process.env.AUTH_SECRET)
+console.log('AUTH_URL (build):', process.env.AUTH_URL)
+console.log('AUTH_TRUST_HOST (build):', process.env.AUTH_TRUST_HOST)
+console.log('AUTH_SECRET set (build):', !!process.env.AUTH_SECRET)
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -25,6 +25,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     debug(code, ...message) {
       // console.log('[AUTH DEBUG]', code, ...message)
+    },
+  },
+  // log what the function runtime actually sees
+  events: {
+    async session() {
+      console.log('AUTH_URL (runtime):', process.env.AUTH_URL)
+      console.log('AUTH_TRUST_HOST (runtime):', process.env.AUTH_TRUST_HOST)
+      console.log('AUTH_SECRET set (runtime):', !!process.env.AUTH_SECRET)
     },
   },
   callbacks: {
