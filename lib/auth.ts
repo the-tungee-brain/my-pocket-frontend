@@ -3,6 +3,10 @@ import Google from 'next-auth/providers/google'
 import type { Session } from 'next-auth'
 import type { JWT } from 'next-auth/jwt'
 
+console.log('AUTH_URL:', process.env.AUTH_URL)
+console.log('AUTH_TRUST_HOST:', process.env.AUTH_TRUST_HOST)
+console.log('AUTH_SECRET set:', !!process.env.AUTH_SECRET)
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
