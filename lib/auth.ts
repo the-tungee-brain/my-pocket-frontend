@@ -93,6 +93,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async session({ session, token }: { session: Session; token: JWT }) {
+      console.log('AUTH_URL (runtime):', process.env.AUTH_URL)
+      console.log('AUTH_TRUST_HOST (runtime):', process.env.AUTH_TRUST_HOST)
+      console.log('AUTH_SECRET set (runtime):', !!process.env.AUTH_SECRET)
       if ((token as any)?.accessToken) {
         return {
           ...session,
