@@ -7,50 +7,92 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!
-    })
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   session: { strategy: 'jwt' },
+  debug: true,
+  logger: {
+    error(code, ...message) {
+      console.error('[AUTH ERROR]', code, ...message)
+    },
+    warn(code, ...message) {
+      console.warn('[AUTH WARN]', code, ...message)
+    },
+    debug(code, ...message) {
+      // console.log('[AUTH DEBUG]', code, ...message)
+    },
+  },
   callbacks: {
-    async signIn({ account, profile }) {
+    async signIn({ account }) {
       if (account?.provider === 'google' && account.id_token) {
-        const res = await fetch('https://thetungeebrain.duckdns.org/api/v1/auth/google/callback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_token: account.id_token }),
-        })
-        if (!res.ok) return false
+        const res = await fetch(
+          'https://thetungeebrain.duckdns.org/api/v1/auth/google/callback',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_token: account.id_token }),
+          },
+        )
+
+        if (!res.ok) {
+          console.error(
+            '[AUTH ERROR] google signIn callback failed',
+            res.status,
+            await res.text(),
+          )
+          return false
+        }
+
         return true
       }
       return true
     },
-    async jwt({ token, account, profile }) {
+
+    async jwt({ token, account }) {
       if (account?.provider === 'google' && account.id_token) {
-        const res = await fetch('https://thetungeebrain.duckdns.org/api/v1/auth/google/callback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_token: account.id_token }),
-        })
-        if (res.ok) {
+        try {
+          const res = await fetch(
+            'https://thetungeebrain.duckdns.org/api/v1/auth/google/callback',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id_token: account.id_token }),
+            },
+          )
+
+          if (!res.ok) {
+            console.error(
+              '[AUTH ERROR] google jwt callback failed',
+              res.status,
+              await res.text(),
+            )
+            return token
+          }
+
           const data = await res.json()
-          token.accessToken = data.access_token
+          ;(token as any).accessToken = data.access_token
+        } catch (err) {
+          console.error('[AUTH ERROR] google jwt callback threw', err)
         }
       }
+
       return token
     },
+
     async session({ session, token }: { session: Session; token: JWT }) {
-      if (token?.accessToken) {
+      if ((token as any)?.accessToken) {
         return {
           ...session,
-          accessToken: token.accessToken,
+          accessToken: (token as any).accessToken,
           user: {
             ...session.user,
-            id: token.sub ?? undefined
-          }
+            id: token.sub ?? undefined,
+          },
         }
       }
       return session
-    }
-  }
+    },
+  },
 })

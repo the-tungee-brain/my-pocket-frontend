@@ -1,9 +1,9 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { SessionProvider } from "next-auth/react";
-import { PositionsProvider } from "./Providers";
-import { TabProvider } from "./contexts/TabContext";
+import type { ReactNode } from "react";
+import { AppProviders } from "./AppProviders";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -15,19 +15,11 @@ export const metadata: Metadata = {
   description: "AI bot for your stock portfolio",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
-        <SessionProvider>
-          <TabProvider>
-            <PositionsProvider>{children}</PositionsProvider>
-          </TabProvider>
-        </SessionProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
