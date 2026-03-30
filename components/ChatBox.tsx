@@ -1,4 +1,3 @@
-// components/ChatBox.tsx
 "use client";
 
 import { RefObject } from "react";

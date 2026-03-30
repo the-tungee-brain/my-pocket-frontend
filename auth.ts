@@ -4,7 +4,10 @@ import type { Session } from 'next-auth'
 import type { JWT } from 'next-auth/jwt'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [Google],
+  providers: [Google({
+    clientId: process.env.NEXT_PUBLIC_AUTH_GOOGLE_ID,
+    clientSecret: process.env.NEXT_PUBLIC_AUTH_GOOGLE_SECRET
+  })],
   session: { strategy: 'jwt' },
   debug: true,
   trustHost: true,
