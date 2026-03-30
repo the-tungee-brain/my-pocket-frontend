@@ -13,6 +13,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       console.error('[AUTH ERROR]', code, ...message)
     },
   },
+  secret: process.env.NEXT_PUBLIC_AUTH_SECRET,
   callbacks: {
     async signIn({ account }) {
       if (account?.provider === 'google' && account.id_token) {
