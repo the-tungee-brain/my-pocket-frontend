@@ -10,7 +10,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.AUTH_GOOGLE_CLIENT_SECRET!,
     }),
   ],
-  secret: process.env.AUTH_SECRET,
   session: { strategy: 'jwt' },
   debug: true,
   trustHost: true,
