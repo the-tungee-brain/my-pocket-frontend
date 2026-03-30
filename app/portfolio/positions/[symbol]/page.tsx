@@ -11,7 +11,6 @@ import { CompanyNews } from "@/components/CompanyNews";
 import { useTabs } from "@/app/contexts/TabContext";
 import { StockChart } from "@/components/StockChart";
 import { useStockData } from "@/app/hooks/useStockData";
-import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 
 export default function SymbolPage() {
   const { symbol } = useParams<{ symbol: string }>();
@@ -21,7 +20,6 @@ export default function SymbolPage() {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
 
-  // Chart controls state
   const [period, setPeriod] = useState<string>("3mo");
   const [interval, setInterval] = useState<string>("1d");
 
@@ -44,7 +42,7 @@ export default function SymbolPage() {
   } = useStockData({
     symbol: symbol ?? null,
     accessToken: accessToken ?? null,
-    enabled: !!symbol && !!accessToken,
+    enabled: !!symbol && !!accessToken && activeTab === "assistant",
     period,
     interval,
   });
@@ -64,7 +62,7 @@ export default function SymbolPage() {
     <>
       {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
 
-      {symbol && (
+      {activeTab === "assistant" && symbol && (
         <div className="mb-6">
           {stockError && (
             <p className="mb-3 text-sm text-red-400">
@@ -72,24 +70,19 @@ export default function SymbolPage() {
             </p>
           )}
 
-          {stockLoading ? (
-            <div className="max-w-3xl mx-auto mt-4">
-              <ThinkingSpinner message={`Loading ${symbol} chart`} />
-            </div>
-          ) : stockData ? (
-            <StockChart
-              data={stockData.data}
-              symbol={stockData.symbol}
-              period={period}
-              interval={interval}
-              onPeriodChange={handlePeriodChange}
-              onIntervalChange={handleIntervalChange}
-            />
-          ) : null}
+          <StockChart
+            data={stockData?.data ?? []}
+            loading={isLoading}
+            symbol={stockData?.symbol ?? symbol}
+            period={period}
+            interval={interval}
+            onPeriodChange={handlePeriodChange}
+            onIntervalChange={handleIntervalChange}
+          />
         </div>
       )}
 
-      {activeTab === "assistant" ? (
+      {activeTab === "assistant" && (
         <>
           <AccountPositionList
             positionsForSelectedSymbol={positionsForSelectedSymbol}
@@ -103,9 +96,9 @@ export default function SymbolPage() {
             }
           />
         </>
-      ) : null}
+      )}
 
-      {activeTab === "news" ? (
+      {activeTab === "news" && (
         <CompanyNews
           symbol={symbol}
           analytics={analytics}
@@ -113,7 +106,7 @@ export default function SymbolPage() {
           error={newsError}
           onRetry={refetch}
         />
-      ) : null}
+      )}
     </>
   );
 }

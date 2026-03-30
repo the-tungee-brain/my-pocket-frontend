@@ -23,6 +23,7 @@ type Props = {
   interval?: string;
   onPeriodChange?: (period: string) => void;
   onIntervalChange?: (interval: string) => void;
+  loading?: boolean;
 };
 
 const PRESETS = [
@@ -53,6 +54,7 @@ export function StockChart({
   interval = "1d",
   onPeriodChange,
   onIntervalChange,
+  loading = false,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
@@ -67,7 +69,14 @@ export function StockChart({
 
   useEffect(() => {
     if (!containerRef.current) return;
-    if (!data || data.length === 0) return;
+
+    if (!data || data.length === 0) {
+      if (chartRef.current) {
+        chartRef.current.remove();
+        chartRef.current = null;
+      }
+      return;
+    }
 
     if (chartRef.current) {
       chartRef.current.remove();
@@ -183,6 +192,8 @@ export function StockChart({
     handlePresetClick(PRESETS[3]);
   };
 
+  const showOverlay = loading || !data || data.length === 0;
+
   return (
     <div className="w-full max-w-3xl mx-auto mt-4">
       <div className="mb-2 flex items-center justify-between">
@@ -225,8 +236,16 @@ export function StockChart({
         <div
           ref={containerRef}
           className="w-full overflow-hidden rounded-2xl border-b"
-          style={{ borderColor: "var(--color-border)" }}
+          style={{ borderColor: "var(--color-border)", minHeight: 400 }}
         />
+
+        {showOverlay && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl text-xs font-medium">
+            <span style={{ color: "var(--color-foreground)" }}>
+              Loading {symbol} chart…
+            </span>
+          </div>
+        )}
 
         <div className="flex flex-col gap-2 px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
