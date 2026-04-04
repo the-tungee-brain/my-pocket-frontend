@@ -72,7 +72,7 @@ export async function streamAnalysis(
     console.error("Stream start failed: response.body is null");
     throw new Error("Failed to start analysis (no body)");
   }
-
+  
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
 

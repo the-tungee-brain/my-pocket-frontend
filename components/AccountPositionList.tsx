@@ -25,7 +25,7 @@ export function AccountPositionList({
 
   if (!positionsForSelectedSymbol || positionsForSelectedSymbol.length === 0) {
     return (
-      <section className="w-full py-4">
+      <section className="w-full max-w-3xl mx-auto py-4">
         <p className="text-sm text-neutral-400">
           No positions found for {selectedSymbol}.
         </p>
