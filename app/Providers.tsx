@@ -14,6 +14,7 @@ import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
 import { Position, SchwabAccounts } from "./types/schwab";
 import { MainView } from "@/components/NavList";
+import { usePathname } from "next/navigation";
 
 type SymbolChatState = {
   loading: boolean;
@@ -73,10 +74,11 @@ export function usePositionsContext() {
 
 export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const [positionMap, setPositionMap] = useState<PositionMap>({});
   const [account, setAccount] = useState<SchwabAccounts | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
-  const [selectedView, setSelectedView] = useState<MainView>("portfolio");
+  const [selectedView, setSelectedView] = useState<MainView>("research");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
@@ -93,6 +95,21 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     }),
     [],
   );
+
+  useEffect(() => {
+    if (!pathname) return;
+
+    const segments = pathname.split("/").filter(Boolean);
+    const first = segments[0];
+
+    if (first === "research") {
+      setSelectedView("research");
+    } else if (first === "portfolio") {
+      setSelectedView(segments[1] === "positions" ? "symbol" : "portfolio");
+    } else {
+      setSelectedView("research");
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (!accessToken) return;

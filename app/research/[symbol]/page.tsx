@@ -91,7 +91,7 @@ export default async function ResearchPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 py-8 lg:py-10">
+      <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8 lg:py-10">
         <CompanySnapshot symbol={symbol} />
         <ResearchBody symbol={symbol} />
       </div>

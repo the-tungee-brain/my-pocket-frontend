@@ -129,6 +129,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     setInputRows(MIN_ROWS);
   };
+  console.log(selectedView);
 
   const labelSymbol =
     selectedView === "portfolio" ? "PORTFOLIO" : selectedSymbol;
@@ -178,31 +179,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex-1 overflow-y-auto px-4 pt-3 pb-4">
             {children}
 
-            {activeTab === "assistant" && labelSymbol && (
-              <ConversationPane
-                symbol={labelSymbol}
-                messages={currentChat?.messages ?? []}
-                loading={!!currentChat?.loading}
-              />
-            )}
+            {selectedView !== "research" &&
+              activeTab === "assistant" &&
+              labelSymbol && (
+                <ConversationPane
+                  symbol={labelSymbol}
+                  messages={currentChat?.messages ?? []}
+                  loading={!!currentChat?.loading}
+                />
+              )}
           </div>
 
-          {(selectedView === "portfolio" || selectedSymbol) && (
-            <div className="sticky bottom-0 z-20 bg-background">
-              <ChatBox
-                mode={selectedView}
-                selectedSymbol={selectedSymbol}
-                currentChat={currentChat}
-                inputRows={inputRows}
-                modelMenuRef={modelMenuRef as any}
-                onChangeInput={handleChatInputChange}
-                onSendPrompt={() => void handleSendMessage()}
-                onSendQuickAction={(id) => void handleQuickAction(id)}
-                onToggleModelMenu={toggleModelMenu}
-                onModelChange={handleModelChange}
-              />
-            </div>
-          )}
+          {selectedView !== "research" &&
+            (selectedView === "portfolio" || selectedSymbol) && (
+              <div className="sticky bottom-0 z-20 bg-background">
+                <ChatBox
+                  mode={selectedView}
+                  selectedSymbol={selectedSymbol}
+                  currentChat={currentChat}
+                  inputRows={inputRows}
+                  modelMenuRef={modelMenuRef as any}
+                  onChangeInput={handleChatInputChange}
+                  onSendPrompt={() => void handleSendMessage()}
+                  onSendQuickAction={(id) => void handleQuickAction(id)}
+                  onToggleModelMenu={toggleModelMenu}
+                  onModelChange={handleModelChange}
+                />
+              </div>
+            )}
         </div>
       </section>
     </main>

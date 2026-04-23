@@ -2,7 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import { Button } from "./ui/Button";
-import { TopTabBar } from "./TobTabBar";
+import { TopTabBar } from "./TopTabBar";
 import { useTabs } from "@/app/contexts/TabContext";
 import { usePositionsContext } from "@/app/Providers";
 
