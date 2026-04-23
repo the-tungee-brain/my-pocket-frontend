@@ -37,7 +37,7 @@ export function NavList({
     useSchwabStatus();
 
   const isPortfolio = pathname === "/portfolio";
-  const isResearch = pathname === "/research";
+  const isResearch = pathname.startsWith("/research");
   const activeSymbol = pathname.startsWith("/portfolio/positions/")
     ? pathname.split("/").at(-1)
     : null;
