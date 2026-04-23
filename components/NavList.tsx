@@ -93,7 +93,9 @@ export function NavList({
         <div className="flex min-w-0 flex-1 flex-col">
           <span>Research</span>
         </div>
-        {isResearch && <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />}
+        {isResearch && (
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        )}
       </button>
 
       <button
