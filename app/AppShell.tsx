@@ -129,7 +129,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     setInputRows(MIN_ROWS);
   };
-  console.log(selectedView);
 
   const labelSymbol =
     selectedView === "portfolio" ? "PORTFOLIO" : selectedSymbol;

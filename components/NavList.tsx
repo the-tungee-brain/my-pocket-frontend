@@ -69,39 +69,6 @@ export function NavList({
         type="button"
         disabled={loading}
         onClick={() => {
-          setSelectedView("research");
-          setSelectedSymbol(null);
-          router.replace("/research");
-        }}
-        className={[
-          "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
-          isResearch
-            ? "bg-neutral-800 text-neutral-50 shadow-inner"
-            : "text-neutral-300 hover:bg-neutral-800/60",
-        ].join(" ")}
-      >
-        <span
-          className={[
-            "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
-            isResearch
-              ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-300"
-              : "border-neutral-700 bg-neutral-900/60 text-neutral-300",
-          ].join(" ")}
-        >
-          R
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span>Research</span>
-        </div>
-        {isResearch && (
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-        )}
-      </button>
-
-      <button
-        type="button"
-        disabled={loading}
-        onClick={() => {
           setSelectedView("portfolio");
           setSelectedSymbol(null);
           router.replace("/portfolio");
@@ -131,6 +98,39 @@ export function NavList({
           </span>
         </div>
         {isPortfolio && (
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        )}
+      </button>
+
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => {
+          setSelectedView("research");
+          setSelectedSymbol(null);
+          router.replace("/research");
+        }}
+        className={[
+          "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
+          isResearch
+            ? "bg-neutral-800 text-neutral-50 shadow-inner"
+            : "text-neutral-300 hover:bg-neutral-800/60",
+        ].join(" ")}
+      >
+        <span
+          className={[
+            "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
+            isResearch
+              ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-300"
+              : "border-neutral-700 bg-neutral-900/60 text-neutral-300",
+          ].join(" ")}
+        >
+          R
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span>Research</span>
+        </div>
+        {isResearch && (
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
         )}
       </button>
