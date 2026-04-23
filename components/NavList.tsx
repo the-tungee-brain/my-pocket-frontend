@@ -84,7 +84,7 @@ export function NavList({
           className={[
             "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
             isResearch
-              ? "border-sky-400/60 bg-sky-500/10 text-sky-300"
+              ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-300"
               : "border-neutral-700 bg-neutral-900/60 text-neutral-300",
           ].join(" ")}
         >
