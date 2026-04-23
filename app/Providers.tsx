@@ -13,8 +13,7 @@ import { apiFetch, streamAnalysis } from "@/lib/apiClient";
 import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
 import { Position, SchwabAccounts } from "./types/schwab";
-
-type MainView = "portfolio" | "symbol";
+import { MainView } from "@/components/NavList";
 
 type SymbolChatState = {
   loading: boolean;

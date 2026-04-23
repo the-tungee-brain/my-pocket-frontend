@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { NavList, MainView } from "@/components/NavList";
 
 interface DesktopNavProps {

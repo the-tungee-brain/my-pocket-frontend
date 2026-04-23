@@ -11,8 +11,7 @@ import {
 import { Insights } from "@/components/Insights";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { Position } from "@/app/types/schwab";
-
-type MainView = "portfolio" | "symbol";
+import { MainView } from "./NavList";
 
 interface PositionsLayoutProps {
   loading: boolean;

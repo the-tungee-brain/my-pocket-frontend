@@ -4,6 +4,7 @@ import { RefObject } from "react";
 import { QuickAnalysisBar } from "@/components/QuickAnalysisBar";
 import { Dropdown } from "@/components/Dropdown";
 import { ChatMessage } from "@/components/ConversationPane";
+import { MainView } from "./NavList";
 
 type SymbolChatState = {
   loading: boolean;
@@ -12,8 +13,6 @@ type SymbolChatState = {
   model: string;
   modelMenuOpen: boolean;
 };
-
-type MainView = "portfolio" | "symbol";
 
 const MODEL_OPTIONS = [
   { id: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
