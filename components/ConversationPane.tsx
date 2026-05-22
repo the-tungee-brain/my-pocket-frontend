@@ -44,7 +44,7 @@ export function ConversationPane({
       top: absoluteTop - paddingTop,
       behavior: "smooth",
     });
-  }, [messages.length, messages, symbol]);
+  }, [messages.length, messages]);
 
   if (!symbol) return null;
 

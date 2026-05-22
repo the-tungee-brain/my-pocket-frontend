@@ -61,12 +61,12 @@ export function AccountPositionList({
               </tr>
             </thead>
             <tbody>
-              {positions.map((p, idx) => {
+              {positions.map((p) => {
                 const qty = p.longQuantity - p.shortQuantity;
 
                 return (
                   <tr
-                    key={`${selectedSymbol}-${idx}-${p.longQuantity}-${p.shortQuantity}`}
+                    key={`${p.instrument.symbol}-${p.instrument.cusip}-${p.longQuantity}-${p.shortQuantity}`}
                     className="border-t border-border hover:bg-neutral-800/40"
                   >
                     <td className="hidden w-2/5 px-4 py-2 text-left text-neutral-400 sm:table-cell">

@@ -171,7 +171,7 @@ export function StockChart({
         chartRef.current = null;
       }
     };
-  }, [data, selectedPeriod, selectedInterval]);
+  }, [data]);
 
   useEffect(() => {
     setSelectedPeriod(period);
@@ -262,6 +262,7 @@ export function StockChart({
                 return (
                   <button
                     key={p.label}
+                    type="button"
                     onClick={() => handlePresetClick(p)}
                     className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
                     style={{
@@ -350,6 +351,7 @@ export function StockChart({
             </label>
 
             <button
+              type="button"
               onClick={handleReset}
               className="ml-auto rounded-md border px-2 py-1 text-xs font-medium transition-colors"
               style={{

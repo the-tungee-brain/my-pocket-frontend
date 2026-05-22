@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
 
 type SchwabStatus = {
@@ -16,7 +16,7 @@ export function useSchwabStatus(): SchwabStatus {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
       setError(null);
@@ -31,11 +31,11 @@ export function useSchwabStatus(): SchwabStatus {
       setAuthorized(false);
       setError(e?.message ?? "Error checking Schwab status");
     }
-  };
+  }, [session?.accessToken]);
 
   useEffect(() => {
     fetchStatus();
-  }, [session?.accessToken]);
+  }, [fetchStatus]);
 
   return {
     authorized,

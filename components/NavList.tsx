@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { BriefcaseBusiness, CircleDollarSign, Search } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { apiFetch } from "@/lib/apiClient";
@@ -68,6 +69,7 @@ export function NavList({
       <button
         type="button"
         disabled={loading}
+        aria-current={isPortfolio ? "page" : undefined}
         onClick={() => {
           setSelectedView("portfolio");
           setSelectedSymbol(null);
@@ -89,7 +91,7 @@ export function NavList({
               : "border-neutral-700 bg-neutral-900/60 text-neutral-300",
           ].join(" ")}
         >
-          P
+          <BriefcaseBusiness className="h-3.5 w-3.5" aria-hidden="true" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <span>My portfolio</span>
@@ -105,6 +107,7 @@ export function NavList({
       <button
         type="button"
         disabled={loading}
+        aria-current={isResearch ? "page" : undefined}
         onClick={() => {
           setSelectedView("research");
           setSelectedSymbol(null);
@@ -125,10 +128,13 @@ export function NavList({
               : "border-neutral-700 bg-neutral-900/60 text-neutral-300",
           ].join(" ")}
         >
-          R
+          <Search className="h-3.5 w-3.5" aria-hidden="true" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <span>Research</span>
+          <span className="truncate text-[10px] text-neutral-500">
+            Company snapshots
+          </span>
         </div>
         {isResearch && (
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -149,14 +155,16 @@ export function NavList({
       </div>
 
       {loading && (
-        <div className="px-2 py-2 text-[11px] text-neutral-500">
-          Loading symbols…
+        <div className="space-y-2 px-2 py-2">
+          <div className="h-8 animate-pulse rounded-lg bg-neutral-800/50" />
+          <div className="h-8 animate-pulse rounded-lg bg-neutral-800/40" />
+          <div className="h-8 animate-pulse rounded-lg bg-neutral-800/30" />
         </div>
       )}
 
       {!loading && symbols.length === 0 && (
-        <div className="px-2 py-2 text-[11px] text-neutral-500">
-          No symbols yet. Connect Schwab to load holdings.
+        <div className="rounded-lg border border-dashed border-border bg-background/50 px-3 py-3 text-[11px] text-neutral-500">
+          Connect Schwab to load your holdings here.
         </div>
       )}
 
@@ -169,6 +177,7 @@ export function NavList({
               key={sym}
               type="button"
               disabled={loading}
+              aria-current={isActive ? "page" : undefined}
               onClick={() => {
                 setSelectedView("symbol");
                 setSelectedSymbol(sym);
@@ -183,6 +192,14 @@ export function NavList({
               ].join(" ")}
             >
               <span className="flex items-center gap-2">
+                <CircleDollarSign
+                  className={
+                    isActive
+                      ? "h-3.5 w-3.5 text-emerald-300"
+                      : "h-3.5 w-3.5 text-neutral-500"
+                  }
+                  aria-hidden="true"
+                />
                 <span className="text-xs font-mono">{sym}</span>
               </span>
 

@@ -39,7 +39,9 @@ export function MobileNav({
 
   return (
     <div className="fixed inset-0 z-40 flex md:hidden">
-      <div
+      <button
+        type="button"
+        aria-label="Close mobile navigation"
         className="fixed inset-0 bg-black/40"
         onClick={() => setMobileNavOpen(false)}
       />

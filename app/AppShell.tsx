@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { Menu, Search } from "lucide-react";
+import { useRef, useState } from "react";
+import { ChatBox } from "@/components/ChatBox";
+import { ConversationPane } from "@/components/ConversationPane";
 import { DesktopNav } from "@/components/DesktopNav";
 import { MobileNav } from "@/components/MobileNav";
 import { SchwabConnectCard } from "@/components/SchwabConnectCard";
-import { usePositionsContext } from "./Providers";
-import { ChatBox } from "@/components/ChatBox";
-import { ConversationPane } from "@/components/ConversationPane";
 import { Button } from "@/components/ui/Button";
 import { useTabs } from "./contexts/TabContext";
+import { usePositionsContext } from "./Providers";
 
 const MIN_ROWS = 1;
 const MAX_ROWS = 24;
@@ -34,7 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [inputRows, setInputRows] = useState(MIN_ROWS);
-  const modelMenuRef = useState<HTMLDivElement | null>(null)[0];
+  const modelMenuRef = useRef<HTMLDivElement | null>(null);
 
   const activeChatKey =
     selectedView === "portfolio"
@@ -132,6 +133,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const labelSymbol =
     selectedView === "portfolio" ? "PORTFOLIO" : selectedSymbol;
+  const headerLabel =
+    selectedView === "portfolio"
+      ? "Portfolio"
+      : selectedView === "research"
+        ? "Research"
+        : (selectedSymbol ?? "Position");
 
   return (
     <main className="flex min-h-screen text-neutral-50">
@@ -156,20 +163,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       />
 
       <section className="flex min-h-screen flex-1 flex-col">
-        <div className="sticky top-0 z-30 border-b border-border bg-secondary">
-          <div className="flex items-center justify-between px-4 md:hidden space-x-4">
+        <div className="sticky top-0 z-30 border-b border-border bg-secondary/95 backdrop-blur">
+          <div className="flex min-h-14 items-center justify-between gap-3 px-4">
             <Button
               onClick={() => setMobileNavOpen(true)}
               size="xs"
               variant="ghost"
-              className="text-[11px] text-neutral-400 hover:text-neutral-100"
+              aria-label="Open navigation"
+              className="text-neutral-400 hover:text-neutral-100 md:hidden"
             >
-              Menu
+              <Menu className="h-4 w-4" aria-hidden="true" />
             </Button>
-            <SchwabConnectCard />
-          </div>
 
-          <div className="hidden px-4 md:block">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="truncate text-sm font-semibold text-foreground">
+                  {headerLabel}
+                </span>
+                {selectedView === "research" && (
+                  <Search
+                    className="h-3.5 w-3.5 text-neutral-500"
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+              <div className="truncate text-[11px] text-neutral-500">
+                {selectedView === "portfolio"
+                  ? `${symbols.length} tracked ${symbols.length === 1 ? "symbol" : "symbols"}`
+                  : selectedView === "research"
+                    ? "Find a symbol and open its snapshot"
+                    : "Position details and assistant context"}
+              </div>
+            </div>
+
             <SchwabConnectCard />
           </div>
         </div>
@@ -197,7 +223,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   selectedSymbol={selectedSymbol}
                   currentChat={currentChat}
                   inputRows={inputRows}
-                  modelMenuRef={modelMenuRef as any}
+                  modelMenuRef={modelMenuRef}
                   onChangeInput={handleChatInputChange}
                   onSendPrompt={() => void handleSendMessage()}
                   onSendQuickAction={(id) => void handleQuickAction(id)}

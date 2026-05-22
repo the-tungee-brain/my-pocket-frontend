@@ -172,7 +172,10 @@ export function PortfolioOverview() {
               </div>
             </div>
           </div>
-          <button className="hidden rounded-full border border-neutral-700 bg-neutral-900/60 px-2.5 py-1 text-[11px] text-neutral-300 transition hover:border-neutral-500 hover:bg-neutral-800/80 sm:inline-flex">
+          <button
+            type="button"
+            className="hidden rounded-full border border-neutral-700 bg-neutral-900/60 px-2.5 py-1 text-[11px] text-neutral-300 transition hover:border-neutral-500 hover:bg-neutral-800/80 sm:inline-flex"
+          >
             Regenerate
           </button>
         </div>

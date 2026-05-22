@@ -92,9 +92,9 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
 
         <div className="flex flex-wrap gap-2">
           {data
-            ? data.insights.map((insight, idx) => (
+            ? data.insights.map((insight) => (
                 <div
-                  key={idx}
+                  key={insight}
                   className="flex items-start gap-2 rounded-lg bg-black/20 px-3 py-2 text-xs text-white/80"
                 >
                   <span className="mt-0.75 inline-block h-1.5 w-1.5 rounded-full bg-emerald-300" />
@@ -115,9 +115,9 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
               Risks
             </div>
             <div className="flex flex-wrap gap-2">
-              {data.risks.map((risk, idx) => (
+              {data.risks.map((risk) => (
                 <div
-                  key={idx}
+                  key={risk}
                   className="flex items-start gap-2 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-100"
                 >
                   <span className="mt-0.75 inline-block h-1.5 w-1.5 rounded-full bg-rose-300" />

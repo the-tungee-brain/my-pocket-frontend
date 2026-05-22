@@ -1,10 +1,11 @@
 "use client";
 
-import { RefObject } from "react";
-import { QuickAnalysisBar } from "@/components/QuickAnalysisBar";
+import { ChevronDown, SendHorizontal, Sparkles } from "lucide-react";
+import type { RefObject } from "react";
+import type { ChatMessage } from "@/components/ConversationPane";
 import { Dropdown } from "@/components/Dropdown";
-import { ChatMessage } from "@/components/ConversationPane";
-import { MainView } from "./NavList";
+import { QuickAnalysisBar } from "@/components/QuickAnalysisBar";
+import type { MainView } from "./NavList";
 
 type SymbolChatState = {
   loading: boolean;
@@ -50,10 +51,17 @@ export function ChatBox({
       : selectedSymbol
         ? `your ${selectedSymbol} position`
         : "this position";
+  const inputValue = currentChat?.input ?? "";
+  const canSend = !currentChat?.loading && inputValue.trim().length > 0;
 
   return (
-    <div className="px-4 pb-4 scrollbar-dark bg-background">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 rounded-2xl border border-border bg-secondary/95 p-4 backdrop-blur">
+    <div className="bg-gradient-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-border bg-secondary/95 p-3 shadow-lg shadow-black/10 backdrop-blur">
+        <div className="flex items-center gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+          <Sparkles className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
+          Assistant prompts
+        </div>
+
         <QuickAnalysisBar
           symbol={mode === "portfolio" ? "PORTFOLIO" : (selectedSymbol ?? "")}
           loading={!!currentChat?.loading}
@@ -69,9 +77,10 @@ export function ChatBox({
         >
           <textarea
             rows={inputRows}
-            className="w-full resize-none bg-transparent text-base leading-relaxed tracking-wide text-foreground outline-none placeholder:text-neutral-500"
+            aria-label={`Ask about ${placeholderLabel}`}
+            className="max-h-52 min-h-12 w-full resize-none rounded-xl bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground outline-none ring-1 ring-transparent transition placeholder:text-neutral-500 focus:ring-border"
             placeholder={`Ask anything about ${placeholderLabel}…`}
-            value={currentChat?.input ?? ""}
+            value={inputValue}
             onChange={(e) => onChangeInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -86,8 +95,10 @@ export function ChatBox({
             }}
           />
 
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex-1" />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-[11px] text-neutral-500">
+              Enter to send · Shift Enter for a new line
+            </div>
 
             <div
               ref={modelMenuRef}
@@ -111,7 +122,10 @@ export function ChatBox({
                     (m) => m.id === (currentChat?.model || "gpt-4.1-mini"),
                   )?.label ?? "GPT-4.1 Mini"}
                 </span>
-                <span className="text-[10px] text-neutral-400">▾</span>
+                <ChevronDown
+                  className="h-3 w-3 text-neutral-400"
+                  aria-hidden="true"
+                />
               </button>
 
               <Dropdown
@@ -124,12 +138,17 @@ export function ChatBox({
 
               <button
                 type="submit"
-                disabled={
-                  currentChat?.loading || !(currentChat?.input ?? "").trim()
-                }
-                className="ml-1 rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-neutral-900 disabled:opacity-60"
+                disabled={!canSend}
+                className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-neutral-900 transition hover:opacity-90 disabled:opacity-60"
               >
-                {currentChat?.loading ? "Analyzing…" : "Send"}
+                {currentChat?.loading ? (
+                  "Analyzing…"
+                ) : (
+                  <>
+                    Send
+                    <SendHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+                  </>
+                )}
               </button>
             </div>
           </div>

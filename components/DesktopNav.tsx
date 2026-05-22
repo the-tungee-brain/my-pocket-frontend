@@ -20,7 +20,14 @@ export function DesktopNav({
   setSelectedView,
 }: DesktopNavProps) {
   return (
-    <aside className="sticky top-0 hidden h-screen w-48 border-r border-border bg-secondary p-3 text-sm text-foreground md:flex md:flex-col">
+    <aside className="sticky top-0 hidden h-screen w-64 border-r border-border bg-secondary p-3 text-sm text-foreground md:flex md:flex-col">
+      <div className="mb-3 rounded-xl border border-border bg-background/60 px-3 py-3">
+        <div className="text-sm font-semibold tracking-tight">My Pocket</div>
+        <div className="mt-0.5 text-[11px] text-neutral-500">
+          Portfolio workspace
+        </div>
+      </div>
+
       <NavList
         loading={loading}
         symbols={symbols}
