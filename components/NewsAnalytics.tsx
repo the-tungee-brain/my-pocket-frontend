@@ -48,6 +48,21 @@ function overallSentimentColor(s: OverallSentiment) {
   }
 }
 
+function formatMetadataValue(value: string | null | undefined) {
+  if (!value) return "Not available";
+
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function actionabilityTone(score: number | null | undefined) {
+  if (score == null) return "text-neutral-300";
+  if (score >= 8) return "text-emerald-300";
+  if (score >= 5) return "text-amber-300";
+  return "text-neutral-300";
+}
+
 type Props = {
   analytics: StockNewsView | null;
   isLoading: boolean;
@@ -61,6 +76,12 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
   const sentimentClass = data
     ? overallSentimentColor(data.overall_sentiment)
     : "bg-slate-700/40 text-slate-200 border border-slate-600/40";
+  const actionabilityScore = data?.actionability_score ?? null;
+  const actionabilityPercent =
+    actionabilityScore == null
+      ? 0
+      : Math.max(0, Math.min(100, actionabilityScore * 10));
+
   return (
     <div className="mt-4 flex w-full flex-col gap-4">
       <div
@@ -89,6 +110,51 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
             <span className="inline-block h-4 w-3/4 animate-pulse rounded bg-white/10" />
           )}
         </p>
+
+        <div className="mb-3 grid gap-2 border-y border-white/10 py-3 sm:grid-cols-3">
+          <div className="rounded-lg bg-black/20 px-3 py-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-white/50">
+              Dominant driver
+            </div>
+            <div className="mt-1 text-xs font-medium text-white/90">
+              {data
+                ? formatMetadataValue(data.dominant_driver)
+                : "Loading..."}
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-black/20 px-3 py-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-white/50">
+              Impact horizon
+            </div>
+            <div className="mt-1 text-xs font-medium text-white/90">
+              {data
+                ? formatMetadataValue(data.market_impact_horizon)
+                : "Loading..."}
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-black/20 px-3 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-white/50">
+                Actionability
+              </div>
+              <div
+                className={`text-xs font-semibold ${actionabilityTone(
+                  actionabilityScore,
+                )}`}
+              >
+                {actionabilityScore == null ? "N/A" : actionabilityScore}
+              </div>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-current transition-all"
+                style={{ width: `${actionabilityPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
 
         <div className="flex flex-wrap gap-2">
           {data

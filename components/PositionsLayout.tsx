@@ -9,7 +9,6 @@ import {
   PositionMap,
 } from "@/components/AccountPositionList";
 import { Insights } from "@/components/Insights";
-import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { Position } from "@/app/types/schwab";
 import { MainView } from "./NavList";
 
@@ -107,8 +106,6 @@ export function PositionsLayout({
               <>
                 {selectedView === "portfolio" ? (
                   <>
-                    {/* <PortfolioOverview /> */}
-
                     <Insights
                       symbol={null}
                       positions={allPositions}

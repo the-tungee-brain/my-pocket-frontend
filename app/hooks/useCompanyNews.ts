@@ -32,6 +32,9 @@ export type StockNewsView = {
   summary: string;
   insights: string[];
   risks: string[];
+  dominant_driver?: string | null;
+  market_impact_horizon?: string | null;
+  actionability_score?: number | null;
   items: EnrichedNewsItem[];
 };
 
