@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertTriangle, Scale, Sparkles } from "lucide-react";
-import type { ProactiveAlert } from "@/app/types/intelligence";
+import { AlertTriangle, Scale, Sparkles, X } from "lucide-react";
+import type { AttentionItem, ProactiveAlert } from "@/app/types/intelligence";
 import type { SuggestedAnalysisAction } from "@/app/types/schwab";
 import {
   alertToQuickActionId,
@@ -17,8 +17,11 @@ import { cn } from "@/lib/utils";
 type Props = {
   taxItems: TaxAlertItem[];
   alerts: ProactiveAlert[];
+  attentionItems?: AttentionItem[];
   suggestedActions?: SuggestedAnalysisAction[];
   onRunAlert?: (alert: ProactiveAlert) => void;
+  onRunAttentionItem?: (item: AttentionItem) => void;
+  onDismissAttention?: (alertId: string) => void;
   onRunTax?: (item: TaxAlertItem) => void;
   onRunActionId?: (actionId: string) => void;
   className?: string;
@@ -63,18 +66,27 @@ function AlertChip({
 export function PortfolioAttentionSection({
   taxItems,
   alerts,
+  attentionItems = [],
   suggestedActions = [],
   onRunAlert,
+  onRunAttentionItem,
+  onDismissAttention,
   onRunTax,
   onRunActionId,
   className,
 }: Props) {
-  const generalAlerts = dedupeAlerts(filterNonTaxAlerts(alerts)).slice(0, 6);
+  const useAttentionQueue = attentionItems.length > 0;
+  const generalAlerts = useAttentionQueue
+    ? []
+    : dedupeAlerts(filterNonTaxAlerts(alerts)).slice(0, 6);
+  const queueItems = useAttentionQueue ? attentionItems.slice(0, 8) : [];
 
   const alertActionKeys = new Set(
-    [...taxItems.map((item) => item.actionId), ...generalAlerts.map(alertToQuickActionId)].map(
-      (id) => id.toLowerCase(),
-    ),
+    [
+      ...taxItems.map((item) => item.actionId),
+      ...generalAlerts.map(alertToQuickActionId),
+      ...queueItems.map((item) => item.action),
+    ].map((id) => id.toLowerCase()),
   );
 
   const extraSuggestions = pickSuggestedActions(
@@ -86,12 +98,29 @@ export function PortfolioAttentionSection({
   });
 
   const hasContent =
-    taxItems.length > 0 || generalAlerts.length > 0 || extraSuggestions.length > 0;
+    taxItems.length > 0 ||
+    generalAlerts.length > 0 ||
+    queueItems.length > 0 ||
+    extraSuggestions.length > 0;
 
   if (!hasContent) return null;
 
   const handleAlertChip = (alert: ProactiveAlert) => {
     onRunAlert?.(alert);
+  };
+
+  const handleAttentionItem = (item: AttentionItem) => {
+    if (onRunAttentionItem) {
+      onRunAttentionItem(item);
+      return;
+    }
+    onRunAlert?.({
+      action: item.action,
+      label: item.label,
+      reason: item.reason,
+      priority: item.priority,
+      symbol: item.symbol,
+    });
   };
 
   return (
@@ -161,8 +190,66 @@ export function PortfolioAttentionSection({
         </div>
       )}
 
-      {(generalAlerts.length > 0 || extraSuggestions.length > 0) && (
+      {(queueItems.length > 0 || generalAlerts.length > 0 || extraSuggestions.length > 0) && (
         <div className="space-y-3 px-4 py-3">
+          {queueItems.length > 0 && (
+            <div>
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+                Priority queue
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {queueItems.map((item) => {
+                  const actionId = item.action;
+                  const quickAction = findQuickAction(actionId);
+                  const Icon = quickAction?.icon ?? Sparkles;
+
+                  return (
+                    <div
+                      key={`${item.action}-${item.symbol ?? "portfolio"}-${item.priority}-${item.alertId ?? "current"}`}
+                      className="relative rounded-xl border border-border bg-background px-3 py-2"
+                    >
+                      {item.alertId && onDismissAttention && (
+                        <button
+                          type="button"
+                          aria-label="Dismiss alert"
+                          onClick={() => onDismissAttention(item.alertId!)}
+                          className="absolute right-2 top-2 rounded-md p-1 text-muted transition hover:bg-muted-bg hover:text-foreground"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        disabled={!onRunAttentionItem && !onRunAlert}
+                        title={item.reason}
+                        onClick={() => handleAttentionItem(item)}
+                        className="inline-flex max-w-full flex-col items-start gap-0.5 pr-6 text-left disabled:opacity-60"
+                      >
+                        <span className="inline-flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-foreground">
+                          <Icon className="h-3.5 w-3.5 shrink-0 text-accent-strong" aria-hidden />
+                          {item.label}
+                          {item.symbol && (
+                            <span className="font-mono text-accent-strong">
+                              {item.symbol}
+                            </span>
+                          )}
+                          {item.source === "historical" && item.daysActive != null && (
+                            <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
+                              {item.daysActive}d
+                            </span>
+                          )}
+                        </span>
+                        <span className="line-clamp-2 text-[11px] text-muted">
+                          {item.reason}
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {generalAlerts.length > 0 && (
             <div>
               <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">

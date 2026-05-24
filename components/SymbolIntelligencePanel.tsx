@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   AlertTriangle,
+  ArrowRightLeft,
   CalendarDays,
   FileText,
   GitCompareArrows,
@@ -19,6 +20,7 @@ import type {
 } from "@/app/types/intelligence";
 import {
   buildOptionCandidatePrompt,
+  buildRollSuggestionPrompt,
   hasSymbolIntelligenceContent,
   signalSeverityClass,
   signalSeverityLabel,
@@ -99,6 +101,7 @@ export function SymbolIntelligencePanel({
   const peers = intelligence?.peerComparison;
   const timeline = intelligence?.eventTimeline ?? [];
   const options = intelligence?.optionsScorecard;
+  const rollSuggestions = intelligence?.rollSuggestions ?? [];
   const research = intelligence?.cachedResearch;
   const symbol = intelligence?.symbol;
 
@@ -340,6 +343,50 @@ export function SymbolIntelligencePanel({
                   </li>
                 );
               })}
+            </ul>
+          </div>
+        )}
+
+        {!!rollSuggestions.length && symbol && (
+          <div>
+            <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+              <ArrowRightLeft className="h-3.5 w-3.5" aria-hidden />
+              Roll suggestions
+            </div>
+            <ul className="space-y-2">
+              {rollSuggestions.slice(0, compact ? 2 : 4).map((suggestion) => (
+                <li
+                  key={`${suggestion.side}-${suggestion.currentStrike}-${suggestion.suggestedStrike}`}
+                  className="rounded-xl border border-border bg-background/60 px-3 py-2.5"
+                >
+                  <p className="text-sm font-medium text-foreground">
+                    {formatUsd(suggestion.currentStrike, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    {formatStrikeSide(suggestion.side)} →{" "}
+                    {formatUsd(suggestion.suggestedStrike, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    · {formatExpiration(suggestion.suggestedExpiration)}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted">
+                    {suggestion.rationale}
+                  </p>
+                  {onAnalyzeOption && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onAnalyzeOption(buildRollSuggestionPrompt(symbol, suggestion))
+                      }
+                      className="mt-2 inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
+                    >
+                      Analyze roll
+                    </button>
+                  )}
+                </li>
+              ))}
             </ul>
           </div>
         )}

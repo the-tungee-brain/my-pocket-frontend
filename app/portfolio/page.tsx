@@ -1,20 +1,21 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { usePositionsContext } from "../Providers";
 import { useTabs } from "@/app/contexts/TabContext";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { PortfolioAttentionSection } from "@/components/PortfolioAttentionSection";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
+import { PortfolioChangesSection } from "@/components/PortfolioChangesSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
 import { NewsHintBanner } from "@/components/NewsHintBanner";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { usePortfolioBrief } from "@/app/hooks/usePortfolioBrief";
-import type { ProactiveAlert } from "@/app/types/intelligence";
+import { useMorningBrief } from "@/app/hooks/useMorningBrief";
+import type { AttentionItem, ProactiveAlert } from "@/app/types/intelligence";
 import {
   alertToQuickActionId,
   buildLocalPortfolioBrief,
@@ -23,6 +24,7 @@ import {
   mergeDisplayAlerts,
 } from "@/lib/intelligence";
 import type { TaxAlertItem } from "@/lib/intelligence";
+import { dismissPortfolioAlert } from "@/lib/apiClient";
 
 export default function PortfolioPage() {
   const router = useRouter();
@@ -44,43 +46,30 @@ export default function PortfolioPage() {
   } = usePositionsContext();
   const { activeTab } = useTabs();
 
-  const localBrief = useMemo(
-    () => buildLocalPortfolioBrief(allPositions, account, proactiveAlerts),
-    [allPositions, account, proactiveAlerts],
-  );
-
+  const localBrief = buildLocalPortfolioBrief(allPositions, account, proactiveAlerts);
   const seedBrief = accountBrief ?? localBrief;
 
   const {
-    brief,
+    morningBrief,
+    portfolioBrief: fetchedBrief,
     loading: briefLoading,
     error: briefError,
     lastUpdated: briefLastUpdated,
-    refetch: refetchBrief,
-  } = usePortfolioBrief(sessionAccessToken, {
+    refetch: refetchMorningBrief,
+  } = useMorningBrief(sessionAccessToken, {
     enabled: !loading && allPositions.length > 0,
     initialBrief: seedBrief,
   });
 
-  const displayBrief = brief ?? seedBrief;
+  const displayBrief = fetchedBrief ?? seedBrief;
 
-  const mergedAlerts = useMemo(
-    () => mergeDisplayAlerts(proactiveAlerts, displayBrief),
-    [proactiveAlerts, displayBrief],
-  );
+  const mergedAlerts = mergeDisplayAlerts(proactiveAlerts, displayBrief);
 
-  const symbolAlertMap = useMemo(
-    () => buildSymbolAlertMap(mergedAlerts, displayBrief),
-    [mergedAlerts, displayBrief],
-  );
+  const symbolAlertMap = buildSymbolAlertMap(mergedAlerts, displayBrief);
 
-  const taxItems = useMemo(
-    () =>
-      collectTaxAlertItems(
-        mergedAlerts,
-        recentActivity?.suggestedActions ?? [],
-      ),
-    [mergedAlerts, recentActivity?.suggestedActions],
+  const taxItems = collectTaxAlertItems(
+    mergedAlerts,
+    recentActivity?.suggestedActions ?? [],
   );
 
   const showNewsHint =
@@ -121,10 +110,36 @@ export default function PortfolioPage() {
     [handleSuggestedAction, positionMap, router, sendQuickAction],
   );
 
+  const handleRunAttentionItem = useCallback(
+    (item: AttentionItem) => {
+      handleRunAlert({
+        action: item.action,
+        label: item.label,
+        reason: item.reason,
+        priority: item.priority,
+        symbol: item.symbol,
+      });
+    },
+    [handleRunAlert],
+  );
+
+  const handleDismissAttention = useCallback(
+    async (alertId: string) => {
+      if (!sessionAccessToken) return;
+      try {
+        await dismissPortfolioAlert(sessionAccessToken, alertId);
+        refetchMorningBrief();
+      } catch {
+        // ignore — user can retry refresh
+      }
+    },
+    [refetchMorningBrief, sessionAccessToken],
+  );
+
   const handleRefreshAll = useCallback(async () => {
     await refreshPositions(true);
-    refetchBrief();
-  }, [refreshPositions, refetchBrief]);
+    refetchMorningBrief();
+  }, [refreshPositions, refetchMorningBrief]);
 
   const handleGoDeeper = useCallback(() => {
     void sendQuickAction({
@@ -157,6 +172,7 @@ export default function PortfolioPage() {
 
   const showContent = !loading && allPositions.length > 0;
   const showBriefSection = showContent && sessionAccessToken;
+  const attentionQueue = morningBrief?.attentionQueue ?? [];
 
   return (
     <>
@@ -180,25 +196,35 @@ export default function PortfolioPage() {
           className="mb-4"
           taxItems={taxItems}
           alerts={mergedAlerts}
+          attentionItems={attentionQueue}
           suggestedActions={recentActivity?.suggestedActions ?? []}
           onRunAlert={handleRunAlert}
+          onRunAttentionItem={handleRunAttentionItem}
+          onDismissAttention={handleDismissAttention}
           onRunTax={handleTaxAlert}
           onRunActionId={handleSuggestedAction}
         />
       )}
 
       {showBriefSection && (
-        <PortfolioBriefSection
-          className="mb-4"
-          brief={displayBrief}
-          fallbackAlerts={proactiveAlerts}
-          loading={briefLoading && !displayBrief}
-          error={displayBrief ? null : briefError}
-          lastUpdated={briefLastUpdated}
-          onRefresh={handleRefreshAll}
-          onGoDeeper={handleGoDeeper}
-          hideSuggestedActions
-        />
+        <>
+          <PortfolioChangesSection
+            className="mb-4"
+            changes={morningBrief?.changes}
+            loading={briefLoading && !morningBrief}
+          />
+          <PortfolioBriefSection
+            className="mb-4"
+            brief={displayBrief}
+            fallbackAlerts={proactiveAlerts}
+            loading={briefLoading && !displayBrief}
+            error={displayBrief ? null : briefError}
+            lastUpdated={briefLastUpdated}
+            onRefresh={handleRefreshAll}
+            onGoDeeper={handleGoDeeper}
+            hideSuggestedActions
+          />
+        </>
       )}
 
       <PortfolioOverview

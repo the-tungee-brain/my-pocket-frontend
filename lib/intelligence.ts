@@ -1,5 +1,6 @@
 import type {
   IntelligenceSignal,
+  OptionRollSuggestion,
   OptionsStrikeCandidate,
   ProactiveAlert,
   PortfolioIntelligence,
@@ -170,6 +171,25 @@ export function buildOptionCandidatePrompt(
   );
 }
 
+export function buildRollSuggestionPrompt(
+  symbol: string,
+  suggestion: OptionRollSuggestion,
+): string {
+  const side = suggestion.side === "call" ? "call" : "put";
+  const credit =
+    suggestion.estimatedCredit != null
+      ? ` Estimated net credit ~$${suggestion.estimatedCredit.toFixed(2)}/contract.`
+      : "";
+
+  return (
+    `Should I roll my short ${side} on ${symbol.toUpperCase()} from ` +
+    `$${suggestion.currentStrike} (${suggestion.currentExpiration.slice(0, 10)}) to ` +
+    `$${suggestion.suggestedStrike} (${suggestion.suggestedExpiration.slice(0, 10)})?` +
+    credit +
+    ` ${suggestion.rationale}`
+  );
+}
+
 export function isTaxAction(action: string): boolean {
   const normalized = action.toLowerCase();
   return normalized.includes("tax");
@@ -280,6 +300,7 @@ export function hasSymbolIntelligenceContent(
     (intelligence.optionsScorecard?.coveredCallCandidates?.length ?? 0) > 0 ||
     (intelligence.optionsScorecard?.cspCandidates?.length ?? 0) > 0 ||
     (intelligence.optionsScorecard?.assignmentFlags?.length ?? 0) > 0 ||
+    (intelligence.rollSuggestions?.length ?? 0) > 0 ||
     !!intelligence.cachedResearch?.investmentThesis ||
     (intelligence.cachedResearch?.keyStrengths?.length ?? 0) > 0 ||
     (intelligence.cachedResearch?.keyRisks?.length ?? 0) > 0

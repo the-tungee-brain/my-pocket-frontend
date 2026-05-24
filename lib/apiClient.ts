@@ -1,7 +1,12 @@
 import { API_BASE_URL } from "./config";
 import { isAbortError } from "./isAbortError";
 import type { AccountPositionsResponse, RecentOrdersResponse } from "@/app/types/schwab";
-import type { PortfolioIntelligence, SymbolIntelligence } from "@/app/types/intelligence";
+import type {
+  MorningBrief,
+  PortfolioChanges,
+  PortfolioIntelligence,
+  SymbolIntelligence,
+} from "@/app/types/intelligence";
 import type {
   ChatSessionMessagesResponse,
   ChatSessionsResponse,
@@ -59,6 +64,58 @@ export async function fetchPortfolioBrief(
   }
 
   return res.json() as Promise<PortfolioIntelligence>;
+}
+
+export async function fetchMorningBrief(
+  accessToken: string,
+  options: { refresh?: boolean } = {},
+): Promise<MorningBrief> {
+  const res = await apiFetch(
+    `/portfolio/morning-brief${buildQuery({ refresh: options.refresh ? true : undefined })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    const error = new Error(
+      res.status === 404
+        ? "Morning brief endpoint is not available."
+        : `Failed to load morning brief (${res.status})`,
+    ) as Error & { status?: number };
+    error.status = res.status;
+    throw error;
+  }
+
+  return res.json() as Promise<MorningBrief>;
+}
+
+export async function fetchPortfolioChanges(
+  accessToken: string,
+  options: { compareDays?: number } = {},
+): Promise<PortfolioChanges> {
+  const res = await apiFetch(
+    `/portfolio/changes${buildQuery({ compareDays: options.compareDays })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load portfolio changes (${res.status})`);
+  }
+
+  return res.json() as Promise<PortfolioChanges>;
+}
+
+export async function dismissPortfolioAlert(
+  accessToken: string,
+  alertId: string,
+): Promise<void> {
+  const res = await apiFetch(`/portfolio/alerts/${alertId}/dismiss`, {
+    method: "POST",
+    accessToken,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to dismiss alert (${res.status})`);
+  }
 }
 
 export async function fetchSymbolIntelligence(

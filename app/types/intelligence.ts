@@ -100,7 +100,62 @@ export type SymbolIntelligence = {
   peerComparison?: PeerComparison | null;
   eventTimeline?: EventTimelineEntry[];
   optionsScorecard?: OptionsScorecard | null;
+  rollSuggestions?: OptionRollSuggestion[];
   cachedResearch?: CachedResearchSnippet | null;
   dataGaps?: string[];
   partial?: boolean;
+};
+
+export type OptionRollSuggestion = {
+  side: "call" | "put";
+  currentStrike: number;
+  currentExpiration: string;
+  suggestedStrike: number;
+  suggestedExpiration: string;
+  currentDelta?: number | null;
+  suggestedDelta?: number | null;
+  estimatedCredit?: number | null;
+  rationale: string;
+  action: "roll" | "close" | "hold";
+};
+
+export type PositionWeightChange = {
+  symbol: string;
+  previousWeightPct: number;
+  currentWeightPct: number;
+  changePct: number;
+};
+
+export type PortfolioChanges = {
+  fromDate?: string | null;
+  toDate?: string | null;
+  liquidationValueChange?: number | null;
+  liquidationValueChangePct?: number | null;
+  newSymbols: string[];
+  removedSymbols: string[];
+  weightChanges: PositionWeightChange[];
+  summary?: string | null;
+};
+
+export type AttentionItem = {
+  action: string;
+  label: string;
+  symbol?: string | null;
+  reason: string;
+  priority: number;
+  source: "current" | "historical";
+  firstSeenAt?: string | null;
+  daysActive?: number | null;
+  alertId?: string | null;
+};
+
+export type MorningBrief = {
+  generatedAt: string;
+  macroRegime?: string | null;
+  digest?: PortfolioDigest | null;
+  changes?: PortfolioChanges | null;
+  signals: IntelligenceSignal[];
+  topAlerts: ProactiveAlert[];
+  attentionQueue: AttentionItem[];
+  deliveryReady: boolean;
 };

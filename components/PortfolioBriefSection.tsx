@@ -113,10 +113,10 @@ export function PortfolioBriefSection({
           </div>
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-foreground">
-              Portfolio brief
+              Morning brief
             </h2>
             <p className="text-[11px] text-muted">
-              Macro context, sector mix, and what to watch today
+              Macro context, what changed, sector mix, and what to watch today
             </p>
             {lastUpdated != null && (
               <p className="mt-0.5 text-[10px] text-muted">
