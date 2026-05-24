@@ -6,6 +6,7 @@ import {
   CandlestickSeries,
   HistogramSeries,
 } from "lightweight-charts";
+import { cn } from "@/lib/utils";
 
 type StockData = {
   date: string;
@@ -24,6 +25,8 @@ type Props = {
   onPeriodChange?: (period: string) => void;
   onIntervalChange?: (interval: string) => void;
   loading?: boolean;
+  hideHeader?: boolean;
+  className?: string;
 };
 
 const PRESETS = [
@@ -55,6 +58,8 @@ export function StockChart({
   onPeriodChange,
   onIntervalChange,
   loading = false,
+  hideHeader = false,
+  className,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
@@ -195,43 +200,52 @@ export function StockChart({
   const showOverlay = loading || !data || data.length === 0;
 
   return (
-    <div className="w-full max-w-3xl mx-auto mt-4">
-      <div className="mb-2 flex items-center justify-between">
-        <div>
-          <h2
-            className="text-lg font-semibold tracking-tight"
-            style={{ color: "var(--color-foreground)" }}
-          >
-            {symbol}
-          </h2>
-          <p
-            className="text-xs opacity-70"
-            style={{ color: "var(--color-foreground)" }}
-          >
-            {selectedPeriod.toUpperCase()} • {selectedInterval.toUpperCase()}
-          </p>
-        </div>
+    <div className={cn("mx-auto mt-4 w-full max-w-3xl", className)}>
+      {!hideHeader && (
+        <div className="mb-2 flex items-center justify-between">
+          <div>
+            <h2
+              className="text-lg font-semibold tracking-tight"
+              style={{ color: "var(--color-foreground)" }}
+            >
+              {symbol}
+            </h2>
+            <p
+              className="text-xs opacity-70"
+              style={{ color: "var(--color-foreground)" }}
+            >
+              {selectedPeriod.toUpperCase()} • {selectedInterval.toUpperCase()}
+            </p>
+          </div>
 
-        {currentPreset && (
-          <span
-            className="rounded-full px-2 py-1 text-[10px] font-medium"
-            style={{
-              backgroundColor: "var(--color-secondary)",
-              color: "var(--color-foreground)",
-              border: "1px solid var(--color-border)",
-            }}
-          >
-            {currentPreset} preset
-          </span>
-        )}
-      </div>
+          {currentPreset && (
+            <span
+              className="rounded-full px-2 py-1 text-[10px] font-medium"
+              style={{
+                backgroundColor: "var(--color-secondary)",
+                color: "var(--color-foreground)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              {currentPreset} preset
+            </span>
+          )}
+        </div>
+      )}
 
       <div
-        className="relative rounded-2xl border shadow-sm"
-        style={{
-          borderColor: "var(--color-border)",
-          backgroundColor: "var(--color-secondary)",
-        }}
+        className={cn(
+          "relative rounded-2xl border shadow-sm",
+          hideHeader && "border-0 bg-transparent shadow-none",
+        )}
+        style={
+          hideHeader
+            ? undefined
+            : {
+                borderColor: "var(--color-border)",
+                backgroundColor: "var(--color-secondary)",
+              }
+        }
       >
         <div
           ref={containerRef}

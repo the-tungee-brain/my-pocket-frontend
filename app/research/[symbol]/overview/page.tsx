@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { ResearchStockChart } from "../ResearchStockChart";
 import { SummarySection } from "../SummarySection";
 import { PerformanceSnapshot } from "../PerformanceSnapshot";
 
@@ -12,6 +13,8 @@ export default async function OverviewPage({ params }: PageProps) {
 
   return (
     <>
+      <ResearchStockChart symbol={symbol} />
+
       <ResearchSectionCard
         title="Big picture"
         description="Plain-language overview and AI sentiment"
