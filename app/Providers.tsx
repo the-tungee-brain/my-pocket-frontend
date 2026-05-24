@@ -26,6 +26,7 @@ import {
   AssignmentRiskSummary,
   RecentActivitySummary,
 } from "./types/schwab";
+import type { ProactiveAlert } from "./types/intelligence";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
 import {
   loadChatHistoryForKey,
@@ -85,6 +86,7 @@ type PositionsContextValue = {
   cashSecuredPutSummary: CashSecuredPutSummary | null;
   assignmentRiskSummary: AssignmentRiskSummary | null;
   recentActivity: RecentActivitySummary | null;
+  proactiveAlerts: ProactiveAlert[];
   refreshPositions: (refresh?: boolean) => Promise<void>;
 };
 
@@ -177,6 +179,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     useState<AssignmentRiskSummary | null>(null);
   const [recentActivity, setRecentActivity] =
     useState<RecentActivitySummary | null>(null);
+  const [proactiveAlerts, setProactiveAlerts] = useState<ProactiveAlert[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [selectedView, setSelectedView] = useState<MainView>("research");
   const [loading, setLoading] = useState(false);
@@ -214,6 +217,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       );
       setAssignmentRiskSummary(data.assignmentRiskSummary ?? null);
       setRecentActivity(data.recentActivity ?? null);
+      setProactiveAlerts(data.proactiveAlerts ?? []);
 
       const symbolsOnly = Object.keys(map).sort();
       setSelectedSymbol((current) =>
@@ -241,6 +245,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         setCashSecuredPutSummary(null);
         setAssignmentRiskSummary(null);
         setRecentActivity(null);
+        setProactiveAlerts([]);
         setSelectedSymbol(null);
       } finally {
         setLoading(false);
@@ -780,6 +785,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       cashSecuredPutSummary,
       assignmentRiskSummary,
       recentActivity,
+      proactiveAlerts,
       refreshPositions,
     }),
     [
@@ -802,6 +808,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       cashSecuredPutSummary,
       assignmentRiskSummary,
       recentActivity,
+      proactiveAlerts,
       refreshPositions,
     ],
   );

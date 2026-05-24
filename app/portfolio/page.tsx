@@ -1,16 +1,22 @@
 "use client";
 
 import { useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { usePositionsContext } from "../Providers";
 import { useTabs } from "@/app/contexts/TabContext";
 import { Insights } from "@/components/Insights";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
+import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
 import { NewsHintBanner } from "@/components/NewsHintBanner";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { usePortfolioBrief } from "@/app/hooks/usePortfolioBrief";
+import type { ProactiveAlert } from "@/app/types/intelligence";
+import { alertToQuickActionId } from "@/lib/intelligence";
 
 export default function PortfolioPage() {
+  const router = useRouter();
   const {
     error,
     allPositions,
@@ -21,11 +27,22 @@ export default function PortfolioPage() {
     assignmentRiskSummary,
     account,
     recentActivity,
+    proactiveAlerts,
     refreshPositions,
     sessionAccessToken,
     sendQuickAction,
   } = usePositionsContext();
   const { activeTab } = useTabs();
+
+  const {
+    brief,
+    loading: briefLoading,
+    error: briefError,
+    lastUpdated: briefLastUpdated,
+    refetch: refetchBrief,
+  } = usePortfolioBrief(sessionAccessToken, {
+    enabled: !loading && allPositions.length > 0,
+  });
 
   const showNewsHint =
     activeTab === "assistant" && !loading && symbols.length > 0;
@@ -43,6 +60,33 @@ export default function PortfolioPage() {
     [allPositions, sendQuickAction],
   );
 
+  const handleRunAlert = useCallback(
+    (alert: ProactiveAlert) => {
+      const actionId = alertToQuickActionId(alert);
+      const symbol = alert.symbol?.toUpperCase();
+
+      if (symbol) {
+        router.push(`/portfolio/positions/${symbol}`);
+        void sendQuickAction({
+          activeChatKey: symbol,
+          selectedView: "symbol",
+          selectedSymbol: symbol,
+          positionsForSelectedSymbol: positionMap[symbol] ?? [],
+          actionId,
+        });
+        return;
+      }
+
+      handleSuggestedAction(actionId);
+    },
+    [handleSuggestedAction, positionMap, router, sendQuickAction],
+  );
+
+  const handleRefreshAll = useCallback(async () => {
+    await refreshPositions(true);
+    refetchBrief();
+  }, [refreshPositions, refetchBrief]);
+
   return (
     <>
       {error && <ErrorBanner message={error} className="mb-3" />}
@@ -50,6 +94,19 @@ export default function PortfolioPage() {
       <PortfolioOnboarding />
 
       {showNewsHint && <NewsHintBanner symbols={symbols} />}
+
+      {!loading && sessionAccessToken && allPositions.length > 0 && (
+        <PortfolioBriefSection
+          className="mb-4"
+          brief={brief}
+          fallbackAlerts={proactiveAlerts}
+          loading={briefLoading}
+          error={briefError}
+          lastUpdated={briefLastUpdated}
+          onRefresh={handleRefreshAll}
+          onRunAlert={handleRunAlert}
+        />
+      )}
 
       <PortfolioOverview
         loading={loading}

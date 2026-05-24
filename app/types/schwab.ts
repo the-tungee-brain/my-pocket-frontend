@@ -1,3 +1,5 @@
+import type { ProactiveAlert } from "@/app/types/intelligence";
+
 export type Instrument = {
   assetType: "EQUITY" | "OPTION";
   cusip: string;
@@ -259,4 +261,5 @@ export type AccountPositionsResponse = {
   cashSecuredPutSummary?: CashSecuredPutSummary;
   assignmentRiskSummary?: AssignmentRiskSummary;
   recentActivity?: RecentActivitySummary | null;
+  proactiveAlerts?: ProactiveAlert[];
 };

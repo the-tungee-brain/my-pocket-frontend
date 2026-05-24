@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "./config";
 import { isAbortError } from "./isAbortError";
 import type { AccountPositionsResponse, RecentOrdersResponse } from "@/app/types/schwab";
+import type { PortfolioIntelligence } from "@/app/types/intelligence";
 import type {
   ChatSessionMessagesResponse,
   ChatSessionsResponse,
@@ -36,6 +37,22 @@ export async function fetchAccountPositions(
   }
 
   return res.json() as Promise<AccountPositionsResponse>;
+}
+
+export async function fetchPortfolioBrief(
+  accessToken: string,
+  options: { refresh?: boolean } = {},
+): Promise<PortfolioIntelligence> {
+  const res = await apiFetch(
+    `/portfolio/brief${buildQuery({ refresh: options.refresh ? true : undefined })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load portfolio brief (${res.status})`);
+  }
+
+  return res.json() as Promise<PortfolioIntelligence>;
 }
 
 export async function fetchRecentOrders(
