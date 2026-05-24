@@ -9,7 +9,10 @@ import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
 import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
 import { Insights } from "@/components/Insights";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
+import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
+import { SymbolAlertStrip } from "@/components/SymbolAlertStrip";
+import { SymbolIntelligencePanel } from "@/components/SymbolIntelligencePanel";
 import { CompanyNews } from "@/components/CompanyNews";
 import { useTabs } from "@/app/contexts/TabContext";
 import { StockChart } from "@/components/StockChart";
@@ -17,11 +20,13 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useStockData } from "@/app/hooks/useStockData";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
 import { filterAssignmentRiskSummary } from "@/lib/assignmentRiskSummary";
+import type { ProactiveAlert } from "@/app/types/intelligence";
+import { alertToQuickActionId } from "@/lib/intelligence";
 
 export default function SymbolPage() {
   const { symbol } = useParams<{ symbol: string }>();
   const { activeTab } = useTabs();
-  const { error, positionMap, setSelectedView, setSelectedSymbol, account, assignmentRiskSummary, sendQuickAction } =
+  const { error, positionMap, setSelectedView, setSelectedSymbol, account, assignmentRiskSummary, proactiveAlerts, portfolioBrief, sendQuickAction } =
     usePositionsContext();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
@@ -33,6 +38,16 @@ export default function SymbolPage() {
     setSelectedView("symbol");
     setSelectedSymbol(symbol ?? null);
   }, [symbol, setSelectedView, setSelectedSymbol]);
+
+  const {
+    intelligence: symbolIntelligence,
+    loading: intelligenceLoading,
+    error: intelligenceError,
+    refetch: refetchIntelligence,
+  } = useSymbolIntelligence(symbol ?? null, {
+    accessToken,
+    enabled: !!symbol && !!accessToken && activeTab === "assistant",
+  });
 
   const {
     analytics,
@@ -78,6 +93,25 @@ export default function SymbolPage() {
     setInterval(newInterval);
   };
 
+  const handleRunAlert = useCallback(
+    (alert: ProactiveAlert) => {
+      if (!symbol) return;
+      void sendQuickAction({
+        activeChatKey: symbol,
+        selectedView: "symbol",
+        selectedSymbol: symbol,
+        positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
+        actionId: alertToQuickActionId(alert),
+      });
+    },
+    [symbol, sendQuickAction, positionsForSelectedSymbol],
+  );
+
+  const symbolAlerts = [
+    ...(portfolioBrief?.alerts ?? []),
+    ...proactiveAlerts,
+  ];
+
   const handleSuggestedAction = useCallback(
     (actionId: string) => {
       if (!symbol) return;
@@ -102,6 +136,28 @@ export default function SymbolPage() {
           role="tabpanel"
           aria-labelledby="tab-assistant"
         >
+          {symbol && (
+            <SymbolAlertStrip
+              className="mb-4"
+              symbol={symbol}
+              alerts={symbolAlerts}
+              onRunAlert={handleRunAlert}
+            />
+          )}
+
+          {symbol && (
+            <div className="mb-4">
+              <SymbolIntelligencePanel
+                intelligence={symbolIntelligence}
+                loading={intelligenceLoading}
+                error={intelligenceError}
+                onRefresh={refetchIntelligence}
+                compact
+                researchBasePath="/research"
+              />
+            </div>
+          )}
+
           {symbol && (
             <div className="mb-6">
               <StockChart

@@ -10,7 +10,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
 import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
-import { formatSignedUsd } from "@/lib/formatCurrency";
+import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
+import {
+  openProfitLossPct,
+  portfolioWeightPct,
+  sumCostBasis,
+  sumOpenProfitLoss,
+} from "@/lib/positionMetrics";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -21,6 +27,7 @@ type Props = {
   cashSecuredPutSummary?: CashSecuredPutSummaryData | null;
   assignmentRiskSummary?: AssignmentRiskSummaryData | null;
   cashBalance?: number | null;
+  liquidationValue?: number | null;
 };
 
 type SymbolSummary = {
@@ -28,16 +35,31 @@ type SymbolSummary = {
   positions: Position[];
   totalValue: number;
   dayPL: number;
+  openPL: number | null;
+  costBasis: number | null;
+  weightPct: number | null;
 };
 
-function buildSymbolSummaries(positionMap: PositionMap): SymbolSummary[] {
+function buildSymbolSummaries(
+  positionMap: PositionMap,
+  liquidationValue?: number | null,
+): SymbolSummary[] {
   return Object.entries(positionMap)
-    .map(([symbol, positions]) => ({
-      symbol,
-      positions,
-      totalValue: positions.reduce((sum, p) => sum + p.marketValue, 0),
-      dayPL: positions.reduce((sum, p) => sum + p.currentDayProfitLoss, 0),
-    }))
+    .map(([symbol, positions]) => {
+      const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
+      const openPL = sumOpenProfitLoss(positions);
+      const costBasis = sumCostBasis(positions);
+
+      return {
+        symbol,
+        positions,
+        totalValue,
+        dayPL: positions.reduce((sum, p) => sum + p.currentDayProfitLoss, 0),
+        openPL,
+        costBasis,
+        weightPct: portfolioWeightPct(totalValue, liquidationValue),
+      };
+    })
     .sort((a, b) => b.totalValue - a.totalValue);
 }
 
@@ -49,6 +71,7 @@ export function PortfolioOverview({
   cashSecuredPutSummary,
   assignmentRiskSummary,
   cashBalance,
+  liquidationValue,
 }: Props) {
   const { authorized: schwabAuthorized, loading: schwabLoading } =
     useSchwabStatus();
@@ -69,7 +92,8 @@ export function PortfolioOverview({
     (sum, p) => sum + p.currentDayProfitLoss,
     0,
   );
-  const symbolSummaries = buildSymbolSummaries(positionMap);
+  const symbolSummaries = buildSymbolSummaries(positionMap, liquidationValue);
+  const totalOpenPL = sumOpenProfitLoss(allPositions);
 
   if (loading) {
     return (
@@ -134,13 +158,30 @@ export function PortfolioOverview({
         </p>
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-xl border border-border bg-secondary/60 px-4 py-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
             Total value
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
             ${totalValue.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-secondary/60 px-4 py-3">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+            Open P/L
+          </p>
+          <p
+            className={cn(
+              "mt-1 text-xl font-semibold tabular-nums",
+              totalOpenPL == null
+                ? "text-muted"
+                : totalOpenPL >= 0
+                  ? "text-success"
+                  : "text-danger",
+            )}
+          >
+            {totalOpenPL != null ? formatSignedUsd(totalOpenPL) : "—"}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-secondary/60 px-4 py-3">
@@ -156,7 +197,7 @@ export function PortfolioOverview({
             {formatSignedUsd(totalDayPL)}
           </p>
         </div>
-        <div className="col-span-2 rounded-xl border border-border bg-secondary/60 px-4 py-3 sm:col-span-1">
+        <div className="rounded-xl border border-border bg-secondary/60 px-4 py-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
             Symbols
           </p>
@@ -186,14 +227,28 @@ export function PortfolioOverview({
           <table className="w-full table-fixed text-sm">
             <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
               <tr>
-                <th className="w-1/4 px-4 py-2.5 text-left">Symbol</th>
-                <th className="w-1/4 px-4 py-2.5 text-right">Positions</th>
-                <th className="w-1/4 px-4 py-2.5 text-right">Value</th>
-                <th className="w-1/4 px-4 py-2.5 text-right">Today P/L</th>
+                <th className="px-4 py-2.5 text-left">Symbol</th>
+                <th className="px-4 py-2.5 text-right">Weight</th>
+                <th className="px-4 py-2.5 text-right">Value</th>
+                <th className="px-4 py-2.5 text-right">Cost</th>
+                <th className="px-4 py-2.5 text-right">Open P/L</th>
+                <th className="px-4 py-2.5 text-right">Today P/L</th>
               </tr>
             </thead>
             <tbody>
-              {symbolSummaries.map(({ symbol, positions, totalValue, dayPL }) => (
+              {symbolSummaries.map(
+                ({
+                  symbol,
+                  positions,
+                  totalValue,
+                  dayPL,
+                  openPL,
+                  costBasis,
+                  weightPct,
+                }) => {
+                  const openPLPct = openProfitLossPct(openPL, costBasis);
+
+                  return (
                 <tr
                   key={symbol}
                   className="border-t border-border transition-colors hover:bg-muted-bg/40"
@@ -213,12 +268,43 @@ export function PortfolioOverview({
                         Research
                       </Link>
                     </div>
+                    <p className="mt-0.5 text-[11px] text-muted">
+                      {positions.length}{" "}
+                      {positions.length === 1 ? "position" : "positions"}
+                    </p>
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-muted">
-                    {positions.length}
+                    {weightPct != null ? `${weightPct.toFixed(1)}%` : "—"}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
                     ${totalValue.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-muted">
+                    {costBasis != null ? `$${costBasis.toLocaleString()}` : "—"}
+                  </td>
+                  <td
+                    className={cn(
+                      "px-4 py-3 text-right tabular-nums",
+                      openPL == null
+                        ? "text-muted"
+                        : openPL >= 0
+                          ? "text-success"
+                          : "text-danger",
+                    )}
+                  >
+                    {openPL != null ? (
+                      <>
+                        {formatSignedUsd(openPL)}
+                        {openPLPct != null && (
+                          <span className="block text-[11px] opacity-80">
+                            ({openPLPct >= 0 ? "+" : ""}
+                            {openPLPct.toFixed(1)}%)
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td
                     className={cn(
@@ -229,13 +315,27 @@ export function PortfolioOverview({
                     {formatSignedUsd(dayPL)}
                   </td>
                 </tr>
-              ))}
+                  );
+                },
+              )}
             </tbody>
           </table>
         </div>
 
         <div className="divide-y divide-border sm:hidden">
-          {symbolSummaries.map(({ symbol, positions, totalValue, dayPL }) => (
+          {symbolSummaries.map(
+            ({
+              symbol,
+              positions,
+              totalValue,
+              dayPL,
+              openPL,
+              costBasis,
+              weightPct,
+            }) => {
+              const openPLPct = openProfitLossPct(openPL, costBasis);
+
+              return (
             <div
               key={symbol}
               className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted-bg/40"
@@ -247,10 +347,11 @@ export function PortfolioOverview({
                 >
                   {symbol}
                 </Link>
-                <div className="mt-0.5 flex items-center gap-2">
+                <div className="mt-0.5 flex flex-wrap items-center gap-2">
                   <p className="text-xs text-muted">
                     {positions.length}{" "}
                     {positions.length === 1 ? "position" : "positions"}
+                    {weightPct != null && ` · ${weightPct.toFixed(1)}%`}
                   </p>
                   <Link
                     href={`/research/${symbol}/overview`}
@@ -259,6 +360,11 @@ export function PortfolioOverview({
                     Research
                   </Link>
                 </div>
+                {costBasis != null && (
+                  <p className="mt-1 text-[11px] text-muted">
+                    Cost {formatUsd(costBasis)}
+                  </p>
+                )}
               </div>
               <Link
                 href={`/portfolio/positions/${symbol}`}
@@ -267,17 +373,30 @@ export function PortfolioOverview({
                 <p className="tabular-nums font-medium">
                   ${totalValue.toLocaleString()}
                 </p>
+                {openPL != null && (
+                  <p
+                    className={cn(
+                      "text-xs tabular-nums",
+                      openPL >= 0 ? "text-success" : "text-danger",
+                    )}
+                  >
+                    Open {formatSignedUsd(openPL)}
+                    {openPLPct != null && ` (${openPLPct.toFixed(1)}%)`}
+                  </p>
+                )}
                 <p
                   className={cn(
                     "text-xs tabular-nums",
                     dayPL >= 0 ? "text-success" : "text-danger",
                   )}
                 >
-                  {formatSignedUsd(dayPL)}
+                  Today {formatSignedUsd(dayPL)}
                 </p>
               </Link>
             </div>
-          ))}
+              );
+            },
+          )}
         </div>
       </div>
     </section>

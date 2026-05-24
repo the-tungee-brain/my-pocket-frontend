@@ -10,6 +10,11 @@ import {
   optionStrategyLabel,
 } from "@/lib/optionStrategyLabel";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
+import {
+  positionCostBasis,
+  positionOpenProfitLoss,
+  positionOpenProfitLossPct,
+} from "@/lib/positionMetrics";
 import { cn } from "@/lib/utils";
 
 export type PositionMap = Record<string, Position[]>;
@@ -183,52 +188,94 @@ export function AccountPositionList({
                       </div>
                     )}
                   </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
                     <div>
                       <p className="text-muted">Qty</p>
                       <p className="mt-0.5 tabular-nums font-medium">
                         {qty.toLocaleString()}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div>
+                      <p className="text-muted">Cost</p>
+                      <p className="mt-0.5 tabular-nums font-medium">
+                        {(() => {
+                          const cost = positionCostBasis(p);
+                          return cost != null ? formatUsd(cost) : "—";
+                        })()}
+                      </p>
+                    </div>
+                    <div>
                       <p className="text-muted">Value</p>
                       <p className="mt-0.5 tabular-nums font-medium">
                         ${p.marketValue.toLocaleString()}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-muted">Today P/L</p>
-                      <p
-                        className={cn(
-                          "mt-0.5 tabular-nums font-medium",
-                          isPositive ? "text-success" : "text-danger",
-                        )}
-                      >
-                        {formatSignedUsd(p.currentDayProfitLoss)}
-                      </p>
-                      <p
-                        className={cn(
-                          "tabular-nums text-[11px]",
-                          isPositive ? "text-success" : "text-danger",
-                        )}
-                      >
-                        ({p.currentDayProfitLossPercentage.toFixed(2)}%)
-                      </p>
+                    <div>
+                      <p className="text-muted">Open P/L</p>
+                      {(() => {
+                        const openPL = positionOpenProfitLoss(p);
+                        const openPLPct = positionOpenProfitLossPct(p);
+                        if (openPL == null) {
+                          return (
+                            <p className="mt-0.5 tabular-nums font-medium text-muted">
+                              —
+                            </p>
+                          );
+                        }
+                        const isPositive = openPL >= 0;
+                        return (
+                          <>
+                            <p
+                              className={cn(
+                                "mt-0.5 tabular-nums font-medium",
+                                isPositive ? "text-success" : "text-danger",
+                              )}
+                            >
+                              {formatSignedUsd(openPL)}
+                            </p>
+                            {openPLPct != null && (
+                              <p
+                                className={cn(
+                                  "tabular-nums text-[11px]",
+                                  isPositive ? "text-success" : "text-danger",
+                                )}
+                              >
+                                ({openPLPct >= 0 ? "+" : ""}
+                                {openPLPct.toFixed(2)}%)
+                              </p>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
+                  </div>
+                  <div className="mt-2 text-xs">
+                    <p className="text-muted">Today P/L</p>
+                    <p
+                      className={cn(
+                        "mt-0.5 tabular-nums font-medium",
+                        isPositive ? "text-success" : "text-danger",
+                      )}
+                    >
+                      {formatSignedUsd(p.currentDayProfitLoss)} (
+                      {p.currentDayProfitLossPercentage.toFixed(2)}%)
+                    </p>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          <table className="hidden w-full table-fixed text-sm sm:table">
+          <table className="hidden w-full text-sm sm:table">
             <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
               <tr>
-                <th className="w-[34%] px-4 py-2.5 text-left">Name</th>
-                <th className="w-[14%] px-4 py-2.5 text-right">Qty</th>
-                <th className="w-[18%] px-4 py-2.5 text-right">Value</th>
-                <th className="w-[16%] px-4 py-2.5 text-right">Reserved</th>
-                <th className="w-[18%] px-4 py-2.5 text-right">Today P/L</th>
+                <th className="px-4 py-2.5 text-left">Name</th>
+                <th className="px-4 py-2.5 text-right">Qty</th>
+                <th className="px-4 py-2.5 text-right">Cost</th>
+                <th className="px-4 py-2.5 text-right">Value</th>
+                <th className="px-4 py-2.5 text-right">Open P/L</th>
+                <th className="px-4 py-2.5 text-right">Reserved</th>
+                <th className="px-4 py-2.5 text-right">Today P/L</th>
               </tr>
             </thead>
             <tbody>
@@ -236,6 +283,9 @@ export function AccountPositionList({
                 const qty = p.longQuantity - p.shortQuantity;
                 const isPositive = p.currentDayProfitLoss >= 0;
                 const reserved = cspReservedCash(p);
+                const cost = positionCostBasis(p);
+                const openPL = positionOpenProfitLoss(p);
+                const openPLPct = positionOpenProfitLossPct(p);
 
                 return (
                   <tr
@@ -261,8 +311,35 @@ export function AccountPositionList({
                     <td className="px-4 py-3 text-right tabular-nums">
                       {qty.toLocaleString()}
                     </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-muted">
+                      {cost != null ? formatUsd(cost) : "—"}
+                    </td>
                     <td className="px-4 py-3 text-right tabular-nums">
                       ${p.marketValue.toLocaleString()}
+                    </td>
+                    <td
+                      className={cn(
+                        "px-4 py-3 text-right tabular-nums",
+                        openPL == null
+                          ? "text-muted"
+                          : openPL >= 0
+                            ? "text-success"
+                            : "text-danger",
+                      )}
+                    >
+                      {openPL != null ? (
+                        <>
+                          {formatSignedUsd(openPL)}
+                          {openPLPct != null && (
+                            <span className="block text-[11px] opacity-80">
+                              ({openPLPct >= 0 ? "+" : ""}
+                              {openPLPct.toFixed(2)}%)
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
                       {reserved != null ? (

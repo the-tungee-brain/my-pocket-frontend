@@ -1,6 +1,7 @@
 import { Info } from "lucide-react";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ResearchStockChart } from "../ResearchStockChart";
+import { SymbolIntelligenceSection } from "../SymbolIntelligenceSection";
 import { SummarySection } from "../SummarySection";
 import { PerformanceSnapshot } from "../PerformanceSnapshot";
 
@@ -14,6 +15,8 @@ export default async function OverviewPage({ params }: PageProps) {
   return (
     <>
       <ResearchStockChart symbol={symbol} />
+
+      <SymbolIntelligenceSection symbol={symbol} />
 
       <ResearchSectionCard
         title="Big picture"

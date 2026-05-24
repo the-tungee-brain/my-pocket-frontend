@@ -2,6 +2,7 @@ import type {
   ProactiveAlert,
   PortfolioIntelligence,
   SignalSeverity,
+  SymbolIntelligence,
 } from "@/app/types/intelligence";
 import type { Position, SchwabAccounts } from "@/app/types/schwab";
 import { suggestedActionToQuickActionId } from "@/lib/recentOrders";
@@ -71,6 +72,24 @@ export function hasPortfolioBriefContent(
     (brief.digest?.sector_weights.length ?? 0) > 0 ||
     (brief.digest?.top_news.length ?? 0) > 0 ||
     (brief.digest?.earnings_this_week.length ?? 0) > 0
+  );
+}
+
+export function hasSymbolIntelligenceContent(
+  intelligence: SymbolIntelligence | null,
+): boolean {
+  if (!intelligence) return false;
+  return (
+    intelligence.signals.length > 0 ||
+    (intelligence.peer_comparison?.peers.length ?? 0) > 0 ||
+    !!intelligence.peer_comparison?.summary ||
+    intelligence.event_timeline.length > 0 ||
+    !!intelligence.options_scorecard?.covered_call_candidates.length ||
+    !!intelligence.options_scorecard?.csp_candidates.length ||
+    (intelligence.options_scorecard?.assignment_flags.length ?? 0) > 0 ||
+    !!intelligence.cached_research?.investment_thesis ||
+    (intelligence.cached_research?.key_strengths.length ?? 0) > 0 ||
+    (intelligence.cached_research?.key_risks.length ?? 0) > 0
   );
 }
 

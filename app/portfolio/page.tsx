@@ -8,6 +8,7 @@ import { Insights } from "@/components/Insights";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
+import { AccountHealthStrip } from "@/components/AccountHealthStrip";
 import { NewsHintBanner } from "@/components/NewsHintBanner";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -125,6 +126,14 @@ export default function PortfolioPage() {
         />
       )}
 
+      {!loading && account && allPositions.length > 0 && (
+        <AccountHealthStrip
+          className="mb-4"
+          account={account}
+          cashSecuredPutSummary={cashSecuredPutSummary}
+        />
+      )}
+
       <PortfolioOverview
         loading={loading}
         allPositions={allPositions}
@@ -133,6 +142,9 @@ export default function PortfolioPage() {
         cashSecuredPutSummary={cashSecuredPutSummary}
         assignmentRiskSummary={assignmentRiskSummary}
         cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
+        liquidationValue={
+          account?.securitiesAccount.currentBalances.liquidationValue
+        }
       />
 
       {!loading && sessionAccessToken && (

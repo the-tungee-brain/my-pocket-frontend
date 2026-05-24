@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "./config";
 import { isAbortError } from "./isAbortError";
 import type { AccountPositionsResponse, RecentOrdersResponse } from "@/app/types/schwab";
-import type { PortfolioIntelligence } from "@/app/types/intelligence";
+import type { PortfolioIntelligence, SymbolIntelligence } from "@/app/types/intelligence";
 import type {
   ChatSessionMessagesResponse,
   ChatSessionsResponse,
@@ -59,6 +59,33 @@ export async function fetchPortfolioBrief(
   }
 
   return res.json() as Promise<PortfolioIntelligence>;
+}
+
+export async function fetchSymbolIntelligence(
+  accessToken: string,
+  symbol: string,
+  options: { includeOptions?: boolean } = {},
+): Promise<SymbolIntelligence> {
+  const res = await apiFetch(
+    `/research/intelligence${buildQuery({
+      symbol: symbol.toUpperCase(),
+      include_options:
+        options.includeOptions === false ? false : undefined,
+    })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    const error = new Error(
+      res.status === 404
+        ? "Symbol intelligence is not available yet."
+        : `Failed to load symbol intelligence (${res.status})`,
+    ) as Error & { status?: number };
+    error.status = res.status;
+    throw error;
+  }
+
+  return res.json() as Promise<SymbolIntelligence>;
 }
 
 export async function fetchRecentOrders(

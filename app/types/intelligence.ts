@@ -40,3 +40,64 @@ export type PortfolioIntelligence = {
   digest?: PortfolioDigest | null;
   alerts: ProactiveAlert[];
 };
+
+export type PeerMetric = {
+  symbol: string;
+  name?: string | null;
+  one_year_return?: string | null;
+  pe_trailing?: string | null;
+  sector?: string | null;
+};
+
+export type PeerComparison = {
+  target_symbol: string;
+  target_one_year_return?: string | null;
+  target_pe_trailing?: string | null;
+  peers: PeerMetric[];
+  summary?: string | null;
+};
+
+export type EventTimelineEntry = {
+  date: string;
+  kind: string;
+  title: string;
+  detail?: string | null;
+};
+
+export type OptionsStrikeCandidate = {
+  side: "call" | "put";
+  strike: number;
+  expiration: string;
+  delta?: number | null;
+  open_interest?: number | null;
+  bid?: number | null;
+  ask?: number | null;
+  iv?: number | null;
+  score: number;
+  rationale: string;
+};
+
+export type OptionsScorecard = {
+  underlying_price?: number | null;
+  covered_call_candidates: OptionsStrikeCandidate[];
+  csp_candidates: OptionsStrikeCandidate[];
+  assignment_flags: string[];
+};
+
+export type CachedResearchSnippet = {
+  sentiment?: string | null;
+  investment_thesis?: string | null;
+  key_strengths: string[];
+  key_risks: string[];
+  what_to_watch: string[];
+  valuation_context?: string | null;
+};
+
+export type SymbolIntelligence = {
+  symbol: string;
+  signals: IntelligenceSignal[];
+  peer_comparison?: PeerComparison | null;
+  event_timeline: EventTimelineEntry[];
+  options_scorecard?: OptionsScorecard | null;
+  cached_research?: CachedResearchSnippet | null;
+};
