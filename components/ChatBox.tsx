@@ -3,10 +3,16 @@
 import { ChevronDown, SendHorizontal, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { ChatMessage } from "@/components/ConversationPane";
-import { Dropdown } from "@/components/Dropdown";
+import { ModelPicker } from "@/components/ModelPicker";
 import { QuickAnalysisBar } from "@/components/QuickAnalysisBar";
 import type { MainView } from "./NavList";
 import { cn } from "@/lib/utils";
+import {
+  DEFAULT_CHAT_MODEL,
+  getModelButtonLabel,
+} from "@/lib/chatModels";
+
+export { DEFAULT_CHAT_MODEL };
 
 type SymbolChatState = {
   loading: boolean;
@@ -15,22 +21,6 @@ type SymbolChatState = {
   model: string;
   modelMenuOpen: boolean;
 };
-
-export const DEFAULT_CHAT_MODEL = "gpt-5-mini";
-
-const ADVANCED_MODEL_OPTIONS = [
-  "gpt-5.4",
-  "gpt-5.1",
-  DEFAULT_CHAT_MODEL,
-  "gpt-5-nano",
-  "o3",
-  "o4-mini",
-  "gpt-4.1",
-  "gpt-4.1-mini",
-  "gpt-4.1-nano",
-  "gpt-4o",
-  "gpt-4o-mini",
-];
 
 interface ChatBoxProps {
   mode: MainView;
@@ -71,7 +61,7 @@ export function ChatBox({
   const canSend = !isBusy && inputValue.trim().length > 0;
   const selectedModel = currentChat?.model || DEFAULT_CHAT_MODEL;
   const modelMenuOpen = !!currentChat?.modelMenuOpen;
-  const usingNonDefaultModel = selectedModel !== DEFAULT_CHAT_MODEL;
+  const modelButtonLabel = getModelButtonLabel(selectedModel);
   const modelMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -165,19 +155,15 @@ export function ChatBox({
                 disabled={isBusy}
                 aria-expanded={modelMenuOpen}
                 aria-haspopup="listbox"
+                aria-label={`Model: ${modelButtonLabel}`}
                 onClick={onToggleModelMenu}
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-muted transition-all duration-200 ease-out hover:bg-muted-bg hover:text-foreground",
+                  "inline-flex max-w-44 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-muted transition-all duration-200 ease-out hover:bg-muted-bg hover:text-foreground sm:max-w-none",
                   "disabled:opacity-60",
                   modelMenuOpen && "bg-muted-bg text-foreground",
                 )}
               >
-                Advanced
-                {usingNonDefaultModel && (
-                  <span className="max-w-24 truncate text-[10px] text-accent-strong">
-                    · {selectedModel}
-                  </span>
-                )}
+                <span className="truncate">{modelButtonLabel}</span>
                 <ChevronDown
                   className={cn(
                     "h-3 w-3 transition-transform",
@@ -187,9 +173,8 @@ export function ChatBox({
                 />
               </button>
 
-              <Dropdown
+              <ModelPicker
                 open={modelMenuOpen}
-                options={ADVANCED_MODEL_OPTIONS}
                 value={selectedModel}
                 onChange={onModelChange}
                 onClose={onToggleModelMenu}

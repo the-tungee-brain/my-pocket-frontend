@@ -5,6 +5,7 @@ import { useResearchSnapshot } from "@/app/hooks/useResearchSnapshot";
 import {
   ArrowUpRight,
   ArrowDownRight,
+  ArrowLeft,
   ExternalLink,
   BriefcaseBusiness,
 } from "lucide-react";
@@ -14,7 +15,7 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { usePositionsContext } from "@/app/Providers";
 import { tabQuerySuffix, useTabs } from "@/app/contexts/TabContext";
 
-type Props = { symbol: string };
+type Props = { symbol: string; compact?: boolean };
 
 function formatPL(value: number) {
   const prefix = value >= 0 ? "+" : "";
@@ -26,7 +27,7 @@ function formatPL(value: number) {
   })}`;
 }
 
-export function CompanySnapshot({ symbol }: Props) {
+export function CompanySnapshot({ symbol, compact = false }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
   const { positionMap } = usePositionsContext();
@@ -39,6 +40,15 @@ export function CompanySnapshot({ symbol }: Props) {
   });
 
   if (isLoading) {
+    if (compact) {
+      return (
+        <header className="flex items-center justify-between gap-3">
+          <div className="h-5 w-24 animate-pulse rounded bg-muted-bg" />
+          <div className="h-5 w-20 animate-pulse rounded bg-muted-bg" />
+        </header>
+      );
+    }
+
     return (
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-2">
@@ -66,6 +76,70 @@ export function CompanySnapshot({ symbol }: Props) {
     (sum, p) => sum + p.currentDayProfitLoss,
     0,
   );
+
+  if (compact) {
+    return (
+      <header className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <Link
+            href="/research"
+            className="inline-flex shrink-0 items-center text-muted transition hover:text-foreground md:hidden"
+            aria-label="Back to search"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+          {snapshot.logo && (
+            <div className="h-7 w-7 shrink-0 overflow-hidden rounded-md border border-border bg-white">
+              <img
+                src={snapshot.logo}
+                alt=""
+                className="h-full w-full object-contain p-1"
+              />
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">
+              {snapshot.symbol}
+              <span className="hidden font-normal text-muted sm:inline">
+                {" "}
+                · {snapshot.name}
+              </span>
+            </p>
+          </div>
+          {userPositions?.length ? (
+            <Link
+              href={`/portfolio/positions/${upperSymbol}${tabQuerySuffix(activeTab)}`}
+              className="hidden shrink-0 rounded-full border border-accent/40 bg-accent-muted px-2 py-0.5 text-[10px] font-medium text-accent-strong sm:inline-flex"
+            >
+              Your position
+            </Link>
+          ) : null}
+        </div>
+
+        <div className="flex shrink-0 items-baseline gap-2 text-sm">
+          <span className="font-semibold tabular-nums">
+            ${snapshot.price.toLocaleString()}
+          </span>
+          <span
+            className={cn(
+              "inline-flex items-center gap-0.5 text-xs font-medium",
+              positiveChange ? "text-success" : "text-danger",
+            )}
+          >
+            {positiveChange ? (
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            ) : (
+              <ArrowDownRight className="h-3.5 w-3.5" />
+            )}
+            <span className="tabular-nums">
+              {positiveChange ? "+" : ""}
+              {snapshot.changePct.toFixed(2)}%
+            </span>
+          </span>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">

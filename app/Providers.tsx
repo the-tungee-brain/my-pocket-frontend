@@ -6,13 +6,18 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useSession } from "next-auth/react";
 import { apiFetch, streamAnalysis } from "@/lib/apiClient";
 import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
-import { DEFAULT_CHAT_MODEL } from "@/components/ChatBox";
+import { DEFAULT_CHAT_MODEL } from "@/lib/chatModels";
+import {
+  loadPersistedChat,
+  persistChatState,
+} from "@/lib/chatPersistence";
 import { formatQuickActionMessage } from "@/lib/quickActions";
 import { Position, SchwabAccounts } from "./types/schwab";
 import { MainView } from "@/components/NavList";
@@ -84,7 +89,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
+  const chatHydratedRef = useRef(false);
   const accessToken = session?.accessToken ?? "";
+  const chatUserId = session?.user?.email ?? session?.user?.id ?? null;
 
   const ensureSymbolChatState = useCallback(
     (key: string, base?: Partial<SymbolChatState>): SymbolChatState => ({
@@ -97,6 +104,35 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     }),
     [],
   );
+
+  useEffect(() => {
+    if (!chatUserId) {
+      chatHydratedRef.current = false;
+      return;
+    }
+
+    chatHydratedRef.current = false;
+
+    const loaded = loadPersistedChat(chatUserId);
+    if (Object.keys(loaded).length === 0) {
+      chatHydratedRef.current = true;
+      return;
+    }
+
+    setChatBySymbol((prev) => {
+      const merged = { ...prev };
+      for (const [key, saved] of Object.entries(loaded)) {
+        merged[key] = ensureSymbolChatState(key, saved);
+      }
+      return merged;
+    });
+    chatHydratedRef.current = true;
+  }, [chatUserId, ensureSymbolChatState]);
+
+  useEffect(() => {
+    if (!chatUserId || !chatHydratedRef.current) return;
+    persistChatState(chatUserId, chatBySymbol);
+  }, [chatBySymbol, chatUserId]);
 
   useEffect(() => {
     if (!pathname) return;
