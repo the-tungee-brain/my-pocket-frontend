@@ -60,7 +60,7 @@ function OrderRows({
               <th className="w-[14%] px-4 py-2.5 text-left">Side</th>
               <th className="w-[8%] px-4 py-2.5 text-right">Qty</th>
               <th className="w-[12%] px-4 py-2.5 text-right">Fill</th>
-              <th className="w-[14%] px-4 py-2.5 text-right">Premium/ct (options)</th>
+              <th className="w-[14%] px-4 py-2.5 text-right">Premium</th>
               <th className="w-[14%] px-4 py-2.5 text-right">Total cash</th>
               {!compact && (
                 <th className="w-[10%] px-4 py-2.5 text-left">Type</th>
@@ -112,7 +112,9 @@ function OrderRows({
             className="px-4 py-3"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-sm font-medium">{order.symbol}</span>
+              <span className="font-mono text-sm font-medium">
+                {order.symbol}
+              </span>
               <span className="text-xs text-muted">
                 {formatOrderFillTime(order.fillTime)}
               </span>
@@ -247,9 +249,7 @@ export function RecentActivitySection({
     ? orders
     : orders.slice(0, compact ? 5 : orders.length);
 
-  const title = symbol
-    ? `${symbol} recent trades`
-    : "Recent trade activity";
+  const title = symbol ? `${symbol} recent trades` : "Recent trade activity";
 
   const subtitle = symbol
     ? `${displayOrders.length} filled order${displayOrders.length === 1 ? "" : "s"} in the last ${daysBack} days`
@@ -317,7 +317,10 @@ export function RecentActivitySection({
       {loading && !displayOrders.length ? (
         <div className="space-y-2 px-4 py-4">
           {[1, 2, 3].map((row) => (
-            <div key={row} className="h-10 animate-pulse rounded-lg bg-muted-bg" />
+            <div
+              key={row}
+              className="h-10 animate-pulse rounded-lg bg-muted-bg"
+            />
           ))}
         </div>
       ) : (
