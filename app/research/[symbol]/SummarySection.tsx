@@ -47,7 +47,7 @@ export function SummarySection({ symbol }: SummarySectionProps) {
       {error && <p className="text-xs text-danger">{error}</p>}
 
       <p className="text-sm leading-relaxed text-foreground">{short}</p>
-      <p className="text-sm leading-relaxed text-muted">{long}</p>
+      <p className="text-sm leading-relaxed text-foreground">{long}</p>
     </div>
   );
 }

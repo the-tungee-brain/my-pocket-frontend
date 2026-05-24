@@ -40,7 +40,7 @@ export function BusinessSection({ symbol }: BusinessSectionProps) {
         ))}
       </ul>
 
-      <p className="text-sm leading-relaxed text-muted">{business.revenueNotes}</p>
+      <p className="text-sm leading-relaxed text-foreground">{business.revenueNotes}</p>
     </div>
   );
 }

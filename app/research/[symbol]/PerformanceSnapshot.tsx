@@ -64,7 +64,7 @@ export function PerformanceSnapshot({ symbol }: Props) {
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted">{perf.volatilityNote}</p>
+          <p className="text-xs text-foreground">{perf.volatilityNote}</p>
         </div>
       )}
     </ResearchSectionCard>

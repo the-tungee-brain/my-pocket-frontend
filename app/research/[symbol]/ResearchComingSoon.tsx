@@ -17,11 +17,9 @@ export function ResearchComingSoon({
   return (
     <ResearchSectionCard title={title} description={description} icon={icon}>
       <div className="py-6 text-center">
-        <p className="text-sm text-muted">
+        <p className="text-sm text-foreground">
           {title} for{" "}
-          <span className="font-mono font-semibold text-foreground">
-            {symbol.toUpperCase()}
-          </span>{" "}
+          <span className="font-mono font-semibold">{symbol.toUpperCase()}</span>{" "}
           is coming soon.
         </p>
         <p className="mt-1 text-xs text-muted">
