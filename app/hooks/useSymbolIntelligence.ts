@@ -55,7 +55,7 @@ export function useSymbolIntelligence(
 
         if (status === 404) {
           setError(null);
-          setIntelligence({ symbol: key, signals: [], event_timeline: [] });
+          setIntelligence({ symbol: key, signals: [], eventTimeline: [] });
           return;
         }
 

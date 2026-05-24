@@ -157,38 +157,38 @@ export function PortfolioBriefSection({
         </div>
       ) : (
         <div className="space-y-4 px-4 py-4">
-          {digest?.macro_regime && (
+          {digest?.macroRegime && (
             <div className="rounded-xl border border-border bg-background/60 px-3 py-2.5">
               <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                 <TrendingUp className="h-3.5 w-3.5" aria-hidden />
                 Macro
               </div>
-              <p className="text-sm text-foreground">{digest.macro_regime}</p>
+              <p className="text-sm text-foreground">{digest.macroRegime}</p>
             </div>
           )}
 
-          {!!digest?.sector_weights?.length && (
+          {!!digest?.sectorWeights?.length && (
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                 <PieChart className="h-3.5 w-3.5" aria-hidden />
                 Sector allocation
               </div>
               <div className="space-y-2">
-                {digest.sector_weights.slice(0, 5).map((sector) => (
+                {digest.sectorWeights.slice(0, 5).map((sector) => (
                   <div key={sector.sector}>
                     <div className="mb-1 flex items-center justify-between gap-2 text-xs">
                       <span className="font-medium text-foreground">
                         {sector.sector}
                       </span>
                       <span className="tabular-nums text-muted">
-                        {sector.weight_pct.toFixed(1)}%
+                        {sector.weightPct.toFixed(1)}%
                       </span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-muted-bg">
                       <div
                         className="h-full rounded-full bg-accent-strong/80"
                         style={{
-                          width: `${Math.min(sector.weight_pct, 100)}%`,
+                          width: `${Math.min(sector.weightPct, 100)}%`,
                         }}
                       />
                     </div>
@@ -202,14 +202,14 @@ export function PortfolioBriefSection({
             </div>
           )}
 
-          {!!digest?.earnings_this_week?.length && (
+          {!!digest?.earningsThisWeek?.length && (
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                 <CalendarDays className="h-3.5 w-3.5" aria-hidden />
                 Earnings this week
               </div>
               <div className="flex flex-wrap gap-2">
-                {digest.earnings_this_week.map((symbol) => (
+                {digest.earningsThisWeek.map((symbol) => (
                   <Link
                     key={symbol}
                     href={`/portfolio/positions/${symbol}`}
@@ -222,14 +222,14 @@ export function PortfolioBriefSection({
             </div>
           )}
 
-          {!!digest?.top_news?.length && (
+          {!!digest?.topNews?.length && (
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                 <Newspaper className="h-3.5 w-3.5" aria-hidden />
                 Top holdings news
               </div>
               <ul className="space-y-2">
-                {digest.top_news.slice(0, 4).map((item) => (
+                {digest.topNews.slice(0, 4).map((item) => (
                   <li
                     key={`${item.symbol}-${item.headline}`}
                     className="rounded-xl border border-border bg-background/60 px-3 py-2"
@@ -241,9 +241,9 @@ export function PortfolioBriefSection({
                       >
                         {item.symbol}
                       </Link>
-                      {item.weight_pct != null && (
+                      {item.weightPct != null && (
                         <span className="text-muted">
-                          {item.weight_pct.toFixed(1)}% of portfolio
+                          {item.weightPct.toFixed(1)}% of portfolio
                         </span>
                       )}
                       {item.sentiment && (

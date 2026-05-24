@@ -119,7 +119,7 @@ export function buildSymbolAlertMap(
     upsert(signal.symbol, signal.severity);
   }
 
-  for (const sym of brief?.digest?.earnings_this_week ?? []) {
+  for (const sym of brief?.digest?.earningsThisWeek ?? []) {
     upsert(sym, "watch");
   }
 
@@ -259,12 +259,12 @@ export function hasPortfolioBriefContent(
 ): boolean {
   if (!brief) return false;
   return (
-    brief.signals.length > 0 ||
-    brief.alerts.length > 0 ||
-    !!brief.digest?.macro_regime ||
-    (brief.digest?.sector_weights.length ?? 0) > 0 ||
-    (brief.digest?.top_news.length ?? 0) > 0 ||
-    (brief.digest?.earnings_this_week.length ?? 0) > 0
+    (brief.signals?.length ?? 0) > 0 ||
+    (brief.alerts?.length ?? 0) > 0 ||
+    !!brief.digest?.macroRegime ||
+    (brief.digest?.sectorWeights?.length ?? 0) > 0 ||
+    (brief.digest?.topNews?.length ?? 0) > 0 ||
+    (brief.digest?.earningsThisWeek?.length ?? 0) > 0
   );
 }
 
@@ -273,16 +273,16 @@ export function hasSymbolIntelligenceContent(
 ): boolean {
   if (!intelligence) return false;
   return (
-    intelligence.signals.length > 0 ||
-    (intelligence.peer_comparison?.peers.length ?? 0) > 0 ||
-    !!intelligence.peer_comparison?.summary ||
-    intelligence.event_timeline.length > 0 ||
-    !!intelligence.options_scorecard?.covered_call_candidates.length ||
-    !!intelligence.options_scorecard?.csp_candidates.length ||
-    (intelligence.options_scorecard?.assignment_flags.length ?? 0) > 0 ||
-    !!intelligence.cached_research?.investment_thesis ||
-    (intelligence.cached_research?.key_strengths.length ?? 0) > 0 ||
-    (intelligence.cached_research?.key_risks.length ?? 0) > 0
+    (intelligence.signals?.length ?? 0) > 0 ||
+    (intelligence.peerComparison?.peers?.length ?? 0) > 0 ||
+    !!intelligence.peerComparison?.summary ||
+    (intelligence.eventTimeline?.length ?? 0) > 0 ||
+    (intelligence.optionsScorecard?.coveredCallCandidates?.length ?? 0) > 0 ||
+    (intelligence.optionsScorecard?.cspCandidates?.length ?? 0) > 0 ||
+    (intelligence.optionsScorecard?.assignmentFlags?.length ?? 0) > 0 ||
+    !!intelligence.cachedResearch?.investmentThesis ||
+    (intelligence.cachedResearch?.keyStrengths?.length ?? 0) > 0 ||
+    (intelligence.cachedResearch?.keyRisks?.length ?? 0) > 0
   );
 }
 

@@ -9,7 +9,7 @@ export type IntelligenceSignal = {
 
 export type SectorWeight = {
   sector: string;
-  weight_pct: number;
+  weightPct: number;
   symbols: string[];
 };
 
@@ -17,14 +17,14 @@ export type PortfolioNewsItem = {
   symbol: string;
   headline: string;
   sentiment?: string | null;
-  weight_pct?: number | null;
+  weightPct?: number | null;
 };
 
 export type PortfolioDigest = {
-  sector_weights: SectorWeight[];
-  macro_regime?: string | null;
-  top_news: PortfolioNewsItem[];
-  earnings_this_week: string[];
+  sectorWeights: SectorWeight[];
+  macroRegime?: string | null;
+  topNews: PortfolioNewsItem[];
+  earningsThisWeek: string[];
 };
 
 export type ProactiveAlert = {
@@ -44,15 +44,15 @@ export type PortfolioIntelligence = {
 export type PeerMetric = {
   symbol: string;
   name?: string | null;
-  one_year_return?: string | null;
-  pe_trailing?: string | null;
+  oneYearReturn?: string | null;
+  peTrailing?: string | null;
   sector?: string | null;
 };
 
 export type PeerComparison = {
-  target_symbol: string;
-  target_one_year_return?: string | null;
-  target_pe_trailing?: string | null;
+  targetSymbol: string;
+  targetOneYearReturn?: string | null;
+  targetPeTrailing?: string | null;
   peers: PeerMetric[];
   summary?: string | null;
 };
@@ -69,7 +69,7 @@ export type OptionsStrikeCandidate = {
   strike: number;
   expiration: string;
   delta?: number | null;
-  open_interest?: number | null;
+  openInterest?: number | null;
   bid?: number | null;
   ask?: number | null;
   iv?: number | null;
@@ -78,26 +78,28 @@ export type OptionsStrikeCandidate = {
 };
 
 export type OptionsScorecard = {
-  underlying_price?: number | null;
-  covered_call_candidates: OptionsStrikeCandidate[];
-  csp_candidates: OptionsStrikeCandidate[];
-  assignment_flags: string[];
+  underlyingPrice?: number | null;
+  coveredCallCandidates: OptionsStrikeCandidate[];
+  cspCandidates: OptionsStrikeCandidate[];
+  assignmentFlags: string[];
 };
 
 export type CachedResearchSnippet = {
   sentiment?: string | null;
-  investment_thesis?: string | null;
-  key_strengths: string[];
-  key_risks: string[];
-  what_to_watch: string[];
-  valuation_context?: string | null;
+  investmentThesis?: string | null;
+  keyStrengths: string[];
+  keyRisks: string[];
+  whatToWatch: string[];
+  valuationContext?: string | null;
 };
 
 export type SymbolIntelligence = {
   symbol: string;
   signals: IntelligenceSignal[];
-  peer_comparison?: PeerComparison | null;
-  event_timeline: EventTimelineEntry[];
-  options_scorecard?: OptionsScorecard | null;
-  cached_research?: CachedResearchSnippet | null;
+  peerComparison?: PeerComparison | null;
+  eventTimeline?: EventTimelineEntry[];
+  optionsScorecard?: OptionsScorecard | null;
+  cachedResearch?: CachedResearchSnippet | null;
+  dataGaps?: string[];
+  partial?: boolean;
 };

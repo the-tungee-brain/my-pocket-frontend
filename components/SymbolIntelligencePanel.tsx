@@ -85,10 +85,10 @@ export function SymbolIntelligencePanel({
 }: Props) {
   const hasContent = hasSymbolIntelligenceContent(intelligence);
   const signals = sortSignalsBySeverity(intelligence?.signals ?? []);
-  const peers = intelligence?.peer_comparison;
-  const timeline = intelligence?.event_timeline ?? [];
-  const options = intelligence?.options_scorecard;
-  const research = intelligence?.cached_research;
+  const peers = intelligence?.peerComparison;
+  const timeline = intelligence?.eventTimeline ?? [];
+  const options = intelligence?.optionsScorecard;
+  const research = intelligence?.cachedResearch;
   const symbol = intelligence?.symbol;
 
   if (!loading && !error && !hasContent) {
@@ -192,9 +192,9 @@ export function SymbolIntelligencePanel({
         )}
 
         {research &&
-          (research.investment_thesis ||
-            research.key_strengths.length > 0 ||
-            research.key_risks.length > 0) && (
+          (research.investmentThesis ||
+            (research.keyStrengths?.length ?? 0) > 0 ||
+            (research.keyRisks?.length ?? 0) > 0) && (
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                 <Sparkles className="h-3.5 w-3.5" aria-hidden />
@@ -206,26 +206,26 @@ export function SymbolIntelligencePanel({
                 )}
               </div>
               <div className="space-y-2 rounded-xl border border-border bg-background/60 px-3 py-3">
-                {research.investment_thesis && (
+                {research.investmentThesis && (
                   <p className="text-sm leading-relaxed text-foreground">
-                    {research.investment_thesis}
+                    {research.investmentThesis}
                   </p>
                 )}
-                {research.key_strengths.length > 0 && (
+                {(research.keyStrengths?.length ?? 0) > 0 && (
                   <div>
                     <p className="text-[11px] font-medium text-muted">Strengths</p>
                     <ul className="mt-1 list-inside list-disc text-sm text-foreground">
-                      {research.key_strengths.slice(0, 3).map((item) => (
+                      {research.keyStrengths.slice(0, 3).map((item) => (
                         <li key={item}>{item}</li>
                       ))}
                     </ul>
                   </div>
                 )}
-                {research.key_risks.length > 0 && (
+                {(research.keyRisks?.length ?? 0) > 0 && (
                   <div>
                     <p className="text-[11px] font-medium text-muted">Risks</p>
                     <ul className="mt-1 list-inside list-disc text-sm text-foreground">
-                      {research.key_risks.slice(0, 3).map((item) => (
+                      {research.keyRisks.slice(0, 3).map((item) => (
                         <li key={item}>{item}</li>
                       ))}
                     </ul>
@@ -255,22 +255,22 @@ export function SymbolIntelligencePanel({
                 </thead>
                 <tbody>
                   <tr className="border-t border-border bg-accent-muted/20 font-medium">
-                    <td className="px-3 py-2 font-mono">{peers.target_symbol}</td>
+                    <td className="px-3 py-2 font-mono">{peers.targetSymbol}</td>
                     <td className="px-3 py-2 tabular-nums">
-                      {peers.target_one_year_return ?? "—"}
+                      {peers.targetOneYearReturn ?? "—"}
                     </td>
                     <td className="px-3 py-2 tabular-nums">
-                      {peers.target_pe_trailing ?? "—"}
+                      {peers.targetPeTrailing ?? "—"}
                     </td>
                   </tr>
                   {peers.peers.slice(0, compact ? 3 : 5).map((peer) => (
                     <tr key={peer.symbol} className="border-t border-border">
                       <td className="px-3 py-2 font-mono">{peer.symbol}</td>
                       <td className="px-3 py-2 tabular-nums">
-                        {peer.one_year_return ?? "—"}
+                        {peer.oneYearReturn ?? "—"}
                       </td>
                       <td className="px-3 py-2 tabular-nums">
-                        {peer.pe_trailing ?? "—"}
+                        {peer.peTrailing ?? "—"}
                       </td>
                     </tr>
                   ))}
@@ -317,23 +317,23 @@ export function SymbolIntelligencePanel({
         )}
 
         {options &&
-          (options.assignment_flags.length > 0 ||
-            options.covered_call_candidates.length > 0 ||
-            options.csp_candidates.length > 0) && (
+          ((options.assignmentFlags?.length ?? 0) > 0 ||
+            (options.coveredCallCandidates?.length ?? 0) > 0 ||
+            (options.cspCandidates?.length ?? 0) > 0) && (
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                 <Target className="h-3.5 w-3.5" aria-hidden />
                 Options scorecard
-                {options.underlying_price != null && (
+                {options.underlyingPrice != null && (
                   <span className="font-mono normal-case text-foreground">
-                    @ {formatUsd(options.underlying_price)}
+                    @ {formatUsd(options.underlyingPrice)}
                   </span>
                 )}
               </div>
 
-              {options.assignment_flags.length > 0 && (
+              {(options.assignmentFlags?.length ?? 0) > 0 && (
                 <ul className="mb-3 space-y-1">
-                  {options.assignment_flags.map((flag) => (
+                  {options.assignmentFlags.map((flag) => (
                     <li
                       key={flag}
                       className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
@@ -344,12 +344,12 @@ export function SymbolIntelligencePanel({
                 </ul>
               )}
 
-              {options.assignment_flags.length > 0 && onAnalyzeOption && symbol && (
+              {(options.assignmentFlags?.length ?? 0) > 0 && onAnalyzeOption && symbol && (
                 <button
                   type="button"
                   onClick={() =>
                     onAnalyzeOption(
-                      `Review assignment and call-away risk for my ${symbol} short options over the next two weeks. ${options.assignment_flags.join(" ")}`,
+                      `Review assignment and call-away risk for my ${symbol} short options over the next two weeks. ${options.assignmentFlags?.join(" ") ?? ""}`,
                     )
                   }
                   className="mb-3 inline-flex items-center gap-1 rounded-lg border border-danger/30 bg-danger/10 px-2.5 py-1 text-[11px] font-medium text-danger transition hover:bg-danger/15"
@@ -358,20 +358,20 @@ export function SymbolIntelligencePanel({
                 </button>
               )}
 
-              {options.covered_call_candidates.length > 0 && (
+              {(options.coveredCallCandidates?.length ?? 0) > 0 && (
                 <OptionsCandidateTable
                   title="Covered call candidates"
                   symbol={symbol}
-                  candidates={options.covered_call_candidates.slice(0, 3)}
+                  candidates={options.coveredCallCandidates.slice(0, 3)}
                   onAnalyzeOption={onAnalyzeOption}
                 />
               )}
 
-              {options.csp_candidates.length > 0 && (
+              {(options.cspCandidates?.length ?? 0) > 0 && (
                 <OptionsCandidateTable
                   title="Cash-secured put candidates"
                   symbol={symbol}
-                  candidates={options.csp_candidates.slice(0, 3)}
+                  candidates={options.cspCandidates.slice(0, 3)}
                   onAnalyzeOption={onAnalyzeOption}
                   className="mt-3"
                 />
@@ -425,8 +425,8 @@ function OptionsCandidateTable({
   title: string;
   symbol?: string;
   candidates: NonNullable<
-    SymbolIntelligence["options_scorecard"]
-  >["covered_call_candidates"];
+    SymbolIntelligence["optionsScorecard"]
+  >["coveredCallCandidates"];
   onAnalyzeOption?: (prompt: string) => void;
   className?: string;
 }) {
@@ -452,7 +452,7 @@ function OptionsCandidateTable({
                 <p className="mt-1 text-xs text-muted">
                   Δ {candidate.delta != null ? candidate.delta.toFixed(2) : "—"}
                   {" · "}
-                  OI {candidate.open_interest ?? "—"}
+                  OI {candidate.openInterest ?? "—"}
                   {" · "}
                   Bid{" "}
                   {candidate.bid != null
