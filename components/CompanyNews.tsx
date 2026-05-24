@@ -1,9 +1,11 @@
 "use client";
 
+import { Newspaper } from "lucide-react";
 import { StockNewsView } from "@/app/hooks/useCompanyNews";
 import NewsAnalytics from "./NewsAnalytics";
 import { ThinkingSpinner } from "./ui/ThinkingSpinner";
 import { ErrorBanner } from "./ui/ErrorBanner";
+import { EmptyState } from "./ui/EmptyState";
 
 type Props = {
   analytics: StockNewsView | null;
@@ -20,6 +22,7 @@ export function CompanyNews({
   error,
   lastUpdated = null,
   onRetry,
+  symbol,
 }: Props) {
   return (
     <section className="mt-6 flex justify-center">
@@ -43,9 +46,16 @@ export function CompanyNews({
         )}
 
         {!error && !isLoading && !analytics && (
-          <p className="text-center text-sm text-muted">
-            No news analysis available for this symbol.
-          </p>
+          <EmptyState
+            icon={Newspaper}
+            title="No news yet"
+            description={
+              symbol
+                ? `We couldn't find recent news analysis for ${symbol} right now.`
+                : "No news analysis is available for this symbol right now."
+            }
+            variant="solid"
+          />
         )}
       </div>
     </section>

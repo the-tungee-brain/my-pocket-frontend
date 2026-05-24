@@ -1,6 +1,8 @@
 "use client";
 
+import { CircleDollarSign, Inbox } from "lucide-react";
 import { Position } from "@/app/types/schwab";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 
 export type PositionMap = Record<string, Position[]>;
@@ -30,13 +32,14 @@ export function AccountPositionList({
 }: AccountPositionListProps) {
   if (!selectedSymbol) {
     return (
-      <section className="w-full py-4">
-        <p className="text-sm text-muted md:hidden">
-          Open the menu to pick a symbol.
-        </p>
-        <p className="hidden text-sm text-muted md:block">
-          Select a symbol from the sidebar to view its positions.
-        </p>
+      <section className="mx-auto w-full max-w-3xl py-4">
+        <EmptyState
+          icon={CircleDollarSign}
+          title="Pick a symbol"
+          description="Open the menu on mobile or choose a symbol from the sidebar to view its positions."
+          variant="solid"
+          className="py-8"
+        />
       </section>
     );
   }
@@ -44,9 +47,13 @@ export function AccountPositionList({
   if (!positionsForSelectedSymbol || positionsForSelectedSymbol.length === 0) {
     return (
       <section className="mx-auto w-full max-w-3xl py-4">
-        <p className="text-sm text-muted">
-          No positions found for {selectedSymbol}.
-        </p>
+        <EmptyState
+          icon={Inbox}
+          title={`No positions for ${selectedSymbol}`}
+          description="This symbol isn't in your Schwab holdings, or positions haven't loaded yet."
+          variant="solid"
+          className="py-8"
+        />
       </section>
     );
   }

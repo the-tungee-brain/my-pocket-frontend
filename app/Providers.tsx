@@ -18,7 +18,7 @@ import {
   loadPersistedChat,
   persistChatState,
 } from "@/lib/chatPersistence";
-import { formatQuickActionMessage } from "@/lib/quickActions";
+import { formatQuickActionMessage, isFreeFormQuickAction } from "@/lib/quickActions";
 import { Position, SchwabAccounts } from "./types/schwab";
 import { MainView } from "@/components/NavList";
 import { usePathname } from "next/navigation";
@@ -408,16 +408,18 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
             ? selectedSymbol
             : (selectedSymbol ?? "UNKNOWN");
 
+      const freeForm = isFreeFormQuickAction(actionId);
+
       try {
         let assistantContent = "";
 
         await streamAnalysis(
           {
             account: account,
-            positions: positionsForSelectedSymbol,
+            positions: positionsForSelectedSymbol ?? [],
             symbol: symbolForApi,
-            action: actionId,
-            prompt: null,
+            action: freeForm ? "free-form" : actionId,
+            prompt: freeForm ? userMessage.content : null,
             model: state.model,
           },
           accessToken,

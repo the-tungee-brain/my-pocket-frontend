@@ -1,34 +1,91 @@
 import {
   CalendarDays,
   CircleHelp,
+  Landmark,
   Scale,
   ShieldAlert,
+  ShieldCheck,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
+import type { MainView } from "@/components/NavList";
 
 export type QuickAction = {
   id: string;
   label: string;
   icon: LucideIcon;
+  /** When set, sends a free-form prompt instead of a backend action id. */
+  prompt?: (target: string) => string;
 };
 
-export const QUICK_ACTIONS: QuickAction[] = [
+export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
   { id: "daily-summary", label: "Daily summary", icon: CalendarDays },
   { id: "risk-check", label: "Risk check", icon: ShieldAlert },
   { id: "tax-angle", label: "Tax angle", icon: Scale },
   { id: "what-changed", label: "What changed", icon: CircleHelp },
 ];
 
-export function getQuickActionLabel(actionId: string): string {
+export const RESEARCH_QUICK_ACTIONS: QuickAction[] = [
+  {
+    id: "bull-bear-case",
+    label: "Bull/bear case",
+    icon: TrendingUp,
+    prompt: (target) =>
+      `Summarize the bull case and bear case for ${target}. Keep it concise and balanced.`,
+  },
+  {
+    id: "key-risks",
+    label: "Key risks",
+    icon: ShieldAlert,
+    prompt: (target) =>
+      `What are the main business and market risks for ${target} right now?`,
+  },
+  {
+    id: "competitive-moat",
+    label: "Competitive moat",
+    icon: ShieldCheck,
+    prompt: (target) =>
+      `How durable is ${target}'s competitive moat, and who are the main competitors?`,
+  },
+  {
+    id: "earnings-preview",
+    label: "Earnings preview",
+    icon: Landmark,
+    prompt: (target) =>
+      `What should investors watch ahead of the next earnings report for ${target}?`,
+  },
+];
+
+/** @deprecated Use PORTFOLIO_QUICK_ACTIONS */
+export const QUICK_ACTIONS = PORTFOLIO_QUICK_ACTIONS;
+
+export function getQuickActionsForMode(mode: MainView): QuickAction[] {
+  if (mode === "research") return RESEARCH_QUICK_ACTIONS;
+  return PORTFOLIO_QUICK_ACTIONS;
+}
+
+export function findQuickAction(actionId: string): QuickAction | undefined {
   return (
-    QUICK_ACTIONS.find((action) => action.id === actionId)?.label ?? actionId
+    PORTFOLIO_QUICK_ACTIONS.find((action) => action.id === actionId) ??
+    RESEARCH_QUICK_ACTIONS.find((action) => action.id === actionId)
   );
+}
+
+export function getQuickActionLabel(actionId: string): string {
+  return findQuickAction(actionId)?.label ?? actionId;
 }
 
 export function formatQuickActionMessage(
   actionId: string,
   target: string,
 ): string {
+  const action = findQuickAction(actionId);
+  if (action?.prompt) return action.prompt(target);
+
   const actionLabel = getQuickActionLabel(actionId);
   return `${actionLabel} for ${target}`;
+}
+
+export function isFreeFormQuickAction(actionId: string): boolean {
+  return !!findQuickAction(actionId)?.prompt;
 }

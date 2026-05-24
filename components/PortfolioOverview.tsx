@@ -5,6 +5,7 @@ import { BriefcaseBusiness } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
 import { Position } from "@/app/types/schwab";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -81,26 +82,23 @@ export function PortfolioOverview({
   if (!allPositions.length) {
     return (
       <section className="mx-auto w-full max-w-3xl">
-        <div className="rounded-2xl border border-dashed border-border bg-muted-bg/30 px-6 py-10 text-center">
-          <BriefcaseBusiness
-            className="mx-auto mb-3 h-8 w-8 text-muted"
-            aria-hidden="true"
-          />
-          <h2 className="text-sm font-semibold text-foreground">
-            No holdings yet
-          </h2>
-          <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
-            {schwabAuthorized === false
+        <EmptyState
+          icon={BriefcaseBusiness}
+          title="No holdings yet"
+          description={
+            schwabAuthorized === false
               ? "Connect Schwab from the sidebar to import positions and unlock portfolio insights."
-              : "Your Schwab account is connected, but no positions were returned. Holdings will appear here once available."}
-          </p>
-          {schwabAuthorized === false && !schwabLoading && (
-            <p className="mx-auto mt-4 max-w-sm text-xs text-muted">
-              On mobile, open the menu and use Connect at the bottom of the
-              sidebar.
-            </p>
-          )}
-        </div>
+              : "Your Schwab account is connected, but no positions were returned. Holdings will appear here once available."
+          }
+          action={
+            schwabAuthorized === false && !schwabLoading ? (
+              <p className="text-xs text-muted">
+                On mobile, open the menu and use Connect at the bottom of the
+                sidebar.
+              </p>
+            ) : undefined
+          }
+        />
       </section>
     );
   }
@@ -203,19 +201,34 @@ export function PortfolioOverview({
 
         <div className="divide-y divide-border sm:hidden">
           {symbolSummaries.map(({ symbol, positions, totalValue, dayPL }) => (
-            <Link
+            <div
               key={symbol}
-              href={`/portfolio/positions/${symbol}`}
               className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted-bg/40"
             >
               <div>
-                <p className="font-mono font-medium text-foreground">{symbol}</p>
-                <p className="text-xs text-muted">
-                  {positions.length}{" "}
-                  {positions.length === 1 ? "position" : "positions"}
-                </p>
+                <Link
+                  href={`/portfolio/positions/${symbol}`}
+                  className="font-mono font-medium text-foreground hover:text-accent-strong"
+                >
+                  {symbol}
+                </Link>
+                <div className="mt-0.5 flex items-center gap-2">
+                  <p className="text-xs text-muted">
+                    {positions.length}{" "}
+                    {positions.length === 1 ? "position" : "positions"}
+                  </p>
+                  <Link
+                    href={`/research/${symbol}/overview`}
+                    className="text-[10px] font-medium text-muted hover:text-accent-strong"
+                  >
+                    Research
+                  </Link>
+                </div>
               </div>
-              <div className="text-right">
+              <Link
+                href={`/portfolio/positions/${symbol}`}
+                className="text-right"
+              >
                 <p className="tabular-nums font-medium">
                   ${totalValue.toLocaleString()}
                 </p>
@@ -227,8 +240,8 @@ export function PortfolioOverview({
                 >
                   {formatPL(dayPL)}
                 </p>
-              </div>
-            </Link>
+              </Link>
+            </div>
           ))}
         </div>
       </div>

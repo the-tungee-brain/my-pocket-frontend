@@ -105,6 +105,7 @@ export function ChatBox({
           </p>
         ) : (
           <QuickAnalysisBar
+            mode={mode}
             symbol={
               mode === "portfolio"
                 ? "PORTFOLIO"

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bot, User } from "lucide-react";
+import { Bot, Check, Copy, Trash2, User } from "lucide-react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
+import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 
 export type ChatMessage = {
@@ -16,12 +18,49 @@ interface ConversationPaneProps {
   symbol: string | null;
   messages: ChatMessage[];
   loading: boolean;
+  onClear?: () => void;
+}
+
+function CopyMessageButton({ content }: { content: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard unavailable
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleCopy()}
+      aria-label={copied ? "Copied" : "Copy message"}
+      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-muted transition hover:bg-muted-bg hover:text-foreground"
+    >
+      {copied ? (
+        <>
+          <Check className="h-3 w-3 text-success" aria-hidden="true" />
+          Copied
+        </>
+      ) : (
+        <>
+          <Copy className="h-3 w-3" aria-hidden="true" />
+          Copy
+        </>
+      )}
+    </button>
+  );
 }
 
 export function ConversationPane({
   symbol,
   messages,
   loading,
+  onClear,
 }: ConversationPaneProps) {
   const lastUserRef = useRef<HTMLDivElement | null>(null);
   const prevLoadingRef = useRef(loading);
@@ -62,17 +101,16 @@ export function ConversationPane({
   if (!symbol) return null;
 
   const label = symbol === "PORTFOLIO" ? "portfolio" : symbol;
+  const canClear = !!onClear && messages.length > 0 && !loading;
 
   if (messages.length === 0 && !loading) {
     return (
-      <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-dashed border-border bg-muted-bg/30 px-6 py-10 text-center">
-        <Bot className="mx-auto mb-3 h-8 w-8 text-muted" aria-hidden="true" />
-        <p className="text-sm font-medium text-foreground">
-          Ask anything about your {label}
-        </p>
-        <p className="mt-1 text-xs text-muted">
-          Use quick prompts below or type your own question
-        </p>
+      <div className="mx-auto mt-6 max-w-3xl">
+        <EmptyState
+          icon={Bot}
+          title={`Ask anything about ${label === "portfolio" ? "your portfolio" : label}`}
+          description="Use quick prompts below or type your own question"
+        />
       </div>
     );
   }
@@ -87,13 +125,27 @@ export function ConversationPane({
         {liveAnnouncement}
       </div>
 
-      <div className="mb-4 text-xs font-medium uppercase tracking-wide text-muted">
-        Conversation
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="text-xs font-medium uppercase tracking-wide text-muted">
+          Conversation
+        </div>
+        {canClear && (
+          <Button
+            size="xs"
+            variant="ghost"
+            className="text-muted hover:text-foreground"
+            onClick={onClear}
+          >
+            <Trash2 className="h-3 w-3" aria-hidden="true" />
+            Clear
+          </Button>
+        )}
       </div>
+
       <div
         className="space-y-4 pr-1"
         role="log"
-        aria-label={`Conversation about your ${label}`}
+        aria-label={`Conversation about ${label === "portfolio" ? "your portfolio" : label}`}
       >
         {messages.map((m, idx) => {
           const isAssistant = m.role === "assistant";
@@ -127,6 +179,11 @@ export function ConversationPane({
                 )}
               >
                 <MarkdownRenderer content={m.content} />
+                {isAssistant && m.content && (
+                  <div className="mt-2 border-t border-border pt-2">
+                    <CopyMessageButton content={m.content} />
+                  </div>
+                )}
               </div>
 
               {!isAssistant && (

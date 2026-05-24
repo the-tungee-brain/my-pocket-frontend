@@ -218,6 +218,7 @@ export function StockChart({
         <div className="mb-2 flex items-center justify-between">
           <div>
             <h2
+              id={`stock-chart-title-${symbol}`}
               className="text-lg font-semibold tracking-tight"
               style={{ color: "var(--color-foreground)" }}
             >
@@ -246,7 +247,11 @@ export function StockChart({
         </div>
       )}
 
-      <div
+      <section
+        aria-labelledby={
+          hideHeader ? undefined : `stock-chart-title-${symbol}`
+        }
+        aria-label={hideHeader ? `${symbol} price chart` : undefined}
         className={cn(
           "relative rounded-2xl border shadow-sm",
           hideHeader && "border-0 bg-transparent shadow-none",
@@ -262,6 +267,8 @@ export function StockChart({
       >
         <div
           ref={containerRef}
+          role="img"
+          aria-label={`${symbol} candlestick chart, ${selectedPeriod} period, ${selectedInterval} interval`}
           className="w-full overflow-hidden rounded-2xl border-b"
           style={{ borderColor: "var(--color-border)", minHeight: 400 }}
         />
@@ -307,19 +314,26 @@ export function StockChart({
         <div className="flex flex-col gap-2 px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span
+              id={`stock-chart-range-label-${symbol}`}
               className="text-[11px] uppercase tracking-wide opacity-70"
               style={{ color: "var(--color-foreground)" }}
             >
               Time range
             </span>
 
-            <div className="flex flex-wrap gap-1">
+            <div
+              className="flex flex-wrap gap-1"
+              role="group"
+              aria-labelledby={`stock-chart-range-label-${symbol}`}
+            >
               {PRESETS.map((p) => {
                 const active = p.label === currentPreset;
                 return (
                   <button
                     key={p.label}
                     type="button"
+                    aria-pressed={active}
+                    aria-label={`${p.label} time range`}
                     onClick={() => handlePresetClick(p)}
                     className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
                     style={{
@@ -349,6 +363,7 @@ export function StockChart({
               <span className="opacity-80">Period</span>
               <select
                 value={selectedPeriod}
+                aria-label={`${symbol} chart period`}
                 onChange={(e) => {
                   const newPeriod = e.target.value;
                   setSelectedPeriod(newPeriod);
@@ -379,6 +394,7 @@ export function StockChart({
               <span className="opacity-80">Interval</span>
               <select
                 value={selectedInterval}
+                aria-label={`${symbol} chart interval`}
                 onChange={(e) => {
                   const newInterval = e.target.value;
                   setSelectedInterval(newInterval);
@@ -421,7 +437,7 @@ export function StockChart({
             </button>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

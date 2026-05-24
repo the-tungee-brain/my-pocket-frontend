@@ -16,11 +16,18 @@ type ChatStateForPersistence = {
   modelMenuOpen: boolean;
 };
 
-const STORAGE_VERSION = 1;
+const STORAGE_VERSION = 2;
+const LEGACY_STORAGE_VERSION = 1;
 const STORAGE_PREFIX = "powerpocket-chat";
+const MAX_MESSAGES_PER_THREAD = 100;
+const MAX_INPUT_LENGTH = 4000;
 
 function storageKey(userId: string): string {
   return `${STORAGE_PREFIX}:v${STORAGE_VERSION}:${userId}`;
+}
+
+function legacyStorageKey(userId: string): string {
+  return `${STORAGE_PREFIX}:v${LEGACY_STORAGE_VERSION}:${userId}`;
 }
 
 function isChatMessage(value: unknown): value is ChatMessage {
@@ -31,6 +38,17 @@ function isChatMessage(value: unknown): value is ChatMessage {
     (msg.role === "user" || msg.role === "assistant") &&
     typeof msg.content === "string"
   );
+}
+
+function trimThread(state: PersistedChatState): PersistedChatState {
+  return {
+    input: state.input.slice(0, MAX_INPUT_LENGTH),
+    model: state.model,
+    messages:
+      state.messages.length > MAX_MESSAGES_PER_THREAD
+        ? state.messages.slice(-MAX_MESSAGES_PER_THREAD)
+        : state.messages,
+  };
 }
 
 function parsePersistedChat(raw: string): PersistedChatMap {
@@ -47,11 +65,11 @@ function parsePersistedChat(raw: string): PersistedChatMap {
         ? entry.messages.filter(isChatMessage)
         : [];
 
-      result[key] = {
+      result[key] = trimThread({
         input: typeof entry.input === "string" ? entry.input : "",
         messages,
         model: typeof entry.model === "string" ? entry.model : "",
-      };
+      });
     }
 
     return result;
@@ -60,13 +78,33 @@ function parsePersistedChat(raw: string): PersistedChatMap {
   }
 }
 
+function readLegacySessionChat(userId: string): PersistedChatMap | null {
+  if (typeof window === "undefined") return null;
+
+  const raw = sessionStorage.getItem(legacyStorageKey(userId));
+  if (!raw) return null;
+
+  return parsePersistedChat(raw);
+}
+
 export function loadPersistedChat(userId: string): PersistedChatMap {
   if (typeof window === "undefined") return {};
 
-  const raw = sessionStorage.getItem(storageKey(userId));
-  if (!raw) return {};
+  const raw = localStorage.getItem(storageKey(userId));
+  if (raw) return parsePersistedChat(raw);
 
-  return parsePersistedChat(raw);
+  const legacy = readLegacySessionChat(userId);
+  if (legacy && Object.keys(legacy).length > 0) {
+    try {
+      localStorage.setItem(storageKey(userId), JSON.stringify(legacy));
+      sessionStorage.removeItem(legacyStorageKey(userId));
+    } catch {
+      // ignore migration errors
+    }
+    return legacy;
+  }
+
+  return {};
 }
 
 export function persistChatState(
@@ -80,16 +118,16 @@ export function persistChatState(
   for (const [key, state] of Object.entries(chatBySymbol)) {
     if (!state.messages.length && !state.input.trim()) continue;
 
-    toSave[key] = {
+    toSave[key] = trimThread({
       input: state.input,
       messages: state.messages,
       model: state.model,
-    };
+    });
   }
 
   try {
-    sessionStorage.setItem(storageKey(userId), JSON.stringify(toSave));
+    localStorage.setItem(storageKey(userId), JSON.stringify(toSave));
   } catch {
-    // sessionStorage full or unavailable — ignore
+    // localStorage full or unavailable — ignore
   }
 }

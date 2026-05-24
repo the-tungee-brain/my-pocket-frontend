@@ -210,6 +210,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setInputRows(MIN_ROWS);
   };
 
+  const handleClearChat = () => {
+    if (activeChatKey === "__NONE__") return;
+    if (currentChat?.loading) return;
+
+    setChatBySymbol((prev) => ({
+      ...prev,
+      [activeChatKey]: ensureSymbolChatState(activeChatKey, {
+        messages: [],
+        input: "",
+        loading: false,
+        modelMenuOpen: false,
+      }),
+    }));
+    setInputRows(MIN_ROWS);
+  };
+
   const labelSymbol =
     selectedView === "portfolio"
       ? "PORTFOLIO"
@@ -330,6 +346,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   symbol={labelSymbol}
                   messages={currentChat?.messages ?? []}
                   loading={!!currentChat?.loading}
+                  onClear={handleClearChat}
                 />
               )}
             </div>
