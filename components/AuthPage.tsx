@@ -19,25 +19,18 @@ import { cn } from "@/lib/utils";
 export default function AuthPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="mx-auto flex min-h-screen max-w-6xl flex-col items-center justify-center gap-12 px-6 py-12 lg:flex-row lg:gap-16 lg:py-16">
+      <main className="mx-auto flex min-h-screen max-w-6xl flex-col items-center justify-center gap-12 px-6 py-6 lg:flex-row lg:gap-16 lg:py-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
           className="flex-1"
         >
-          <div className="mb-6 flex items-center gap-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-              <Wallet className="h-4 w-4" aria-hidden="true" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold tracking-tight">PowerPocket</div>
-              <div className="text-[11px] text-muted">Portfolio workspace</div>
-            </div>
-          </div>
-
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-muted">
-            <Sparkles className="h-3.5 w-3.5 text-accent-strong" aria-hidden="true" />
+            <Sparkles
+              className="h-3.5 w-3.5 text-accent-strong"
+              aria-hidden="true"
+            />
             AI-powered portfolio intelligence
           </div>
 
@@ -132,8 +125,12 @@ function AppPreview() {
               <Wallet className="h-3.5 w-3.5" aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <div className="truncate text-[11px] font-semibold">PowerPocket</div>
-              <div className="truncate text-[9px] text-muted">Portfolio workspace</div>
+              <div className="truncate text-[11px] font-semibold">
+                PowerPocket
+              </div>
+              <div className="truncate text-[9px] text-muted">
+                Portfolio workspace
+              </div>
             </div>
           </div>
 
@@ -144,7 +141,11 @@ function AppPreview() {
               sublabel="Overview"
               active
             />
-            <PreviewNavItem icon={Search} label="Research" sublabel="Snapshots" />
+            <PreviewNavItem
+              icon={Search}
+              label="Research"
+              sublabel="Snapshots"
+            />
             <div className="my-2 h-px bg-border" />
             <p className="px-1 text-[9px] font-semibold uppercase tracking-wide text-muted">
               Positions
@@ -168,7 +169,9 @@ function AppPreview() {
                   <Sparkles className="h-3 w-3" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold">Portfolio insights</p>
+                  <p className="text-[11px] font-semibold">
+                    Portfolio insights
+                  </p>
                   <p className="text-[9px] text-muted">AI-generated analysis</p>
                 </div>
               </div>
@@ -229,7 +232,9 @@ function PreviewNavItem({
         aria-hidden="true"
       />
       <div className="min-w-0">
-        <p className={cn("truncate text-[10px]", mono && "font-mono")}>{label}</p>
+        <p className={cn("truncate text-[10px]", mono && "font-mono")}>
+          {label}
+        </p>
         {sublabel && (
           <p className="truncate text-[9px] text-muted">{sublabel}</p>
         )}
@@ -255,7 +260,9 @@ function PortfolioRow({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-mono text-xs font-semibold">{symbol}</h3>
-          <p className="mt-0.5 text-[10px] leading-relaxed text-muted">{summary}</p>
+          <p className="mt-0.5 text-[10px] leading-relaxed text-muted">
+            {summary}
+          </p>
         </div>
         <span
           className={cn(
