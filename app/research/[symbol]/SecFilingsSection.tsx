@@ -1,10 +1,11 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FolderOpen } from "lucide-react";
 import { useSecFilings, useSecLookup } from "@/app/hooks/useSecResearch";
 import { useSession } from "next-auth/react";
 import { buildSecFilingUrl } from "@/lib/secUtils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type SecFilingsSectionProps = {
   symbol: string;
@@ -34,7 +35,13 @@ export function SecFilingsSection({ symbol }: SecFilingsSectionProps) {
 
   if (!filings?.filings.length) {
     return (
-      <p className="text-sm text-muted">No recent SEC filings were found.</p>
+      <EmptyState
+        icon={FolderOpen}
+        title="No SEC filings"
+        description="No recent SEC filings were found for this symbol."
+        variant="solid"
+        className="py-6"
+      />
     );
   }
 

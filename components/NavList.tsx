@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BriefcaseBusiness, CircleDollarSign, Search } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CircleDollarSign,
+  Search,
+  Star,
+  X,
+} from "lucide-react";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
+import { useWatchlist } from "@/app/hooks/useWatchlist";
+import { useToast } from "@/app/contexts/ToastContext";
 import { tabQuerySuffix, useTabs } from "@/app/contexts/TabContext";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/Button";
@@ -25,8 +33,9 @@ interface NavListProps {
 }
 
 const navItemActive =
-  "bg-muted-bg text-foreground shadow-sm ring-1 ring-border";
-const navItemInactive = "text-muted hover:bg-muted-bg/60 hover:text-foreground";
+  "border border-border bg-muted-bg text-foreground shadow-sm";
+const navItemInactive =
+  "border border-transparent text-muted hover:bg-muted-bg/60 hover:text-foreground";
 
 export function NavList({
   loading,
@@ -40,6 +49,8 @@ export function NavList({
   const router = useRouter();
   const pathname = usePathname();
   const { activeTab } = useTabs();
+  const { symbols: watchlist, remove: removeFromWatchlist } = useWatchlist();
+  const { showToast } = useToast();
 
   const {
     authorized: schwabAuthorized,
@@ -59,6 +70,9 @@ export function NavList({
   const isResearch = pathname.startsWith("/research");
   const activeSymbol = pathname.startsWith("/portfolio/positions/")
     ? pathname.split("/").at(-1)
+    : null;
+  const activeResearchSymbol = pathname.startsWith("/research/")
+    ? pathname.split("/")[2]?.toUpperCase()
     : null;
 
   const showSchwabStatus =
@@ -172,7 +186,7 @@ export function NavList({
         </div>
       )}
 
-      <div className="mt-1 flex-1 space-y-1 overflow-y-auto pr-1">
+      <div className="mt-1 flex-1 space-y-1 overflow-y-auto px-1">
         {symbols.map((sym) => {
           const isActive = activeSymbol === sym;
 
@@ -211,6 +225,80 @@ export function NavList({
           );
         })}
       </div>
+
+      <div className="my-3 h-px bg-border" />
+
+      <div className="mb-1 flex items-center justify-between px-1">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+          Watchlist
+        </span>
+        {watchlist.length > 0 && (
+          <span className="rounded-full bg-muted-bg px-2 py-px text-[10px] text-muted">
+            {watchlist.length}
+          </span>
+        )}
+      </div>
+
+      {watchlist.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border bg-background/50 px-3 py-3 text-[11px] text-muted">
+          <p>Save symbols from Research to track them here.</p>
+          {!isResearch && (
+            <Link
+              href="/research"
+              className="mt-2 inline-flex text-xs font-medium text-accent-strong transition hover:underline"
+            >
+              Go to Research
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="mb-1 max-h-36 space-y-1 overflow-y-auto px-1">
+          {watchlist.map((sym) => {
+            const isActive = activeResearchSymbol === sym;
+
+            return (
+              <div
+                key={sym}
+                className={cn(
+                  "group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-xs transition-all",
+                  isActive ? navItemActive : navItemInactive,
+                )}
+              >
+                <button
+                  type="button"
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => {
+                    setSelectedView("research");
+                    setSelectedSymbol(null);
+                    router.replace(`/research/${sym}/overview`);
+                  }}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                >
+                  <Star
+                    className={cn(
+                      "h-3.5 w-3.5 shrink-0",
+                      isActive ? "fill-accent-strong text-accent-strong" : "text-muted",
+                    )}
+                    aria-hidden="true"
+                  />
+                  <span className="font-mono">{sym}</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Remove ${sym} from watchlist`}
+                  onClick={() => {
+                    removeFromWatchlist(sym);
+                    showToast(`${sym} removed from watchlist`);
+                  }}
+                  className="shrink-0 rounded p-1 text-muted transition hover:bg-muted-bg hover:text-danger"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {showSchwabStatus && (
         <>

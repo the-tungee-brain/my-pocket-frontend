@@ -43,7 +43,7 @@ export function DesktopNav({
         setSelectedSymbol={setSelectedSymbol}
         selectedView={selectedView}
         setSelectedView={setSelectedView}
-        containerClassName="flex-1 flex flex-col gap-2 overflow-y-auto scrollbar-dark"
+        containerClassName="flex-1 flex flex-col gap-2 overflow-y-auto px-1 scrollbar-dark"
         portfolioButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors"
         symbolButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm transition-colors"
       />

@@ -8,6 +8,8 @@ import {
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { FileText } from "lucide-react";
 
 type SummarySectionProps = {
   symbol: string;
@@ -45,7 +47,13 @@ export function SummarySection({ symbol }: SummarySectionProps) {
 
   if (!summary) {
     return (
-      <p className="text-sm text-muted">Summary is not available for this symbol.</p>
+      <EmptyState
+        icon={FileText}
+        title="Summary unavailable"
+        description={`We don't have a summary for ${symbol} right now.`}
+        variant="solid"
+        className="py-6"
+      />
     );
   }
 

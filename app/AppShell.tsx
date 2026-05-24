@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu, Search } from "lucide-react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChatBox } from "@/components/ChatBox";
 import { ConversationPane } from "@/components/ConversationPane";
@@ -44,8 +44,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [inputRows, setInputRows] = useState(MIN_ROWS);
-  const [chatBoxHeight, setChatBoxHeight] = useState(0);
-  const chatBoxRef = useRef<HTMLDivElement>(null);
 
   const activeChatKey =
     selectedView === "portfolio"
@@ -81,30 +79,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     selectedView === "research"
       ? false
       : !insightsPositions?.length;
-
-  const measureChatBox = useCallback(() => {
-    if (!chatBoxRef.current) {
-      setChatBoxHeight(0);
-      return;
-    }
-    setChatBoxHeight(chatBoxRef.current.offsetHeight);
-  }, []);
-
-  useEffect(() => {
-    if (!showChat) {
-      setChatBoxHeight(0);
-      return;
-    }
-
-    measureChatBox();
-
-    const node = chatBoxRef.current;
-    if (!node || typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(() => measureChatBox());
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [showChat, inputRows, chatDisabled, measureChatBox]);
 
   const handleChatInputChange = (value: string) => {
     if (activeChatKey === "__NONE__") return;
@@ -332,12 +306,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-1 flex-col">
             <div
               id="main-content"
-              className={cn("flex-1 overflow-y-auto px-4 pt-3")}
-              style={{
-                paddingBottom: showChat
-                  ? Math.max(chatBoxHeight + 16, 16)
-                  : undefined,
-              }}
+              className={cn("flex-1 overflow-y-auto px-4 pt-3 pb-2")}
             >
               {children}
 
@@ -352,10 +321,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             {showChat && (
-              <div
-                ref={chatBoxRef}
-                className="sticky bottom-0 z-20 bg-background"
-              >
+              <div className="sticky bottom-0 z-20 bg-background">
                 <ChatBox
                   mode={selectedView}
                   selectedSymbol={

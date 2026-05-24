@@ -4,6 +4,8 @@ import { useFundamentals } from "@/app/hooks/useFundamentals";
 import { useSession } from "next-auth/react";
 import { ResearchTextBlock } from "@/components/ResearchDetailBlocks";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { BarChart3 } from "lucide-react";
 
 type FundamentalsSectionProps = {
   symbol: string;
@@ -31,7 +33,13 @@ export function FundamentalsSection({ symbol }: FundamentalsSectionProps) {
 
   if (!fundamentals) {
     return (
-      <p className="text-sm text-muted">Fundamentals are not available.</p>
+      <EmptyState
+        icon={BarChart3}
+        title="Fundamentals unavailable"
+        description="Fundamental data isn't available for this symbol right now."
+        variant="solid"
+        className="py-6"
+      />
     );
   }
 

@@ -1,0 +1,28 @@
+"use client";
+
+import { useCallback } from "react";
+import { useToast } from "@/app/contexts/ToastContext";
+import { useWatchlist } from "./useWatchlist";
+
+export function useWatchlistToggle(symbol: string) {
+  const { isWatchlisted, toggle } = useWatchlist();
+  const { showToast } = useToast();
+  const upper = symbol.trim().toUpperCase();
+  const watching = isWatchlisted(upper);
+
+  const handleToggle = useCallback(
+    (event?: { stopPropagation?: () => void }) => {
+      event?.stopPropagation?.();
+      const added = toggle(upper);
+      showToast(
+        added
+          ? `${upper} added to watchlist`
+          : `${upper} removed from watchlist`,
+      );
+      return added;
+    },
+    [toggle, upper, showToast],
+  );
+
+  return { watching, handleToggle, symbol: upper };
+}

@@ -3,11 +3,13 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Search, TrendingUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Search, SearchX, Star, TrendingUp } from "lucide-react";
 
 import { TickerSymbolItem, useSymbolSearch } from "../hooks/useSymbolSearch";
+import { useWatchlist } from "../hooks/useWatchlist";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { SymbolSearchResult } from "@/components/SymbolSearchResult";
 
 export default function ResearchPage() {
   const { data: session } = useSession();
@@ -16,6 +18,7 @@ export default function ResearchPage() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const router = useRouter();
 
+  const { symbols: watchlist } = useWatchlist();
   const { results, isLoading, error, refetch } = useSymbolSearch(query, {
     accessToken,
     limit: 10,
@@ -41,6 +44,12 @@ export default function ResearchPage() {
   };
 
   const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && hasResults) {
+      event.preventDefault();
+      handleSymbolClick(results[activeIndex >= 0 ? activeIndex : 0]);
+      return;
+    }
+
     if (!hasResults) return;
 
     if (event.key === "ArrowDown") {
@@ -59,12 +68,6 @@ export default function ResearchPage() {
       return;
     }
 
-    if (event.key === "Enter" && activeIndex >= 0) {
-      event.preventDefault();
-      handleSymbolClick(results[activeIndex]);
-      return;
-    }
-
     if (event.key === "Escape") {
       setActiveIndex(-1);
     }
@@ -73,9 +76,8 @@ export default function ResearchPage() {
   const examples = ["NVDA", "AAPL", "MSFT", "TSLA"];
 
   return (
-    <div className="flex min-h-[calc(100vh-9rem)] w-full items-center justify-center px-4 py-8">
-      <div className="w-full max-w-3xl">
-        <div className="mb-5 flex items-start gap-3">
+    <div className="mx-auto w-full max-w-3xl px-4 pt-8 pb-4">
+      <div className="mb-5 flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-accent-muted text-accent-strong">
             <TrendingUp className="h-5 w-5" aria-hidden="true" />
           </div>
@@ -114,17 +116,43 @@ export default function ResearchPage() {
             />
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            {examples.map((symbol) => (
-              <button
-                key={symbol}
-                type="button"
-                className="rounded-full border border-border bg-background px-3 py-1 text-xs font-mono text-foreground transition hover:border-accent/50 hover:bg-secondary"
-                onClick={() => openSymbol(symbol)}
-              >
-                {symbol}
-              </button>
-            ))}
+          {watchlist.length > 0 && (
+            <div className="mt-3">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+                Your watchlist
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {watchlist.map((symbol) => (
+                  <button
+                    key={symbol}
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent-muted px-3 py-1 text-xs font-mono text-accent-strong transition hover:border-accent/50"
+                    onClick={() => openSymbol(symbol)}
+                  >
+                    <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+                    {symbol}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+              Try an example
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {examples.map((symbol) => (
+                <button
+                  key={symbol}
+                  type="button"
+                  className="rounded-full border border-border bg-background px-3 py-1 text-xs font-mono text-foreground transition hover:border-accent/50 hover:bg-secondary"
+                  onClick={() => openSymbol(symbol)}
+                >
+                  {symbol}
+                </button>
+              ))}
+            </div>
           </div>
 
           {(isLoading || error || hasResults || showEmptyState) && (
@@ -144,8 +172,14 @@ export default function ResearchPage() {
               )}
 
               {showEmptyState && (
-                <div className="px-3 py-3 text-muted">
-                  No symbols found for &quot;{query.trim().toUpperCase()}&quot;.
+                <div className="p-3">
+                  <EmptyState
+                    icon={SearchX}
+                    title="No symbols found"
+                    description={`We couldn't find a match for "${query.trim().toUpperCase()}". Try another ticker.`}
+                    variant="solid"
+                    className="py-6"
+                  />
                 </div>
               )}
 
@@ -157,38 +191,20 @@ export default function ResearchPage() {
                   className="max-h-72 divide-y divide-border overflow-y-auto"
                 >
                   {results.map((item, index) => (
-                    <li key={item.symbol} role="presentation">
-                      <button
-                        id={`research-symbol-option-${index}`}
-                        type="button"
-                        role="option"
-                        aria-selected={index === activeIndex}
-                        className={cn(
-                          "flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition hover:bg-secondary/80",
-                          index === activeIndex && "bg-muted-bg",
-                        )}
-                        onMouseEnter={() => setActiveIndex(index)}
-                        onClick={() => handleSymbolClick(item)}
-                      >
-                        <span className="font-mono font-semibold text-foreground">
-                          {item.symbol}
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-xs text-muted">
-                          Open
-                          <ArrowRight
-                            className="h-3.5 w-3.5"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </button>
-                    </li>
+                    <SymbolSearchResult
+                      key={item.symbol}
+                      item={item}
+                      index={index}
+                      activeIndex={activeIndex}
+                      onSelect={handleSymbolClick}
+                      onHover={() => setActiveIndex(index)}
+                    />
                   ))}
                 </ul>
               )}
             </div>
           )}
         </div>
-      </div>
     </div>
   );
 }

@@ -31,7 +31,7 @@ export function ResearchSymbolShell({ symbol, children }: Props) {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-3xl pb-8">
+    <div className="mx-auto w-full max-w-3xl pb-2">
       <div
         ref={sentinelRef}
         className="pointer-events-none h-px"
@@ -40,7 +40,7 @@ export function ResearchSymbolShell({ symbol, children }: Props) {
 
       <div
         className={cn(
-          "sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 backdrop-blur-md transition-[padding] duration-200",
+          "sticky top-0 z-20 -mx-4 bg-background/95 px-4 backdrop-blur-md transition-[padding] duration-200",
           collapsed ? "pb-2 pt-1.5" : "pb-3 pt-2",
         )}
       >

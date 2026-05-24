@@ -12,6 +12,7 @@ import {
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { WatchlistButton } from "@/components/WatchlistButton";
 import { usePositionsContext } from "@/app/Providers";
 import { tabQuerySuffix, useTabs } from "@/app/contexts/TabContext";
 
@@ -116,26 +117,29 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           ) : null}
         </div>
 
-        <div className="flex shrink-0 items-baseline gap-2 text-sm">
-          <span className="font-semibold tabular-nums">
-            ${snapshot.price.toLocaleString()}
-          </span>
-          <span
-            className={cn(
-              "inline-flex items-center gap-0.5 text-xs font-medium",
-              positiveChange ? "text-success" : "text-danger",
-            )}
-          >
-            {positiveChange ? (
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            ) : (
-              <ArrowDownRight className="h-3.5 w-3.5" />
-            )}
-            <span className="tabular-nums">
-              {positiveChange ? "+" : ""}
-              {snapshot.changePct.toFixed(2)}%
+        <div className="flex shrink-0 items-center gap-2">
+          <WatchlistButton symbol={upperSymbol} iconOnly />
+          <div className="flex items-baseline gap-2 text-sm">
+            <span className="font-semibold tabular-nums">
+              ${snapshot.price.toLocaleString()}
             </span>
-          </span>
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 text-xs font-medium",
+                positiveChange ? "text-success" : "text-danger",
+              )}
+            >
+              {positiveChange ? (
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              ) : (
+                <ArrowDownRight className="h-3.5 w-3.5" />
+              )}
+              <span className="tabular-nums">
+                {positiveChange ? "+" : ""}
+                {snapshot.changePct.toFixed(2)}%
+              </span>
+            </span>
+          </div>
         </div>
       </header>
     );
@@ -190,6 +194,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
               )}
             </Link>
           ) : null}
+          <WatchlistButton symbol={upperSymbol} />
         </div>
         <p className="text-sm text-muted">
           {snapshot.sector} · {snapshot.country}
