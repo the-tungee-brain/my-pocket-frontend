@@ -12,12 +12,15 @@ import {
   Target,
 } from "lucide-react";
 import type { SymbolIntelligence } from "@/app/types/intelligence";
+import type { IntelligenceSignal } from "@/app/types/intelligence";
 import {
   hasSymbolIntelligenceContent,
   signalSeverityClass,
   signalSeverityLabel,
+  signalToQuickActionId,
   sortSignalsBySeverity,
 } from "@/lib/intelligence";
+import { findQuickAction } from "@/lib/quickActions";
 import { formatUsd } from "@/lib/formatCurrency";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -28,6 +31,8 @@ type Props = {
   loading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
+  onRunSignal?: (signal: IntelligenceSignal, actionId: string) => void;
+  actionContext?: "portfolio" | "research";
   compact?: boolean;
   className?: string;
   researchBasePath?: string;
@@ -64,6 +69,8 @@ export function SymbolIntelligencePanel({
   loading = false,
   error = null,
   onRefresh,
+  onRunSignal,
+  actionContext = "portfolio",
   compact = false,
   className,
   researchBasePath,
@@ -138,22 +145,40 @@ export function SymbolIntelligencePanel({
               Signals
             </div>
             <ul className="space-y-2">
-              {signals.slice(0, compact ? 3 : 6).map((signal, index) => (
+              {signals.slice(0, compact ? 3 : 6).map((signal, index) => {
+                const actionId = signalToQuickActionId(signal, actionContext);
+                const quickAction = actionId ? findQuickAction(actionId) : null;
+                const ActionIcon = quickAction?.icon;
+
+                return (
                 <li
                   key={`${signal.kind}-${index}`}
-                  className="flex items-start gap-2 rounded-xl border border-border bg-background/60 px-3 py-2"
+                  className="rounded-xl border border-border bg-background/60 px-3 py-2"
                 >
-                  <span
-                    className={cn(
-                      "mt-0.5 inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                      signalSeverityClass(signal.severity),
-                    )}
-                  >
-                    {signalSeverityLabel(signal.severity)}
-                  </span>
-                  <p className="text-sm text-foreground">{signal.message}</p>
+                  <div className="flex items-start gap-2">
+                    <span
+                      className={cn(
+                        "mt-0.5 inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                        signalSeverityClass(signal.severity),
+                      )}
+                    >
+                      {signalSeverityLabel(signal.severity)}
+                    </span>
+                    <p className="flex-1 text-sm text-foreground">{signal.message}</p>
+                  </div>
+                  {actionId && onRunSignal && quickAction && ActionIcon && (
+                    <button
+                      type="button"
+                      onClick={() => onRunSignal(signal, actionId)}
+                      className="mt-2 inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
+                    >
+                      <ActionIcon className="h-3 w-3" aria-hidden />
+                      {quickAction.label}
+                    </button>
+                  )}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </div>
         )}

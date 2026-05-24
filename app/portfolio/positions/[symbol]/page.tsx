@@ -20,7 +20,7 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useStockData } from "@/app/hooks/useStockData";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
 import { filterAssignmentRiskSummary } from "@/lib/assignmentRiskSummary";
-import type { ProactiveAlert } from "@/app/types/intelligence";
+import type { IntelligenceSignal, ProactiveAlert } from "@/app/types/intelligence";
 import { alertToQuickActionId } from "@/lib/intelligence";
 
 export default function SymbolPage() {
@@ -107,6 +107,20 @@ export default function SymbolPage() {
     [symbol, sendQuickAction, positionsForSelectedSymbol],
   );
 
+  const handleRunSignal = useCallback(
+    (_signal: IntelligenceSignal, actionId: string) => {
+      if (!symbol) return;
+      void sendQuickAction({
+        activeChatKey: symbol,
+        selectedView: "symbol",
+        selectedSymbol: symbol,
+        positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
+        actionId,
+      });
+    },
+    [symbol, sendQuickAction, positionsForSelectedSymbol],
+  );
+
   const symbolAlerts = [
     ...(portfolioBrief?.alerts ?? []),
     ...proactiveAlerts,
@@ -152,6 +166,8 @@ export default function SymbolPage() {
                 loading={intelligenceLoading}
                 error={intelligenceError}
                 onRefresh={refetchIntelligence}
+                onRunSignal={handleRunSignal}
+                actionContext="portfolio"
                 compact
                 researchBasePath="/research"
               />

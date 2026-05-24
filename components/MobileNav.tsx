@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Wallet } from "lucide-react";
 import { NavList, MainView } from "@/components/NavList";
 
+import type { SymbolAlertSummary } from "@/lib/intelligence";
+
 interface MobileNavProps {
   mobileNavOpen: boolean;
   setMobileNavOpen: Dispatch<SetStateAction<boolean>>;
@@ -14,6 +16,7 @@ interface MobileNavProps {
   setSelectedSymbol: (s: string | null) => void;
   selectedView: MainView;
   setSelectedView: (v: MainView) => void;
+  symbolAlertMap?: Record<string, SymbolAlertSummary>;
 }
 
 function getFocusableElements(container: HTMLElement) {
@@ -33,6 +36,7 @@ export function MobileNav({
   setSelectedSymbol,
   selectedView,
   setSelectedView,
+  symbolAlertMap,
 }: MobileNavProps) {
   const panelRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -162,6 +166,7 @@ export function MobileNav({
                 setSelectedSymbol={handleSetSymbol}
                 selectedView={selectedView}
                 setSelectedView={handleSetView}
+                symbolAlertMap={symbolAlertMap}
                 containerClassName="flex flex-col gap-2"
                 portfolioButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors"
                 symbolButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm transition-colors"

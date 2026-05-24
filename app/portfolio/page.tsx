@@ -17,6 +17,8 @@ import type { ProactiveAlert } from "@/app/types/intelligence";
 import {
   alertToQuickActionId,
   buildLocalPortfolioBrief,
+  buildSymbolAlertMap,
+  mergeDisplayAlerts,
 } from "@/lib/intelligence";
 
 export default function PortfolioPage() {
@@ -58,6 +60,15 @@ export default function PortfolioPage() {
   });
 
   const displayBrief = brief ?? seedBrief;
+
+  const symbolAlertMap = useMemo(
+    () =>
+      buildSymbolAlertMap(
+        mergeDisplayAlerts(proactiveAlerts, displayBrief),
+        displayBrief,
+      ),
+    [proactiveAlerts, displayBrief],
+  );
 
   const showNewsHint =
     activeTab === "assistant" && !loading && symbols.length > 0;
@@ -145,6 +156,7 @@ export default function PortfolioPage() {
         liquidationValue={
           account?.securitiesAccount.currentBalances.liquidationValue
         }
+        symbolAlertMap={symbolAlertMap}
       />
 
       {!loading && sessionAccessToken && (

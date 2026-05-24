@@ -1,4 +1,5 @@
 import type {
+  IntelligenceSignal,
   ProactiveAlert,
   PortfolioIntelligence,
   SignalSeverity,
@@ -13,6 +14,8 @@ const SEVERITY_ORDER: Record<SignalSeverity, number> = {
   watch: 2,
   info: 3,
 };
+
+export { SEVERITY_ORDER };
 
 export function sortSignalsBySeverity<T extends { severity: SignalSeverity }>(
   signals: T[],
@@ -59,6 +62,92 @@ export function dedupeAlerts(alerts: ProactiveAlert[]): ProactiveAlert[] {
   }
 
   return result;
+}
+
+export type SymbolAlertSummary = {
+  symbol: string;
+  count: number;
+  topSeverity: SignalSeverity;
+};
+
+export function mergeDisplayAlerts(
+  proactiveAlerts: ProactiveAlert[],
+  portfolioBrief: PortfolioIntelligence | null = null,
+): ProactiveAlert[] {
+  return dedupeAlerts([
+    ...(portfolioBrief?.alerts ?? []),
+    ...proactiveAlerts,
+  ]);
+}
+
+export function alertPriorityToSeverity(priority: number): SignalSeverity {
+  if (priority <= 1) return "critical";
+  if (priority <= 2) return "warning";
+  if (priority <= 3) return "watch";
+  return "info";
+}
+
+export function buildSymbolAlertMap(
+  alerts: ProactiveAlert[],
+  brief: PortfolioIntelligence | null = null,
+): Record<string, SymbolAlertSummary> {
+  const map: Record<string, SymbolAlertSummary> = {};
+
+  const upsert = (symbol: string, severity: SignalSeverity) => {
+    const key = symbol.toUpperCase();
+    const existing = map[key] ?? {
+      symbol: key,
+      count: 0,
+      topSeverity: "info" as SignalSeverity,
+    };
+    existing.count += 1;
+    if (SEVERITY_ORDER[severity] < SEVERITY_ORDER[existing.topSeverity]) {
+      existing.topSeverity = severity;
+    }
+    map[key] = existing;
+  };
+
+  for (const alert of alerts) {
+    if (!alert.symbol) continue;
+    upsert(alert.symbol, alertPriorityToSeverity(alert.priority));
+  }
+
+  for (const signal of brief?.signals ?? []) {
+    if (!signal.symbol || signal.kind === "holding") continue;
+    upsert(signal.symbol, signal.severity);
+  }
+
+  for (const sym of brief?.digest?.earnings_this_week ?? []) {
+    upsert(sym, "watch");
+  }
+
+  return map;
+}
+
+export function signalToQuickActionId(
+  signal: IntelligenceSignal,
+  context: "portfolio" | "research" = "portfolio",
+): string | null {
+  if (signal.kind === "holding" || signal.severity === "info") {
+    return null;
+  }
+
+  switch (signal.kind) {
+    case "concentration":
+    case "position_size":
+    case "sector_concentration":
+      return "concentration-check";
+    case "earnings":
+      return context === "research" ? "earnings-preview" : "daily-summary";
+    case "valuation":
+    case "drawdown":
+    case "momentum":
+    case "thesis_drift":
+    case "fundamentals":
+      return context === "research" ? "key-risks" : "risk-check";
+    default:
+      return context === "research" ? "key-risks" : "daily-summary";
+  }
 }
 
 export function hasPortfolioBriefContent(

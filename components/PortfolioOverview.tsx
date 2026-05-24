@@ -10,7 +10,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
 import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
+import { AlertBadge } from "@/components/AlertBadge";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
+import type { SymbolAlertSummary } from "@/lib/intelligence";
+import { SEVERITY_ORDER } from "@/lib/intelligence";
 import {
   openProfitLossPct,
   portfolioWeightPct,
@@ -28,6 +31,7 @@ type Props = {
   assignmentRiskSummary?: AssignmentRiskSummaryData | null;
   cashBalance?: number | null;
   liquidationValue?: number | null;
+  symbolAlertMap?: Record<string, SymbolAlertSummary>;
 };
 
 type SymbolSummary = {
@@ -72,6 +76,7 @@ export function PortfolioOverview({
   assignmentRiskSummary,
   cashBalance,
   liquidationValue,
+  symbolAlertMap = {},
 }: Props) {
   const { authorized: schwabAuthorized, loading: schwabLoading } =
     useSchwabStatus();
@@ -92,7 +97,20 @@ export function PortfolioOverview({
     (sum, p) => sum + p.currentDayProfitLoss,
     0,
   );
-  const symbolSummaries = buildSymbolSummaries(positionMap, liquidationValue);
+  const symbolSummaries = buildSymbolSummaries(positionMap, liquidationValue)
+    .sort((a, b) => {
+      const alertA = symbolAlertMap[a.symbol];
+      const alertB = symbolAlertMap[b.symbol];
+      if (alertA && !alertB) return -1;
+      if (!alertA && alertB) return 1;
+      if (alertA && alertB) {
+        const severityDiff =
+          SEVERITY_ORDER[alertA.topSeverity] - SEVERITY_ORDER[alertB.topSeverity];
+        if (severityDiff !== 0) return severityDiff;
+        return alertB.count - alertA.count;
+      }
+      return b.totalValue - a.totalValue;
+    });
   const totalOpenPL = sumOpenProfitLoss(allPositions);
 
   if (loading) {
@@ -261,6 +279,9 @@ export function PortfolioOverview({
                       >
                         {symbol}
                       </Link>
+                      {symbolAlertMap[symbol] && (
+                        <AlertBadge summary={symbolAlertMap[symbol]} compact />
+                      )}
                       <Link
                         href={`/research/${symbol}/overview`}
                         className="text-[10px] font-medium text-muted hover:text-accent-strong"
@@ -341,12 +362,17 @@ export function PortfolioOverview({
               className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted-bg/40"
             >
               <div>
-                <Link
-                  href={`/portfolio/positions/${symbol}`}
-                  className="font-mono font-medium text-foreground hover:text-accent-strong"
-                >
-                  {symbol}
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/portfolio/positions/${symbol}`}
+                    className="font-mono font-medium text-foreground hover:text-accent-strong"
+                  >
+                    {symbol}
+                  </Link>
+                  {symbolAlertMap[symbol] && (
+                    <AlertBadge summary={symbolAlertMap[symbol]} compact />
+                  )}
+                </div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-2">
                   <p className="text-xs text-muted">
                     {positions.length}{" "}

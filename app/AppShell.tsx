@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronUp, Menu, Search, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChatBox } from "@/components/ChatBox";
 import { ConversationPane } from "@/components/ConversationPane";
@@ -15,6 +15,10 @@ import { useToast } from "./contexts/ToastContext";
 import { usePositionsContext } from "./Providers";
 import { researchTabLabel } from "@/components/ResearchTabBar";
 import { cn } from "@/lib/utils";
+import {
+  buildSymbolAlertMap,
+  mergeDisplayAlerts,
+} from "@/lib/intelligence";
 
 const MIN_ROWS = 1;
 const MAX_ROWS = 24;
@@ -37,7 +41,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     sendQuickAction,
     hydrateChatFromServer,
     clearChatHistory,
+    proactiveAlerts,
+    portfolioBrief,
   } = usePositionsContext();
+
+  const symbolAlertMap = useMemo(
+    () =>
+      buildSymbolAlertMap(
+        mergeDisplayAlerts(proactiveAlerts, portfolioBrief),
+        portfolioBrief,
+      ),
+    [proactiveAlerts, portfolioBrief],
+  );
 
   const { showToast } = useToast();
 
@@ -305,6 +320,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           setSelectedSymbol={setSelectedSymbol}
           selectedView={selectedView}
           setSelectedView={setSelectedView}
+          symbolAlertMap={symbolAlertMap}
         />
 
         <MobileNav
@@ -316,6 +332,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           setSelectedSymbol={setSelectedSymbol}
           selectedView={selectedView}
           setSelectedView={setSelectedView}
+          symbolAlertMap={symbolAlertMap}
         />
 
         <section className="flex min-h-screen flex-1 flex-col">

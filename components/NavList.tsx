@@ -19,6 +19,8 @@ import { useToast } from "@/app/contexts/ToastContext";
 import { tabQuerySuffix, useTabs } from "@/app/contexts/TabContext";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/Button";
+import { AlertBadge } from "./AlertBadge";
+import type { SymbolAlertSummary } from "@/lib/intelligence";
 
 export type MainView = "portfolio" | "symbol" | "research";
 
@@ -32,6 +34,7 @@ interface NavListProps {
   containerClassName?: string;
   portfolioButtonClassName?: string;
   symbolButtonClassName?: string;
+  symbolAlertMap?: Record<string, SymbolAlertSummary>;
 }
 
 const navItemActive =
@@ -47,6 +50,7 @@ export function NavList({
   containerClassName = "",
   portfolioButtonClassName = "",
   symbolButtonClassName = "",
+  symbolAlertMap = {},
 }: NavListProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -202,6 +206,7 @@ export function NavList({
       <div className="mt-1 flex-1 space-y-1 overflow-y-auto px-1">
         {symbols.map((sym) => {
           const isActive = activeSymbol === sym;
+          const alertSummary = symbolAlertMap[sym];
 
           return (
             <div
@@ -235,6 +240,9 @@ export function NavList({
                   aria-hidden="true"
                 />
                 <span className="truncate font-mono">{sym}</span>
+                {alertSummary && (
+                  <AlertBadge summary={alertSummary} compact className="ml-auto" />
+                )}
               </button>
               <button
                 type="button"
