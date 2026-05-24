@@ -7,10 +7,7 @@ import { ModelPicker } from "@/components/ModelPicker";
 import { QuickAnalysisBar } from "@/components/QuickAnalysisBar";
 import type { MainView } from "./NavList";
 import { cn } from "@/lib/utils";
-import {
-  DEFAULT_CHAT_MODEL,
-  getModelButtonLabel,
-} from "@/lib/chatModels";
+import { DEFAULT_CHAT_MODEL, getModelButtonLabel } from "@/lib/chatModels";
 
 export { DEFAULT_CHAT_MODEL };
 
@@ -53,7 +50,7 @@ export function ChatBox({
     mode === "portfolio"
       ? "your portfolio"
       : mode === "research"
-        ? selectedSymbol ?? "this symbol"
+        ? (selectedSymbol ?? "this symbol")
         : selectedSymbol
           ? `your ${selectedSymbol} position`
           : "this position";
@@ -89,7 +86,7 @@ export function ChatBox({
   }, [modelMenuOpen, onToggleModelMenu]);
 
   return (
-    <div className="bg-gradient-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
+    <div className="bg-linear-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-border bg-secondary/95 p-3 shadow-lg shadow-black/10 backdrop-blur">
         <div className="flex items-center justify-between gap-2 px-1">
           <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-muted">
@@ -120,11 +117,7 @@ export function ChatBox({
         ) : (
           <QuickAnalysisBar
             mode={mode}
-            symbol={
-              mode === "portfolio"
-                ? "PORTFOLIO"
-                : (selectedSymbol ?? "")
-            }
+            symbol={mode === "portfolio" ? "PORTFOLIO" : (selectedSymbol ?? "")}
             loading={isBusy}
             onRunAction={(id) => void onSendQuickAction(id)}
           />
@@ -164,7 +157,10 @@ export function ChatBox({
               Enter to send · Shift Enter for a new line
             </div>
 
-            <div ref={modelMenuRef} className="relative flex items-center gap-2">
+            <div
+              ref={modelMenuRef}
+              className="relative flex items-center gap-2"
+            >
               <button
                 type="button"
                 disabled={isBusy}
