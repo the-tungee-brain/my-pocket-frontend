@@ -1,3 +1,7 @@
+import {
+  chatDisplayTarget,
+  restoreQuickActionDisplayMessage,
+} from "@/lib/quickActions";
 import type { ChatMessage } from "@/components/ConversationPane";
 import type {
   ChatSessionKind,
@@ -51,16 +55,28 @@ export function findLatestSessionForChatKey(
   );
 }
 
-export function mapServerMessages(messages: ServerChatMessage[]): ChatMessage[] {
+export function mapServerMessages(
+  messages: ServerChatMessage[],
+  activeChatKey: string,
+): ChatMessage[] {
+  const target = chatDisplayTarget(activeChatKey);
+
   return messages
     .filter(
       (message) => message.role === "user" || message.role === "assistant",
     )
-    .map((message) => ({
-      id: `server-${message.id}`,
-      role: message.role as "user" | "assistant",
-      content: message.content,
-    }));
+    .map((message) => {
+      const content =
+        message.role === "user"
+          ? restoreQuickActionDisplayMessage(message.content, target)
+          : message.content;
+
+      return {
+        id: `server-${message.id}`,
+        role: message.role as "user" | "assistant",
+        content,
+      };
+    });
 }
 
 export async function loadChatHistoryForKey(
@@ -82,7 +98,7 @@ export async function loadChatHistoryForKey(
     accessToken,
     session.id,
   );
-  const messages = mapServerMessages(messagesResponse.messages);
+  const messages = mapServerMessages(messagesResponse.messages, activeChatKey);
   if (messages.length === 0) return null;
 
   return { sessionId: session.id, messages };

@@ -677,6 +677,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
               symbol: symbolForApi,
               action: freeForm ? "free-form" : getQuickActionApiAction(actionId),
               prompt: freeForm ? userMessage.content : null,
+              user_display_message: userMessage.content,
               model: state.model,
               session_id: state.sessionId ?? undefined,
             },

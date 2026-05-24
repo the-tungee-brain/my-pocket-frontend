@@ -143,3 +143,47 @@ export function formatQuickActionMessage(
 export function isFreeFormQuickAction(actionId: string): boolean {
   return !!findQuickAction(actionId)?.prompt;
 }
+
+function normalizeActionKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[-_]/g, " ").replace(/\s+/g, " ");
+}
+
+/** Restore pill label text (e.g. "assignment risk") to the user-facing message. */
+export function restoreQuickActionDisplayMessage(
+  content: string,
+  target: string,
+): string {
+  const normalized = normalizeActionKey(content);
+  if (!normalized) return content;
+
+  for (const action of [...PORTFOLIO_QUICK_ACTIONS, ...RESEARCH_QUICK_ACTIONS]) {
+    const candidates = [
+      action.label,
+      action.apiAction,
+      action.id.replace(/-/g, " "),
+    ].filter(Boolean) as string[];
+
+    if (!candidates.some((candidate) => normalizeActionKey(candidate) === normalized)) {
+      continue;
+    }
+
+    if (action.message) return action.message(target);
+    if (action.prompt) return action.prompt(target);
+    return formatQuickActionMessage(action.id, target);
+  }
+
+  return content;
+}
+
+export function chatDisplayTarget(activeChatKey: string): string {
+  if (activeChatKey === "__PORTFOLIO_CHAT__") return "my portfolio";
+
+  if (activeChatKey.startsWith("__RESEARCH_") && activeChatKey.endsWith("__")) {
+    const symbol = activeChatKey.slice("__RESEARCH_".length, -2).trim();
+    return symbol ? symbol.toUpperCase() : "this symbol";
+  }
+
+  if (activeChatKey.startsWith("__")) return "this position";
+
+  return activeChatKey.toUpperCase();
+}
