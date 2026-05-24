@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Sparkles,
   Target,
+  ExternalLink,
 } from "lucide-react";
 import type {
   IntelligenceSignal,
@@ -68,6 +69,16 @@ function formatExpiration(expiration: string) {
 
 function formatStrikeSide(side: "call" | "put") {
   return side === "call" ? "Call" : "Put";
+}
+
+function isTimelineExternalLink(entry: {
+  kind: string;
+  url?: string | null;
+}): entry is { kind: string; url: string } {
+  return (
+    !!entry.url &&
+    (entry.kind === "news" || entry.kind === "press_release")
+  );
 }
 
 export function SymbolIntelligencePanel({
@@ -289,6 +300,7 @@ export function SymbolIntelligencePanel({
             <ul className="space-y-2">
               {timeline.slice(0, compact ? 4 : 8).map((entry, index) => {
                 const Icon = timelineIcon(entry.kind);
+                const linkable = isTimelineExternalLink(entry);
                 return (
                   <li
                     key={`${entry.kind}-${entry.date}-${index}`}
@@ -302,9 +314,25 @@ export function SymbolIntelligencePanel({
                       <p className="text-[10px] uppercase tracking-wide text-muted">
                         {entry.date} · {entry.kind.replace(/_/g, " ")}
                       </p>
-                      <p className="text-sm font-medium text-foreground">
-                        {entry.title}
-                      </p>
+                      {linkable ? (
+                        <a
+                          href={entry.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group inline-flex max-w-full items-start gap-1 text-sm font-medium text-accent-strong hover:underline"
+                        >
+                          <span className="min-w-0">{entry.title}</span>
+                          <ExternalLink
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70 transition group-hover:opacity-100"
+                            aria-hidden
+                          />
+                          <span className="sr-only"> (opens in new tab)</span>
+                        </a>
+                      ) : (
+                        <p className="text-sm font-medium text-foreground">
+                          {entry.title}
+                        </p>
+                      )}
                       {entry.detail && (
                         <p className="mt-0.5 text-xs text-muted">{entry.detail}</p>
                       )}

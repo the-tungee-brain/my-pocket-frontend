@@ -62,6 +62,7 @@ export type EventTimelineEntry = {
   kind: string;
   title: string;
   detail?: string | null;
+  url?: string | null;
 };
 
 export type OptionsStrikeCandidate = {
