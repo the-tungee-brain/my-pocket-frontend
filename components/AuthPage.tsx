@@ -1,12 +1,15 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   BarChart3,
   BrainCircuit,
   BriefcaseBusiness,
   CircleDollarSign,
+  Loader2,
   Search,
   ShieldCheck,
   Sparkles,
@@ -14,9 +17,71 @@ import {
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
 
+function getAuthErrorMessage(code: string | null): string | null {
+  if (!code) return null;
+
+  switch (code) {
+    case "AccessDenied":
+      return "Sign in was cancelled or denied. Please try again.";
+    case "Configuration":
+      return "Sign in is not configured correctly. Please contact support.";
+    case "Verification":
+      return "The sign-in link expired or is invalid. Please try again.";
+    case "OAuthSignin":
+    case "OAuthCallback":
+    case "OAuthCreateAccount":
+    case "Callback":
+      return "Could not complete Google sign in. Please try again.";
+    default:
+      return "Sign in failed. Please try again.";
+  }
+}
+
 export default function AuthPage() {
+  const searchParams = useSearchParams();
+  const callbackError = searchParams.get("error");
+
+  const [signingIn, setSigningIn] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const message = getAuthErrorMessage(callbackError);
+    if (message) setSignInError(message);
+  }, [callbackError]);
+
+  const handleSignIn = useCallback(async () => {
+    setSignInError(null);
+    setSigningIn(true);
+
+    try {
+      const result = await signIn("google", {
+        redirect: false,
+        callbackUrl: "/portfolio",
+      });
+
+      if (result?.error) {
+        setSignInError(
+          getAuthErrorMessage(result.error) ?? "Sign in failed. Please try again.",
+        );
+        setSigningIn(false);
+        return;
+      }
+
+      if (result?.url) {
+        window.location.assign(result.url);
+        return;
+      }
+
+      setSigningIn(false);
+    } catch {
+      setSignInError("Something went wrong while starting sign in. Please try again.");
+      setSigningIn(false);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col items-center justify-center gap-12 px-6 py-6 lg:flex-row lg:gap-16 lg:py-8">
@@ -69,12 +134,29 @@ export default function AuthPage() {
           </div>
 
           <div className="mt-8">
+            {signInError && (
+              <ErrorBanner
+                message={signInError}
+                onRetry={() => void handleSignIn()}
+                className="mb-4 max-w-md"
+              />
+            )}
+
             <Button
-              onClick={() => signIn("google")}
+              onClick={() => void handleSignIn()}
+              disabled={signingIn}
+              aria-busy={signingIn}
               size="lg"
               className="rounded-xl px-8"
             >
-              Sign in with Google
+              {signingIn ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  Signing in…
+                </>
+              ) : (
+                "Sign in with Google"
+              )}
             </Button>
             <p className="mt-3 text-xs text-muted">
               Connect your Schwab account after signing in.

@@ -2,7 +2,7 @@
 
 import { AppShell } from "@/app/AppShell";
 
-export default function PortfolioLayout({
+export default function ResearchLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -1,7 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/apiClient";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export type StockPoint = {
   date: string;
@@ -40,6 +40,14 @@ export function useStockData({
   const [data, setData] = useState<StockResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const refetch = useCallback(() => {
+    if (!symbol) return;
+    const key = `${symbol}:${period}:${interval}`;
+    stockCache.delete(key);
+    setRetryCount((count) => count + 1);
+  }, [symbol, period, interval]);
 
   useEffect(() => {
     if (!enabled || !symbol || !accessToken) {
@@ -112,7 +120,7 @@ export function useStockData({
         cancelled = true;
         controller.abort();
         };
-    }, [symbol, accessToken, enabled, period, interval]);
+    }, [symbol, accessToken, enabled, period, interval, retryCount]);
 
-    return { data, loading, error };
+    return { data, loading, error, refetch };
 }

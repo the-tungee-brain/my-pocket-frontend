@@ -1,13 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { BriefcaseBusiness, Link2 } from "lucide-react";
+import { BriefcaseBusiness } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
 import { Position } from "@/app/types/schwab";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
-import { apiFetch } from "@/lib/apiClient";
-import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -51,22 +48,8 @@ export function PortfolioOverview({
   symbols,
   positionMap,
 }: Props) {
-  const { data: session } = useSession();
   const { authorized: schwabAuthorized, loading: schwabLoading } =
     useSchwabStatus();
-
-  const handleConnectSchwab = async () => {
-    if (!session?.accessToken) return;
-    try {
-      const res = await apiFetch("/auth/schwab/connect", {
-        method: "GET",
-        accessToken: session.accessToken,
-      });
-      if (!res.ok) return;
-      const data = (await res.json()) as { auth_url: string };
-      window.location.href = data.auth_url;
-    } catch {}
-  };
 
   const totalValue = allPositions.reduce((sum, p) => sum + p.marketValue, 0);
   const totalDayPL = allPositions.reduce(
@@ -108,18 +91,14 @@ export function PortfolioOverview({
           </h2>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
             {schwabAuthorized === false
-              ? "Connect your Schwab account to import positions and unlock portfolio insights."
+              ? "Connect Schwab from the sidebar to import positions and unlock portfolio insights."
               : "Your Schwab account is connected, but no positions were returned. Holdings will appear here once available."}
           </p>
           {schwabAuthorized === false && !schwabLoading && (
-            <Button
-              size="sm"
-              className="mt-4"
-              onClick={() => void handleConnectSchwab()}
-            >
-              <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
-              Connect Schwab
-            </Button>
+            <p className="mx-auto mt-4 max-w-sm text-xs text-muted">
+              On mobile, open the menu and use Connect at the bottom of the
+              sidebar.
+            </p>
           )}
         </div>
       </section>
@@ -187,12 +166,20 @@ export function PortfolioOverview({
                   className="border-t border-border transition-colors hover:bg-muted-bg/40"
                 >
                   <td className="px-4 py-3 text-left">
-                    <Link
-                      href={`/portfolio/positions/${symbol}`}
-                      className="font-mono font-medium text-foreground hover:text-accent-strong"
-                    >
-                      {symbol}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/portfolio/positions/${symbol}`}
+                        className="font-mono font-medium text-foreground hover:text-accent-strong"
+                      >
+                        {symbol}
+                      </Link>
+                      <Link
+                        href={`/research/${symbol}/overview`}
+                        className="text-[10px] font-medium text-muted hover:text-accent-strong"
+                      >
+                        Research
+                      </Link>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-muted">
                     {positions.length}

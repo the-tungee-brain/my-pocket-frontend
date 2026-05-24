@@ -1,19 +1,42 @@
 "use client";
 
+import Link from "next/link";
 import { useResearchSnapshot } from "@/app/hooks/useResearchSnapshot";
-import { ArrowUpRight, ArrowDownRight, ExternalLink } from "lucide-react";
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  ExternalLink,
+  BriefcaseBusiness,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { usePositionsContext } from "@/app/Providers";
+import { tabQuerySuffix, useTabs } from "@/app/contexts/TabContext";
 
 type Props = { symbol: string };
+
+function formatPL(value: number) {
+  const prefix = value >= 0 ? "+" : "";
+  return `${prefix}${value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
 
 export function CompanySnapshot({ symbol }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
-  const { snapshot, isLoading, error } = useResearchSnapshot(
-    symbol.toUpperCase(),
-    { accessToken },
-  );
+  const { positionMap } = usePositionsContext();
+  const { activeTab } = useTabs();
+  const upperSymbol = symbol.toUpperCase();
+  const userPositions = positionMap[upperSymbol];
+
+  const { snapshot, isLoading, error } = useResearchSnapshot(upperSymbol, {
+    accessToken,
+  });
 
   if (isLoading) {
     return (
@@ -31,14 +54,18 @@ export function CompanySnapshot({ symbol }: Props) {
   if (error || !snapshot) {
     return (
       <header>
-        <p className="text-xs text-danger">
-          Could not load snapshot for this symbol.
-        </p>
+        <ErrorBanner
+          message={error ?? "Could not load snapshot for this symbol."}
+        />
       </header>
     );
   }
 
   const positiveChange = snapshot.changePct >= 0;
+  const dayPL = userPositions?.reduce(
+    (sum, p) => sum + p.currentDayProfitLoss,
+    0,
+  );
 
   return (
     <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -70,6 +97,25 @@ export function CompanySnapshot({ symbol }: Props) {
               <ExternalLink className="h-3 w-3" />
             </a>
           )}
+          {userPositions?.length ? (
+            <Link
+              href={`/portfolio/positions/${upperSymbol}${tabQuerySuffix(activeTab)}`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent-muted px-2.5 py-0.5 text-[11px] font-medium text-accent-strong transition hover:bg-accent-muted/80"
+            >
+              <BriefcaseBusiness className="h-3 w-3" aria-hidden="true" />
+              Your position
+              {dayPL != null && (
+                <span
+                  className={cn(
+                    "tabular-nums",
+                    dayPL >= 0 ? "text-success" : "text-danger",
+                  )}
+                >
+                  · {formatPL(dayPL)} today
+                </span>
+              )}
+            </Link>
+          ) : null}
         </div>
         <p className="text-sm text-muted">
           {snapshot.sector} · {snapshot.country}

@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { useSecFilings, useSecLookup } from "@/app/hooks/useSecResearch";
 import { useSession } from "next-auth/react";
 import { buildSecFilingUrl } from "@/lib/secUtils";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 type SecFilingsSectionProps = {
   symbol: string;
@@ -28,7 +29,7 @@ export function SecFilingsSection({ symbol }: SecFilingsSectionProps) {
   }
 
   if (error) {
-    return <p className="text-sm text-muted">{error}</p>;
+    return <ErrorBanner message={error} />;
   }
 
   if (!filings?.filings.length) {

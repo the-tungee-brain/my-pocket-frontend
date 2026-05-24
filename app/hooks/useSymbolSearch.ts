@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
 
 export type TickerSymbolItem = {
@@ -11,18 +11,42 @@ export type TickerSymbolItem = {
 type UseSymbolSearchOptions = {
   accessToken?: string | null;
   limit?: number;
+  debounceMs?: number;
 };
 
 export function useSymbolSearch(
   keyword: string | null,
-  { accessToken, limit = 20 }: UseSymbolSearchOptions = {},
+  { accessToken, limit = 20, debounceMs = 300 }: UseSymbolSearchOptions = {},
 ) {
+  const [debouncedKeyword, setDebouncedKeyword] = useState<string | null>(
+    keyword,
+  );
   const [results, setResults] = useState<TickerSymbolItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(!!keyword);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const refetch = useCallback(() => {
+    setRetryCount((count) => count + 1);
+  }, []);
 
   useEffect(() => {
-    const q = keyword?.toUpperCase().trim();
+    const trimmed = keyword?.trim() ?? "";
+
+    if (!trimmed) {
+      setDebouncedKeyword(null);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setDebouncedKeyword(keyword);
+    }, debounceMs);
+
+    return () => window.clearTimeout(timer);
+  }, [keyword, debounceMs]);
+
+  useEffect(() => {
+    const q = debouncedKeyword?.toUpperCase().trim();
 
     if (!q) {
       setResults([]);
@@ -74,12 +98,16 @@ export function useSymbolSearch(
       }
     }
 
-    load();
+    void load();
 
     return () => {
       cancelled = true;
     };
-  }, [keyword, accessToken, limit]);
+  }, [debouncedKeyword, accessToken, limit, retryCount]);
 
-  return { results, isLoading, error };
+  const isDebouncing =
+    !!keyword?.trim() &&
+    keyword.trim() !== (debouncedKeyword?.trim() ?? "");
+
+  return { results, isLoading: isLoading || isDebouncing, error, refetch };
 }

@@ -10,6 +10,7 @@ import {
   formatSecPeriodLabel,
 } from "@/lib/secUtils";
 import { cn } from "@/lib/utils";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 type SecRatiosSectionProps = {
   symbol: string;
@@ -27,7 +28,7 @@ export function SecRatiosSection({ symbol, period }: SecRatiosSectionProps) {
   }
 
   if (error) {
-    return <p className="text-sm text-muted">{error}</p>;
+    return <ErrorBanner message={error} />;
   }
 
   if (!ratios?.snapshots.length) {

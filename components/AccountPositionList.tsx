@@ -20,6 +20,10 @@ function formatPL(value: number) {
   })}`;
 }
 
+function positionKey(p: Position) {
+  return `${p.instrument.symbol}-${p.instrument.cusip}-${p.longQuantity}-${p.shortQuantity}`;
+}
+
 export function AccountPositionList({
   positionsForSelectedSymbol,
   selectedSymbol,
@@ -27,8 +31,11 @@ export function AccountPositionList({
   if (!selectedSymbol) {
     return (
       <section className="w-full py-4">
-        <p className="text-sm text-muted">
-          Select a symbol on the left to view its positions.
+        <p className="text-sm text-muted md:hidden">
+          Open the menu to pick a symbol.
+        </p>
+        <p className="hidden text-sm text-muted md:block">
+          Select a symbol from the sidebar to view its positions.
         </p>
       </section>
     );
@@ -76,17 +83,60 @@ export function AccountPositionList({
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm">
-          <table className="w-full table-fixed text-sm">
+          <div className="divide-y divide-border sm:hidden">
+            {positions.map((p) => {
+              const qty = p.longQuantity - p.shortQuantity;
+              const isPositive = p.currentDayProfitLoss >= 0;
+              const name = p.instrument.description ?? "EQUITY";
+
+              return (
+                <div key={positionKey(p)} className="px-4 py-3">
+                  <p className="text-sm font-medium text-foreground">{name}</p>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <p className="text-muted">Qty</p>
+                      <p className="mt-0.5 tabular-nums font-medium">
+                        {qty.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-muted">Value</p>
+                      <p className="mt-0.5 tabular-nums font-medium">
+                        ${p.marketValue.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-muted">Today P/L</p>
+                      <p
+                        className={cn(
+                          "mt-0.5 tabular-nums font-medium",
+                          isPositive ? "text-success" : "text-danger",
+                        )}
+                      >
+                        {formatPL(p.currentDayProfitLoss)}
+                      </p>
+                      <p
+                        className={cn(
+                          "tabular-nums text-[11px]",
+                          isPositive ? "text-success" : "text-danger",
+                        )}
+                      >
+                        ({p.currentDayProfitLossPercentage.toFixed(2)}%)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <table className="hidden w-full table-fixed text-sm sm:table">
             <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
               <tr>
-                <th className="hidden w-2/5 px-4 py-2.5 text-left sm:table-cell">
-                  Name
-                </th>
+                <th className="w-2/5 px-4 py-2.5 text-left">Name</th>
                 <th className="w-1/5 px-4 py-2.5 text-right">Qty</th>
                 <th className="w-1/5 px-4 py-2.5 text-right">Value</th>
-                <th className="hidden w-1/5 px-4 py-2.5 text-right sm:table-cell">
-                  Today P/L
-                </th>
+                <th className="w-1/5 px-4 py-2.5 text-right">Today P/L</th>
               </tr>
             </thead>
             <tbody>
@@ -96,10 +146,10 @@ export function AccountPositionList({
 
                 return (
                   <tr
-                    key={`${p.instrument.symbol}-${p.instrument.cusip}-${p.longQuantity}-${p.shortQuantity}`}
+                    key={positionKey(p)}
                     className="border-t border-border transition-colors hover:bg-muted-bg/40"
                   >
-                    <td className="hidden w-2/5 px-4 py-3 text-left text-muted sm:table-cell">
+                    <td className="w-2/5 px-4 py-3 text-left text-muted">
                       {p.instrument.description ?? "EQUITY"}
                     </td>
                     <td className="w-1/5 px-4 py-3 text-right tabular-nums">
@@ -110,7 +160,7 @@ export function AccountPositionList({
                     </td>
                     <td
                       className={cn(
-                        "hidden w-1/5 px-4 py-3 text-right tabular-nums sm:table-cell",
+                        "w-1/5 px-4 py-3 text-right tabular-nums",
                         isPositive ? "text-success" : "text-danger",
                       )}
                     >

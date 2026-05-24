@@ -1,11 +1,14 @@
 "use client";
 
-import { BriefcaseBusiness, CircleDollarSign, Search } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { BriefcaseBusiness, CircleDollarSign, Search } from "lucide-react";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
-import { apiFetch } from "@/lib/apiClient";
+import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
+import { tabQuerySuffix, useTabs } from "@/app/contexts/TabContext";
+import { cn } from "@/lib/utils";
 import { Button } from "./ui/Button";
+import { ErrorBanner } from "./ui/ErrorBanner";
 
 export type MainView = "portfolio" | "symbol" | "research";
 
@@ -21,6 +24,10 @@ interface NavListProps {
   symbolButtonClassName?: string;
 }
 
+const navItemActive =
+  "bg-muted-bg text-foreground shadow-sm ring-1 ring-border";
+const navItemInactive = "text-muted hover:bg-muted-bg/60 hover:text-foreground";
+
 export function NavList({
   loading,
   symbols,
@@ -32,10 +39,21 @@ export function NavList({
 }: NavListProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { activeTab } = useTabs();
 
-  const { authorized: schwabAuthorized, loading: schwabLoading } =
-    useSchwabStatus();
+  const {
+    authorized: schwabAuthorized,
+    loading: schwabLoading,
+    error: schwabStatusError,
+    refetch: refetchSchwabStatus,
+  } = useSchwabStatus();
+
+  const {
+    connect: connectSchwab,
+    connecting: schwabConnecting,
+    connectError: schwabConnectError,
+    clearConnectError: clearSchwabConnectError,
+  } = useSchwabConnect();
 
   const isPortfolio = pathname === "/portfolio";
   const isResearch = pathname.startsWith("/research");
@@ -46,25 +64,17 @@ export function NavList({
   const showSchwabStatus =
     schwabAuthorized !== null && schwabAuthorized !== undefined;
 
-  const handleConnectSchwab = async () => {
-    if (!session?.accessToken) return;
-    try {
-      const res = await apiFetch("/auth/schwab/connect", {
-        method: "GET",
-        accessToken: session.accessToken,
-      });
-      if (!res.ok) return;
-      const data = (await res.json()) as { auth_url: string };
-      window.location.href = data.auth_url;
-    } catch {}
+  const handleConnectSchwab = () => {
+    clearSchwabConnectError();
+    void connectSchwab();
   };
 
   return (
     <div
-      className={[
+      className={cn(
         "flex h-full flex-col rounded-2xl bg-secondary/60 py-3",
         containerClassName,
-      ].join(" ")}
+      )}
     >
       <button
         type="button"
@@ -75,29 +85,25 @@ export function NavList({
           setSelectedSymbol(null);
           router.replace("/portfolio");
         }}
-        className={[
+        className={cn(
           "group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
-          isPortfolio
-            ? "bg-neutral-800 text-neutral-50 shadow-inner"
-            : "text-neutral-300 hover:bg-neutral-800/60",
+          isPortfolio ? navItemActive : navItemInactive,
           portfolioButtonClassName,
-        ].join(" ")}
+        )}
       >
         <span
-          className={[
+          className={cn(
             "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
             isPortfolio
               ? "border-accent/60 bg-accent-muted text-accent-strong"
               : "border-border bg-muted-bg text-muted",
-          ].join(" ")}
+          )}
         >
           <BriefcaseBusiness className="h-3.5 w-3.5" aria-hidden="true" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <span>My portfolio</span>
-          <span className="truncate text-[10px] text-neutral-500">
-            Overview
-          </span>
+          <span className="truncate text-[10px] text-muted">Overview</span>
         </div>
         {isPortfolio && (
           <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
@@ -113,26 +119,24 @@ export function NavList({
           setSelectedSymbol(null);
           router.replace("/research");
         }}
-        className={[
+        className={cn(
           "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
-          isResearch
-            ? "bg-neutral-800 text-neutral-50 shadow-inner"
-            : "text-neutral-300 hover:bg-neutral-800/60",
-        ].join(" ")}
+          isResearch ? navItemActive : navItemInactive,
+        )}
       >
         <span
-          className={[
+          className={cn(
             "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
             isResearch
               ? "border-accent/60 bg-accent-muted text-accent-strong"
               : "border-border bg-muted-bg text-muted",
-          ].join(" ")}
+          )}
         >
           <Search className="h-3.5 w-3.5" aria-hidden="true" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <span>Research</span>
-          <span className="truncate text-[10px] text-neutral-500">
+          <span className="truncate text-[10px] text-muted">
             Company snapshots
           </span>
         </div>
@@ -141,14 +145,14 @@ export function NavList({
         )}
       </button>
 
-      <div className="my-3 h-px bg-neutral-800/80" />
+      <div className="my-3 h-px bg-border" />
 
       <div className="mb-1 flex items-center justify-between px-1">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
           Positions
         </span>
         {symbols.length > 0 && (
-          <span className="rounded-full bg-neutral-900/70 px-2 py-px text-[10px] text-neutral-400">
+          <span className="rounded-full bg-muted-bg px-2 py-px text-[10px] text-muted">
             {symbols.length}
           </span>
         )}
@@ -156,14 +160,14 @@ export function NavList({
 
       {loading && (
         <div className="space-y-2 px-2 py-2">
-          <div className="h-8 animate-pulse rounded-lg bg-neutral-800/50" />
-          <div className="h-8 animate-pulse rounded-lg bg-neutral-800/40" />
-          <div className="h-8 animate-pulse rounded-lg bg-neutral-800/30" />
+          <div className="h-8 animate-pulse rounded-lg bg-muted-bg" />
+          <div className="h-8 animate-pulse rounded-lg bg-muted-bg/80" />
+          <div className="h-8 animate-pulse rounded-lg bg-muted-bg/60" />
         </div>
       )}
 
       {!loading && symbols.length === 0 && (
-        <div className="rounded-lg border border-dashed border-border bg-background/50 px-3 py-3 text-[11px] text-neutral-500">
+        <div className="rounded-lg border border-dashed border-border bg-background/50 px-3 py-3 text-[11px] text-muted">
           Connect Schwab to load your holdings here.
         </div>
       )}
@@ -181,26 +185,23 @@ export function NavList({
               onClick={() => {
                 setSelectedView("symbol");
                 setSelectedSymbol(sym);
-                router.replace(`/portfolio/positions/${sym}`);
+                router.replace(`/portfolio/positions/${sym}${tabQuerySuffix(activeTab)}`);
               }}
-              className={[
+              className={cn(
                 "group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs transition-all",
-                isActive
-                  ? "bg-neutral-800 text-neutral-50 shadow-inner"
-                  : "text-neutral-300 hover:bg-neutral-800/60",
+                isActive ? navItemActive : navItemInactive,
                 symbolButtonClassName,
-              ].join(" ")}
+              )}
             >
               <span className="flex items-center gap-2">
                 <CircleDollarSign
-                  className={
-                    isActive
-                      ? "h-3.5 w-3.5 text-accent-strong"
-                      : "h-3.5 w-3.5 text-muted"
-                  }
+                  className={cn(
+                    "h-3.5 w-3.5",
+                    isActive ? "text-accent-strong" : "text-muted",
+                  )}
                   aria-hidden="true"
                 />
-                <span className="text-xs font-mono">{sym}</span>
+                <span className="font-mono text-xs">{sym}</span>
               </span>
 
               {isActive && (
@@ -213,18 +214,35 @@ export function NavList({
 
       {showSchwabStatus && (
         <>
-          <div className="mt-3 h-px bg-neutral-800/80" />
+          <div className="mt-3 h-px bg-border" />
           <div className="mt-2 px-4 text-[11px]">
+            {schwabStatusError && (
+              <ErrorBanner
+                message={schwabStatusError}
+                onRetry={refetchSchwabStatus}
+                className="mb-2"
+              />
+            )}
+
+            {schwabConnectError && (
+              <ErrorBanner
+                message={schwabConnectError}
+                onRetry={handleConnectSchwab}
+                className="mb-2"
+              />
+            )}
+
             <div className="mb-2 flex items-center justify-center gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                 Schwab
               </span>
               <span
-                className={
+                className={cn(
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
                   schwabAuthorized
-                    ? "inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400"
-                    : "inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400"
-                }
+                    ? "bg-accent-muted text-accent-strong"
+                    : "border border-border bg-muted-bg text-muted",
+                )}
               >
                 {schwabLoading
                   ? "Checking…"
@@ -239,9 +257,10 @@ export function NavList({
                 size="xs"
                 variant="outline"
                 className="w-full"
+                disabled={schwabConnecting}
                 onClick={handleConnectSchwab}
               >
-                Connect
+                {schwabConnecting ? "Connecting…" : "Connect"}
               </Button>
             )}
           </div>

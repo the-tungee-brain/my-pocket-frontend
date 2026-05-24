@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bot, User } from "lucide-react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
@@ -24,6 +24,9 @@ export function ConversationPane({
   loading,
 }: ConversationPaneProps) {
   const lastUserRef = useRef<HTMLDivElement | null>(null);
+  const prevLoadingRef = useRef(loading);
+  const prevMessageCountRef = useRef(messages.length);
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
 
   useEffect(() => {
     if (!messages.length) return;
@@ -40,6 +43,21 @@ export function ConversationPane({
 
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [messages.length, messages]);
+
+  useEffect(() => {
+    const lastMessage = messages.at(-1);
+
+    if (messages.length > prevMessageCountRef.current && lastMessage?.role === "user") {
+      setLiveAnnouncement("Your message was sent.");
+    } else if (loading && !prevLoadingRef.current) {
+      setLiveAnnouncement("Assistant is responding.");
+    } else if (!loading && prevLoadingRef.current) {
+      setLiveAnnouncement("Assistant finished responding.");
+    }
+
+    prevLoadingRef.current = loading;
+    prevMessageCountRef.current = messages.length;
+  }, [messages, loading]);
 
   if (!symbol) return null;
 
@@ -61,10 +79,22 @@ export function ConversationPane({
 
   return (
     <div className="mx-auto mt-4 max-w-3xl py-3">
+      <div
+        className="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {liveAnnouncement}
+      </div>
+
       <div className="mb-4 text-xs font-medium uppercase tracking-wide text-muted">
         Conversation
       </div>
-      <div className="space-y-4 pr-1">
+      <div
+        className="space-y-4 pr-1"
+        role="log"
+        aria-label={`Conversation about your ${label}`}
+      >
         {messages.map((m, idx) => {
           const isAssistant = m.role === "assistant";
           const isLastUser =
@@ -88,6 +118,7 @@ export function ConversationPane({
               )}
 
               <div
+                aria-label={isAssistant ? "Assistant message" : "Your message"}
                 className={cn(
                   "min-w-0 max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
                   isAssistant
@@ -108,7 +139,7 @@ export function ConversationPane({
         })}
 
         {loading && (
-          <div className="flex gap-3">
+          <div className="flex gap-3" aria-busy="true" aria-label="Assistant is responding">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
               <Bot className="h-3.5 w-3.5" aria-hidden="true" />
             </div>

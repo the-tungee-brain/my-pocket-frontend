@@ -40,15 +40,20 @@ export type StockNewsView = {
   items: EnrichedNewsItem[];
 };
 
+type CachedNews = {
+  data: StockNewsView;
+  fetchedAt: number;
+};
+
 type UseCompanyNewsResult = {
   analytics: StockNewsView | null;
   isLoading: boolean;
   error: string | null;
+  lastUpdated: number | null;
   refetch: () => void;
 };
 
-// Simple per-symbol cache
-const newsCache = new Map<string, StockNewsView>();
+const newsCache = new Map<string, CachedNews>();
 
 type Listener = (data?: StockNewsView, error?: string) => void;
 
@@ -56,8 +61,13 @@ type InFlightNewsEntry = {
   listeners: Set<Listener>;
 };
 
-// Tracks in-flight fetches by symbol key
 const inFlightNews = new Map<string, InFlightNewsEntry>();
+
+function cacheNews(key: string, data: StockNewsView): number {
+  const fetchedAt = Date.now();
+  newsCache.set(key, { data, fetchedAt });
+  return fetchedAt;
+}
 
 export function useCompanyNews(
   symbol: string | undefined,
@@ -67,16 +77,17 @@ export function useCompanyNews(
   const [analytics, setAnalytics] = useState<StockNewsView | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
 
   const key = symbol?.toUpperCase();
 
   useEffect(() => {
     if (!key || !accessToken || activeTab !== "news") return;
 
-    // 1. Cache hit
     const cached = newsCache.get(key);
     if (cached) {
-      setAnalytics(cached);
+      setAnalytics(cached.data);
+      setLastUpdated(cached.fetchedAt);
       setError(null);
       setIsLoading(false);
       return;
@@ -84,7 +95,6 @@ export function useCompanyNews(
 
     let cancelled = false;
 
-    // 2. Attach to in-flight if exists
     let entry = inFlightNews.get(key);
     if (entry) {
       setIsLoading(true);
@@ -96,6 +106,7 @@ export function useCompanyNews(
           setIsLoading(false);
         } else if (data) {
           setAnalytics(data);
+          setLastUpdated(newsCache.get(key)?.fetchedAt ?? null);
           setError(null);
           setIsLoading(false);
         }
@@ -109,7 +120,6 @@ export function useCompanyNews(
       };
     }
 
-    // 3. Start new request
     entry = { listeners: new Set<Listener>() };
     inFlightNews.set(key, entry);
 
@@ -123,6 +133,7 @@ export function useCompanyNews(
         setIsLoading(false);
       } else if (data) {
         setAnalytics(data);
+        setLastUpdated(newsCache.get(key)?.fetchedAt ?? null);
         setError(null);
         setIsLoading(false);
       }
@@ -143,7 +154,7 @@ export function useCompanyNews(
         if (!res.ok) throw new Error("Failed to fetch news analytics");
 
         const data: StockNewsView = await res.json();
-        newsCache.set(key, data);
+        cacheNews(key, data);
 
         for (const l of entry!.listeners) {
           l(data);
@@ -186,8 +197,9 @@ export function useCompanyNews(
         if (!res.ok) throw new Error("Failed to fetch news analytics");
 
         const data: StockNewsView = await res.json();
-        newsCache.set(key, data);
+        const fetchedAt = cacheNews(key, data);
         setAnalytics(data);
+        setLastUpdated(fetchedAt);
       } catch (e: any) {
         setError(e?.message ?? "Error fetching news analytics");
       } finally {
@@ -196,5 +208,5 @@ export function useCompanyNews(
     })();
   };
 
-  return { analytics, isLoading, error, refetch };
+  return { analytics, isLoading, error, lastUpdated, refetch };
 }

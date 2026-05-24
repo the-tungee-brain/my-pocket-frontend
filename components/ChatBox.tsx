@@ -1,11 +1,12 @@
 "use client";
 
 import { ChevronDown, SendHorizontal, Sparkles } from "lucide-react";
-import type { RefObject } from "react";
+import { useEffect, useRef } from "react";
 import type { ChatMessage } from "@/components/ConversationPane";
 import { Dropdown } from "@/components/Dropdown";
 import { QuickAnalysisBar } from "@/components/QuickAnalysisBar";
 import type { MainView } from "./NavList";
+import { cn } from "@/lib/utils";
 
 type SymbolChatState = {
   loading: boolean;
@@ -15,10 +16,12 @@ type SymbolChatState = {
   modelMenuOpen: boolean;
 };
 
-const MODEL_OPTIONS = [
+export const DEFAULT_CHAT_MODEL = "gpt-5-mini";
+
+const ADVANCED_MODEL_OPTIONS = [
   "gpt-5.4",
   "gpt-5.1",
-  "gpt-5-mini",
+  DEFAULT_CHAT_MODEL,
   "gpt-5-nano",
   "o3",
   "o4-mini",
@@ -35,7 +38,6 @@ interface ChatBoxProps {
   currentChat: SymbolChatState | undefined;
   disabled?: boolean;
   inputRows: number;
-  modelMenuRef: RefObject<HTMLDivElement | null>;
   onChangeInput: (value: string) => void;
   onSendPrompt: () => void;
   onSendQuickAction: (actionId: string) => void;
@@ -49,7 +51,6 @@ export function ChatBox({
   currentChat,
   disabled = false,
   inputRows,
-  modelMenuRef,
   onChangeInput,
   onSendPrompt,
   onSendQuickAction,
@@ -59,13 +60,41 @@ export function ChatBox({
   const placeholderLabel =
     mode === "portfolio"
       ? "your portfolio"
-      : selectedSymbol
-        ? `your ${selectedSymbol} position`
-        : "this position";
+      : mode === "research"
+        ? selectedSymbol ?? "this symbol"
+        : selectedSymbol
+          ? `your ${selectedSymbol} position`
+          : "this position";
   const inputValue = currentChat?.input ?? "";
   const isChatLoading = !!currentChat?.loading;
   const isBusy = isChatLoading || disabled;
   const canSend = !isBusy && inputValue.trim().length > 0;
+  const selectedModel = currentChat?.model || DEFAULT_CHAT_MODEL;
+  const modelMenuOpen = !!currentChat?.modelMenuOpen;
+  const usingNonDefaultModel = selectedModel !== DEFAULT_CHAT_MODEL;
+  const modelMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!modelMenuOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!modelMenuRef.current?.contains(event.target as Node)) {
+        onToggleModelMenu();
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onToggleModelMenu();
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [modelMenuOpen, onToggleModelMenu]);
 
   return (
     <div className="bg-gradient-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
@@ -80,11 +109,17 @@ export function ChatBox({
 
         {disabled ? (
           <p className="rounded-lg border border-dashed border-border bg-muted-bg/30 px-3 py-2 text-xs text-muted">
-            Connect Schwab and load holdings to use the assistant.
+            {mode === "research"
+              ? "Sign in to ask questions about this symbol."
+              : "Connect Schwab and load holdings to use the assistant."}
           </p>
         ) : (
           <QuickAnalysisBar
-            symbol={mode === "portfolio" ? "PORTFOLIO" : (selectedSymbol ?? "")}
+            symbol={
+              mode === "portfolio"
+                ? "PORTFOLIO"
+                : (selectedSymbol ?? "")
+            }
             loading={isBusy}
             onRunAction={(id) => void onSendQuickAction(id)}
           />
@@ -101,7 +136,7 @@ export function ChatBox({
             rows={inputRows}
             disabled={isBusy}
             aria-label={`Ask about ${placeholderLabel}`}
-            className="max-h-52 min-h-12 w-full resize-none rounded-xl bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground outline-none ring-1 ring-transparent transition placeholder:text-neutral-500 focus:ring-border disabled:cursor-not-allowed disabled:opacity-60"
+            className="max-h-52 min-h-12 w-full resize-none rounded-xl bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground outline-none ring-1 ring-transparent transition placeholder:text-muted focus:ring-border disabled:cursor-not-allowed disabled:opacity-60"
             placeholder={
               disabled
                 ? "Load holdings to start chatting…"
@@ -120,40 +155,42 @@ export function ChatBox({
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-[11px] text-neutral-500">
+            <div className="text-[11px] text-muted">
               Enter to send · Shift Enter for a new line
             </div>
 
-            <div
-              ref={modelMenuRef}
-              className="relative flex items-center gap-2"
-            >
+            <div ref={modelMenuRef} className="relative flex items-center gap-2">
               <button
                 type="button"
                 disabled={isBusy}
+                aria-expanded={modelMenuOpen}
+                aria-haspopup="listbox"
                 onClick={onToggleModelMenu}
-                className={[
-                  "flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-foreground",
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-muted transition-all duration-200 ease-out hover:bg-muted-bg hover:text-foreground",
                   "disabled:opacity-60",
-                  "transition-all duration-200 ease-out",
-                  currentChat?.modelMenuOpen
-                    ? "bg-neutral-800/90"
-                    : "hover:bg-neutral-800/90",
-                ].join(" ")}
+                  modelMenuOpen && "bg-muted-bg text-foreground",
+                )}
               >
-                <span className="max-w-30 truncate text-neutral-200">
-                  {currentChat?.model || "gpt-5-mini"}
-                </span>
+                Advanced
+                {usingNonDefaultModel && (
+                  <span className="max-w-24 truncate text-[10px] text-accent-strong">
+                    · {selectedModel}
+                  </span>
+                )}
                 <ChevronDown
-                  className="h-3 w-3 text-neutral-400"
+                  className={cn(
+                    "h-3 w-3 transition-transform",
+                    modelMenuOpen && "rotate-180",
+                  )}
                   aria-hidden="true"
                 />
               </button>
 
               <Dropdown
-                open={!!currentChat?.modelMenuOpen}
-                options={MODEL_OPTIONS}
-                value={currentChat?.model || "gpt-5-mini"}
+                open={modelMenuOpen}
+                options={ADVANCED_MODEL_OPTIONS}
+                value={selectedModel}
                 onChange={onModelChange}
                 onClose={onToggleModelMenu}
               />
@@ -162,7 +199,7 @@ export function ChatBox({
                 type="submit"
                 disabled={!canSend}
                 aria-busy={isChatLoading}
-                className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-neutral-900 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isChatLoading ? (
                   "Analyzing…"

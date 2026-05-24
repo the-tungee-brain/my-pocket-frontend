@@ -6,6 +6,7 @@ import {
   ResearchBulletList,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 type BusinessSectionProps = {
   symbol: string | null;
@@ -23,7 +24,7 @@ export function BusinessSection({ symbol }: BusinessSectionProps) {
   }
 
   if (error) {
-    return <p className="text-sm text-danger">{error}</p>;
+    return <ErrorBanner message={error} />;
   }
 
   if (!business) {

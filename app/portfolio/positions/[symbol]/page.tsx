@@ -10,6 +10,7 @@ import { useCompanyNews } from "@/app/hooks/useCompanyNews";
 import { CompanyNews } from "@/components/CompanyNews";
 import { useTabs } from "@/app/contexts/TabContext";
 import { StockChart } from "@/components/StockChart";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useStockData } from "@/app/hooks/useStockData";
 
 export default function SymbolPage() {
@@ -32,6 +33,7 @@ export default function SymbolPage() {
     analytics,
     isLoading,
     error: newsError,
+    lastUpdated: newsLastUpdated,
     refetch,
   } = useCompanyNews(symbol, accessToken, activeTab);
 
@@ -39,6 +41,7 @@ export default function SymbolPage() {
     data: stockData,
     loading: stockLoading,
     error: stockError,
+    refetch: refetchStock,
   } = useStockData({
     symbol: symbol ?? null,
     accessToken: accessToken ?? null,
@@ -60,30 +63,30 @@ export default function SymbolPage() {
 
   return (
     <>
-      {error && <p className="mb-3 text-sm text-danger">{error}</p>}
-
-      {activeTab === "assistant" && symbol && (
-        <div className="mb-6">
-          {stockError && (
-            <p className="mb-3 text-sm text-danger">
-              Failed to load chart: {stockError.message}
-            </p>
-          )}
-
-          <StockChart
-            data={stockData?.data ?? []}
-            loading={stockLoading}
-            symbol={stockData?.symbol ?? symbol}
-            period={period}
-            interval={interval}
-            onPeriodChange={handlePeriodChange}
-            onIntervalChange={handleIntervalChange}
-          />
-        </div>
-      )}
+      {error && <ErrorBanner message={error} className="mb-3" />}
 
       {activeTab === "assistant" && (
-        <>
+        <div
+          id="panel-assistant"
+          role="tabpanel"
+          aria-labelledby="tab-assistant"
+        >
+          {symbol && (
+            <div className="mb-6">
+              <StockChart
+                data={stockData?.data ?? []}
+                loading={stockLoading}
+                error={stockError?.message ?? null}
+                onRetry={stockError ? refetchStock : undefined}
+                symbol={stockData?.symbol ?? symbol}
+                period={period}
+                interval={interval}
+                onPeriodChange={handlePeriodChange}
+                onIntervalChange={handleIntervalChange}
+              />
+            </div>
+          )}
+
           <AccountPositionList
             positionsForSelectedSymbol={positionsForSelectedSymbol}
             selectedSymbol={symbol}
@@ -95,17 +98,24 @@ export default function SymbolPage() {
               symbol ? `Analyzing your ${symbol} positions` : "Analyzing"
             }
           />
-        </>
+        </div>
       )}
 
       {activeTab === "news" && (
-        <CompanyNews
-          symbol={symbol}
-          analytics={analytics}
-          isLoading={isLoading}
-          error={newsError}
-          onRetry={refetch}
-        />
+        <div
+          id="panel-news"
+          role="tabpanel"
+          aria-labelledby="tab-news"
+        >
+          <CompanyNews
+            symbol={symbol}
+            analytics={analytics}
+            isLoading={isLoading}
+            error={newsError}
+            lastUpdated={newsLastUpdated}
+            onRetry={refetch}
+          />
+        </div>
       )}
     </>
   );

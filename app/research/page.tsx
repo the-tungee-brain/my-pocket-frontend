@@ -1,19 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Search, TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { TickerSymbolItem, useSymbolSearch } from "../hooks/useSymbolSearch";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 export default function ResearchPage() {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
   const [query, setQuery] = useState<string>("");
+  const [activeIndex, setActiveIndex] = useState(-1);
   const router = useRouter();
 
-  const { results, isLoading, error } = useSymbolSearch(query, {
+  const { results, isLoading, error, refetch } = useSymbolSearch(query, {
     accessToken,
     limit: 10,
   });
@@ -21,6 +24,11 @@ export default function ResearchPage() {
   const hasResults = !isLoading && !error && results.length > 0;
   const showEmptyState =
     !isLoading && !error && results.length === 0 && query.trim().length > 0;
+  const listboxId = "research-symbol-listbox";
+
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [query, results]);
 
   const openSymbol = (symbol: string) => {
     const upper = symbol.toUpperCase();
@@ -30,6 +38,36 @@ export default function ResearchPage() {
 
   const handleSymbolClick = (item: TickerSymbolItem) => {
     openSymbol(item.symbol);
+  };
+
+  const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!hasResults) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((index) =>
+        index < results.length - 1 ? index + 1 : 0,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((index) =>
+        index > 0 ? index - 1 : results.length - 1,
+      );
+      return;
+    }
+
+    if (event.key === "Enter" && activeIndex >= 0) {
+      event.preventDefault();
+      handleSymbolClick(results[activeIndex]);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setActiveIndex(-1);
+    }
   };
 
   const examples = ["NVDA", "AAPL", "MSFT", "TSLA"];
@@ -60,8 +98,18 @@ export default function ResearchPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleInputKeyDown}
               placeholder="Search symbol, e.g. NVDA"
+              role="combobox"
               aria-label="Search ticker symbol"
+              aria-autocomplete="list"
+              aria-expanded={hasResults}
+              aria-controls={hasResults ? listboxId : undefined}
+              aria-activedescendant={
+                activeIndex >= 0
+                  ? `research-symbol-option-${activeIndex}`
+                  : undefined
+              }
               className="w-full rounded-xl border border-border bg-background px-9 py-3.5 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
             />
           </div>
@@ -89,7 +137,11 @@ export default function ResearchPage() {
                 </div>
               )}
 
-              {error && <div className="px-3 py-3 text-danger">{error}</div>}
+              {error && (
+                <div className="p-3">
+                  <ErrorBanner message={error} onRetry={refetch} />
+                </div>
+              )}
 
               {showEmptyState && (
                 <div className="px-3 py-3 text-muted">
@@ -98,12 +150,24 @@ export default function ResearchPage() {
               )}
 
               {hasResults && (
-                <ul className="max-h-72 divide-y divide-border overflow-y-auto">
-                  {results.map((item) => (
-                    <li key={item.symbol}>
+                <ul
+                  id={listboxId}
+                  role="listbox"
+                  aria-label="Symbol search results"
+                  className="max-h-72 divide-y divide-border overflow-y-auto"
+                >
+                  {results.map((item, index) => (
+                    <li key={item.symbol} role="presentation">
                       <button
+                        id={`research-symbol-option-${index}`}
                         type="button"
-                        className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition hover:bg-secondary/80"
+                        role="option"
+                        aria-selected={index === activeIndex}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition hover:bg-secondary/80",
+                          index === activeIndex && "bg-muted-bg",
+                        )}
+                        onMouseEnter={() => setActiveIndex(index)}
                         onClick={() => handleSymbolClick(item)}
                       >
                         <span className="font-mono font-semibold text-foreground">

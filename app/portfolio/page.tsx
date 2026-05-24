@@ -3,6 +3,7 @@
 import { usePositionsContext } from "../Providers";
 import { Insights } from "@/components/Insights";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 export default function PortfolioPage() {
   const { error, allPositions, loading, symbols, positionMap } =
@@ -10,9 +11,7 @@ export default function PortfolioPage() {
 
   return (
     <>
-      {error && (
-        <p className="mb-3 text-sm text-danger">{error}</p>
-      )}
+      {error && <ErrorBanner message={error} className="mb-3" />}
 
       <PortfolioOverview
         loading={loading}

@@ -34,7 +34,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           variant === "default" &&
             "bg-foreground text-background hover:bg-[#383838] dark:hover:bg-[#ccc]",
           variant === "outline" &&
-            "border border-input bg-background hover:bg-neutral-800 hover:text-white hover:border-neutral-400",
+            "border border-border bg-background hover:bg-muted-bg hover:text-foreground",
           variant === "ghost" && "hover:bg-accent hover:text-accent-foreground",
           variant === "destructive" &&
             "bg-destructive text-destructive-foreground hover:bg-destructive/90",
@@ -49,10 +49,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         ref={ref}
         disabled={isLoading || props.disabled}
+        aria-busy={isLoading || undefined}
         {...props}
       >
-        {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-        {!isLoading && children}
+        {isLoading && (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+        )}
+        {children}
         {isLoading && !children && <span className="sr-only">Loading</span>}
       </button>
     );

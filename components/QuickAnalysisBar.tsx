@@ -1,25 +1,6 @@
 "use client";
 
-import {
-  CalendarDays,
-  CircleHelp,
-  Scale,
-  ShieldAlert,
-  type LucideIcon,
-} from "lucide-react";
-
-type QuickAction = {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-};
-
-const QUICK_ACTIONS: QuickAction[] = [
-  { id: "daily-summary", label: "Daily summary", icon: CalendarDays },
-  { id: "risk-check", label: "Risk check", icon: ShieldAlert },
-  { id: "tax-angle", label: "Tax angle", icon: Scale },
-  { id: "what-changed", label: "What changed", icon: CircleHelp },
-];
+import { QUICK_ACTIONS } from "@/lib/quickActions";
 
 interface QuickAnalysisBarProps {
   symbol: string;
@@ -28,7 +9,7 @@ interface QuickAnalysisBarProps {
 }
 
 export function QuickAnalysisBar({
-  symbol, // kept in case you later want tooltips, etc.
+  symbol,
   loading,
   onRunAction,
 }: QuickAnalysisBarProps) {
@@ -45,9 +26,9 @@ export function QuickAnalysisBar({
             disabled={loading}
             aria-label={`${action.label} for ${symbol}`}
             onClick={() => onRunAction(action.id)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] font-medium text-foreground transition-all duration-200 ease-out hover:border-neutral-500 hover:bg-neutral-800/80 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] font-medium text-foreground transition-all duration-200 ease-out hover:border-accent/40 hover:bg-muted-bg disabled:opacity-60"
           >
-            <Icon className="h-3 w-3 text-emerald-300" aria-hidden="true" />
+            <Icon className="h-3 w-3 text-accent-strong" aria-hidden="true" />
             {action.label}
           </button>
         );

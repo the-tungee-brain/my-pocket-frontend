@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
-import { Lightbulb, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Lightbulb, Sparkles } from "lucide-react";
 import { MarkdownRenderer } from "./ui/MarkdownRenderer";
 import { ThinkingSpinner } from "./ui/ThinkingSpinner";
+import { ErrorBanner } from "./ui/ErrorBanner";
 import { Button } from "./ui/Button";
 import { usePositionsContext } from "@/app/Providers";
 import { useInsights } from "@/app/hooks/useInsights";
@@ -21,6 +22,7 @@ export function Insights({
   thinkingMessage = "Analyzing",
 }: Props) {
   const { account, sessionAccessToken } = usePositionsContext();
+  const [requested, setRequested] = useState(false);
 
   const label = useMemo(
     () => (positions?.length ? (symbol ?? "PORTFOLIO") : null),
@@ -33,6 +35,7 @@ export function Insights({
       positions,
       account,
       accessToken: sessionAccessToken || null,
+      enabled: requested,
     },
     "gpt-5.4",
   );
@@ -40,35 +43,46 @@ export function Insights({
   if (!positions?.length) return null;
 
   const title = symbol ? `${symbol} insights` : "Portfolio insights";
+  const hasContent = !!content;
+  const showGenerate = !requested && !hasContent;
+
+  const handleGenerate = () => setRequested(true);
 
   return (
     <section className="mx-auto mt-6 max-w-3xl overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-sm">
-      <div className="flex items-center gap-2.5 border-b border-border bg-surface-elevated/50 px-4 py-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-          <Lightbulb className="h-4 w-4" aria-hidden="true" />
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+            <Lightbulb className="h-4 w-4" aria-hidden="true" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold capitalize text-foreground">
+              {title}
+            </h2>
+            <p className="text-[11px] text-muted">AI-generated analysis</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-sm font-semibold capitalize text-foreground">
-            {title}
-          </h2>
-          <p className="text-[11px] text-muted">AI-generated analysis</p>
-        </div>
+
+        {showGenerate && (
+          <Button size="xs" variant="outline" onClick={handleGenerate}>
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+            Generate insights
+          </Button>
+        )}
       </div>
 
       <div className="px-4 py-4">
+        {showGenerate && (
+          <p className="text-sm text-muted">
+            Get a concise AI summary of{" "}
+            {symbol ? `your ${symbol} holdings` : "your portfolio"} — generated
+            on demand.
+          </p>
+        )}
+
         {loading && <ThinkingSpinner message={thinkingMessage} />}
 
-        {error && (
-          <div className="space-y-3">
-            <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
-            <Button size="xs" variant="outline" onClick={refetch}>
-              <RotateCcw className="h-3 w-3" aria-hidden="true" />
-              Try again
-            </Button>
-          </div>
-        )}
+        {error && <ErrorBanner message={error} onRetry={refetch} />}
 
         {!loading && !error && content && (
           <div className="text-sm leading-relaxed text-foreground">
@@ -76,13 +90,12 @@ export function Insights({
           </div>
         )}
 
-        {!loading && !error && !content && (
+        {requested && !loading && !error && !content && (
           <div className="space-y-3 text-center">
             <p className="text-sm text-muted">
               Analysis unavailable right now.
             </p>
             <Button size="xs" variant="outline" onClick={refetch}>
-              <RotateCcw className="h-3 w-3" aria-hidden="true" />
               Retry analysis
             </Button>
           </div>

@@ -12,6 +12,8 @@ import { useSession } from "next-auth/react";
 import { apiFetch, streamAnalysis } from "@/lib/apiClient";
 import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
+import { DEFAULT_CHAT_MODEL } from "@/components/ChatBox";
+import { formatQuickActionMessage } from "@/lib/quickActions";
 import { Position, SchwabAccounts } from "./types/schwab";
 import { MainView } from "@/components/NavList";
 import { usePathname } from "next/navigation";
@@ -89,7 +91,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       loading: false,
       input: "",
       messages: [],
-      model: "gpt-5-mini",
+      model: DEFAULT_CHAT_MODEL,
       modelMenuOpen: false,
       ...base,
     }),
@@ -181,7 +183,11 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       prompt,
     }) => {
       if (!accessToken) return;
-      if (!positionsForSelectedSymbol?.length) return;
+      if (
+        !positionsForSelectedSymbol?.length &&
+        selectedView !== "research"
+      )
+        return;
       if (activeChatKey === "__NONE__") return;
 
       const state =
@@ -214,7 +220,11 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       });
 
       const symbolForApi =
-        selectedView === "portfolio" ? null : (selectedSymbol ?? "UNKNOWN");
+        selectedView === "portfolio"
+          ? null
+          : selectedView === "research"
+            ? selectedSymbol
+            : (selectedSymbol ?? "UNKNOWN");
 
       try {
         let assistantContent = "";
@@ -316,24 +326,28 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       actionId,
     }) => {
       if (!accessToken) return;
-      if (!positionsForSelectedSymbol?.length) return;
+      if (
+        !positionsForSelectedSymbol?.length &&
+        selectedView !== "research"
+      )
+        return;
       if (activeChatKey === "__NONE__") return;
 
       const state =
         chatBySymbol[activeChatKey] ?? ensureSymbolChatState(activeChatKey);
       if (state.loading) return;
 
-      const label =
+      const target =
         selectedView === "portfolio"
-          ? "portfolio"
-          : (selectedSymbol ?? "position");
+          ? "my portfolio"
+          : selectedView === "research"
+            ? (selectedSymbol ?? "this symbol")
+            : (selectedSymbol ?? "this position");
 
       const userMessage: ChatMessage = {
         id: `user-${activeChatKey}-${actionId}-${Date.now()}`,
         role: "user",
-        content: `${actionId
-          .replace(/-/g, " ")
-          .replace(/^./, (c) => c.toUpperCase())} analysis for ${label}`,
+        content: formatQuickActionMessage(actionId, target),
       };
 
       setChatBySymbol((prev) => {
@@ -352,7 +366,11 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       });
 
       const symbolForApi =
-        selectedView === "portfolio" ? null : (selectedSymbol ?? "UNKNOWN");
+        selectedView === "portfolio"
+          ? null
+          : selectedView === "research"
+            ? selectedSymbol
+            : (selectedSymbol ?? "UNKNOWN");
 
       try {
         let assistantContent = "";

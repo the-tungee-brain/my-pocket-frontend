@@ -1,15 +1,15 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
 import { StockNewsView } from "@/app/hooks/useCompanyNews";
 import NewsAnalytics from "./NewsAnalytics";
 import { ThinkingSpinner } from "./ui/ThinkingSpinner";
-import { Button } from "./ui/Button";
+import { ErrorBanner } from "./ui/ErrorBanner";
 
 type Props = {
   analytics: StockNewsView | null;
   isLoading: boolean;
   error: string | null;
+  lastUpdated?: number | null;
   onRetry: () => void;
   symbol?: string;
 };
@@ -18,6 +18,7 @@ export function CompanyNews({
   analytics,
   isLoading,
   error,
+  lastUpdated = null,
   onRetry,
 }: Props) {
   return (
@@ -28,17 +29,17 @@ export function CompanyNews({
         )}
 
         {error && !isLoading && (
-          <div className="space-y-3 rounded-2xl border border-border bg-secondary/60 px-4 py-6 text-center">
-            <p className="text-sm text-danger">{error}</p>
-            <Button size="xs" variant="outline" onClick={onRetry}>
-              <RotateCcw className="h-3 w-3" aria-hidden="true" />
-              Try again
-            </Button>
+          <div className="rounded-2xl border border-border bg-secondary/60 px-4 py-6">
+            <ErrorBanner message={error} onRetry={onRetry} />
           </div>
         )}
 
         {!error && analytics && (
-          <NewsAnalytics analytics={analytics} isLoading={isLoading} />
+          <NewsAnalytics
+            analytics={analytics}
+            isLoading={isLoading}
+            lastUpdated={lastUpdated}
+          />
         )}
 
         {!error && !isLoading && !analytics && (

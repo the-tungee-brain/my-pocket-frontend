@@ -4,6 +4,7 @@ import { BarChart3 } from "lucide-react";
 import { usePerformanceSnapshot } from "@/app/hooks/usePerformance";
 import { useSession } from "next-auth/react";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -35,7 +36,7 @@ export function PerformanceSnapshot({ symbol }: Props) {
           </div>
         </div>
       ) : error ? (
-        <p className="text-xs text-danger">{error}</p>
+        <ErrorBanner message={error} />
       ) : !perf ? (
         <p className="text-sm text-muted">Performance data is not available.</p>
       ) : (

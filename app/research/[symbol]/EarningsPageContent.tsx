@@ -13,6 +13,7 @@ import {
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import {
   beatLabelText,
   formatEps,
@@ -238,7 +239,7 @@ function EarningsDetailPanel({
       <MetricsGrid event={event} />
 
       {error && !analysis ? (
-        <p className="text-sm text-danger">{error}</p>
+        <ErrorBanner message={error} />
       ) : null}
 
       {showAnalysisLoading ? <AnalysisLoadingState /> : null}
@@ -369,7 +370,7 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
   }
 
   if (error) {
-    return <p className="text-sm text-danger">{error}</p>;
+    return <ErrorBanner message={error} />;
   }
 
   if (!data) {

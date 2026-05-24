@@ -3,6 +3,7 @@
 import { useFundamentals } from "@/app/hooks/useFundamentals";
 import { useSession } from "next-auth/react";
 import { ResearchTextBlock } from "@/components/ResearchDetailBlocks";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 type FundamentalsSectionProps = {
   symbol: string;
@@ -25,7 +26,7 @@ export function FundamentalsSection({ symbol }: FundamentalsSectionProps) {
   }
 
   if (error) {
-    return <p className="text-sm text-danger">{error}</p>;
+    return <ErrorBanner message={error} />;
   }
 
   if (!fundamentals) {

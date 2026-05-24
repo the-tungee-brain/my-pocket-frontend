@@ -7,6 +7,8 @@ import {
   HistogramSeries,
 } from "lightweight-charts";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
+import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 
 type StockData = {
   date: string;
@@ -25,6 +27,8 @@ type Props = {
   onPeriodChange?: (period: string) => void;
   onIntervalChange?: (interval: string) => void;
   loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   hideHeader?: boolean;
   className?: string;
 };
@@ -58,6 +62,8 @@ export function StockChart({
   onPeriodChange,
   onIntervalChange,
   loading = false,
+  error = null,
+  onRetry,
   hideHeader = false,
   className,
 }: Props) {
@@ -197,7 +203,14 @@ export function StockChart({
     handlePresetClick(PRESETS[3]);
   };
 
-  const showOverlay = loading || !data || data.length === 0;
+  const hasData = !!data?.length;
+  const chartState = error
+    ? "error"
+    : loading && !hasData
+      ? "loading"
+      : !hasData
+        ? "empty"
+        : "ready";
 
   return (
     <div className={cn("mx-auto mt-4 w-full max-w-3xl", className)}>
@@ -253,11 +266,41 @@ export function StockChart({
           style={{ borderColor: "var(--color-border)", minHeight: 400 }}
         />
 
-        {showOverlay && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl text-xs font-medium">
-            <span style={{ color: "var(--color-foreground)" }}>
-              Loading {symbol} chart…
-            </span>
+        {chartState !== "ready" && (
+          <div
+            className={cn(
+              "absolute inset-0 flex items-center justify-center rounded-2xl",
+              chartState === "loading" && "bg-secondary/80 backdrop-blur-sm",
+              chartState === "error" && "bg-secondary/90",
+              chartState === "empty" && "bg-secondary/60",
+            )}
+          >
+            {chartState === "loading" && (
+              <ThinkingSpinner message={`Loading ${symbol} chart`} />
+            )}
+
+            {chartState === "error" && (
+              <div className="max-w-xs space-y-3 px-4 text-center">
+                <p className="text-sm text-danger">{error}</p>
+                {onRetry && (
+                  <Button size="xs" variant="outline" onClick={onRetry}>
+                    Try again
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {chartState === "empty" && (
+              <p className="px-4 text-center text-sm text-muted">
+                No price data for this time range.
+              </p>
+            )}
+          </div>
+        )}
+
+        {chartState === "ready" && loading && (
+          <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-secondary/90 px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-border">
+            Updating…
           </div>
         )}
 

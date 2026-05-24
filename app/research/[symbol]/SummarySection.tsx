@@ -7,6 +7,7 @@ import {
   ResearchBulletList,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 type SummarySectionProps = {
   symbol: string;
@@ -39,7 +40,7 @@ export function SummarySection({ symbol }: SummarySectionProps) {
   }
 
   if (error) {
-    return <p className="text-xs text-danger">{error}</p>;
+    return <ErrorBanner message={error} />;
   }
 
   if (!summary) {

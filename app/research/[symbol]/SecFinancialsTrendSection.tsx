@@ -8,6 +8,7 @@ import {
   formatLargeUsd,
   formatSecPeriodLabel,
 } from "@/lib/secUtils";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 const REVENUE_TAGS = new Set([
   "RevenueFromContractWithCustomerExcludingAssessedTax",
@@ -39,7 +40,7 @@ export function SecFinancialsTrendSection({
   }
 
   if (error) {
-    return <p className="text-sm text-muted">{error}</p>;
+    return <ErrorBanner message={error} />;
   }
 
   if (!financials) {

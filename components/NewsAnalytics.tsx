@@ -5,16 +5,18 @@ import type {
   Sentiment,
   OverallSentiment,
 } from "@/app/hooks/useCompanyNews";
+import { cn } from "@/lib/utils";
+import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 
 function sentimentColor(sentiment: Sentiment) {
   switch (sentiment) {
     case "bullish":
-      return "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40";
+      return "bg-accent-muted text-accent-strong ring-1 ring-accent/30";
     case "bearish":
-      return "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/40";
+      return "bg-danger/10 text-danger ring-1 ring-danger/30";
     case "neutral":
     default:
-      return "bg-slate-500/20 text-slate-300 ring-1 ring-slate-500/40";
+      return "bg-muted-bg text-muted ring-1 ring-border";
   }
 }
 
@@ -36,15 +38,15 @@ function overallSentimentLabel(s: OverallSentiment) {
 function overallSentimentColor(s: OverallSentiment) {
   switch (s) {
     case "strongly_bullish":
-      return "bg-emerald-500/20 text-emerald-200 border border-emerald-500/50";
+      return "bg-accent-muted text-accent-strong border border-accent/40";
     case "bullish":
-      return "bg-emerald-500/10 text-emerald-200 border border-emerald-500/40";
+      return "bg-accent-muted/70 text-accent-strong border border-accent/30";
     case "neutral":
-      return "bg-slate-600/40 text-slate-100 border border-slate-500/40";
+      return "bg-muted-bg text-foreground border border-border";
     case "bearish":
-      return "bg-rose-500/10 text-rose-200 border border-rose-500/40";
+      return "bg-danger/10 text-danger border border-danger/30";
     case "strongly_bearish":
-      return "bg-rose-500/20 text-rose-100 border border-rose-500/60";
+      return "bg-danger/15 text-danger border border-danger/40";
   }
 }
 
@@ -57,119 +59,140 @@ function formatMetadataValue(value: string | null | undefined) {
 }
 
 function actionabilityTone(score: number | null | undefined) {
-  if (score == null) return "text-neutral-300";
-  if (score >= 4) return "text-emerald-300";
-  if (score >= 3) return "text-amber-300";
-  return "text-neutral-300";
+  if (score == null) return "text-muted";
+  if (score >= 4) return "text-success";
+  if (score >= 3) return "text-accent-strong";
+  return "text-muted";
 }
 
 type Props = {
   analytics: StockNewsView | null;
   isLoading: boolean;
+  lastUpdated?: number | null;
 };
 
-export default function NewsAnalytics({ analytics, isLoading }: Props) {
+export default function NewsAnalytics({
+  analytics,
+  isLoading,
+  lastUpdated = null,
+}: Props) {
   const data = analytics;
 
   if (!data && !isLoading) return null;
 
   const sentimentClass = data
     ? overallSentimentColor(data.overall_sentiment)
-    : "bg-slate-700/40 text-slate-200 border border-slate-600/40";
+    : "border border-border bg-muted-bg text-foreground";
   const actionabilityScore = data?.actionability_score ?? null;
   const actionabilityPercent =
     actionabilityScore == null
       ? 0
       : Math.max(0, Math.min(100, (actionabilityScore / 5) * 100));
 
+  const updatedLabel = lastUpdated
+    ? formatRelativeUpdatedAt(lastUpdated)
+    : null;
+
   return (
     <div className="mt-4 flex w-full flex-col gap-4">
       <div
-        className={`w-full rounded-xl px-4 py-3 text-sm shadow-sm backdrop-blur ${sentimentClass}`}
+        className={cn(
+          "w-full rounded-xl px-4 py-3 text-sm shadow-sm",
+          sentimentClass,
+        )}
       >
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-7 items-center rounded-full bg-black/20 px-2 text-xs font-medium uppercase tracking-wide text-white/80">
+            <span className="inline-flex h-7 items-center rounded-full bg-background/40 px-2 text-xs font-medium uppercase tracking-wide text-muted">
               News Sentiment
             </span>
-            <span className="inline-flex items-center rounded-full bg-black/30 px-2 py-1 text-xs font-semibold">
+            <span className="inline-flex items-center rounded-full bg-background/50 px-2 py-1 text-xs font-semibold text-foreground">
               {data
                 ? overallSentimentLabel(data.overall_sentiment)
                 : "Loading…"}
             </span>
           </div>
-          <span className="text-[11px] text-white/60">
-            {isLoading ? "Updating…" : "Updated a few minutes ago"}
+          <span className="text-[11px] text-muted">
+            {isLoading
+              ? updatedLabel
+                ? `${updatedLabel} · Updating…`
+                : "Updating…"
+              : updatedLabel}
           </span>
         </div>
 
-        <p className="mb-3 text-sm text-white/90">
+        <p className="mb-3 text-sm text-foreground">
           {data ? (
             data.summary
           ) : (
-            <span className="inline-block h-4 w-3/4 animate-pulse rounded bg-white/10" />
+            <span className="inline-block h-4 w-3/4 animate-pulse rounded bg-muted-bg" />
           )}
         </p>
 
         {data?.investorTakeaway && (
-          <div className="mb-3 rounded-lg border border-white/15 bg-black/25 px-3 py-2">
-            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-200/90">
+          <div className="mb-3 rounded-lg border border-border bg-background/40 px-3 py-2">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-accent-strong">
               Investor takeaway
             </div>
-            <p className="text-sm text-white/90">{data.investorTakeaway}</p>
+            <p className="text-sm text-foreground">{data.investorTakeaway}</p>
           </div>
         )}
 
         {data?.deepAnalysis && (
-          <div className="mb-3 rounded-lg bg-black/20 px-3 py-2">
-            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-white/50">
+          <div className="mb-3 rounded-lg bg-background/30 px-3 py-2">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted">
               Deep analysis
             </div>
-            <p className="text-sm leading-relaxed text-white/85">
+            <p className="text-sm leading-relaxed text-foreground">
               {data.deepAnalysis}
             </p>
           </div>
         )}
 
-        <div className="mb-3 grid gap-2 border-y border-white/10 py-3 sm:grid-cols-3">
-          <div className="rounded-lg bg-black/20 px-3 py-2">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-white/50">
+        <div className="mb-3 grid gap-2 border-y border-border py-3 sm:grid-cols-3">
+          <div className="rounded-lg bg-background/30 px-3 py-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted">
               Dominant driver
             </div>
-            <div className="mt-1 text-xs font-medium text-white/90">
+            <div className="mt-1 text-xs font-medium text-foreground">
               {data
                 ? formatMetadataValue(data.dominant_driver)
                 : "Loading..."}
             </div>
           </div>
 
-          <div className="rounded-lg bg-black/20 px-3 py-2">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-white/50">
+          <div className="rounded-lg bg-background/30 px-3 py-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted">
               Impact horizon
             </div>
-            <div className="mt-1 text-xs font-medium text-white/90">
+            <div className="mt-1 text-xs font-medium text-foreground">
               {data
                 ? formatMetadataValue(data.market_impact_horizon)
                 : "Loading..."}
             </div>
           </div>
 
-          <div className="rounded-lg bg-black/20 px-3 py-2">
+          <div className="rounded-lg bg-background/30 px-3 py-2">
             <div className="flex items-center justify-between gap-2">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-white/50">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                 Actionability
               </div>
               <div
-                className={`text-xs font-semibold ${actionabilityTone(
-                  actionabilityScore,
-                )}`}
+                className={cn(
+                  "text-xs font-semibold",
+                  actionabilityTone(actionabilityScore),
+                )}
               >
                 {actionabilityScore == null ? "N/A" : actionabilityScore}
               </div>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted-bg">
               <div
-                className="h-full rounded-full bg-current transition-all"
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  actionabilityTone(actionabilityScore),
+                  "bg-current",
+                )}
                 style={{ width: `${actionabilityPercent}%` }}
               />
             </div>
@@ -181,32 +204,32 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
             ? data.insights.map((insight) => (
                 <div
                   key={insight}
-                  className="flex items-start gap-2 rounded-lg bg-black/20 px-3 py-2 text-xs text-white/80"
+                  className="flex items-start gap-2 rounded-lg bg-background/30 px-3 py-2 text-xs text-foreground"
                 >
-                  <span className="mt-0.75 inline-block h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                  <span className="mt-0.75 inline-block h-1.5 w-1.5 rounded-full bg-accent-strong" />
                   <span>{insight}</span>
                 </div>
               ))
             : isLoading && (
                 <>
-                  <div className="h-6 w-40 animate-pulse rounded bg-black/20" />
-                  <div className="h-6 w-52 animate-pulse rounded bg-black/20" />
+                  <div className="h-6 w-40 animate-pulse rounded bg-muted-bg" />
+                  <div className="h-6 w-52 animate-pulse rounded bg-muted-bg" />
                 </>
               )}
         </div>
 
         {data && data.risks.length > 0 && (
-          <div className="mt-3 border-t border-white/10 pt-2">
-            <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-rose-200/80">
+          <div className="mt-3 border-t border-border pt-2">
+            <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-danger">
               Risks
             </div>
             <div className="flex flex-wrap gap-2">
               {data.risks.map((risk) => (
                 <div
                   key={risk}
-                  className="flex items-start gap-2 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-100"
+                  className="flex items-start gap-2 rounded-lg bg-danger/10 px-3 py-2 text-xs text-danger"
                 >
-                  <span className="mt-0.75 inline-block h-1.5 w-1.5 rounded-full bg-rose-300" />
+                  <span className="mt-0.75 inline-block h-1.5 w-1.5 rounded-full bg-danger" />
                   <span>{risk}</span>
                 </div>
               ))}
@@ -216,21 +239,21 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
       </div>
 
       <div className="w-full">
-        <div className="flex items-center justify-between border-b border-neutral-800 py-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+        <div className="flex items-center justify-between border-b border-border py-2">
+          <div className="text-xs font-medium uppercase tracking-wide text-muted">
             Recent news flow
           </div>
-          <div className="text-[11px] text-neutral-500">
+          <div className="text-[11px] text-muted">
             {data ? `${data.items.length} articles analyzed` : "Loading…"}
           </div>
         </div>
 
-        <ul className="divide-y divide-neutral-800">
+        <ul className="divide-y divide-border">
           {data &&
             data.items.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-col gap-1 py-3 text-sm text-neutral-100 sm:flex-row sm:items-start sm:justify-between sm:gap-3"
+                className="flex flex-col gap-1 py-3 text-sm text-foreground sm:flex-row sm:items-start sm:justify-between sm:gap-3"
               >
                 <div className="flex-1">
                   <div className="mb-1 flex flex-wrap items-center gap-2">
@@ -239,19 +262,20 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-neutral-50 underline-offset-2 hover:text-white hover:underline"
+                        className="font-medium text-foreground underline-offset-2 hover:text-accent-strong hover:underline"
                       >
                         {item.headline}
                       </a>
                     ) : (
-                      <span className="font-medium text-neutral-50">
+                      <span className="font-medium text-foreground">
                         {item.headline}
                       </span>
                     )}
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${sentimentColor(
-                        item.sentiment,
-                      )}`}
+                      className={cn(
+                        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+                        sentimentColor(item.sentiment),
+                      )}
                     >
                       {item.sentiment === "bullish"
                         ? "Bullish"
@@ -264,12 +288,10 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
                     </span>
                   </div>
 
-                  <p className="mb-1 text-[13px] text-neutral-300">
-                    {item.summary}
-                  </p>
+                  <p className="mb-1 text-[13px] text-muted">{item.summary}</p>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] text-neutral-500">
+                    <span className="text-[11px] text-muted">
                       {new Date(item.datetime).toLocaleString(undefined, {
                         month: "short",
                         day: "numeric",
@@ -282,7 +304,7 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
                       {item.topics.map((topic) => (
                         <span
                           key={topic}
-                          className="inline-flex items-center rounded-full bg-neutral-800 px-2 py-px text-[11px] text-neutral-300"
+                          className="inline-flex items-center rounded-full bg-muted-bg px-2 py-px text-[11px] text-muted"
                         >
                           {topic}
                         </span>
@@ -294,10 +316,10 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
             ))}
 
           {!data && isLoading && (
-            <li className="flex flex-col gap-2 px-4 py-3 text-sm text-neutral-400">
-              <div className="h-4 w-3/4 animate-pulse rounded bg-neutral-800" />
-              <div className="h-4 w-1/2 animate-pulse rounded bg-neutral-800" />
-              <div className="h-4 w-2/3 animate-pulse rounded bg-neutral-800" />
+            <li className="flex flex-col gap-2 px-4 py-3 text-sm text-muted">
+              <div className="h-4 w-3/4 animate-pulse rounded bg-muted-bg" />
+              <div className="h-4 w-1/2 animate-pulse rounded bg-muted-bg" />
+              <div className="h-4 w-2/3 animate-pulse rounded bg-muted-bg" />
             </li>
           )}
         </ul>

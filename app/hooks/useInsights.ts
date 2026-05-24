@@ -38,10 +38,11 @@ export function useInsights(
     positions: Position[] | null;
     account: SchwabAccounts | null;
     accessToken: string | null;
+    enabled?: boolean;
   },
   model: string = "gpt-5.4",
 ): InsightState {
-  const { label, positions, account, accessToken } = opts;
+  const { label, positions, account, accessToken, enabled = false } = opts;
   const [retryCount, setRetryCount] = useState(0);
   const [state, setState] = useState<Omit<InsightState, "refetch">>({
     loading: false,
@@ -56,8 +57,16 @@ export function useInsights(
   }, [label, positions]);
 
   useEffect(() => {
-    if (!label || !positions?.length || !account || !accessToken) {
-      setState({ loading: false, error: null, content: null });
+    if (
+      !enabled ||
+      !label ||
+      !positions?.length ||
+      !account ||
+      !accessToken
+    ) {
+      if (!enabled) {
+        setState({ loading: false, error: null, content: null });
+      }
       return;
     }
 
@@ -161,7 +170,7 @@ export function useInsights(
       cancelled = true;
       entry!.listeners.delete(listener);
     };
-  }, [label, positions, account, accessToken, model, retryCount]);
+  }, [label, positions, account, accessToken, model, retryCount, enabled]);
 
   return { ...state, refetch };
 }

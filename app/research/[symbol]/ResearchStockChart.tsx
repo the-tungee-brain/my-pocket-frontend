@@ -22,6 +22,7 @@ export function ResearchStockChart({ symbol }: Props) {
     data: stockData,
     loading,
     error,
+    refetch,
   } = useStockData({
     symbol,
     accessToken,
@@ -36,24 +37,20 @@ export function ResearchStockChart({ symbol }: Props) {
       description={`${period.toUpperCase()} · ${interval.toUpperCase()}`}
       icon={CandlestickChart}
     >
-      {error && (
-        <p className="mb-3 text-sm text-danger">
-          Failed to load chart: {error.message}
-        </p>
-      )}
-
       <div className="-mx-4 -mb-4">
         <StockChart
-        data={stockData?.data ?? []}
-        loading={loading}
-        symbol={stockData?.symbol ?? symbol.toUpperCase()}
-        period={period}
-        interval={interval}
-        onPeriodChange={setPeriod}
-        onIntervalChange={setInterval}
-        hideHeader
-        className="mt-0 max-w-none"
-      />
+          data={stockData?.data ?? []}
+          loading={loading}
+          error={error?.message ?? null}
+          onRetry={error ? refetch : undefined}
+          symbol={stockData?.symbol ?? symbol.toUpperCase()}
+          period={period}
+          interval={interval}
+          onPeriodChange={setPeriod}
+          onIntervalChange={setInterval}
+          hideHeader
+          className="mt-0 max-w-none"
+        />
       </div>
     </ResearchSectionCard>
   );
