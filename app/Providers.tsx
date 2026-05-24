@@ -258,6 +258,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
                 [activeChatKey]: {
                   ...prevState,
                   messages,
+                  loading: true,
                 },
               };
             });
@@ -395,6 +396,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
                 [activeChatKey]: {
                   ...prevState,
                   messages,
+                  loading: true,
                 },
               };
             });

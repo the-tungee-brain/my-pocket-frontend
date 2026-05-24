@@ -97,6 +97,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleSendMessage = async () => {
     if (activeChatKey === "__NONE__") return;
+    if (currentChat?.loading) return;
     const input = (currentChat?.input ?? "").trim();
     if (!input) return;
 

@@ -61,7 +61,8 @@ export function ChatBox({
         ? `your ${selectedSymbol} position`
         : "this position";
   const inputValue = currentChat?.input ?? "";
-  const canSend = !currentChat?.loading && inputValue.trim().length > 0;
+  const isLoading = !!currentChat?.loading;
+  const canSend = !isLoading && inputValue.trim().length > 0;
 
   return (
     <div className="bg-gradient-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
@@ -76,7 +77,7 @@ export function ChatBox({
 
         <QuickAnalysisBar
           symbol={mode === "portfolio" ? "PORTFOLIO" : (selectedSymbol ?? "")}
-          loading={!!currentChat?.loading}
+          loading={isLoading}
           onRunAction={(id) => void onSendQuickAction(id)}
         />
 
@@ -84,25 +85,25 @@ export function ChatBox({
           className="flex flex-col gap-3 text-foreground"
           onSubmit={(e) => {
             e.preventDefault();
-            onSendPrompt();
+            if (canSend) onSendPrompt();
           }}
         >
           <textarea
             rows={inputRows}
+            disabled={isLoading}
             aria-label={`Ask about ${placeholderLabel}`}
-            className="max-h-52 min-h-12 w-full resize-none rounded-xl bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground outline-none ring-1 ring-transparent transition placeholder:text-neutral-500 focus:ring-border"
-            placeholder={`Ask anything about ${placeholderLabel}…`}
+            className="max-h-52 min-h-12 w-full resize-none rounded-xl bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground outline-none ring-1 ring-transparent transition placeholder:text-neutral-500 focus:ring-border disabled:cursor-not-allowed disabled:opacity-60"
+            placeholder={
+              isLoading
+                ? "Waiting for response…"
+                : `Ask anything about ${placeholderLabel}…`
+            }
             value={inputValue}
             onChange={(e) => onChangeInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                if (
-                  !currentChat?.loading &&
-                  (currentChat?.input ?? "").trim().length > 0
-                ) {
-                  onSendPrompt();
-                }
+                if (canSend) onSendPrompt();
               }
             }}
           />
@@ -118,7 +119,7 @@ export function ChatBox({
             >
               <button
                 type="button"
-                disabled={currentChat?.loading}
+                disabled={isLoading}
                 onClick={onToggleModelMenu}
                 className={[
                   "flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-foreground",
@@ -149,9 +150,10 @@ export function ChatBox({
               <button
                 type="submit"
                 disabled={!canSend}
-                className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-neutral-900 transition hover:opacity-90 disabled:opacity-60"
+                aria-busy={isLoading}
+                className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-neutral-900 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {currentChat?.loading ? (
+                {isLoading ? (
                   "Analyzing…"
                 ) : (
                   <>
