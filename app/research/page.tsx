@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { History, Search, SearchX, Star, TrendingUp } from "lucide-react";
@@ -8,6 +9,9 @@ import { History, Search, SearchX, Star, TrendingUp } from "lucide-react";
 import { TickerSymbolItem, useSymbolSearch } from "../hooks/useSymbolSearch";
 import { useRecentSymbols } from "../hooks/useRecentSymbols";
 import { useWatchlist } from "../hooks/useWatchlist";
+import { useResearchSearchShortcut } from "../hooks/useResearchSearchShortcut";
+import { usePositionsContext } from "../Providers";
+import { consumeResearchSearchFocus } from "@/lib/researchSearchFocus";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SymbolSearchResult } from "@/components/SymbolSearchResult";
@@ -20,6 +24,19 @@ export default function ResearchPage() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { symbols: portfolioSymbols } = usePositionsContext();
+
+  const focusSearch = useCallback(() => {
+    searchInputRef.current?.focus();
+  }, []);
+
+  useResearchSearchShortcut({ onFocus: focusSearch });
+
+  useEffect(() => {
+    if (consumeResearchSearchFocus()) {
+      window.requestAnimationFrame(() => focusSearch());
+    }
+  }, [focusSearch]);
 
   const { symbols: watchlist } = useWatchlist();
   const { symbols: recentSymbols, clear: clearRecentSymbols } =
@@ -37,32 +54,6 @@ export default function ResearchPage() {
   useEffect(() => {
     setActiveIndex(-1);
   }, [query, results]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      const isTyping =
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target?.isContentEditable;
-
-      if (isTyping) return;
-
-      if (event.key === "/") {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-        return;
-      }
-
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   const openSymbol = (symbol: string) => {
     const upper = symbol.toUpperCase();
@@ -111,6 +102,7 @@ export default function ResearchPage() {
   );
 
   const hasQuickAccess = watchlist.length > 0 || recentWithoutWatchlist.length > 0;
+  const showIdleHelper = !query.trim() && !hasQuickAccess;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-8 pb-4">
@@ -160,6 +152,28 @@ export default function ResearchPage() {
               className="w-full rounded-xl border border-border bg-background px-9 py-3.5 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
             />
           </div>
+
+          {showIdleHelper && (
+            <div className="mt-3">
+              <EmptyState
+                icon={Search}
+                title="Find a company to research"
+                description="Search by ticker above, or open a holding from your portfolio to dig into fundamentals and news."
+                variant="solid"
+                className="py-6"
+                action={
+                  portfolioSymbols.length > 0 ? (
+                    <Link
+                      href="/portfolio"
+                      className="inline-flex text-xs font-medium text-accent-strong transition hover:underline"
+                    >
+                      View your portfolio
+                    </Link>
+                  ) : undefined
+                }
+              />
+            </div>
+          )}
 
           {watchlist.length > 0 && (
             <div className="mt-3">

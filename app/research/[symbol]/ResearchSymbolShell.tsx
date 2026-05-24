@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { CompanySnapshot } from "./CompanySnapshot";
 import { ResearchTabBar } from "@/components/ResearchTabBar";
 import { addRecentSymbol } from "@/lib/recentSymbols";
+import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -16,6 +17,8 @@ type Props = {
 export function ResearchSymbolShell({ symbol, children }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useResearchSearchShortcut();
 
   useEffect(() => {
     addRecentSymbol(symbol);

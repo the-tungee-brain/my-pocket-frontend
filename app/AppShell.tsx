@@ -46,9 +46,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [inputRows, setInputRows] = useState(MIN_ROWS);
   const [mobileChatExpanded, setMobileChatExpanded] = useState(false);
 
-  const researchCollapsibleChat =
-    selectedView === "research" && !!researchSymbol;
-
   const activeChatKey =
     selectedView === "portfolio"
       ? "__PORTFOLIO_CHAT__"
@@ -259,6 +256,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     onModelChange: handleModelChange,
   };
 
+  const mobileChatLabel =
+    selectedView === "portfolio"
+      ? "Ask about your portfolio"
+      : selectedView === "research"
+        ? `Ask about ${researchSymbol ?? "this symbol"}`
+        : `Ask about ${selectedSymbol ?? "this position"}`;
+
   return (
     <>
       <a
@@ -350,7 +354,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
-            {showChat && researchCollapsibleChat && (
+            {showChat && (
               <div className="sticky bottom-0 z-20 md:hidden">
                 {!mobileChatExpanded ? (
                   <button
@@ -363,7 +367,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         className="h-4 w-4 shrink-0 text-accent-strong"
                         aria-hidden="true"
                       />
-                      <span className="truncate">Ask about {researchSymbol}</span>
+                      <span className="truncate">{mobileChatLabel}</span>
                     </span>
                     <ChevronUp className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
                   </button>
@@ -377,12 +381,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
 
             {showChat && (
-              <div
-                className={cn(
-                  "sticky bottom-0 z-20 bg-background",
-                  researchCollapsibleChat && "hidden md:block",
-                )}
-              >
+              <div className="sticky bottom-0 z-20 hidden bg-background md:block">
                 <ChatBox {...chatBoxProps} />
               </div>
             )}

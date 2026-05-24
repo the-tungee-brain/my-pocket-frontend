@@ -1,15 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   BriefcaseBusiness,
   Check,
   Link2,
   MessageSquare,
+  Search,
   Sparkles,
+  Star,
   X,
 } from "lucide-react";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
+import { useRecentSymbols } from "@/app/hooks/useRecentSymbols";
+import { useWatchlist } from "@/app/hooks/useWatchlist";
 import { usePositionsContext } from "@/app/Providers";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -30,6 +35,8 @@ export function PortfolioOnboarding() {
     useSchwabStatus();
   const { allPositions, chatBySymbol, loading: positionsLoading } =
     usePositionsContext();
+  const { symbols: watchlist } = useWatchlist();
+  const { symbols: recentSymbols } = useRecentSymbols();
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
@@ -59,8 +66,26 @@ export function PortfolioOnboarding() {
         description: "Use quick prompts or type a question in the chat bar below.",
         done: hasPortfolioChat,
       },
+      {
+        id: "research",
+        label: "Research a symbol",
+        description: "Open any ticker in Research to view its company snapshot.",
+        done: recentSymbols.length > 0,
+      },
+      {
+        id: "watchlist",
+        label: "Save to your watchlist",
+        description: "Star symbols in Research to track them in the sidebar.",
+        done: watchlist.length > 0,
+      },
     ],
-    [schwabAuthorized, allPositions.length, hasPortfolioChat],
+    [
+      schwabAuthorized,
+      allPositions.length,
+      hasPortfolioChat,
+      recentSymbols.length,
+      watchlist.length,
+    ],
   );
 
   const completedCount = steps.filter((step) => step.done).length;
@@ -75,6 +100,23 @@ export function PortfolioOnboarding() {
     setDismissed(true);
   };
 
+  const stepIcon = (id: string) => {
+    switch (id) {
+      case "connect":
+        return Link2;
+      case "holdings":
+        return BriefcaseBusiness;
+      case "assistant":
+        return MessageSquare;
+      case "research":
+        return Search;
+      case "watchlist":
+        return Star;
+      default:
+        return Sparkles;
+    }
+  };
+
   return (
     <section className="mx-auto mb-4 w-full max-w-3xl">
       <div className="rounded-2xl border border-accent/30 bg-accent-muted/40 p-4 shadow-sm">
@@ -84,7 +126,7 @@ export function PortfolioOnboarding() {
               Getting started
             </p>
             <h2 className="mt-1 text-sm font-semibold text-foreground">
-              Set up PowerPocket in 3 steps
+              Set up PowerPocket in {steps.length} steps
             </h2>
             <p className="mt-0.5 text-xs text-muted">
               {completedCount} of {steps.length} complete
@@ -103,12 +145,7 @@ export function PortfolioOnboarding() {
 
         <ol className="space-y-3">
           {steps.map((step, index) => {
-            const StepIcon =
-              step.id === "connect"
-                ? Link2
-                : step.id === "holdings"
-                  ? BriefcaseBusiness
-                  : MessageSquare;
+            const StepIcon = stepIcon(step.id);
 
             return (
               <li
@@ -151,10 +188,25 @@ export function PortfolioOnboarding() {
                       sidebar.
                     </p>
                   )}
-                  {step.id === "assistant" && step.done === false && allPositions.length > 0 && (
-                    <p className="mt-1.5 flex items-center gap-1 text-[11px] text-accent-strong">
-                      <Sparkles className="h-3 w-3" aria-hidden="true" />
-                      Try a quick prompt in the chat bar below
+                  {step.id === "assistant" &&
+                    !step.done &&
+                    allPositions.length > 0 && (
+                      <p className="mt-1.5 flex items-center gap-1 text-[11px] text-accent-strong">
+                        <Sparkles className="h-3 w-3" aria-hidden="true" />
+                        Try a quick prompt in the chat bar below
+                      </p>
+                    )}
+                  {step.id === "research" && !step.done && (
+                    <Link
+                      href="/research"
+                      className="mt-1.5 inline-flex text-[11px] font-medium text-accent-strong transition hover:underline"
+                    >
+                      Go to Research
+                    </Link>
+                  )}
+                  {step.id === "watchlist" && !step.done && (
+                    <p className="mt-1.5 text-[11px] text-muted">
+                      Open a symbol in Research and tap the star button.
                     </p>
                   )}
                 </div>
