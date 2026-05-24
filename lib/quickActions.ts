@@ -29,14 +29,16 @@ export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
     id: "daily-summary",
     label: "Daily summary",
     apiAction: "daily summary",
-    message: (target) => `Give me a daily summary of ${target}.`,
+    message: (target) =>
+      `Give me a concise daily summary of ${target} — what moved, what's at risk, and the one thing I should do today.`,
     icon: CalendarDays,
   },
   {
     id: "risk-check",
     label: "Risk check",
     apiAction: "risk check",
-    message: (target) => `What are the main risks in ${target} right now?`,
+    message: (target) =>
+      `What are the biggest risks in ${target} right now — concentration, options, macro, and earnings?`,
     icon: ShieldAlert,
   },
   {
@@ -44,7 +46,7 @@ export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
     label: "Concentration",
     apiAction: "concentration check",
     message: (target) =>
-      `Check concentration and position sizing for ${target}.`,
+      `Check concentration in ${target}. Flag anything above 15–20% and suggest specific trims if needed.`,
     icon: PieChart,
   },
   {
@@ -52,14 +54,15 @@ export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
     label: "Tax angle",
     apiAction: "tax angle",
     message: (target) =>
-      `What tax considerations should I keep in mind for ${target}?`,
+      `What tax considerations apply to ${target} — gains, losses, wash sales, and whether to harvest anything now?`,
     icon: Scale,
   },
   {
     id: "what-changed",
     label: "What changed",
     apiAction: "what changed",
-    message: (target) => `What changed in ${target} recently?`,
+    message: (target) =>
+      `What changed in ${target} since my last snapshot — positions, weights, and any new risks?`,
     icon: CircleHelp,
   },
   {
@@ -67,7 +70,7 @@ export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
     label: "Assignment risk",
     apiAction: "assignment risk",
     message: (target) =>
-      `Review assignment and call-away risk for ${target} over the next two weeks.`,
+      `Review assignment and call-away risk in ${target} over the next two weeks. For each short option, say roll, close, or hold.`,
     icon: Timer,
   },
 ];
@@ -78,28 +81,28 @@ export const RESEARCH_QUICK_ACTIONS: QuickAction[] = [
     label: "Bull/bear case",
     icon: TrendingUp,
     prompt: (target) =>
-      `Summarize the bull case and bear case for ${target}. Keep it concise and balanced.`,
+      `Summarize the bull case and bear case for ${target} in plain English — 3 bullets each, then which side the data favors today.`,
   },
   {
     id: "key-risks",
     label: "Key risks",
     icon: ShieldAlert,
     prompt: (target) =>
-      `What are the main business and market risks for ${target} right now?`,
+      `What are the top 3 business and market risks for ${target} over the next 6–12 months, and what would show up in the stock first?`,
   },
   {
     id: "competitive-moat",
     label: "Competitive moat",
     icon: ShieldCheck,
     prompt: (target) =>
-      `How durable is ${target}'s competitive moat, and who are the main competitors?`,
+      `How durable is ${target}'s competitive moat versus its main peers, and where is it most vulnerable?`,
   },
   {
     id: "earnings-preview",
     label: "Earnings preview",
     icon: Landmark,
     prompt: (target) =>
-      `What should investors watch ahead of the next earnings report for ${target}?`,
+      `What should I watch in the next earnings report for ${target} — key metrics, guidance, and how the stock might react?`,
   },
 ];
 

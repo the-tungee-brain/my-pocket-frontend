@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, GitCompareArrows, Plus, Minus } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  GitCompareArrows,
+  Minus,
+  Plus,
+} from "lucide-react";
 import type { PortfolioChanges } from "@/app/types/intelligence";
 import { cn } from "@/lib/utils";
 
@@ -16,33 +23,26 @@ function formatPct(value: number | null | undefined) {
   return `${prefix}${value.toFixed(2)}%`;
 }
 
-export function PortfolioChangesSection({ changes, loading = false, className }: Props) {
-  if (loading) {
-    return (
-      <section
-        className={cn(
-          "mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
-          className,
-        )}
-      >
-        <div className="space-y-2 px-4 py-4">
-          <div className="h-4 w-40 animate-pulse rounded bg-muted-bg" />
-          <div className="h-16 animate-pulse rounded-xl bg-muted-bg" />
-        </div>
-      </section>
-    );
-  }
+function hasChangeDetails(changes: PortfolioChanges | null | undefined) {
+  if (!changes) return false;
 
-  if (!changes?.summary) return null;
-
-  const hasDetails =
+  return (
     (changes.newSymbols?.length ?? 0) > 0 ||
     (changes.removedSymbols?.length ?? 0) > 0 ||
     (changes.weightChanges?.length ?? 0) > 0 ||
-    changes.liquidationValueChangePct != null;
+    changes.liquidationValueChangePct != null
+  );
+}
 
-  if (!hasDetails && !changes.summary) return null;
-
+function SectionShell({
+  summary,
+  children,
+  className,
+}: {
+  summary?: string | null;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <section
       className={cn(
@@ -57,12 +57,70 @@ export function PortfolioChangesSection({ changes, loading = false, className }:
         </div>
         <div>
           <h2 className="text-sm font-semibold text-foreground">Since yesterday</h2>
-          <p className="text-[11px] text-muted">{changes.summary}</p>
+          <p className="text-[11px] text-muted">
+            {summary ??
+              "Day-over-day changes in holdings, weights, and portfolio value"}
+          </p>
         </div>
       </div>
+      {children}
+    </section>
+  );
+}
 
+function ChangesEmptyState() {
+  return (
+    <div className="px-4 py-4">
+      <div className="rounded-xl border border-dashed border-border bg-background/40 px-4 py-8 text-center">
+        <GitCompareArrows
+          className="mx-auto mb-2.5 h-5 w-5 text-muted"
+          aria-hidden
+        />
+        <p className="text-sm font-medium text-foreground">
+          No changes since yesterday
+        </p>
+        <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-muted">
+          Your holdings and portfolio weights match the previous snapshot.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ChangesSkeleton() {
+  return (
+    <div className="space-y-2 px-4 py-4">
+      <div className="h-12 animate-pulse rounded-xl bg-muted-bg" />
+      <div className="h-10 animate-pulse rounded-xl bg-muted-bg/80" />
+    </div>
+  );
+}
+
+export function PortfolioChangesSection({
+  changes,
+  loading = false,
+  className,
+}: Props) {
+  if (loading) {
+    return (
+      <SectionShell className={className}>
+        <ChangesSkeleton />
+      </SectionShell>
+    );
+  }
+
+  if (!hasChangeDetails(changes)) {
+    return (
+      <SectionShell className={className} summary={changes?.summary}>
+        <ChangesEmptyState />
+      </SectionShell>
+    );
+  }
+
+  return (
+    <SectionShell className={className} summary={changes?.summary}>
       <div className="space-y-3 px-4 py-4">
-        {changes.liquidationValueChangePct != null && (
+        {changes?.liquidationValueChangePct != null && (
           <div className="flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2.5">
             {changes.liquidationValueChangePct >= 0 ? (
               <ArrowUpRight className="h-4 w-4 text-emerald-600" aria-hidden />
@@ -78,14 +136,14 @@ export function PortfolioChangesSection({ changes, loading = false, className }:
           </div>
         )}
 
-        {(changes.newSymbols?.length ?? 0) > 0 && (
+        {(changes?.newSymbols?.length ?? 0) > 0 && (
           <div>
             <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
               <Plus className="h-3.5 w-3.5" aria-hidden />
               Added
             </p>
             <div className="flex flex-wrap gap-2">
-              {changes.newSymbols.map((symbol) => (
+              {changes!.newSymbols.map((symbol) => (
                 <span
                   key={symbol}
                   className="rounded-full border border-border bg-background px-3 py-1 font-mono text-[11px]"
@@ -97,14 +155,14 @@ export function PortfolioChangesSection({ changes, loading = false, className }:
           </div>
         )}
 
-        {(changes.removedSymbols?.length ?? 0) > 0 && (
+        {(changes?.removedSymbols?.length ?? 0) > 0 && (
           <div>
             <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
               <Minus className="h-3.5 w-3.5" aria-hidden />
               Removed
             </p>
             <div className="flex flex-wrap gap-2">
-              {changes.removedSymbols.map((symbol) => (
+              {changes!.removedSymbols.map((symbol) => (
                 <span
                   key={symbol}
                   className="rounded-full border border-border bg-background px-3 py-1 font-mono text-[11px]"
@@ -116,20 +174,23 @@ export function PortfolioChangesSection({ changes, loading = false, className }:
           </div>
         )}
 
-        {(changes.weightChanges?.length ?? 0) > 0 && (
+        {(changes?.weightChanges?.length ?? 0) > 0 && (
           <div>
             <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
               Largest weight shifts
             </p>
             <ul className="space-y-2">
-              {changes.weightChanges.slice(0, 4).map((item) => (
+              {changes!.weightChanges.slice(0, 4).map((item) => (
                 <li
                   key={item.symbol}
                   className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background/60 px-3 py-2"
                 >
-                  <span className="font-mono text-sm font-medium">{item.symbol}</span>
+                  <span className="font-mono text-sm font-medium">
+                    {item.symbol}
+                  </span>
                   <span className="text-xs tabular-nums text-muted">
-                    {item.previousWeightPct.toFixed(1)}% → {item.currentWeightPct.toFixed(1)}%
+                    {item.previousWeightPct.toFixed(1)}% →{" "}
+                    {item.currentWeightPct.toFixed(1)}%
                     <span
                       className={cn(
                         "ml-2 font-semibold",
@@ -145,6 +206,6 @@ export function PortfolioChangesSection({ changes, loading = false, className }:
           </div>
         )}
       </div>
-    </section>
+    </SectionShell>
   );
 }
