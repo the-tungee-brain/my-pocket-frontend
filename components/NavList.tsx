@@ -161,15 +161,18 @@ export function NavList({
 
       <div className="my-3 h-px bg-border" />
 
-      <div className="mb-1 flex items-center justify-between px-1">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-          Positions
-        </span>
-        {symbols.length > 0 && (
-          <span className="rounded-full bg-muted-bg px-2 py-px text-[10px] text-muted">
-            {symbols.length}
+      <div className="mb-1 px-1">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Positions
           </span>
-        )}
+          {symbols.length > 0 && (
+            <span className="rounded-full bg-muted-bg px-2 py-px text-[10px] text-muted">
+              {symbols.length}
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 text-[10px] text-muted/80">From Schwab</p>
       </div>
 
       {loading && (
@@ -182,7 +185,18 @@ export function NavList({
 
       {!loading && symbols.length === 0 && (
         <div className="rounded-lg border border-dashed border-border bg-background/50 px-3 py-3 text-[11px] text-muted">
-          Connect Schwab to load your holdings here.
+          <p>Connect Schwab to load your holdings here.</p>
+          {!schwabAuthorized && !schwabLoading && (
+            <Button
+              size="xs"
+              variant="outline"
+              className="mt-2 w-full"
+              disabled={schwabConnecting}
+              onClick={handleConnectSchwab}
+            >
+              {schwabConnecting ? "Connecting…" : "Connect Schwab"}
+            </Button>
+          )}
         </div>
       )}
 
@@ -191,52 +205,70 @@ export function NavList({
           const isActive = activeSymbol === sym;
 
           return (
-            <button
+            <div
               key={sym}
-              type="button"
-              disabled={loading}
-              aria-current={isActive ? "page" : undefined}
-              onClick={() => {
-                setSelectedView("symbol");
-                setSelectedSymbol(sym);
-                router.replace(`/portfolio/positions/${sym}${tabQuerySuffix(activeTab)}`);
-              }}
               className={cn(
-                "group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs transition-all",
+                "group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-xs transition-all",
                 isActive ? navItemActive : navItemInactive,
-                symbolButtonClassName,
               )}
             >
-              <span className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={loading}
+                aria-current={isActive ? "page" : undefined}
+                onClick={() => {
+                  setSelectedView("symbol");
+                  setSelectedSymbol(sym);
+                  router.replace(
+                    `/portfolio/positions/${sym}${tabQuerySuffix(activeTab)}`,
+                  );
+                }}
+                className={cn(
+                  "flex min-w-0 flex-1 items-center gap-2 text-left",
+                  symbolButtonClassName,
+                )}
+              >
                 <CircleDollarSign
                   className={cn(
-                    "h-3.5 w-3.5",
+                    "h-3.5 w-3.5 shrink-0",
                     isActive ? "text-accent-strong" : "text-muted",
                   )}
                   aria-hidden="true"
                 />
-                <span className="font-mono text-xs">{sym}</span>
-              </span>
-
-              {isActive && (
-                <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
-              )}
-            </button>
+                <span className="truncate font-mono">{sym}</span>
+              </button>
+              <button
+                type="button"
+                aria-label={`Research ${sym}`}
+                title={`Research ${sym}`}
+                onClick={() => {
+                  setSelectedView("research");
+                  setSelectedSymbol(null);
+                  router.replace(`/research/${sym}/overview`);
+                }}
+                className="shrink-0 rounded p-1 text-muted transition hover:bg-muted-bg hover:text-accent-strong"
+              >
+                <Search className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </div>
           );
         })}
       </div>
 
       <div className="my-3 h-px bg-border" />
 
-      <div className="mb-1 flex items-center justify-between px-1">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-          Watchlist
-        </span>
-        {watchlist.length > 0 && (
-          <span className="rounded-full bg-muted-bg px-2 py-px text-[10px] text-muted">
-            {watchlist.length}
+      <div className="mb-1 px-1">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Watchlist
           </span>
-        )}
+          {watchlist.length > 0 && (
+            <span className="rounded-full bg-muted-bg px-2 py-px text-[10px] text-muted">
+              {watchlist.length}
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 text-[10px] text-muted/80">Saved for research</p>
       </div>
 
       {watchlist.length === 0 ? (

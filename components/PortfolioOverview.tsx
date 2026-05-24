@@ -5,7 +5,9 @@ import { BriefcaseBusiness } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
 import { Position } from "@/app/types/schwab";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
+import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -51,6 +53,17 @@ export function PortfolioOverview({
 }: Props) {
   const { authorized: schwabAuthorized, loading: schwabLoading } =
     useSchwabStatus();
+  const {
+    connect: connectSchwab,
+    connecting: schwabConnecting,
+    connectError: schwabConnectError,
+    clearConnectError: clearSchwabConnectError,
+  } = useSchwabConnect();
+
+  const handleConnectSchwab = () => {
+    clearSchwabConnectError();
+    void connectSchwab();
+  };
 
   const totalValue = allPositions.reduce((sum, p) => sum + p.marketValue, 0);
   const totalDayPL = allPositions.reduce(
@@ -87,15 +100,23 @@ export function PortfolioOverview({
           title="No holdings yet"
           description={
             schwabAuthorized === false
-              ? "Connect Schwab from the sidebar to import positions and unlock portfolio insights."
+              ? "Connect Schwab to import positions and unlock portfolio insights."
               : "Your Schwab account is connected, but no positions were returned. Holdings will appear here once available."
           }
           action={
             schwabAuthorized === false && !schwabLoading ? (
-              <p className="text-xs text-muted">
-                On mobile, open the menu and use Connect at the bottom of the
-                sidebar.
-              </p>
+              <div className="space-y-2">
+                {schwabConnectError && (
+                  <p className="text-xs text-danger">{schwabConnectError}</p>
+                )}
+                <Button
+                  size="sm"
+                  disabled={schwabConnecting}
+                  onClick={handleConnectSchwab}
+                >
+                  {schwabConnecting ? "Connecting…" : "Connect Schwab"}
+                </Button>
+              </div>
             ) : undefined
           }
         />

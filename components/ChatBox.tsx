@@ -33,6 +33,7 @@ interface ChatBoxProps {
   onSendQuickAction: (actionId: string) => void;
   onToggleModelMenu: () => void;
   onModelChange: (model: string) => void;
+  onCollapse?: () => void;
 }
 
 export function ChatBox({
@@ -46,6 +47,7 @@ export function ChatBox({
   onSendQuickAction,
   onToggleModelMenu,
   onModelChange,
+  onCollapse,
 }: ChatBoxProps) {
   const placeholderLabel =
     mode === "portfolio"
@@ -89,12 +91,24 @@ export function ChatBox({
   return (
     <div className="bg-gradient-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-border bg-secondary/95 p-3 shadow-lg shadow-black/10 backdrop-blur">
-        <div className="flex items-center gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted">
-          <Sparkles
-            className="h-3.5 w-3.5 text-accent-strong"
-            aria-hidden="true"
-          />
-          Assistant prompts
+        <div className="flex items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+            <Sparkles
+              className="h-3.5 w-3.5 text-accent-strong"
+              aria-hidden="true"
+            />
+            Assistant prompts
+          </div>
+          {onCollapse && (
+            <button
+              type="button"
+              aria-label="Collapse assistant"
+              onClick={onCollapse}
+              className="rounded-lg p-1 text-muted transition hover:bg-muted-bg hover:text-foreground md:hidden"
+            >
+              <ChevronDown className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
 
         {disabled ? (

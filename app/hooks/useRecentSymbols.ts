@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   getRecentSymbols,
+  clearRecentSymbols as clearRecentSymbolsStorage,
   RECENT_SYMBOLS_UPDATED_EVENT,
 } from "@/lib/recentSymbols";
 
@@ -11,6 +12,10 @@ export function useRecentSymbols() {
 
   const refresh = useCallback(() => {
     setSymbols(getRecentSymbols());
+  }, []);
+
+  const clear = useCallback(() => {
+    setSymbols(clearRecentSymbolsStorage());
   }, []);
 
   useEffect(() => {
@@ -26,5 +31,5 @@ export function useRecentSymbols() {
     };
   }, [refresh]);
 
-  return { symbols, refresh };
+  return { symbols, refresh, clear };
 }

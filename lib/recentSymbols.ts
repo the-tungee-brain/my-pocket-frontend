@@ -47,4 +47,9 @@ export function addRecentSymbol(symbol: string): string[] {
   return next;
 }
 
+export function clearRecentSymbols(): string[] {
+  writeRecent([]);
+  return [];
+}
+
 export const RECENT_SYMBOLS_UPDATED_EVENT = RECENT_EVENT;

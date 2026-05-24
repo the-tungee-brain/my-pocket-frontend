@@ -1,7 +1,7 @@
 "use client";
 
-import { Menu, Search } from "lucide-react";
-import { useState } from "react";
+import { ChevronUp, Menu, Search, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChatBox } from "@/components/ChatBox";
 import { ConversationPane } from "@/components/ConversationPane";
@@ -44,6 +44,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [inputRows, setInputRows] = useState(MIN_ROWS);
+  const [mobileChatExpanded, setMobileChatExpanded] = useState(false);
+
+  const researchCollapsibleChat =
+    selectedView === "research" && !!researchSymbol;
 
   const activeChatKey =
     selectedView === "portfolio"
@@ -54,6 +58,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const currentChat =
     activeChatKey === "__NONE__" ? undefined : chatBySymbol[activeChatKey];
+
+  useEffect(() => {
+    setMobileChatExpanded(false);
+  }, [activeChatKey]);
+
+  useEffect(() => {
+    if ((currentChat?.messages.length ?? 0) > 0 || currentChat?.loading) {
+      setMobileChatExpanded(true);
+    }
+  }, [currentChat?.loading, currentChat?.messages.length, activeChatKey]);
 
   const researchPositions =
     researchSymbol && positionMap[researchSymbol]
@@ -229,6 +243,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     (selectedView !== "research" && activeTab === "assistant") ||
     selectedView === "research";
 
+  const chatBoxProps = {
+    mode: selectedView,
+    selectedSymbol:
+      selectedView === "research"
+        ? researchSymbol ?? null
+        : selectedSymbol,
+    currentChat,
+    disabled: chatDisabled,
+    inputRows,
+    onChangeInput: handleChatInputChange,
+    onSendPrompt: () => void handleSendMessage(),
+    onSendQuickAction: (id: string) => void handleQuickAction(id),
+    onToggleModelMenu: toggleModelMenu,
+    onModelChange: handleModelChange,
+  };
+
   return (
     <>
       <a
@@ -320,24 +350,40 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
+            {showChat && researchCollapsibleChat && (
+              <div className="sticky bottom-0 z-20 md:hidden">
+                {!mobileChatExpanded ? (
+                  <button
+                    type="button"
+                    onClick={() => setMobileChatExpanded(true)}
+                    className="flex w-full items-center justify-between gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-md"
+                  >
+                    <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
+                      <Sparkles
+                        className="h-4 w-4 shrink-0 text-accent-strong"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">Ask about {researchSymbol}</span>
+                    </span>
+                    <ChevronUp className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                  </button>
+                ) : (
+                  <ChatBox
+                    {...chatBoxProps}
+                    onCollapse={() => setMobileChatExpanded(false)}
+                  />
+                )}
+              </div>
+            )}
+
             {showChat && (
-              <div className="sticky bottom-0 z-20 bg-background">
-                <ChatBox
-                  mode={selectedView}
-                  selectedSymbol={
-                    selectedView === "research"
-                      ? researchSymbol ?? null
-                      : selectedSymbol
-                  }
-                  currentChat={currentChat}
-                  disabled={chatDisabled}
-                  inputRows={inputRows}
-                  onChangeInput={handleChatInputChange}
-                  onSendPrompt={() => void handleSendMessage()}
-                  onSendQuickAction={(id) => void handleQuickAction(id)}
-                  onToggleModelMenu={toggleModelMenu}
-                  onModelChange={handleModelChange}
-                />
+              <div
+                className={cn(
+                  "sticky bottom-0 z-20 bg-background",
+                  researchCollapsibleChat && "hidden md:block",
+                )}
+              >
+                <ChatBox {...chatBoxProps} />
               </div>
             )}
           </div>

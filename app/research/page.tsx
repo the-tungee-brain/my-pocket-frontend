@@ -11,6 +11,7 @@ import { useWatchlist } from "../hooks/useWatchlist";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SymbolSearchResult } from "@/components/SymbolSearchResult";
+import { ResearchOnboarding } from "@/components/ResearchOnboarding";
 
 export default function ResearchPage() {
   const { data: session } = useSession();
@@ -20,7 +21,8 @@ export default function ResearchPage() {
   const router = useRouter();
 
   const { symbols: watchlist } = useWatchlist();
-  const { symbols: recentSymbols } = useRecentSymbols();
+  const { symbols: recentSymbols, clear: clearRecentSymbols } =
+    useRecentSymbols();
   const { results, isLoading, error, refetch } = useSymbolSearch(query, {
     accessToken,
     limit: 10,
@@ -81,6 +83,8 @@ export default function ResearchPage() {
     (symbol) => !watchlistSet.has(symbol),
   );
 
+  const hasQuickAccess = watchlist.length > 0 || recentWithoutWatchlist.length > 0;
+
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-8 pb-4">
       <div className="mb-5 flex items-start gap-3">
@@ -96,6 +100,8 @@ export default function ResearchPage() {
             </p>
           </div>
         </div>
+
+        <ResearchOnboarding />
 
         <div className="relative rounded-2xl border border-border bg-secondary/80 p-3 shadow-lg shadow-black/10">
           <div className="relative">
@@ -145,9 +151,18 @@ export default function ResearchPage() {
 
           {recentWithoutWatchlist.length > 0 && (
             <div className="mt-3">
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-                Recently viewed
-              </p>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                  Recently viewed
+                </p>
+                <button
+                  type="button"
+                  onClick={clearRecentSymbols}
+                  className="text-[10px] font-medium text-muted transition hover:text-foreground"
+                >
+                  Clear
+                </button>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {recentWithoutWatchlist.map((symbol) => (
                   <button
@@ -164,23 +179,25 @@ export default function ResearchPage() {
             </div>
           )}
 
-          <div className="mt-3">
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-              Try an example
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {examples.map((symbol) => (
-                <button
-                  key={symbol}
-                  type="button"
-                  className="rounded-full border border-border bg-background px-3 py-1 text-xs font-mono text-foreground transition hover:border-accent/50 hover:bg-secondary"
-                  onClick={() => openSymbol(symbol)}
-                >
-                  {symbol}
-                </button>
-              ))}
+          {!hasQuickAccess && (
+            <div className="mt-3">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+                Try an example
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {examples.map((symbol) => (
+                  <button
+                    key={symbol}
+                    type="button"
+                    className="rounded-full border border-border bg-background px-3 py-1 text-xs font-mono text-foreground transition hover:border-accent/50 hover:bg-secondary"
+                    onClick={() => openSymbol(symbol)}
+                  >
+                    {symbol}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {(isLoading || error || hasResults || showEmptyState) && (
             <div className="mt-3 overflow-hidden rounded-xl border border-border bg-background text-sm">
