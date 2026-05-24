@@ -1,8 +1,15 @@
 "use client";
 
-import { CircleDollarSign, Inbox } from "lucide-react";
+import { CircleDollarSign, Inbox, LockKeyhole } from "lucide-react";
 import { Position } from "@/app/types/schwab";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { cspReservedCash, positionStrikePrice } from "@/lib/cspReservedCash";
+import {
+  isCashSecuredPut,
+  isHighlightedOptionStrategy,
+  optionStrategyLabel,
+} from "@/lib/optionStrategyLabel";
+import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
 import { cn } from "@/lib/utils";
 
 export type PositionMap = Record<string, Position[]>;
@@ -12,18 +19,63 @@ type AccountPositionListProps = {
   selectedSymbol: string | null;
 };
 
-function formatPL(value: number) {
-  const prefix = value >= 0 ? "+" : "";
-  return `${prefix}${value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
 function positionKey(p: Position) {
   return `${p.instrument.symbol}-${p.instrument.cusip}-${p.longQuantity}-${p.shortQuantity}`;
+}
+
+function positionLabel(p: Position) {
+  return p.instrument.description ?? p.instrument.assetType ?? "Position";
+}
+
+function PositionTypeChip({
+  position,
+  siblingPositions,
+}: {
+  position: Position;
+  siblingPositions: Position[];
+}) {
+  const label = optionStrategyLabel(position, siblingPositions);
+  if (!label) return null;
+
+  const highlighted = isHighlightedOptionStrategy(position, siblingPositions);
+  const isCsp = isCashSecuredPut(position);
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+        highlighted
+          ? "bg-accent/15 text-accent-strong"
+          : "bg-muted-bg text-muted",
+      )}
+    >
+      {isCsp && <LockKeyhole className="h-3 w-3 shrink-0" aria-hidden />}
+      {label}
+    </span>
+  );
+}
+
+function ReservedCashNote({ position }: { position: Position }) {
+  const reserved = cspReservedCash(position);
+  if (reserved == null) return null;
+
+  const strike = positionStrikePrice(position);
+  const contracts = position.shortQuantity;
+
+  return (
+    <p className="mt-1 text-xs text-muted">
+      <span className="font-medium text-accent-strong">
+        {formatUsd(reserved)} reserved
+      </span>
+      {strike != null && (
+        <>
+          {" "}
+          · {formatUsd(strike, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
+          strike × {contracts} {contracts === 1 ? "contract" : "contracts"} × 100 shares
+        </>
+      )}
+    </p>
+  );
 }
 
 export function AccountPositionList({
@@ -65,6 +117,10 @@ export function AccountPositionList({
   });
 
   const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
+  const symbolCspReserved = positions.reduce(
+    (sum, p) => sum + (cspReservedCash(p) ?? 0),
+    0,
+  );
 
   return (
     <section className="w-full py-4">
@@ -77,6 +133,15 @@ export function AccountPositionList({
             <p className="mt-0.5 text-sm text-muted">
               {positions.length}{" "}
               {positions.length === 1 ? "position" : "positions"}
+              {symbolCspReserved > 0 && (
+                <>
+                  {" "}
+                  ·{" "}
+                  <span className="text-accent-strong">
+                    {formatUsd(symbolCspReserved)} reserved for puts
+                  </span>
+                </>
+              )}
             </p>
           </div>
           <div className="text-right">
@@ -94,11 +159,30 @@ export function AccountPositionList({
             {positions.map((p) => {
               const qty = p.longQuantity - p.shortQuantity;
               const isPositive = p.currentDayProfitLoss >= 0;
-              const name = p.instrument.description ?? "EQUITY";
+              const name = positionLabel(p);
+              const reserved = cspReservedCash(p);
 
               return (
                 <div key={positionKey(p)} className="px-4 py-3">
-                  <p className="text-sm font-medium text-foreground">{name}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">{name}</p>
+                      <div className="mt-1">
+                        <PositionTypeChip position={p} siblingPositions={positions} />
+                      </div>
+                      <ReservedCashNote position={p} />
+                    </div>
+                    {reserved != null && (
+                      <div className="shrink-0 text-right">
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                          Reserved
+                        </p>
+                        <p className="mt-0.5 text-sm font-semibold tabular-nums text-accent-strong">
+                          {formatUsd(reserved)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                   <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                     <div>
                       <p className="text-muted">Qty</p>
@@ -120,7 +204,7 @@ export function AccountPositionList({
                           isPositive ? "text-success" : "text-danger",
                         )}
                       >
-                        {formatPL(p.currentDayProfitLoss)}
+                        {formatSignedUsd(p.currentDayProfitLoss)}
                       </p>
                       <p
                         className={cn(
@@ -140,38 +224,62 @@ export function AccountPositionList({
           <table className="hidden w-full table-fixed text-sm sm:table">
             <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
               <tr>
-                <th className="w-2/5 px-4 py-2.5 text-left">Name</th>
-                <th className="w-1/5 px-4 py-2.5 text-right">Qty</th>
-                <th className="w-1/5 px-4 py-2.5 text-right">Value</th>
-                <th className="w-1/5 px-4 py-2.5 text-right">Today P/L</th>
+                <th className="w-[34%] px-4 py-2.5 text-left">Name</th>
+                <th className="w-[14%] px-4 py-2.5 text-right">Qty</th>
+                <th className="w-[18%] px-4 py-2.5 text-right">Value</th>
+                <th className="w-[16%] px-4 py-2.5 text-right">Reserved</th>
+                <th className="w-[18%] px-4 py-2.5 text-right">Today P/L</th>
               </tr>
             </thead>
             <tbody>
               {positions.map((p) => {
                 const qty = p.longQuantity - p.shortQuantity;
                 const isPositive = p.currentDayProfitLoss >= 0;
+                const reserved = cspReservedCash(p);
 
                 return (
                   <tr
                     key={positionKey(p)}
                     className="border-t border-border transition-colors hover:bg-muted-bg/40"
                   >
-                    <td className="w-2/5 px-4 py-3 text-left text-muted">
-                      {p.instrument.description ?? "EQUITY"}
+                    <td className="px-4 py-3 text-left">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-muted">{positionLabel(p)}</span>
+                        <PositionTypeChip position={p} siblingPositions={positions} />
+                        {reserved != null && (
+                          <span className="text-[11px] text-muted">
+                            {formatUsd(reserved)} at{" "}
+                            {formatUsd(positionStrikePrice(p) ?? 0, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}{" "}
+                            strike
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="w-1/5 px-4 py-3 text-right tabular-nums">
+                    <td className="px-4 py-3 text-right tabular-nums">
                       {qty.toLocaleString()}
                     </td>
-                    <td className="w-1/5 px-4 py-3 text-right tabular-nums">
+                    <td className="px-4 py-3 text-right tabular-nums">
                       ${p.marketValue.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {reserved != null ? (
+                        <span className="font-medium text-accent-strong">
+                          {formatUsd(reserved)}
+                        </span>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
                     </td>
                     <td
                       className={cn(
-                        "w-1/5 px-4 py-3 text-right tabular-nums",
+                        "px-4 py-3 text-right tabular-nums",
                         isPositive ? "text-success" : "text-danger",
                       )}
                     >
-                      {formatPL(p.currentDayProfitLoss)}{" "}
+                      {formatSignedUsd(p.currentDayProfitLoss)}{" "}
                       <span className="text-[11px] opacity-80">
                         ({p.currentDayProfitLossPercentage.toFixed(2)}%)
                       </span>

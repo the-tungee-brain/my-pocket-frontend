@@ -9,8 +9,15 @@ import { NewsHintBanner } from "@/components/NewsHintBanner";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 export default function PortfolioPage() {
-  const { error, allPositions, loading, symbols, positionMap } =
-    usePositionsContext();
+  const {
+    error,
+    allPositions,
+    loading,
+    symbols,
+    positionMap,
+    cashSecuredPutSummary,
+    account,
+  } = usePositionsContext();
   const { activeTab } = useTabs();
 
   const showNewsHint =
@@ -29,6 +36,8 @@ export default function PortfolioPage() {
         allPositions={allPositions}
         symbols={symbols}
         positionMap={positionMap}
+        cashSecuredPutSummary={cashSecuredPutSummary}
+        cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
       />
 
       <Insights

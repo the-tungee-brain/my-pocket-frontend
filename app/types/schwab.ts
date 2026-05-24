@@ -7,6 +7,8 @@ export type Instrument = {
   type?: string | null;
   putCall?: "CALL" | "PUT" | null;
   underlyingSymbol?: string | null;
+  strikePrice?: number | null;
+  expirationDate?: string | null;
 };
 
 export type Position = {
@@ -130,4 +132,18 @@ export type AggregatedBalance = {
 export type SchwabAccounts = {
   securitiesAccount: SecuritiesAccount;
   aggregatedBalance: AggregatedBalance;
+};
+
+export type CashSecuredPutPositionSummary = {
+  symbol: string;
+  underlyingSymbol: string | null;
+  contracts: number;
+  strike: number | null;
+  reservedCash: number;
+};
+
+export type CashSecuredPutSummary = {
+  totalReservedCash: number;
+  availableCashAfterReserves: number | null;
+  positions: CashSecuredPutPositionSummary[];
 };

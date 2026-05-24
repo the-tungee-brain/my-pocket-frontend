@@ -19,7 +19,8 @@ import {
   persistChatState,
 } from "@/lib/chatPersistence";
 import { formatQuickActionMessage, getQuickActionApiAction, isFreeFormQuickAction } from "@/lib/quickActions";
-import { Position, SchwabAccounts } from "./types/schwab";
+import { Position, SchwabAccounts, CashSecuredPutSummary } from "./types/schwab";
+import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
 import { MainView } from "@/components/NavList";
 import { usePathname } from "next/navigation";
 
@@ -66,6 +67,7 @@ type PositionsContextValue = {
     actionId: string;
   }) => Promise<void>;
   account: SchwabAccounts | null;
+  cashSecuredPutSummary: CashSecuredPutSummary | null;
 };
 
 const PositionsContext = createContext<PositionsContextValue | null>(null);
@@ -84,6 +86,8 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [positionMap, setPositionMap] = useState<PositionMap>({});
   const [account, setAccount] = useState<SchwabAccounts | null>(null);
+  const [cashSecuredPutSummary, setCashSecuredPutSummary] =
+    useState<CashSecuredPutSummary | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [selectedView, setSelectedView] = useState<MainView>("research");
   const [loading, setLoading] = useState(false);
@@ -166,6 +170,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           setError("Failed to load positions");
           setPositionMap({});
           setAccount(null);
+          setCashSecuredPutSummary(null);
           setSelectedSymbol(null);
           return;
         }
@@ -173,10 +178,20 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         const data = (await res.json()) as {
           schwab_positions: PositionMap;
           account: SchwabAccounts;
+          cashSecuredPutSummary?: CashSecuredPutSummary;
         };
         const map = data.schwab_positions ?? {};
+        const loadedAccount = data.account ?? null;
+        const flatPositions = Object.values(map).flat().filter(Boolean) as Position[];
+        const cashBalance =
+          loadedAccount?.securitiesAccount.currentBalances.cashBalance ?? null;
+
         setPositionMap(map);
-        setAccount(data.account ?? null);
+        setAccount(loadedAccount);
+        setCashSecuredPutSummary(
+          data.cashSecuredPutSummary ??
+            summarizeCspCashReserves(flatPositions, cashBalance),
+        );
 
         const symbolsOnly = Object.keys(map).sort();
         setSelectedSymbol((current) =>
@@ -188,6 +203,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         setError("Failed to load positions");
         setPositionMap({});
         setAccount(null);
+        setCashSecuredPutSummary(null);
         setSelectedSymbol(null);
       } finally {
         setLoading(false);
@@ -570,6 +586,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       sendPrompt,
       sendQuickAction,
       account,
+      cashSecuredPutSummary,
     }),
     [
       accessToken,
@@ -586,6 +603,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       sendPrompt,
       sendQuickAction,
       account,
+      cashSecuredPutSummary,
     ],
   );
 

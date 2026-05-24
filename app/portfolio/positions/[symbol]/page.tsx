@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { usePositionsContext } from "@/app/Providers";
 import { AccountPositionList } from "@/components/AccountPositionList";
+import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
 import { Insights } from "@/components/Insights";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
 import { CompanyNews } from "@/components/CompanyNews";
@@ -12,11 +13,12 @@ import { useTabs } from "@/app/contexts/TabContext";
 import { StockChart } from "@/components/StockChart";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useStockData } from "@/app/hooks/useStockData";
+import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
 
 export default function SymbolPage() {
   const { symbol } = useParams<{ symbol: string }>();
   const { activeTab } = useTabs();
-  const { error, positionMap, setSelectedView, setSelectedSymbol } =
+  const { error, positionMap, setSelectedView, setSelectedSymbol, account } =
     usePositionsContext();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
@@ -53,6 +55,13 @@ export default function SymbolPage() {
   const positionsForSelectedSymbol =
     symbol && positionMap[symbol] ? positionMap[symbol] : null;
 
+  const symbolCspSummary = positionsForSelectedSymbol
+    ? summarizeCspCashReserves(
+        positionsForSelectedSymbol,
+        account?.securitiesAccount.currentBalances.cashBalance,
+      )
+    : null;
+
   const handlePeriodChange = (newPeriod: string) => {
     setPeriod(newPeriod);
   };
@@ -83,6 +92,16 @@ export default function SymbolPage() {
                 interval={interval}
                 onPeriodChange={handlePeriodChange}
                 onIntervalChange={handleIntervalChange}
+              />
+            </div>
+          )}
+
+          {symbolCspSummary && symbolCspSummary.totalReservedCash > 0 && (
+            <div className="mb-4">
+              <CashSecuredPutSummary
+                summary={symbolCspSummary}
+                cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
+                compact
               />
             </div>
           )}

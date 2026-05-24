@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { BriefcaseBusiness } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
-import { Position } from "@/app/types/schwab";
+import { Position, CashSecuredPutSummary as CashSecuredPutSummaryData } from "@/app/types/schwab";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
+import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
+import { formatSignedUsd } from "@/lib/formatCurrency";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -15,17 +17,9 @@ type Props = {
   allPositions: Position[];
   symbols: string[];
   positionMap: PositionMap;
+  cashSecuredPutSummary?: CashSecuredPutSummaryData | null;
+  cashBalance?: number | null;
 };
-
-function formatPL(value: number) {
-  const prefix = value >= 0 ? "+" : "";
-  return `${prefix}${value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
 
 type SymbolSummary = {
   symbol: string;
@@ -50,6 +44,8 @@ export function PortfolioOverview({
   allPositions,
   symbols,
   positionMap,
+  cashSecuredPutSummary,
+  cashBalance,
 }: Props) {
   const { authorized: schwabAuthorized, loading: schwabLoading } =
     useSchwabStatus();
@@ -154,7 +150,7 @@ export function PortfolioOverview({
               totalDayPL >= 0 ? "text-success" : "text-danger",
             )}
           >
-            {formatPL(totalDayPL)}
+            {formatSignedUsd(totalDayPL)}
           </p>
         </div>
         <div className="col-span-2 rounded-xl border border-border bg-secondary/60 px-4 py-3 sm:col-span-1">
@@ -166,6 +162,14 @@ export function PortfolioOverview({
           </p>
         </div>
       </div>
+
+      {cashSecuredPutSummary && (
+        <CashSecuredPutSummary
+          summary={cashSecuredPutSummary}
+          cashBalance={cashBalance}
+          className="mb-4"
+        />
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm">
         <div className="hidden sm:block">
@@ -212,7 +216,7 @@ export function PortfolioOverview({
                       dayPL >= 0 ? "text-success" : "text-danger",
                     )}
                   >
-                    {formatPL(dayPL)}
+                    {formatSignedUsd(dayPL)}
                   </td>
                 </tr>
               ))}
@@ -259,7 +263,7 @@ export function PortfolioOverview({
                     dayPL >= 0 ? "text-success" : "text-danger",
                   )}
                 >
-                  {formatPL(dayPL)}
+                  {formatSignedUsd(dayPL)}
                 </p>
               </Link>
             </div>
