@@ -1,12 +1,13 @@
 "use client";
 
-import { usePerformanceSnapshot } from "@/app/hooks/usePerformance";
 import { BarChart3 } from "lucide-react";
+import { usePerformanceSnapshot } from "@/app/hooks/usePerformance";
 import { useSession } from "next-auth/react";
+import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { cn } from "@/lib/utils";
 
 type Props = {
   symbol: string;
-  accessToken?: string | null;
 };
 
 export function PerformanceSnapshot({ symbol }: Props) {
@@ -19,53 +20,53 @@ export function PerformanceSnapshot({ symbol }: Props) {
   } = usePerformanceSnapshot(symbol, { accessToken });
 
   return (
-    <section className="space-y-3">
-      <h3 className="flex items-center gap-2 text-sm font-semibold">
-        <BarChart3 className="h-4 w-4 text-neutral-500" />
-        Recent performance
-      </h3>
-
+    <ResearchSectionCard
+      title="Recent performance"
+      description="Price trends and volatility"
+      icon={BarChart3}
+    >
       {isLoading ? (
         <div className="space-y-2">
-          <div className="h-4 w-48 rounded bg-secondary animate-pulse" />
+          <div className="h-4 w-48 animate-pulse rounded bg-muted-bg" />
           <div className="grid grid-cols-3 gap-3">
-            <div className="h-12 rounded bg-secondary animate-pulse" />
-            <div className="h-12 rounded bg-secondary animate-pulse" />
-            <div className="h-12 rounded bg-secondary animate-pulse" />
+            <div className="h-12 animate-pulse rounded bg-muted-bg" />
+            <div className="h-12 animate-pulse rounded bg-muted-bg" />
+            <div className="h-12 animate-pulse rounded bg-muted-bg" />
           </div>
         </div>
       ) : error ? (
-        <p className="text-xs text-red-600">{error}</p>
+        <p className="text-xs text-danger">{error}</p>
       ) : !perf ? (
-        <p className="text-xs text-neutral-500">
-          Performance data is not available.
-        </p>
-      ) : null}
-
-      {perf && (
-        <>
-          <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+        <p className="text-sm text-muted">Performance data is not available.</p>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-foreground">
             {perf.trendLabel}
           </p>
-          <div className="grid grid-cols-3 gap-3 rounded-xl border border-border bg-secondary/70 p-3 text-xs">
-            <div>
-              <p className="text-neutral-500">1 month</p>
-              <p className="mt-1 font-medium">{perf.oneMonth}</p>
-            </div>
-            <div>
-              <p className="text-neutral-500">3 months</p>
-              <p className="mt-1 font-medium">{perf.threeMonth}</p>
-            </div>
-            <div>
-              <p className="text-neutral-500">1 year</p>
-              <p className="mt-1 font-medium">{perf.oneYear}</p>
-            </div>
+          <div className="grid grid-cols-3 gap-3 rounded-xl border border-border bg-background/40 p-3 text-xs">
+            {(
+              [
+                ["1 month", perf.oneMonth],
+                ["3 months", perf.threeMonth],
+                ["1 year", perf.oneYear],
+              ] as const
+            ).map(([label, value]) => (
+              <div key={label}>
+                <p className="text-muted">{label}</p>
+                <p
+                  className={cn(
+                    "mt-1 font-medium tabular-nums",
+                    value.startsWith("-") ? "text-danger" : "text-success",
+                  )}
+                >
+                  {value}
+                </p>
+              </div>
+            ))}
           </div>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400">
-            {perf.volatilityNote}
-          </p>
-        </>
+          <p className="text-xs text-muted">{perf.volatilityNote}</p>
+        </div>
       )}
-    </section>
+    </ResearchSectionCard>
   );
 }

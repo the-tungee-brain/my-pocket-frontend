@@ -2,6 +2,7 @@
 
 import { Menu, Search } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { ChatBox } from "@/components/ChatBox";
 import { ConversationPane } from "@/components/ConversationPane";
 import { DesktopNav } from "@/components/DesktopNav";
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { useTabs } from "./contexts/TabContext";
 import { usePositionsContext } from "./Providers";
 import { useInsights } from "./hooks/useInsights";
+import { researchTabLabel } from "@/components/ResearchTabBar";
 
 const MIN_ROWS = 1;
 const MAX_ROWS = 24;
@@ -35,6 +37,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   } = usePositionsContext();
 
   const { activeTab } = useTabs();
+  const pathname = usePathname();
+
+  const researchMatch = pathname.match(/^\/research\/([^/]+)(?:\/([^/]+))?/);
+  const researchSymbol = researchMatch?.[1]?.toUpperCase();
+  const researchTabId = researchMatch?.[2];
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [inputRows, setInputRows] = useState(MIN_ROWS);
@@ -165,9 +172,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const headerLabel =
     selectedView === "portfolio"
       ? "Portfolio"
-      : selectedView === "research"
-        ? "Research"
-        : (selectedSymbol ?? "Position");
+      : selectedView === "research" && researchSymbol
+        ? researchSymbol
+        : selectedView === "research"
+          ? "Research"
+          : (selectedSymbol ?? "Position");
+
+  const headerSubtitle =
+    selectedView === "portfolio"
+      ? `${symbols.length} tracked ${symbols.length === 1 ? "symbol" : "symbols"}`
+      : selectedView === "research" && researchSymbol
+        ? `Stock research · ${researchTabLabel(researchTabId)}`
+        : selectedView === "research"
+          ? "Find a symbol and open its snapshot"
+          : "Position details and assistant context";
 
   return (
     <main className="flex min-h-screen text-foreground">
@@ -209,16 +227,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="truncate text-sm font-semibold text-foreground">
                   {headerLabel}
                 </span>
-                {selectedView === "research" && (
+                {selectedView === "research" && !researchSymbol && (
                   <Search className="h-3.5 w-3.5 text-muted" aria-hidden="true" />
                 )}
               </div>
               <div className="truncate text-[11px] text-muted">
-                {selectedView === "portfolio"
-                  ? `${symbols.length} tracked ${symbols.length === 1 ? "symbol" : "symbols"}`
-                  : selectedView === "research"
-                    ? "Find a symbol and open its snapshot"
-                    : "Position details and assistant context"}
+                {headerSubtitle}
               </div>
             </div>
 
