@@ -179,6 +179,23 @@ export function isWashSaleText(text: string): boolean {
   return text.toLowerCase().includes("wash sale");
 }
 
+export function isTaxAlert(alert: ProactiveAlert): boolean {
+  return isTaxAction(alert.action) || isWashSaleText(alert.reason);
+}
+
+export function filterNonTaxAlerts(alerts: ProactiveAlert[]): ProactiveAlert[] {
+  return alerts.filter((alert) => !isTaxAlert(alert));
+}
+
+export function filterNonTaxSuggestedActions(
+  actions: SuggestedAnalysisAction[],
+): SuggestedAnalysisAction[] {
+  return actions.filter(
+    (action) =>
+      !isTaxAction(action.action) && !isWashSaleText(action.reason),
+  );
+}
+
 export type TaxAlertItem = {
   id: string;
   label: string;

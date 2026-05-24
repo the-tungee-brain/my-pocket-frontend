@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { BriefcaseBusiness } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
-import { Position, CashSecuredPutSummary as CashSecuredPutSummaryData, AssignmentRiskSummary as AssignmentRiskSummaryData } from "@/app/types/schwab";
+import { Position } from "@/app/types/schwab";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
-import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
-import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
 import { AlertBadge } from "@/components/AlertBadge";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
 import type { SymbolAlertSummary } from "@/lib/intelligence";
@@ -25,13 +23,10 @@ import { cn } from "@/lib/utils";
 type Props = {
   loading: boolean;
   allPositions: Position[];
-  symbols: string[];
   positionMap: PositionMap;
-  cashSecuredPutSummary?: CashSecuredPutSummaryData | null;
-  assignmentRiskSummary?: AssignmentRiskSummaryData | null;
-  cashBalance?: number | null;
   liquidationValue?: number | null;
   symbolAlertMap?: Record<string, SymbolAlertSummary>;
+  className?: string;
 };
 
 type SymbolSummary = {
@@ -70,13 +65,10 @@ function buildSymbolSummaries(
 export function PortfolioOverview({
   loading,
   allPositions,
-  symbols,
   positionMap,
-  cashSecuredPutSummary,
-  assignmentRiskSummary,
-  cashBalance,
   liquidationValue,
   symbolAlertMap = {},
+  className,
 }: Props) {
   const { authorized: schwabAuthorized, loading: schwabLoading } =
     useSchwabStatus();
@@ -92,11 +84,6 @@ export function PortfolioOverview({
     void connectSchwab();
   };
 
-  const totalValue = allPositions.reduce((sum, p) => sum + p.marketValue, 0);
-  const totalDayPL = allPositions.reduce(
-    (sum, p) => sum + p.currentDayProfitLoss,
-    0,
-  );
   const symbolSummaries = buildSymbolSummaries(positionMap, liquidationValue)
     .sort((a, b) => {
       const alertA = symbolAlertMap[a.symbol];
@@ -111,31 +98,19 @@ export function PortfolioOverview({
       }
       return b.totalValue - a.totalValue;
     });
-  const totalOpenPL = sumOpenProfitLoss(allPositions);
 
   if (loading) {
     return (
-      <section className="mx-auto w-full max-w-3xl">
-        <div className="mb-4 space-y-2">
-          <div className="h-6 w-40 animate-pulse rounded bg-muted-bg" />
-          <div className="h-4 w-56 animate-pulse rounded bg-muted-bg" />
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-20 animate-pulse rounded-xl bg-muted-bg"
-            />
-          ))}
-        </div>
-        <div className="mt-4 h-48 animate-pulse rounded-2xl bg-muted-bg" />
+      <section className={cn("mx-auto w-full max-w-3xl", className)}>
+        <div className="mb-3 h-5 w-24 animate-pulse rounded bg-muted-bg" />
+        <div className="h-48 animate-pulse rounded-2xl bg-muted-bg" />
       </section>
     );
   }
 
   if (!allPositions.length) {
     return (
-      <section className="mx-auto w-full max-w-3xl">
+      <section className={cn("mx-auto w-full max-w-3xl", className)}>
         <EmptyState
           icon={BriefcaseBusiness}
           title="No holdings yet"
@@ -166,79 +141,8 @@ export function PortfolioOverview({
   }
 
   return (
-    <section className="mx-auto w-full max-w-3xl">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold tracking-tight">My portfolio</h2>
-        <p className="mt-0.5 text-sm text-muted">
-          {symbols.length} {symbols.length === 1 ? "symbol" : "symbols"} ·{" "}
-          {allPositions.length}{" "}
-          {allPositions.length === 1 ? "position" : "positions"}
-        </p>
-      </div>
-
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-border bg-secondary/60 px-4 py-3">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Total value
-          </p>
-          <p className="mt-1 text-xl font-semibold tabular-nums">
-            ${totalValue.toLocaleString()}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border bg-secondary/60 px-4 py-3">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Open P/L
-          </p>
-          <p
-            className={cn(
-              "mt-1 text-xl font-semibold tabular-nums",
-              totalOpenPL == null
-                ? "text-muted"
-                : totalOpenPL >= 0
-                  ? "text-success"
-                  : "text-danger",
-            )}
-          >
-            {totalOpenPL != null ? formatSignedUsd(totalOpenPL) : "—"}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border bg-secondary/60 px-4 py-3">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Today P/L
-          </p>
-          <p
-            className={cn(
-              "mt-1 text-xl font-semibold tabular-nums",
-              totalDayPL >= 0 ? "text-success" : "text-danger",
-            )}
-          >
-            {formatSignedUsd(totalDayPL)}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border bg-secondary/60 px-4 py-3">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Symbols
-          </p>
-          <p className="mt-1 text-xl font-semibold tabular-nums">
-            {symbols.length}
-          </p>
-        </div>
-      </div>
-
-      {cashSecuredPutSummary && (
-        <CashSecuredPutSummary
-          summary={cashSecuredPutSummary}
-          cashBalance={cashBalance}
-          className="mb-4"
-        />
-      )}
-
-      {assignmentRiskSummary && (
-        <AssignmentRiskSummary
-          summary={assignmentRiskSummary}
-          className="mb-4"
-        />
-      )}
+    <section className={cn("mx-auto w-full max-w-3xl", className)}>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Holdings</h2>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm">
         <div className="hidden sm:block">

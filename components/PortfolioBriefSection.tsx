@@ -14,6 +14,7 @@ import type { ProactiveAlert, PortfolioIntelligence } from "@/app/types/intellig
 import {
   alertToQuickActionId,
   dedupeAlerts,
+  filterNonTaxAlerts,
   hasPortfolioBriefContent,
   signalSeverityClass,
   signalSeverityLabel,
@@ -34,6 +35,7 @@ type Props = {
   onRefresh?: () => void;
   onRunAlert?: (alert: ProactiveAlert) => void;
   onGoDeeper?: () => void;
+  hideSuggestedActions?: boolean;
   className?: string;
 };
 
@@ -79,6 +81,7 @@ export function PortfolioBriefSection({
   onRefresh,
   onRunAlert,
   onGoDeeper,
+  hideSuggestedActions = false,
   className,
 }: Props) {
   const mergedBrief: PortfolioIntelligence | null = brief ?? {
@@ -90,10 +93,9 @@ export function PortfolioBriefSection({
   const hasContent = hasPortfolioBriefContent(mergedBrief);
 
   const signals = sortSignalsBySeverity(mergedBrief?.signals ?? []);
-  const alerts = dedupeAlerts([
-    ...(mergedBrief?.alerts ?? []),
-    ...fallbackAlerts,
-  ]).slice(0, 6);
+  const alerts = filterNonTaxAlerts(
+    dedupeAlerts([...(mergedBrief?.alerts ?? []), ...fallbackAlerts]),
+  ).slice(0, 6);
   const digest = mergedBrief?.digest;
 
   return (
@@ -114,7 +116,7 @@ export function PortfolioBriefSection({
               Portfolio brief
             </h2>
             <p className="text-[11px] text-muted">
-              Precomputed signals, sector mix, and what to watch today
+              Macro context, sector mix, and what to watch today
             </p>
             {lastUpdated != null && (
               <p className="mt-0.5 text-[10px] text-muted">
@@ -288,12 +290,12 @@ export function PortfolioBriefSection({
 
           {!loading && !error && !hasContent && (
             <p className="text-sm text-muted">
-              No urgent signals right now. Use suggested actions below or ask
-              the assistant for a daily summary or risk check.
+              No urgent signals right now. Check suggested actions above or ask
+              the assistant for a deeper analysis.
             </p>
           )}
 
-          {!!alerts.length && onRunAlert && (
+          {!!alerts.length && onRunAlert && !hideSuggestedActions && (
             <div>
               <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
                 Suggested actions

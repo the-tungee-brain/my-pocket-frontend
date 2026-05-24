@@ -4,9 +4,10 @@ import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { usePositionsContext } from "../Providers";
 import { useTabs } from "@/app/contexts/TabContext";
+import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
+import { PortfolioAttentionSection } from "@/components/PortfolioAttentionSection";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
-import { AccountHealthStrip } from "@/components/AccountHealthStrip";
-import { TaxWashSaleStrip } from "@/components/TaxWashSaleStrip";
+import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
 import { NewsHintBanner } from "@/components/NewsHintBanner";
@@ -63,22 +64,23 @@ export default function PortfolioPage() {
 
   const displayBrief = brief ?? seedBrief;
 
-  const symbolAlertMap = useMemo(
-    () =>
-      buildSymbolAlertMap(
-        mergeDisplayAlerts(proactiveAlerts, displayBrief),
-        displayBrief,
-      ),
+  const mergedAlerts = useMemo(
+    () => mergeDisplayAlerts(proactiveAlerts, displayBrief),
     [proactiveAlerts, displayBrief],
+  );
+
+  const symbolAlertMap = useMemo(
+    () => buildSymbolAlertMap(mergedAlerts, displayBrief),
+    [mergedAlerts, displayBrief],
   );
 
   const taxItems = useMemo(
     () =>
       collectTaxAlertItems(
-        mergeDisplayAlerts(proactiveAlerts, displayBrief),
+        mergedAlerts,
         recentActivity?.suggestedActions ?? [],
       ),
-    [proactiveAlerts, displayBrief, recentActivity?.suggestedActions],
+    [mergedAlerts, recentActivity?.suggestedActions],
   );
 
   const showNewsHint =
@@ -148,19 +150,13 @@ export default function PortfolioPage() {
         return;
       }
 
-      void sendQuickAction({
-        activeChatKey: "__PORTFOLIO_CHAT__",
-        selectedView: "portfolio",
-        selectedSymbol: null,
-        positionsForSelectedSymbol: allPositions,
-        actionId: item.actionId,
-      });
+      handleSuggestedAction(item.actionId);
     },
-    [allPositions, positionMap, router, sendQuickAction],
+    [handleSuggestedAction, positionMap, router, sendQuickAction],
   );
 
-  const showBriefSection =
-    !loading && sessionAccessToken && allPositions.length > 0;
+  const showContent = !loading && allPositions.length > 0;
+  const showBriefSection = showContent && sessionAccessToken;
 
   return (
     <>
@@ -169,6 +165,27 @@ export default function PortfolioPage() {
       <PortfolioOnboarding />
 
       {showNewsHint && <NewsHintBanner symbols={symbols} />}
+
+      <PortfolioSnapshot
+        className="mb-4"
+        loading={loading}
+        allPositions={allPositions}
+        symbols={symbols}
+        account={account}
+        cashSecuredPutSummary={cashSecuredPutSummary}
+      />
+
+      {showContent && (
+        <PortfolioAttentionSection
+          className="mb-4"
+          taxItems={taxItems}
+          alerts={mergedAlerts}
+          suggestedActions={recentActivity?.suggestedActions ?? []}
+          onRunAlert={handleRunAlert}
+          onRunTax={handleTaxAlert}
+          onRunActionId={handleSuggestedAction}
+        />
+      )}
 
       {showBriefSection && (
         <PortfolioBriefSection
@@ -179,48 +196,38 @@ export default function PortfolioPage() {
           error={displayBrief ? null : briefError}
           lastUpdated={briefLastUpdated}
           onRefresh={handleRefreshAll}
-          onRunAlert={handleRunAlert}
           onGoDeeper={handleGoDeeper}
-        />
-      )}
-
-      {taxItems.length > 0 && (
-        <TaxWashSaleStrip
-          className="mb-4"
-          items={taxItems}
-          onRun={handleTaxAlert}
-        />
-      )}
-
-      {!loading && account && allPositions.length > 0 && (
-        <AccountHealthStrip
-          className="mb-4"
-          account={account}
-          cashSecuredPutSummary={cashSecuredPutSummary}
+          hideSuggestedActions
         />
       )}
 
       <PortfolioOverview
+        className="mb-4"
         loading={loading}
         allPositions={allPositions}
-        symbols={symbols}
         positionMap={positionMap}
-        cashSecuredPutSummary={cashSecuredPutSummary}
-        assignmentRiskSummary={assignmentRiskSummary}
-        cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
         liquidationValue={
           account?.securitiesAccount.currentBalances.liquidationValue
         }
         symbolAlertMap={symbolAlertMap}
       />
 
+      {showContent && (
+        <PortfolioRiskSection
+          className="mb-4"
+          cashSecuredPutSummary={cashSecuredPutSummary}
+          assignmentRiskSummary={assignmentRiskSummary}
+          cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
+        />
+      )}
+
       {!loading && sessionAccessToken && (
         <RecentActivitySection
-          className="mt-4"
           accessToken={sessionAccessToken}
           summary={recentActivity}
           onRefresh={() => refreshPositions(true)}
           onRunSuggestedAction={handleSuggestedAction}
+          hideSuggestedActions
           compact
         />
       )}

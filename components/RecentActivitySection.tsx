@@ -41,6 +41,7 @@ type Props = {
   onRunSuggestedAction?: (actionId: string) => void;
   onRefresh?: () => void | Promise<void>;
   compact?: boolean;
+  hideSuggestedActions?: boolean;
   className?: string;
 };
 
@@ -349,6 +350,7 @@ export function RecentActivitySection({
   onRunSuggestedAction,
   onRefresh,
   compact = false,
+  hideSuggestedActions = false,
   className,
 }: Props) {
   const [orders, setOrders] = useState<RecentOrderEntry[]>(
@@ -495,7 +497,7 @@ export function RecentActivitySection({
       )}
 
       <SuggestedActionChips
-        actions={suggestedActions}
+        actions={hideSuggestedActions ? [] : suggestedActions}
         onRun={onRunSuggestedAction}
         disabled={loading}
       />
