@@ -35,6 +35,8 @@ export type StockNewsView = {
   dominant_driver?: string | null;
   market_impact_horizon?: string | null;
   actionability_score?: number | null;
+  investorTakeaway?: string | null;
+  deepAnalysis?: string | null;
   items: EnrichedNewsItem[];
 };
 

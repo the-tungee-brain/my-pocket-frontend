@@ -58,8 +58,8 @@ function formatMetadataValue(value: string | null | undefined) {
 
 function actionabilityTone(score: number | null | undefined) {
   if (score == null) return "text-neutral-300";
-  if (score >= 8) return "text-emerald-300";
-  if (score >= 5) return "text-amber-300";
+  if (score >= 4) return "text-emerald-300";
+  if (score >= 3) return "text-amber-300";
   return "text-neutral-300";
 }
 
@@ -80,7 +80,7 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
   const actionabilityPercent =
     actionabilityScore == null
       ? 0
-      : Math.max(0, Math.min(100, actionabilityScore * 10));
+      : Math.max(0, Math.min(100, (actionabilityScore / 5) * 100));
 
   return (
     <div className="mt-4 flex w-full flex-col gap-4">
@@ -110,6 +110,26 @@ export default function NewsAnalytics({ analytics, isLoading }: Props) {
             <span className="inline-block h-4 w-3/4 animate-pulse rounded bg-white/10" />
           )}
         </p>
+
+        {data?.investorTakeaway && (
+          <div className="mb-3 rounded-lg border border-white/15 bg-black/25 px-3 py-2">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-200/90">
+              Investor takeaway
+            </div>
+            <p className="text-sm text-white/90">{data.investorTakeaway}</p>
+          </div>
+        )}
+
+        {data?.deepAnalysis && (
+          <div className="mb-3 rounded-lg bg-black/20 px-3 py-2">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-white/50">
+              Deep analysis
+            </div>
+            <p className="text-sm leading-relaxed text-white/85">
+              {data.deepAnalysis}
+            </p>
+          </div>
+        )}
 
         <div className="mb-3 grid gap-2 border-y border-white/10 py-3 sm:grid-cols-3">
           <div className="rounded-lg bg-black/20 px-3 py-2">

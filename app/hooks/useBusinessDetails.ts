@@ -7,6 +7,11 @@ export type BusinessBlock = {
   whatTheyDo: string;
   segments: string[];
   revenueNotes: string;
+  customersAndMarkets: string;
+  competitiveLandscape: string;
+  moatAndDifferentiators: string;
+  growthDrivers: string[];
+  keyRisks: string[];
 };
 
 const businessDetailsCache = new Map<string, BusinessBlock>();

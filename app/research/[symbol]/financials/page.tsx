@@ -1,5 +1,6 @@
 import { FileSpreadsheet } from "lucide-react";
-import { ResearchComingSoon } from "../ResearchComingSoon";
+import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { FundamentalsSection } from "../FundamentalsSection";
 
 type PageProps = {
   params: Promise<{ symbol: string }>;
@@ -9,11 +10,12 @@ export default async function FinancialsPage({ params }: PageProps) {
   const { symbol } = await params;
 
   return (
-    <ResearchComingSoon
-      symbol={symbol}
-      title="Financial statements"
-      description="Income statement, balance sheet, and cash flow"
+    <ResearchSectionCard
+      title="Fundamentals"
+      description="Key financial metrics and what they mean for investors"
       icon={FileSpreadsheet}
-    />
+    >
+      <FundamentalsSection symbol={symbol} />
+    </ResearchSectionCard>
   );
 }

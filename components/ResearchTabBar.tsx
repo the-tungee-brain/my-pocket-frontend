@@ -27,7 +27,7 @@ const tabs: Tab[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "business", label: "Business", icon: BriefcaseBusiness },
   { id: "earnings", label: "Earnings", icon: TrendingUp },
-  { id: "financials", label: "Financials", icon: FileSpreadsheet },
+  { id: "financials", label: "Fundamentals", icon: FileSpreadsheet },
 ];
 
 type ResearchTabBarProps = {

@@ -3,30 +3,30 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
 
-export type Sentiment = "Bullish" | "Neutral" | "Bearish";
-
-export type StockSummary = {
-  short: string;
-  long: string;
-  sentiment: Sentiment;
-  investmentThesis: string;
-  keyStrengths: string[];
-  keyRisks: string[];
-  whatToWatch: string[];
-  valuationContext: string;
+export type FundamentalMetric = {
+  label: string;
+  value: string;
+  note?: string | null;
 };
 
-const stockSummaryCache = new Map<string, StockSummary>();
+export type FundamentalsBlock = {
+  overviewNote: string;
+  metrics: FundamentalMetric[];
+};
 
-type UseStockSummaryOptions = {
+const fundamentalsCache = new Map<string, FundamentalsBlock>();
+
+type UseFundamentalsOptions = {
   accessToken?: string | null;
 };
 
-export function useStockSummary(
+export function useFundamentals(
   symbol: string | null,
-  { accessToken }: UseStockSummaryOptions = {},
+  { accessToken }: UseFundamentalsOptions = {},
 ) {
-  const [summary, setSummary] = useState<StockSummary | null>(null);
+  const [fundamentals, setFundamentals] = useState<FundamentalsBlock | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState<boolean>(!!symbol);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,22 +34,22 @@ export function useStockSummary(
     const key = symbol?.toUpperCase().trim();
 
     if (!key) {
-      setSummary(null);
+      setFundamentals(null);
       setIsLoading(false);
       setError(null);
       return;
     }
 
     if (!accessToken) {
-      setSummary(null);
+      setFundamentals(null);
       setIsLoading(false);
       setError("Missing access token");
       return;
     }
 
-    const cached = stockSummaryCache.get(key);
+    const cached = fundamentalsCache.get(key);
     if (cached) {
-      setSummary(cached);
+      setFundamentals(cached);
       setIsLoading(false);
       setError(null);
       return;
@@ -63,7 +63,7 @@ export function useStockSummary(
 
       try {
         const res = await apiFetch(
-          `/research/summary?symbol=${encodeURIComponent(key!)}`,
+          `/research/fundamentals?symbol=${encodeURIComponent(key!)}`,
           {
             method: "GET",
             accessToken: accessToken!,
@@ -71,19 +71,19 @@ export function useStockSummary(
         );
 
         if (!res.ok) {
-          throw new Error("Failed to fetch stock summary");
+          throw new Error("Failed to fetch fundamentals");
         }
 
-        const data: StockSummary = await res.json();
+        const data: FundamentalsBlock = await res.json();
         if (cancelled) return;
 
-        stockSummaryCache.set(key!, data);
-        setSummary(data);
+        fundamentalsCache.set(key!, data);
+        setFundamentals(data);
         setError(null);
       } catch (e: any) {
         if (cancelled) return;
-        setError(e?.message ?? "Error fetching stock summary");
-        setSummary(null);
+        setError(e?.message ?? "Error fetching fundamentals");
+        setFundamentals(null);
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -98,5 +98,5 @@ export function useStockSummary(
     };
   }, [symbol, accessToken]);
 
-  return { summary, isLoading, error };
+  return { fundamentals, isLoading, error };
 }

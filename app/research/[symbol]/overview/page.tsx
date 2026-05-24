@@ -17,7 +17,7 @@ export default async function OverviewPage({ params }: PageProps) {
 
       <ResearchSectionCard
         title="Big picture"
-        description="Plain-language overview and AI sentiment"
+        description="In-depth overview, thesis, strengths, risks, and valuation"
         icon={Info}
       >
         <SummarySection symbol={symbol} />

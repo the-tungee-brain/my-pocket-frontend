@@ -2,6 +2,10 @@
 
 import { useBusinessDetails } from "@/app/hooks/useBusinessDetails";
 import { useSession } from "next-auth/react";
+import {
+  ResearchBulletList,
+  ResearchTextBlock,
+} from "@/components/ResearchDetailBlocks";
 
 type BusinessSectionProps = {
   symbol: string | null;
@@ -29,18 +33,61 @@ export function BusinessSection({ symbol }: BusinessSectionProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-foreground">
-        {business.whatTheyDo}
-      </p>
+    <div className="space-y-6">
+      <ResearchTextBlock title="What they do">
+        <p>{business.whatTheyDo}</p>
+      </ResearchTextBlock>
 
-      <ul className="list-disc space-y-1.5 pl-4 text-sm text-foreground">
-        {business.segments.map((seg) => (
-          <li key={seg}>{seg}</li>
-        ))}
-      </ul>
+      {business.segments.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+            Business segments
+          </h3>
+          <ul className="space-y-2">
+            {business.segments.map((seg) => (
+              <li
+                key={seg}
+                className="rounded-lg border border-border bg-surface-elevated/40 px-3 py-2 text-sm leading-relaxed text-foreground"
+              >
+                {seg}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-      <p className="text-sm leading-relaxed text-foreground">{business.revenueNotes}</p>
+      <ResearchTextBlock title="How they make money">
+        <p>{business.revenueNotes}</p>
+      </ResearchTextBlock>
+
+      {business.customersAndMarkets && (
+        <ResearchTextBlock title="Customers & markets">
+          <p>{business.customersAndMarkets}</p>
+        </ResearchTextBlock>
+      )}
+
+      {business.competitiveLandscape && (
+        <ResearchTextBlock title="Competitive landscape">
+          <p>{business.competitiveLandscape}</p>
+        </ResearchTextBlock>
+      )}
+
+      {business.moatAndDifferentiators && (
+        <ResearchTextBlock title="Moat & differentiators">
+          <p>{business.moatAndDifferentiators}</p>
+        </ResearchTextBlock>
+      )}
+
+      <ResearchBulletList
+        title="Growth drivers"
+        items={business.growthDrivers ?? []}
+      />
+
+      <ResearchBulletList
+        title="Business risks"
+        items={business.keyRisks ?? []}
+        variant="risk"
+      />
     </div>
   );
 }

@@ -12,7 +12,7 @@ export default async function BusinessPage({ params }: PageProps) {
   return (
     <ResearchSectionCard
       title="How this business makes money"
-      description="Revenue model, segments, and business drivers"
+      description="Business model, segments, competition, and growth drivers"
       icon={BriefcaseBusiness}
     >
       <BusinessSection symbol={symbol} />
