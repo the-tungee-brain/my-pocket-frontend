@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { History, Search, SearchX, Star, TrendingUp } from "lucide-react";
@@ -18,6 +18,7 @@ export default function ResearchPage() {
   const accessToken = session?.accessToken;
   const [query, setQuery] = useState<string>("");
   const [activeIndex, setActiveIndex] = useState(-1);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const { symbols: watchlist } = useWatchlist();
@@ -36,6 +37,32 @@ export default function ResearchPage() {
   useEffect(() => {
     setActiveIndex(-1);
   }, [query, results]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTyping =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable;
+
+      if (isTyping) return;
+
+      if (event.key === "/") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const openSymbol = (symbol: string) => {
     const upper = symbol.toUpperCase();
@@ -97,6 +124,11 @@ export default function ResearchPage() {
             </h1>
             <p className="mt-1 text-sm text-muted">
               Search a ticker to open its company, performance, and news view.
+              <span className="hidden sm:inline"> Press </span>
+              <kbd className="mx-1 hidden rounded border border-border bg-muted-bg px-1.5 py-0.5 font-mono text-[10px] text-muted sm:inline">
+                /
+              </kbd>
+              <span className="hidden sm:inline"> to focus search.</span>
             </p>
           </div>
         </div>
@@ -109,6 +141,7 @@ export default function ResearchPage() {
               <Search className="h-4 w-4" aria-hidden="true" />
             </span>
             <input
+              ref={searchInputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}

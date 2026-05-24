@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { WatchlistButton } from "@/components/WatchlistButton";
+import { WatchlistHint } from "@/components/WatchlistHint";
 import { usePositionsContext } from "@/app/Providers";
 import { tabQuerySuffix, useTabs } from "@/app/contexts/TabContext";
 
@@ -196,6 +197,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           ) : null}
           <WatchlistButton symbol={upperSymbol} />
         </div>
+        <WatchlistHint symbol={upperSymbol} />
         <p className="text-sm text-muted">
           {snapshot.sector} · {snapshot.country}
         </p>

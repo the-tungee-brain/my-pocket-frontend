@@ -1,22 +1,8 @@
 "use client";
 
-import { apiFetch } from "@/lib/apiClient";
 import { useEffect, useState } from "react";
-
-export type ResearchSnapshot = {
-  symbol: string;
-  name: string;
-  sector: string;
-  country: string;
-  price: number;
-  changePct: number;
-  marketCap: string;
-  range52w: string;
-  logo?: string;
-  weburl?: string;
-};
-
-const snapshotCache = new Map<string, ResearchSnapshot>();
+import type { ResearchSnapshot } from "@/lib/researchSnapshot";
+import { fetchResearchSnapshot } from "@/lib/researchSnapshot";
 
 type UseResearchSnapshotOptions = {
   accessToken?: string | null;
@@ -24,7 +10,7 @@ type UseResearchSnapshotOptions = {
 
 export function useResearchSnapshot(
   symbol: string | null,
-  { accessToken }: UseResearchSnapshotOptions = {}
+  { accessToken }: UseResearchSnapshotOptions = {},
 ) {
   const [snapshot, setSnapshot] = useState<ResearchSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(!!symbol);
@@ -39,14 +25,6 @@ export function useResearchSnapshot(
       return;
     }
 
-    const cached = snapshotCache.get(key);
-    if (cached) {
-      setSnapshot(cached);
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
-
     let cancelled = false;
 
     async function load() {
@@ -54,23 +32,13 @@ export function useResearchSnapshot(
       setError(null);
 
       try {
-        const res = await apiFetch(
-          `/research/snapshot?symbol=${encodeURIComponent(key!)}`,
-          {
-            method: "GET",
-            accessToken: accessToken!,
-          }
-        );
+        const data = await fetchResearchSnapshot(key!, accessToken!);
+        if (cancelled) return;
 
-        if (!res.ok) {
+        if (!data) {
           throw new Error("Failed to fetch research snapshot");
         }
 
-        const data: ResearchSnapshot = await res.json();
-
-        if (cancelled) return;
-
-        snapshotCache.set(key!, data);
         setSnapshot(data);
       } catch (e: any) {
         if (cancelled) return;
@@ -83,7 +51,7 @@ export function useResearchSnapshot(
       }
     }
 
-    load();
+    void load();
 
     return () => {
       cancelled = true;
@@ -92,3 +60,5 @@ export function useResearchSnapshot(
 
   return { snapshot, isLoading, error };
 }
+
+export type { ResearchSnapshot };
