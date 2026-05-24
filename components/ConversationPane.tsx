@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Bot, Check, Copy, Trash2, User } from "lucide-react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { ChatFollowUpChips } from "@/components/ChatFollowUpChips";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
+import {
+  getChatFollowUpSuggestions,
+  shouldShowFollowUpSuggestions,
+} from "@/lib/chatFollowUpSuggestions";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -19,6 +24,7 @@ interface ConversationPaneProps {
   messages: ChatMessage[];
   loading: boolean;
   onClear?: () => void;
+  onFollowUpPrompt?: (prompt: string) => void;
 }
 
 function CopyMessageButton({ content }: { content: string }) {
@@ -61,6 +67,7 @@ export function ConversationPane({
   messages,
   loading,
   onClear,
+  onFollowUpPrompt,
 }: ConversationPaneProps) {
   const lastUserRef = useRef<HTMLDivElement | null>(null);
   const prevLoadingRef = useRef(loading);
@@ -152,6 +159,10 @@ export function ConversationPane({
           const isLastUser =
             m.role === "user" &&
             messages.findLastIndex((mm) => mm.role === "user") === idx;
+          const followUpSuggestions =
+            isAssistant && shouldShowFollowUpSuggestions(messages, idx, loading)
+              ? getChatFollowUpSuggestions(m.content)
+              : [];
 
           return (
             <div
@@ -183,6 +194,13 @@ export function ConversationPane({
                   <div className="mt-2 border-t border-border pt-2">
                     <CopyMessageButton content={m.content} />
                   </div>
+                )}
+                {isAssistant && onFollowUpPrompt && followUpSuggestions.length > 0 && (
+                  <ChatFollowUpChips
+                    suggestions={followUpSuggestions}
+                    disabled={loading}
+                    onSelect={onFollowUpPrompt}
+                  />
                 )}
               </div>
 

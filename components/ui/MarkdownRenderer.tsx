@@ -7,9 +7,10 @@ interface MarkdownRendererProps {
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={{
+    <div className="markdown-content">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
         h1: ({ children }) => (
           <h1 className="mb-4 text-2xl font-semibold tracking-tight text-foreground">
             {children}
@@ -30,17 +31,27 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
             {children}
           </p>
         ),
-        ul: ({ children }) => (
-          <ul className="my-3 ml-5 list-disc space-y-1.5 text-[15px] leading-relaxed tracking-normal text-foreground">
+        ul: ({ node: _node, children, ...props }) => (
+          <ul
+            className="text-[15px] leading-relaxed tracking-normal text-foreground"
+            {...props}
+          >
             {children}
           </ul>
         ),
-        ol: ({ children }) => (
-          <ol className="my-3 ml-5 list-decimal space-y-1.5 text-[15px] leading-relaxed tracking-normal text-foreground">
+        ol: ({ node: _node, children, ...props }) => (
+          <ol
+            className="text-[15px] leading-relaxed tracking-normal text-foreground"
+            {...props}
+          >
             {children}
           </ol>
         ),
-        li: ({ children }) => <li className="pl-1">{children}</li>,
+        li: ({ node: _node, children, ...props }) => (
+          <li className="pl-0.5" {...props}>
+            {children}
+          </li>
+        ),
         a: ({ href, children }) => (
           <a
             href={href}
@@ -120,8 +131,9 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         ),
         del: ({ children, ...props }) => <span {...props}>{children}</span>,
       }}
-    >
-      {content}
-    </ReactMarkdown>
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 }

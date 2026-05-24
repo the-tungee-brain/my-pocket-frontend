@@ -178,6 +178,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setInputRows(MIN_ROWS);
   };
 
+  const handleFollowUpPrompt = async (prompt: string) => {
+    if (activeChatKey === "__NONE__") return;
+    if (currentChat?.loading || chatDisabled) return;
+
+    const ctx = resolveChatContext();
+
+    await sendPrompt({
+      activeChatKey,
+      selectedView: ctx.view,
+      selectedSymbol: ctx.symbol,
+      positionsForSelectedSymbol: ctx.positions,
+      prompt,
+    });
+
+    setInputRows(MIN_ROWS);
+  };
+
   const handleQuickAction = async (id: string) => {
     if (activeChatKey === "__NONE__") return;
     if (currentChat?.loading || chatDisabled) return;
@@ -350,6 +367,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   messages={currentChat?.messages ?? []}
                   loading={!!currentChat?.loading}
                   onClear={handleClearChat}
+                  onFollowUpPrompt={(prompt) => void handleFollowUpPrompt(prompt)}
                 />
               )}
             </div>
