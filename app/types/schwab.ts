@@ -186,6 +186,9 @@ export type RecentOrderEntry = {
   side: string;
   quantity?: number | null;
   averageFillPrice?: number | null;
+  premiumPerContract?: number | null;
+  totalPremium?: number | null;
+  totalCash?: number | null;
   orderType?: string | null;
   positionEffect?: string | null;
   taxLotMethod?: string | null;

@@ -10,8 +10,10 @@ import type {
 import { fetchRecentOrders } from "@/lib/apiClient";
 import {
   formatOrderFillTime,
-  formatOrderPrice,
+  formatOrderFillPrice,
+  formatOrderPremiumPerContract,
   formatOrderQuantity,
+  formatOrderTotalCash,
   formatOrderSide,
   pickSuggestedActions,
   suggestedActionToQuickActionId,
@@ -53,13 +55,15 @@ function OrderRows({
         <table className="w-full table-fixed text-sm">
           <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
             <tr>
-              <th className="w-[28%] px-4 py-2.5 text-left">Filled</th>
-              <th className="w-[14%] px-4 py-2.5 text-left">Symbol</th>
-              <th className="w-[18%] px-4 py-2.5 text-left">Side</th>
-              <th className="w-[14%] px-4 py-2.5 text-right">Qty</th>
-              <th className="w-[14%] px-4 py-2.5 text-right">Fill</th>
+              <th className="w-[12%] px-4 py-2.5 text-left">Filled</th>
+              <th className="w-[10%] px-4 py-2.5 text-left">Symbol</th>
+              <th className="w-[14%] px-4 py-2.5 text-left">Side</th>
+              <th className="w-[8%] px-4 py-2.5 text-right">Qty</th>
+              <th className="w-[12%] px-4 py-2.5 text-right">Fill</th>
+              <th className="w-[14%] px-4 py-2.5 text-right">Premium/ct (options)</th>
+              <th className="w-[14%] px-4 py-2.5 text-right">Total cash</th>
               {!compact && (
-                <th className="w-[12%] px-4 py-2.5 text-left">Type</th>
+                <th className="w-[10%] px-4 py-2.5 text-left">Type</th>
               )}
             </tr>
           </thead>
@@ -82,7 +86,13 @@ function OrderRows({
                   {formatOrderQuantity(order)}
                 </td>
                 <td className="px-4 py-2.5 text-right tabular-nums text-xs">
-                  {formatOrderPrice(order.averageFillPrice)}
+                  {formatOrderFillPrice(order)}
+                </td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+                  {formatOrderPremiumPerContract(order)}
+                </td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+                  {formatOrderTotalCash(order)}
                 </td>
                 {!compact && (
                   <td className="px-4 py-2.5 text-left text-xs text-muted">
@@ -109,8 +119,11 @@ function OrderRows({
             </div>
             <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted">
               <span>{formatOrderSide(order.side)}</span>
-              <span className="tabular-nums">
-                {formatOrderQuantity(order)} @ {formatOrderPrice(order.averageFillPrice)}
+              <span className="tabular-nums text-right">
+                {formatOrderQuantity(order)} @ {formatOrderFillPrice(order)}
+                {order.totalCash != null
+                  ? ` (${formatOrderTotalCash(order)} total)`
+                  : ""}
               </span>
             </div>
           </div>
