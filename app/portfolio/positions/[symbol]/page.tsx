@@ -1,13 +1,14 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { usePositionsContext } from "@/app/Providers";
 import { AccountPositionList } from "@/components/AccountPositionList";
 import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
 import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
 import { Insights } from "@/components/Insights";
+import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
 import { CompanyNews } from "@/components/CompanyNews";
 import { useTabs } from "@/app/contexts/TabContext";
@@ -20,7 +21,7 @@ import { filterAssignmentRiskSummary } from "@/lib/assignmentRiskSummary";
 export default function SymbolPage() {
   const { symbol } = useParams<{ symbol: string }>();
   const { activeTab } = useTabs();
-  const { error, positionMap, setSelectedView, setSelectedSymbol, account, assignmentRiskSummary } =
+  const { error, positionMap, setSelectedView, setSelectedSymbol, account, assignmentRiskSummary, sendQuickAction } =
     usePositionsContext();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
@@ -77,6 +78,20 @@ export default function SymbolPage() {
     setInterval(newInterval);
   };
 
+  const handleSuggestedAction = useCallback(
+    (actionId: string) => {
+      if (!symbol) return;
+      void sendQuickAction({
+        activeChatKey: symbol,
+        selectedView: "symbol",
+        selectedSymbol: symbol,
+        positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
+        actionId,
+      });
+    },
+    [symbol, sendQuickAction, positionsForSelectedSymbol],
+  );
+
   return (
     <>
       {error && <ErrorBanner message={error} className="mb-3" />}
@@ -126,6 +141,16 @@ export default function SymbolPage() {
             positionsForSelectedSymbol={positionsForSelectedSymbol}
             selectedSymbol={symbol}
           />
+
+          {accessToken && symbol && (
+            <RecentActivitySection
+              className="mt-4"
+              accessToken={accessToken}
+              symbol={symbol}
+              onRunSuggestedAction={handleSuggestedAction}
+            />
+          )}
+
           <Insights
             symbol={symbol}
             positions={positionsForSelectedSymbol}

@@ -178,3 +178,55 @@ export type AssignmentRiskSummary = {
   scopeSymbol?: string | null;
   positions: AssignmentRiskPositionEntry[];
 };
+
+export type RecentOrderEntry = {
+  orderId?: number | null;
+  symbol: string;
+  fillTime?: string | null;
+  side: string;
+  quantity?: number | null;
+  averageFillPrice?: number | null;
+  orderType?: string | null;
+  positionEffect?: string | null;
+  taxLotMethod?: string | null;
+  assetType?: string | null;
+  description?: string | null;
+};
+
+export type SuggestedAnalysisAction = {
+  action: string;
+  label: string;
+  reason: string;
+  priority: number;
+};
+
+export type RecentActivitySymbolSummary = {
+  symbol: string;
+  orderCount: number;
+  lastFillTime?: string | null;
+};
+
+export type RecentActivitySummary = {
+  daysBack: number;
+  totalOrders: number;
+  recentOrderCount: number;
+  symbolsTraded: RecentActivitySymbolSummary[];
+  latestOrders: RecentOrderEntry[];
+  suggestedActions: SuggestedAnalysisAction[];
+};
+
+export type RecentOrdersResponse = {
+  daysBack: number;
+  symbol?: string | null;
+  orders: RecentOrderEntry[];
+  suggestedActions: SuggestedAnalysisAction[];
+  activityBySymbol: Record<string, number>;
+};
+
+export type AccountPositionsResponse = {
+  schwab_positions: Record<string, Position[]>;
+  account: SchwabAccounts;
+  cashSecuredPutSummary?: CashSecuredPutSummary;
+  assignmentRiskSummary?: AssignmentRiskSummary;
+  recentActivity?: RecentActivitySummary | null;
+};

@@ -1,9 +1,62 @@
 import { API_BASE_URL } from "./config";
 import { isAbortError } from "./isAbortError";
+import type { AccountPositionsResponse, RecentOrdersResponse } from "@/app/types/schwab";
 import type {
   ChatSessionMessagesResponse,
   ChatSessionsResponse,
 } from "@/app/types/chat";
+
+type RecentOrdersOptions = {
+  symbol?: string | null;
+  daysBack?: number;
+  refresh?: boolean;
+};
+
+function buildQuery(params: Record<string, string | number | boolean | undefined>) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === "") continue;
+    search.set(key, String(value));
+  }
+  const query = search.toString();
+  return query ? `?${query}` : "";
+}
+
+export async function fetchAccountPositions(
+  accessToken: string,
+  options: { refresh?: boolean } = {},
+): Promise<AccountPositionsResponse> {
+  const res = await apiFetch(
+    `/get-account-positions${buildQuery({ refresh: options.refresh ? true : undefined })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load positions (${res.status})`);
+  }
+
+  return res.json() as Promise<AccountPositionsResponse>;
+}
+
+export async function fetchRecentOrders(
+  accessToken: string,
+  options: RecentOrdersOptions = {},
+): Promise<RecentOrdersResponse> {
+  const res = await apiFetch(
+    `/recent-orders${buildQuery({
+      symbol: options.symbol ?? undefined,
+      days_back: options.daysBack,
+      refresh: options.refresh ? true : undefined,
+    })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load recent orders (${res.status})`);
+  }
+
+  return res.json() as Promise<RecentOrdersResponse>;
+}
 
 export async function apiFetch(
   path: string,

@@ -26,6 +26,12 @@ function HomeContent() {
   useEffect(() => {
     if (status === "loading") return;
     if (session?.accessToken) {
+      const params = new URLSearchParams(window.location.search);
+      const schwabStatus = params.get("status");
+      if (schwabStatus === "success") {
+        router.replace("/portfolio?status=success");
+        return;
+      }
       router.replace("/portfolio");
     }
   }, [status, session?.accessToken, router]);

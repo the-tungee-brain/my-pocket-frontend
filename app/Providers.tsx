@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { useSession } from "next-auth/react";
-import { apiFetch, streamAnalysis, streamResearchChat } from "@/lib/apiClient";
+import { apiFetch, fetchAccountPositions, streamAnalysis, streamResearchChat } from "@/lib/apiClient";
 import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
 import { DEFAULT_CHAT_MODEL } from "@/lib/chatModels";
@@ -24,6 +24,7 @@ import {
   SchwabAccounts,
   CashSecuredPutSummary,
   AssignmentRiskSummary,
+  RecentActivitySummary,
 } from "./types/schwab";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
 import {
@@ -83,6 +84,8 @@ type PositionsContextValue = {
   account: SchwabAccounts | null;
   cashSecuredPutSummary: CashSecuredPutSummary | null;
   assignmentRiskSummary: AssignmentRiskSummary | null;
+  recentActivity: RecentActivitySummary | null;
+  refreshPositions: (refresh?: boolean) => Promise<void>;
 };
 
 const PositionsContext = createContext<PositionsContextValue | null>(null);
@@ -172,6 +175,8 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     useState<CashSecuredPutSummary | null>(null);
   const [assignmentRiskSummary, setAssignmentRiskSummary] =
     useState<AssignmentRiskSummary | null>(null);
+  const [recentActivity, setRecentActivity] =
+    useState<RecentActivitySummary | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [selectedView, setSelectedView] = useState<MainView>("research");
   const [loading, setLoading] = useState(false);
@@ -184,6 +189,65 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   chatBySymbolRef.current = chatBySymbol;
   const accessToken = session?.accessToken ?? "";
   const chatUserId = session?.user?.email ?? session?.user?.id ?? null;
+  const initialRefreshRef = useRef<boolean | null>(null);
+  if (initialRefreshRef.current === null && typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    initialRefreshRef.current =
+      params.get("refresh") === "1" ||
+      params.get("status") === "success" ||
+      params.get("schwab") === "connected";
+  }
+
+  const applyPositionsPayload = useCallback(
+    (data: Awaited<ReturnType<typeof fetchAccountPositions>>) => {
+      const map = data.schwab_positions ?? {};
+      const loadedAccount = data.account ?? null;
+      const flatPositions = Object.values(map).flat().filter(Boolean) as Position[];
+      const cashBalance =
+        loadedAccount?.securitiesAccount.currentBalances.cashBalance ?? null;
+
+      setPositionMap(map);
+      setAccount(loadedAccount);
+      setCashSecuredPutSummary(
+        data.cashSecuredPutSummary ??
+          summarizeCspCashReserves(flatPositions, cashBalance),
+      );
+      setAssignmentRiskSummary(data.assignmentRiskSummary ?? null);
+      setRecentActivity(data.recentActivity ?? null);
+
+      const symbolsOnly = Object.keys(map).sort();
+      setSelectedSymbol((current) =>
+        current && symbolsOnly.includes(current)
+          ? current
+          : (symbolsOnly[0] ?? null),
+      );
+    },
+    [],
+  );
+
+  const refreshPositions = useCallback(
+    async (refresh = false) => {
+      if (!accessToken) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchAccountPositions(accessToken, { refresh });
+        applyPositionsPayload(data);
+      } catch {
+        setError("Failed to load positions");
+        setPositionMap({});
+        setAccount(null);
+        setCashSecuredPutSummary(null);
+        setAssignmentRiskSummary(null);
+        setRecentActivity(null);
+        setSelectedSymbol(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [accessToken, applyPositionsPayload],
+  );
 
   const ensureSymbolChatState = useCallback(
     (key: string, base?: Partial<SymbolChatState>): SymbolChatState => ({
@@ -274,66 +338,19 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!accessToken) return;
 
-    const load = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    const shouldRefresh = initialRefreshRef.current ?? false;
+    initialRefreshRef.current = false;
 
-        const res = await apiFetch("/get-account-positions", {
-          method: "GET",
-          accessToken,
-        });
+    if (shouldRefresh && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("refresh");
+      url.searchParams.delete("status");
+      url.searchParams.delete("schwab");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
 
-        if (!res.ok) {
-          setError("Failed to load positions");
-          setPositionMap({});
-          setAccount(null);
-          setCashSecuredPutSummary(null);
-          setAssignmentRiskSummary(null);
-          setSelectedSymbol(null);
-          return;
-        }
-
-        const data = (await res.json()) as {
-          schwab_positions: PositionMap;
-          account: SchwabAccounts;
-          cashSecuredPutSummary?: CashSecuredPutSummary;
-          assignmentRiskSummary?: AssignmentRiskSummary;
-        };
-        const map = data.schwab_positions ?? {};
-        const loadedAccount = data.account ?? null;
-        const flatPositions = Object.values(map).flat().filter(Boolean) as Position[];
-        const cashBalance =
-          loadedAccount?.securitiesAccount.currentBalances.cashBalance ?? null;
-
-        setPositionMap(map);
-        setAccount(loadedAccount);
-        setCashSecuredPutSummary(
-          data.cashSecuredPutSummary ??
-            summarizeCspCashReserves(flatPositions, cashBalance),
-        );
-        setAssignmentRiskSummary(data.assignmentRiskSummary ?? null);
-
-        const symbolsOnly = Object.keys(map).sort();
-        setSelectedSymbol((current) =>
-          current && symbolsOnly.includes(current)
-            ? current
-            : (symbolsOnly[0] ?? null),
-        );
-      } catch {
-        setError("Failed to load positions");
-        setPositionMap({});
-        setAccount(null);
-        setCashSecuredPutSummary(null);
-        setAssignmentRiskSummary(null);
-        setSelectedSymbol(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, [accessToken]);
+    void refreshPositions(shouldRefresh);
+  }, [accessToken, refreshPositions]);
 
   const allPositions: Position[] = useMemo(
     () => Object.values(positionMap).flat().filter(Boolean) as Position[],
@@ -762,6 +779,8 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       account,
       cashSecuredPutSummary,
       assignmentRiskSummary,
+      recentActivity,
+      refreshPositions,
     }),
     [
       accessToken,
@@ -782,6 +801,8 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       account,
       cashSecuredPutSummary,
       assignmentRiskSummary,
+      recentActivity,
+      refreshPositions,
     ],
   );
 

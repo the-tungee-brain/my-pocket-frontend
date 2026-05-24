@@ -4,7 +4,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BriefcaseBusiness,
+  Check,
   CircleDollarSign,
+  Link2,
+  Loader2,
   Search,
   Star,
   X,
@@ -16,7 +19,6 @@ import { useToast } from "@/app/contexts/ToastContext";
 import { tabQuerySuffix, useTabs } from "@/app/contexts/TabContext";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/Button";
-import { ErrorBanner } from "./ui/ErrorBanner";
 
 export type MainView = "portfolio" | "symbol" | "research";
 
@@ -55,14 +57,11 @@ export function NavList({
   const {
     authorized: schwabAuthorized,
     loading: schwabLoading,
-    error: schwabStatusError,
-    refetch: refetchSchwabStatus,
   } = useSchwabStatus();
 
   const {
     connect: connectSchwab,
     connecting: schwabConnecting,
-    connectError: schwabConnectError,
     clearConnectError: clearSchwabConnectError,
   } = useSchwabConnect();
 
@@ -333,58 +332,62 @@ export function NavList({
       )}
 
       {showSchwabStatus && (
-        <>
-          <div className="mt-3 h-px bg-border" />
-          <div className="mt-2 px-4 text-[11px]">
-            {schwabStatusError && (
-              <ErrorBanner
-                message={schwabStatusError}
-                onRetry={refetchSchwabStatus}
-                className="mb-2"
-              />
+        <div className="mt-auto shrink-0 border-t border-border px-1 pt-2">
+          <div
+            className={cn(
+              "flex items-center gap-2 rounded-xl border px-2.5 py-2 transition-colors",
+              schwabAuthorized
+                ? "border-accent/25 bg-accent-muted/20"
+                : "border-border bg-background/50",
             )}
+          >
+            <div
+              className={cn(
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+                schwabAuthorized
+                  ? "bg-accent-muted text-accent-strong"
+                  : "bg-muted-bg text-muted",
+              )}
+            >
+              {schwabLoading || schwabConnecting ? (
+                <Loader2
+                  className="h-3.5 w-3.5 animate-spin"
+                  aria-hidden="true"
+                />
+              ) : schwabAuthorized ? (
+                <Check className="h-3.5 w-3.5" aria-hidden="true" />
+              ) : (
+                <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+            </div>
 
-            {schwabConnectError && (
-              <ErrorBanner
-                message={schwabConnectError}
-                onRetry={handleConnectSchwab}
-                className="mb-2"
-              />
-            )}
-
-            <div className="mb-2 flex items-center justify-center gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-medium leading-tight text-foreground">
                 Schwab
-              </span>
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
-                  schwabAuthorized
-                    ? "bg-accent-muted text-accent-strong"
-                    : "border border-border bg-muted-bg text-muted",
-                )}
-              >
+              </p>
+              <p className="truncate text-[10px] leading-tight text-muted">
                 {schwabLoading
-                  ? "Checking…"
-                  : schwabAuthorized
-                    ? "Connected"
-                    : "Not connected"}
-              </span>
+                  ? "Checking connection…"
+                  : schwabConnecting
+                    ? "Connecting…"
+                    : schwabAuthorized
+                      ? "Account linked"
+                      : "Not linked"}
+              </p>
             </div>
 
             {!schwabAuthorized && !schwabLoading && (
-              <Button
-                size="xs"
-                variant="outline"
-                className="w-full"
+              <button
+                type="button"
                 disabled={schwabConnecting}
                 onClick={handleConnectSchwab}
+                className="shrink-0 rounded-md bg-accent-muted px-2 py-1 text-[10px] font-semibold text-accent-strong transition hover:bg-accent-muted/70 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {schwabConnecting ? "Connecting…" : "Connect"}
-              </Button>
+                Connect
+              </button>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
