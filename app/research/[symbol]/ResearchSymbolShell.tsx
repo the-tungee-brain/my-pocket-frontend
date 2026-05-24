@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { CompanySnapshot } from "./CompanySnapshot";
 import { ResearchTabBar } from "@/components/ResearchTabBar";
+import { addRecentSymbol } from "@/lib/recentSymbols";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -15,6 +16,10 @@ type Props = {
 export function ResearchSymbolShell({ symbol, children }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    addRecentSymbol(symbol);
+  }, [symbol]);
 
   useEffect(() => {
     const root = document.getElementById("main-content");

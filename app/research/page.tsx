@@ -3,9 +3,10 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Search, SearchX, Star, TrendingUp } from "lucide-react";
+import { History, Search, SearchX, Star, TrendingUp } from "lucide-react";
 
 import { TickerSymbolItem, useSymbolSearch } from "../hooks/useSymbolSearch";
+import { useRecentSymbols } from "../hooks/useRecentSymbols";
 import { useWatchlist } from "../hooks/useWatchlist";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -19,6 +20,7 @@ export default function ResearchPage() {
   const router = useRouter();
 
   const { symbols: watchlist } = useWatchlist();
+  const { symbols: recentSymbols } = useRecentSymbols();
   const { results, isLoading, error, refetch } = useSymbolSearch(query, {
     accessToken,
     limit: 10,
@@ -74,6 +76,10 @@ export default function ResearchPage() {
   };
 
   const examples = ["NVDA", "AAPL", "MSFT", "TSLA"];
+  const watchlistSet = new Set(watchlist);
+  const recentWithoutWatchlist = recentSymbols.filter(
+    (symbol) => !watchlistSet.has(symbol),
+  );
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-8 pb-4">
@@ -130,6 +136,27 @@ export default function ResearchPage() {
                     onClick={() => openSymbol(symbol)}
                   >
                     <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+                    {symbol}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {recentWithoutWatchlist.length > 0 && (
+            <div className="mt-3">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+                Recently viewed
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {recentWithoutWatchlist.map((symbol) => (
+                  <button
+                    key={symbol}
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-mono text-foreground transition hover:border-accent/50 hover:bg-secondary"
+                    onClick={() => openSymbol(symbol)}
+                  >
+                    <History className="h-3 w-3 text-muted" aria-hidden="true" />
                     {symbol}
                   </button>
                 ))}
