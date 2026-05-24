@@ -38,14 +38,7 @@ export function ConversationPane({
     const el = lastUserRef.current;
     if (!el) return;
 
-    const paddingTop = 50;
-    const rect = el.getBoundingClientRect();
-    const absoluteTop = rect.top + window.scrollY;
-
-    window.scrollTo({
-      top: absoluteTop - paddingTop,
-      behavior: "smooth",
-    });
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [messages.length, messages]);
 
   if (!symbol) return null;
@@ -82,6 +75,7 @@ export function ConversationPane({
             <div
               key={m.id}
               ref={isLastUser ? lastUserRef : null}
+              style={{ scrollMarginTop: "4rem" }}
               className={cn(
                 "flex gap-3",
                 isAssistant ? "justify-start" : "justify-end",

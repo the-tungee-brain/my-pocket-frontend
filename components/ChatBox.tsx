@@ -33,7 +33,7 @@ interface ChatBoxProps {
   mode: MainView;
   selectedSymbol: string | null;
   currentChat: SymbolChatState | undefined;
-  insightsLoading?: boolean;
+  disabled?: boolean;
   inputRows: number;
   modelMenuRef: RefObject<HTMLDivElement | null>;
   onChangeInput: (value: string) => void;
@@ -47,7 +47,7 @@ export function ChatBox({
   mode,
   selectedSymbol,
   currentChat,
-  insightsLoading = false,
+  disabled = false,
   inputRows,
   modelMenuRef,
   onChangeInput,
@@ -64,7 +64,7 @@ export function ChatBox({
         : "this position";
   const inputValue = currentChat?.input ?? "";
   const isChatLoading = !!currentChat?.loading;
-  const isBusy = isChatLoading || insightsLoading;
+  const isBusy = isChatLoading || disabled;
   const canSend = !isBusy && inputValue.trim().length > 0;
 
   return (
@@ -78,11 +78,17 @@ export function ChatBox({
           Assistant prompts
         </div>
 
-        <QuickAnalysisBar
-          symbol={mode === "portfolio" ? "PORTFOLIO" : (selectedSymbol ?? "")}
-          loading={isBusy}
-          onRunAction={(id) => void onSendQuickAction(id)}
-        />
+        {disabled ? (
+          <p className="rounded-lg border border-dashed border-border bg-muted-bg/30 px-3 py-2 text-xs text-muted">
+            Connect Schwab and load holdings to use the assistant.
+          </p>
+        ) : (
+          <QuickAnalysisBar
+            symbol={mode === "portfolio" ? "PORTFOLIO" : (selectedSymbol ?? "")}
+            loading={isBusy}
+            onRunAction={(id) => void onSendQuickAction(id)}
+          />
+        )}
 
         <form
           className="flex flex-col gap-3 text-foreground"
@@ -97,11 +103,11 @@ export function ChatBox({
             aria-label={`Ask about ${placeholderLabel}`}
             className="max-h-52 min-h-12 w-full resize-none rounded-xl bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground outline-none ring-1 ring-transparent transition placeholder:text-neutral-500 focus:ring-border disabled:cursor-not-allowed disabled:opacity-60"
             placeholder={
-              isBusy
-                ? insightsLoading && !isChatLoading
-                  ? "Waiting for initial analysis…"
-                  : "Waiting for response…"
-                : `Ask anything about ${placeholderLabel}…`
+              disabled
+                ? "Load holdings to start chatting…"
+                : isChatLoading
+                  ? "Waiting for response…"
+                  : `Ask anything about ${placeholderLabel}…`
             }
             value={inputValue}
             onChange={(e) => onChangeInput(e.target.value)}
@@ -155,10 +161,10 @@ export function ChatBox({
               <button
                 type="submit"
                 disabled={!canSend}
-                aria-busy={isBusy}
+                aria-busy={isChatLoading}
                 className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-neutral-900 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isBusy ? (
+                {isChatLoading ? (
                   "Analyzing…"
                 ) : (
                   <>

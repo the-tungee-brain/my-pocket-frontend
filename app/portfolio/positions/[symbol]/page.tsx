@@ -60,19 +60,19 @@ export default function SymbolPage() {
 
   return (
     <>
-      {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
+      {error && <p className="mb-3 text-sm text-danger">{error}</p>}
 
       {activeTab === "assistant" && symbol && (
         <div className="mb-6">
           {stockError && (
-            <p className="mb-3 text-sm text-red-400">
+            <p className="mb-3 text-sm text-danger">
               Failed to load chart: {stockError.message}
             </p>
           )}
 
           <StockChart
             data={stockData?.data ?? []}
-            loading={isLoading}
+            loading={stockLoading}
             symbol={stockData?.symbol ?? symbol}
             period={period}
             interval={interval}

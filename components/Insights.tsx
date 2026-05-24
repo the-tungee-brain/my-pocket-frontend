@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, RotateCcw } from "lucide-react";
 import { MarkdownRenderer } from "./ui/MarkdownRenderer";
 import { ThinkingSpinner } from "./ui/ThinkingSpinner";
+import { Button } from "./ui/Button";
 import { usePositionsContext } from "@/app/Providers";
 import { useInsights } from "@/app/hooks/useInsights";
 import { Position } from "@/app/types/schwab";
@@ -26,7 +27,7 @@ export function Insights({
     [symbol, positions],
   );
 
-  const { loading, error, content } = useInsights(
+  const { loading, error, content, refetch } = useInsights(
     {
       label,
       positions,
@@ -58,14 +59,32 @@ export function Insights({
         {loading && <ThinkingSpinner message={thinkingMessage} />}
 
         {error && (
-          <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
-            {error}
-          </p>
+          <div className="space-y-3">
+            <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
+              {error}
+            </p>
+            <Button size="xs" variant="outline" onClick={refetch}>
+              <RotateCcw className="h-3 w-3" aria-hidden="true" />
+              Try again
+            </Button>
+          </div>
         )}
 
         {!loading && !error && content && (
           <div className="text-sm leading-relaxed text-foreground">
             <MarkdownRenderer content={content} />
+          </div>
+        )}
+
+        {!loading && !error && !content && (
+          <div className="space-y-3 text-center">
+            <p className="text-sm text-muted">
+              Analysis unavailable right now.
+            </p>
+            <Button size="xs" variant="outline" onClick={refetch}>
+              <RotateCcw className="h-3 w-3" aria-hidden="true" />
+              Retry analysis
+            </Button>
           </div>
         )}
       </div>

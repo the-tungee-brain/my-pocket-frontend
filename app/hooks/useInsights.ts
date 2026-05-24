@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { streamAnalysis } from "@/lib/apiClient";
 import type { Position, SchwabAccounts } from "@/app/types/schwab";
 
@@ -8,6 +8,7 @@ type InsightState = {
   loading: boolean;
   error: string | null;
   content: string | null;
+  refetch: () => void;
 };
 
 type Listener = (done: boolean, error?: string) => void;
@@ -41,11 +42,18 @@ export function useInsights(
   model: string = "gpt-5.4",
 ): InsightState {
   const { label, positions, account, accessToken } = opts;
-  const [state, setState] = useState<InsightState>({
+  const [retryCount, setRetryCount] = useState(0);
+  const [state, setState] = useState<Omit<InsightState, "refetch">>({
     loading: false,
     error: null,
     content: null,
   });
+
+  const refetch = useCallback(() => {
+    if (!label || !positions?.length) return;
+    cache.delete(makeKey(label, positions));
+    setRetryCount((c) => c + 1);
+  }, [label, positions]);
 
   useEffect(() => {
     if (!label || !positions?.length || !account || !accessToken) {
@@ -153,7 +161,7 @@ export function useInsights(
       cancelled = true;
       entry!.listeners.delete(listener);
     };
-  }, [label, positions, account, accessToken, model]);
+  }, [label, positions, account, accessToken, model, retryCount]);
 
-  return state;
+  return { ...state, refetch };
 }
