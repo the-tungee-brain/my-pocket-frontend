@@ -1,4 +1,4 @@
-import { FundamentalsPageContent } from "../FundamentalsPageContent";
+import { FinancialsPageContent } from "../FinancialsPageContent";
 
 type PageProps = {
   params: Promise<{ symbol: string }>;
@@ -7,5 +7,5 @@ type PageProps = {
 export default async function FinancialsPage({ params }: PageProps) {
   const { symbol } = await params;
 
-  return <FundamentalsPageContent symbol={symbol} />;
+  return <FinancialsPageContent symbol={symbol} />;
 }

@@ -7,6 +7,7 @@ import {
   BriefcaseBusiness,
   FileSpreadsheet,
   LayoutDashboard,
+  LineChart,
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
@@ -16,6 +17,7 @@ export type ResearchTabId =
   | "overview"
   | "business"
   | "earnings"
+  | "fundamentals"
   | "financials";
 
 type Tab = {
@@ -28,7 +30,8 @@ const tabs: Tab[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "business", label: "Business", icon: BriefcaseBusiness },
   { id: "earnings", label: "Earnings", icon: TrendingUp },
-  { id: "financials", label: "Fundamentals", icon: FileSpreadsheet },
+  { id: "fundamentals", label: "Fundamentals", icon: FileSpreadsheet },
+  { id: "financials", label: "Financials", icon: LineChart },
 ];
 
 type ResearchTabBarProps = {
