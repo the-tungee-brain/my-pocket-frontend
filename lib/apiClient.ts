@@ -1,5 +1,9 @@
 import { API_BASE_URL } from "./config";
 import { isAbortError } from "./isAbortError";
+import type {
+  ChatSessionMessagesResponse,
+  ChatSessionsResponse,
+} from "@/app/types/chat";
 
 export async function apiFetch(
   path: string,
@@ -180,6 +184,81 @@ export async function streamGet(
 ): Promise<void> {
   const url = `${API_BASE_URL}${path}`;
   await streamGetResponse(url, accessToken, onChunk, options);
+}
+
+type ChatSessionListOptions = {
+  kind?: "all" | "portfolio" | "research";
+  limit?: number;
+  offset?: number;
+};
+
+export async function listChatSessions(
+  accessToken: string,
+  options: ChatSessionListOptions = {},
+): Promise<ChatSessionsResponse> {
+  const params = new URLSearchParams();
+  if (options.kind) params.set("kind", options.kind);
+  if (options.limit != null) params.set("limit", String(options.limit));
+  if (options.offset != null) params.set("offset", String(options.offset));
+
+  const query = params.toString();
+  const path = query ? `/chat/sessions?${query}` : "/chat/sessions";
+  const res = await apiFetch(path, { method: "GET", accessToken });
+
+  if (!res.ok) {
+    throw new Error(`Failed to list chat sessions (${res.status})`);
+  }
+
+  return res.json() as Promise<ChatSessionsResponse>;
+}
+
+export async function getChatSessionMessages(
+  accessToken: string,
+  sessionId: string,
+  limit = 100,
+): Promise<ChatSessionMessagesResponse> {
+  const res = await apiFetch(
+    `/chat/sessions/${sessionId}/messages?limit=${limit}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load chat messages (${res.status})`);
+  }
+
+    return res.json() as Promise<ChatSessionMessagesResponse>;
+}
+
+export async function deleteChatSession(
+  accessToken: string,
+  sessionId: string,
+): Promise<void> {
+  const res = await apiFetch(`/chat/sessions/${sessionId}`, {
+    method: "DELETE",
+    accessToken,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to delete chat session (${res.status})`);
+  }
+}
+
+export async function clearChatSessionsByPrefix(
+  accessToken: string,
+  titlePrefix: string,
+): Promise<number> {
+  const params = new URLSearchParams({ title_prefix: titlePrefix });
+  const res = await apiFetch(`/chat/sessions?${params.toString()}`, {
+    method: "DELETE",
+    accessToken,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to clear chat sessions (${res.status})`);
+  }
+
+  const data = (await res.json()) as { deletedCount: number };
+  return data.deletedCount;
 }
 
 

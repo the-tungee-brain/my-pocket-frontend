@@ -11,6 +11,7 @@ import { HeaderActions } from "@/components/HeaderActions";
 import { TopTabBar } from "@/components/TopTabBar";
 import { Button } from "@/components/ui/Button";
 import { useTabs } from "./contexts/TabContext";
+import { useToast } from "./contexts/ToastContext";
 import { usePositionsContext } from "./Providers";
 import { researchTabLabel } from "@/components/ResearchTabBar";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ensureSymbolChatState,
     sendPrompt,
     sendQuickAction,
+    hydrateChatFromServer,
+    clearChatHistory,
   } = usePositionsContext();
+
+  const { showToast } = useToast();
 
   const { activeTab, setActiveTab } = useTabs();
   const pathname = usePathname();
@@ -90,6 +95,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     selectedView === "research"
       ? false
       : !insightsPositions?.length;
+
+  useEffect(() => {
+    if (!showChat || activeChatKey === "__NONE__") return;
+    void hydrateChatFromServer(activeChatKey);
+  }, [activeChatKey, showChat, hydrateChatFromServer]);
 
   const handleChatInputChange = (value: string) => {
     if (activeChatKey === "__NONE__") return;
@@ -216,16 +226,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (activeChatKey === "__NONE__") return;
     if (currentChat?.loading) return;
 
-    setChatBySymbol((prev) => ({
-      ...prev,
-      [activeChatKey]: ensureSymbolChatState(activeChatKey, {
-        messages: [],
-        input: "",
-        loading: false,
-        modelMenuOpen: false,
-      }),
-    }));
-    setInputRows(MIN_ROWS);
+    void (async () => {
+      const cleared = await clearChatHistory(activeChatKey);
+      if (!cleared) {
+        showToast("Couldn't clear chat history. Try again.");
+        return;
+      }
+      setInputRows(MIN_ROWS);
+    })();
   };
 
   const labelSymbol =

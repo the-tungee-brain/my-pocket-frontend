@@ -2,6 +2,7 @@ import {
   CalendarDays,
   CircleHelp,
   Landmark,
+  PieChart,
   Scale,
   ShieldAlert,
   ShieldCheck,
@@ -37,6 +38,14 @@ export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
     apiAction: "risk check",
     message: (target) => `What are the main risks in ${target} right now?`,
     icon: ShieldAlert,
+  },
+  {
+    id: "concentration-check",
+    label: "Concentration",
+    apiAction: "concentration check",
+    message: (target) =>
+      `Check concentration and position sizing for ${target}.`,
+    icon: PieChart,
   },
   {
     id: "tax-angle",

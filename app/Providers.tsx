@@ -26,6 +26,11 @@ import {
   AssignmentRiskSummary,
 } from "./types/schwab";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
+import {
+  loadChatHistoryForKey,
+  shouldApplyServerHistory,
+  clearChatHistoryForKey,
+} from "@/lib/chatHistory";
 import { MainView } from "@/components/NavList";
 import { usePathname } from "next/navigation";
 
@@ -35,6 +40,8 @@ type SymbolChatState = {
   messages: ChatMessage[];
   model: string;
   modelMenuOpen: boolean;
+  sessionId?: string | null;
+  historyHydrated?: boolean;
 };
 
 type ChatStateMap = Record<string, SymbolChatState>;
@@ -71,6 +78,8 @@ type PositionsContextValue = {
     positionsForSelectedSymbol: Position[] | null;
     actionId: string;
   }) => Promise<void>;
+  hydrateChatFromServer: (activeChatKey: string) => Promise<void>;
+  clearChatHistory: (activeChatKey: string) => Promise<boolean>;
   account: SchwabAccounts | null;
   cashSecuredPutSummary: CashSecuredPutSummary | null;
   assignmentRiskSummary: AssignmentRiskSummary | null;
@@ -171,6 +180,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const chatHydratedRef = useRef(false);
   const chatBySymbolRef = useRef(chatBySymbol);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const serverHydrateInflightRef = useRef<Set<string>>(new Set());
   chatBySymbolRef.current = chatBySymbol;
   const accessToken = session?.accessToken ?? "";
   const chatUserId = session?.user?.email ?? session?.user?.id ?? null;
@@ -338,6 +348,110 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     return positionMap[selectedSymbol] ?? null;
   }, [selectedView, selectedSymbol, positionMap, allPositions]);
 
+  const hydrateChatFromServer = useCallback(
+    async (activeChatKey: string) => {
+      if (!accessToken || activeChatKey === "__NONE__") return;
+      if (serverHydrateInflightRef.current.has(activeChatKey)) return;
+
+      const currentState =
+        chatBySymbolRef.current[activeChatKey] ??
+        ensureSymbolChatState(activeChatKey);
+      if (currentState.loading) return;
+
+      serverHydrateInflightRef.current.add(activeChatKey);
+      try {
+        const loaded = await loadChatHistoryForKey(accessToken, activeChatKey);
+        if (!loaded) {
+          setChatBySymbol((prev) => ({
+            ...prev,
+            [activeChatKey]: {
+              ...ensureSymbolChatState(activeChatKey, prev[activeChatKey]),
+              historyHydrated: true,
+            },
+          }));
+          return;
+        }
+
+        setChatBySymbol((prev) => {
+          const prevState = ensureSymbolChatState(
+            activeChatKey,
+            prev[activeChatKey],
+          );
+          if (prevState.loading) return prev;
+          if (
+            !shouldApplyServerHistory(prevState.messages, loaded.messages)
+          ) {
+            return {
+              ...prev,
+              [activeChatKey]: {
+                ...prevState,
+                sessionId: loaded.sessionId,
+                historyHydrated: true,
+              },
+            };
+          }
+
+          return {
+            ...prev,
+            [activeChatKey]: {
+              ...prevState,
+              messages: loaded.messages,
+              sessionId: loaded.sessionId,
+              historyHydrated: true,
+            },
+          };
+        });
+      } catch {
+        setChatBySymbol((prev) => ({
+          ...prev,
+          [activeChatKey]: {
+            ...ensureSymbolChatState(activeChatKey, prev[activeChatKey]),
+            historyHydrated: true,
+          },
+        }));
+      } finally {
+        serverHydrateInflightRef.current.delete(activeChatKey);
+      }
+    },
+    [accessToken, ensureSymbolChatState],
+  );
+
+  const clearChatHistory = useCallback(
+    async (activeChatKey: string): Promise<boolean> => {
+      if (!accessToken || activeChatKey === "__NONE__") return false;
+
+      const currentState =
+        chatBySymbolRef.current[activeChatKey] ??
+        ensureSymbolChatState(activeChatKey);
+      if (currentState.loading) return false;
+
+      try {
+        await clearChatHistoryForKey(
+          accessToken,
+          activeChatKey,
+          currentState.sessionId,
+        );
+      } catch {
+        return false;
+      }
+
+      serverHydrateInflightRef.current.delete(activeChatKey);
+      setChatBySymbol((prev) => ({
+        ...prev,
+        [activeChatKey]: ensureSymbolChatState(activeChatKey, {
+          messages: [],
+          input: "",
+          loading: false,
+          modelMenuOpen: false,
+          sessionId: null,
+          historyHydrated: true,
+        }),
+      }));
+      return true;
+    },
+    [accessToken, ensureSymbolChatState],
+  );
+
   const sendPrompt: PositionsContextValue["sendPrompt"] = useCallback(
     async ({
       activeChatKey,
@@ -418,6 +532,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
               action: "free-form",
               prompt: userInput,
               model: state.model,
+              session_id: state.sessionId ?? undefined,
             },
             accessToken,
             streamer.appendChunk,
@@ -431,6 +546,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         }
 
         streamer.flushNow();
+        await hydrateChatFromServer(activeChatKey);
       } catch {
         setChatBySymbol((prev) => {
           const prevState = ensureSymbolChatState(
@@ -473,7 +589,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         };
       });
     },
-    [accessToken, account, chatBySymbol, ensureSymbolChatState],
+    [accessToken, account, chatBySymbol, ensureSymbolChatState, hydrateChatFromServer],
   );
 
   const sendQuickAction: PositionsContextValue["sendQuickAction"] = useCallback(
@@ -562,6 +678,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
               action: freeForm ? "free-form" : getQuickActionApiAction(actionId),
               prompt: freeForm ? userMessage.content : null,
               model: state.model,
+              session_id: state.sessionId ?? undefined,
             },
             accessToken,
             streamer.appendChunk,
@@ -575,6 +692,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         }
 
         streamer.flushNow();
+        await hydrateChatFromServer(activeChatKey);
       } catch {
         setChatBySymbol((prev) => {
           const prevState = ensureSymbolChatState(
@@ -617,7 +735,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         };
       });
     },
-    [accessToken, account, chatBySymbol, ensureSymbolChatState],
+    [accessToken, account, chatBySymbol, ensureSymbolChatState, hydrateChatFromServer],
   );
 
   const value: PositionsContextValue = useMemo(
@@ -638,6 +756,8 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       ensureSymbolChatState,
       sendPrompt,
       sendQuickAction,
+      hydrateChatFromServer,
+      clearChatHistory,
       account,
       cashSecuredPutSummary,
       assignmentRiskSummary,
@@ -656,6 +776,8 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       ensureSymbolChatState,
       sendPrompt,
       sendQuickAction,
+      hydrateChatFromServer,
+      clearChatHistory,
       account,
       cashSecuredPutSummary,
       assignmentRiskSummary,
