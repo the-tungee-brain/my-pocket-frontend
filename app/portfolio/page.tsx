@@ -4,11 +4,11 @@ import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { usePositionsContext } from "../Providers";
 import { useTabs } from "@/app/contexts/TabContext";
-import { Insights } from "@/components/Insights";
-import { PortfolioOverview } from "@/components/PortfolioOverview";
-import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
 import { AccountHealthStrip } from "@/components/AccountHealthStrip";
+import { TaxWashSaleStrip } from "@/components/TaxWashSaleStrip";
+import { PortfolioOverview } from "@/components/PortfolioOverview";
+import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
 import { NewsHintBanner } from "@/components/NewsHintBanner";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -18,8 +18,10 @@ import {
   alertToQuickActionId,
   buildLocalPortfolioBrief,
   buildSymbolAlertMap,
+  collectTaxAlertItems,
   mergeDisplayAlerts,
 } from "@/lib/intelligence";
+import type { TaxAlertItem } from "@/lib/intelligence";
 
 export default function PortfolioPage() {
   const router = useRouter();
@@ -70,6 +72,15 @@ export default function PortfolioPage() {
     [proactiveAlerts, displayBrief],
   );
 
+  const taxItems = useMemo(
+    () =>
+      collectTaxAlertItems(
+        mergeDisplayAlerts(proactiveAlerts, displayBrief),
+        recentActivity?.suggestedActions ?? [],
+      ),
+    [proactiveAlerts, displayBrief, recentActivity?.suggestedActions],
+  );
+
   const showNewsHint =
     activeTab === "assistant" && !loading && symbols.length > 0;
 
@@ -113,6 +124,41 @@ export default function PortfolioPage() {
     refetchBrief();
   }, [refreshPositions, refetchBrief]);
 
+  const handleGoDeeper = useCallback(() => {
+    void sendQuickAction({
+      activeChatKey: "__PORTFOLIO_CHAT__",
+      selectedView: "portfolio",
+      selectedSymbol: null,
+      positionsForSelectedSymbol: allPositions,
+      actionId: "daily-summary",
+    });
+  }, [allPositions, sendQuickAction]);
+
+  const handleTaxAlert = useCallback(
+    (item: TaxAlertItem) => {
+      if (item.symbol) {
+        router.push(`/portfolio/positions/${item.symbol}`);
+        void sendQuickAction({
+          activeChatKey: item.symbol,
+          selectedView: "symbol",
+          selectedSymbol: item.symbol,
+          positionsForSelectedSymbol: positionMap[item.symbol] ?? [],
+          actionId: item.actionId,
+        });
+        return;
+      }
+
+      void sendQuickAction({
+        activeChatKey: "__PORTFOLIO_CHAT__",
+        selectedView: "portfolio",
+        selectedSymbol: null,
+        positionsForSelectedSymbol: allPositions,
+        actionId: item.actionId,
+      });
+    },
+    [allPositions, positionMap, router, sendQuickAction],
+  );
+
   const showBriefSection =
     !loading && sessionAccessToken && allPositions.length > 0;
 
@@ -134,6 +180,15 @@ export default function PortfolioPage() {
           lastUpdated={briefLastUpdated}
           onRefresh={handleRefreshAll}
           onRunAlert={handleRunAlert}
+          onGoDeeper={handleGoDeeper}
+        />
+      )}
+
+      {taxItems.length > 0 && (
+        <TaxWashSaleStrip
+          className="mb-4"
+          items={taxItems}
+          onRun={handleTaxAlert}
         />
       )}
 
@@ -169,12 +224,6 @@ export default function PortfolioPage() {
           compact
         />
       )}
-
-      <Insights
-        symbol={null}
-        positions={allPositions}
-        thinkingMessage="Analyzing this portfolio"
-      />
     </>
   );
 }

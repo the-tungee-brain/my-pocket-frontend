@@ -33,6 +33,7 @@ type Props = {
   lastUpdated?: number | null;
   onRefresh?: () => void;
   onRunAlert?: (alert: ProactiveAlert) => void;
+  onGoDeeper?: () => void;
   className?: string;
 };
 
@@ -77,6 +78,7 @@ export function PortfolioBriefSection({
   lastUpdated = null,
   onRefresh,
   onRunAlert,
+  onGoDeeper,
   className,
 }: Props) {
   const mergedBrief: PortfolioIntelligence | null = brief ?? {
@@ -306,6 +308,19 @@ export function PortfolioBriefSection({
                   />
                 ))}
               </div>
+            </div>
+          )}
+
+          {onGoDeeper && (
+            <div className="border-t border-border/70 pt-3">
+              <button
+                type="button"
+                onClick={onGoDeeper}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-strong transition hover:underline"
+              >
+                <Sparkles className="h-3.5 w-3.5" aria-hidden />
+                Go deeper with full AI portfolio analysis
+              </button>
             </div>
           )}
         </div>

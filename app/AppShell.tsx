@@ -3,6 +3,7 @@
 import { ChevronUp, Menu, Search, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { ChatSessionHistory } from "@/components/ChatSessionHistory";
 import { ChatBox } from "@/components/ChatBox";
 import { ConversationPane } from "@/components/ConversationPane";
 import { DesktopNav } from "@/components/DesktopNav";
@@ -41,8 +42,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     sendQuickAction,
     hydrateChatFromServer,
     clearChatHistory,
+    restoreChatSession,
     proactiveAlerts,
     portfolioBrief,
+    recentActivity,
+    sessionAccessToken,
   } = usePositionsContext();
 
   const symbolAlertMap = useMemo(
@@ -393,6 +397,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   loading={!!currentChat?.loading}
                   onClear={handleClearChat}
                   onFollowUpPrompt={(prompt) => void handleFollowUpPrompt(prompt)}
+                  historyControl={
+                    activeChatKey !== "__NONE__" ? (
+                      <ChatSessionHistory
+                        activeChatKey={activeChatKey}
+                        accessToken={sessionAccessToken}
+                        currentSessionId={currentChat?.sessionId}
+                        onRestoreSession={(sessionId, messages) =>
+                          restoreChatSession(activeChatKey, sessionId, messages)
+                        }
+                      />
+                    ) : null
+                  }
                 />
               )}
             </div>

@@ -14,7 +14,8 @@ type Props = {
 export function SymbolIntelligenceSection({ symbol }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
-  const { positionMap, sendQuickAction } = usePositionsContext();
+  const { positionMap, sendQuickAction, sendPrompt } = usePositionsContext();
+  const symbolUpper = symbol.toUpperCase();
 
   const { intelligence, loading, error, refetch } = useSymbolIntelligence(
     symbol,
@@ -23,17 +24,40 @@ export function SymbolIntelligenceSection({ symbol }: Props) {
 
   const handleRunSignal = useCallback(
     (_signal: IntelligenceSignal, actionId: string) => {
-      const chatKey = `__RESEARCH_${symbol.toUpperCase()}__`;
+      const chatKey = `__RESEARCH_${symbolUpper}__`;
       void sendQuickAction({
         activeChatKey: chatKey,
         selectedView: "research",
-        selectedSymbol: symbol.toUpperCase(),
-        positionsForSelectedSymbol: positionMap[symbol.toUpperCase()] ?? [],
+        selectedSymbol: symbolUpper,
+        positionsForSelectedSymbol: positionMap[symbolUpper] ?? [],
         actionId,
       });
     },
-    [symbol, sendQuickAction, positionMap],
+    [symbolUpper, sendQuickAction, positionMap],
   );
+
+  const handleAnalyzeOption = useCallback(
+    (prompt: string) => {
+      void sendPrompt({
+        activeChatKey: `__RESEARCH_${symbolUpper}__`,
+        selectedView: "research",
+        selectedSymbol: symbolUpper,
+        positionsForSelectedSymbol: positionMap[symbolUpper] ?? [],
+        prompt,
+      });
+    },
+    [symbolUpper, sendPrompt, positionMap],
+  );
+
+  const handleGoDeeper = useCallback(() => {
+    void sendQuickAction({
+      activeChatKey: `__RESEARCH_${symbolUpper}__`,
+      selectedView: "research",
+      selectedSymbol: symbolUpper,
+      positionsForSelectedSymbol: positionMap[symbolUpper] ?? [],
+      actionId: "daily-summary",
+    });
+  }, [symbolUpper, sendQuickAction, positionMap]);
 
   return (
     <SymbolIntelligencePanel
@@ -42,6 +66,8 @@ export function SymbolIntelligenceSection({ symbol }: Props) {
       error={error}
       onRefresh={refetch}
       onRunSignal={handleRunSignal}
+      onAnalyzeOption={handleAnalyzeOption}
+      onGoDeeper={handleGoDeeper}
       actionContext="research"
       researchBasePath="/research"
     />

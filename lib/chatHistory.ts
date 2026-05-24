@@ -79,6 +79,34 @@ export function mapServerMessages(
     });
 }
 
+export async function listSessionsForChatKey(
+  accessToken: string,
+  activeChatKey: string,
+): Promise<ChatSessionSummary[]> {
+  const query = chatKeySessionQuery(activeChatKey);
+  if (!query) return [];
+
+  const kind = query.kind === "other" ? "all" : query.kind;
+  const sessionsResponse = await listChatSessions(accessToken, { kind });
+  return sessionsResponse.sessions
+    .filter((session) => session.title?.startsWith(query.titlePrefix) ?? false)
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    );
+}
+
+export async function loadChatSessionById(
+  accessToken: string,
+  activeChatKey: string,
+  sessionId: string,
+): Promise<{ sessionId: string; messages: ChatMessage[] } | null> {
+  const messagesResponse = await getChatSessionMessages(accessToken, sessionId);
+  const messages = mapServerMessages(messagesResponse.messages, activeChatKey);
+  if (messages.length === 0) return null;
+  return { sessionId, messages };
+}
+
 export async function loadChatHistoryForKey(
   accessToken: string,
   activeChatKey: string,

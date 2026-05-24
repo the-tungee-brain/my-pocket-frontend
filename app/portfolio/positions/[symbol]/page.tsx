@@ -1,13 +1,13 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { usePositionsContext } from "@/app/Providers";
 import { AccountPositionList } from "@/components/AccountPositionList";
 import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
 import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
-import { Insights } from "@/components/Insights";
+import { TaxWashSaleStrip } from "@/components/TaxWashSaleStrip";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
@@ -20,13 +20,14 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useStockData } from "@/app/hooks/useStockData";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
 import { filterAssignmentRiskSummary } from "@/lib/assignmentRiskSummary";
+import { alertToQuickActionId, collectTaxAlertItems, mergeDisplayAlerts } from "@/lib/intelligence";
+import type { TaxAlertItem } from "@/lib/intelligence";
 import type { IntelligenceSignal, ProactiveAlert } from "@/app/types/intelligence";
-import { alertToQuickActionId } from "@/lib/intelligence";
 
 export default function SymbolPage() {
   const { symbol } = useParams<{ symbol: string }>();
   const { activeTab } = useTabs();
-  const { error, positionMap, setSelectedView, setSelectedSymbol, account, assignmentRiskSummary, proactiveAlerts, portfolioBrief, sendQuickAction } =
+  const { error, positionMap, setSelectedView, setSelectedSymbol, account, assignmentRiskSummary, proactiveAlerts, portfolioBrief, recentActivity, sendQuickAction, sendPrompt } =
     usePositionsContext();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
@@ -121,10 +122,34 @@ export default function SymbolPage() {
     [symbol, sendQuickAction, positionsForSelectedSymbol],
   );
 
+  const handleAnalyzeOption = useCallback(
+    (prompt: string) => {
+      if (!symbol) return;
+      void sendPrompt({
+        activeChatKey: symbol,
+        selectedView: "symbol",
+        selectedSymbol: symbol,
+        positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
+        prompt,
+      });
+    },
+    [symbol, sendPrompt, positionsForSelectedSymbol],
+  );
+
   const symbolAlerts = [
     ...(portfolioBrief?.alerts ?? []),
     ...proactiveAlerts,
   ];
+
+  const taxItems = useMemo(
+    () =>
+      collectTaxAlertItems(
+        mergeDisplayAlerts(proactiveAlerts, portfolioBrief),
+        recentActivity?.suggestedActions ?? [],
+        symbol,
+      ),
+    [proactiveAlerts, portfolioBrief, recentActivity?.suggestedActions, symbol],
+  );
 
   const handleSuggestedAction = useCallback(
     (actionId: string) => {
@@ -135,6 +160,31 @@ export default function SymbolPage() {
         selectedSymbol: symbol,
         positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
         actionId,
+      });
+    },
+    [symbol, sendQuickAction, positionsForSelectedSymbol],
+  );
+
+  const handleGoDeeper = useCallback(() => {
+    if (!symbol) return;
+    void sendQuickAction({
+      activeChatKey: symbol,
+      selectedView: "symbol",
+      selectedSymbol: symbol,
+      positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
+      actionId: "daily-summary",
+    });
+  }, [symbol, sendQuickAction, positionsForSelectedSymbol]);
+
+  const handleTaxAlert = useCallback(
+    (item: TaxAlertItem) => {
+      if (!symbol) return;
+      void sendQuickAction({
+        activeChatKey: symbol,
+        selectedView: "symbol",
+        selectedSymbol: symbol,
+        positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
+        actionId: item.actionId,
       });
     },
     [symbol, sendQuickAction, positionsForSelectedSymbol],
@@ -159,6 +209,14 @@ export default function SymbolPage() {
             />
           )}
 
+          {symbol && taxItems.length > 0 && (
+            <TaxWashSaleStrip
+              className="mb-4"
+              items={taxItems}
+              onRun={handleTaxAlert}
+            />
+          )}
+
           {symbol && (
             <div className="mb-4">
               <SymbolIntelligencePanel
@@ -167,6 +225,8 @@ export default function SymbolPage() {
                 error={intelligenceError}
                 onRefresh={refetchIntelligence}
                 onRunSignal={handleRunSignal}
+                onAnalyzeOption={handleAnalyzeOption}
+                onGoDeeper={handleGoDeeper}
                 actionContext="portfolio"
                 compact
                 researchBasePath="/research"
@@ -223,13 +283,6 @@ export default function SymbolPage() {
             />
           )}
 
-          <Insights
-            symbol={symbol}
-            positions={positionsForSelectedSymbol}
-            thinkingMessage={
-              symbol ? `Analyzing your ${symbol} positions` : "Analyzing"
-            }
-          />
         </div>
       )}
 

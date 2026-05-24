@@ -11,9 +11,13 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
-import type { SymbolIntelligence } from "@/app/types/intelligence";
-import type { IntelligenceSignal } from "@/app/types/intelligence";
+import type {
+  IntelligenceSignal,
+  OptionsStrikeCandidate,
+  SymbolIntelligence,
+} from "@/app/types/intelligence";
 import {
+  buildOptionCandidatePrompt,
   hasSymbolIntelligenceContent,
   signalSeverityClass,
   signalSeverityLabel,
@@ -32,6 +36,8 @@ type Props = {
   error?: string | null;
   onRefresh?: () => void;
   onRunSignal?: (signal: IntelligenceSignal, actionId: string) => void;
+  onAnalyzeOption?: (prompt: string) => void;
+  onGoDeeper?: () => void;
   actionContext?: "portfolio" | "research";
   compact?: boolean;
   className?: string;
@@ -70,6 +76,8 @@ export function SymbolIntelligencePanel({
   error = null,
   onRefresh,
   onRunSignal,
+  onAnalyzeOption,
+  onGoDeeper,
   actionContext = "portfolio",
   compact = false,
   className,
@@ -336,17 +344,35 @@ export function SymbolIntelligencePanel({
                 </ul>
               )}
 
+              {options.assignment_flags.length > 0 && onAnalyzeOption && symbol && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onAnalyzeOption(
+                      `Review assignment and call-away risk for my ${symbol} short options over the next two weeks. ${options.assignment_flags.join(" ")}`,
+                    )
+                  }
+                  className="mb-3 inline-flex items-center gap-1 rounded-lg border border-danger/30 bg-danger/10 px-2.5 py-1 text-[11px] font-medium text-danger transition hover:bg-danger/15"
+                >
+                  Analyze assignment risk
+                </button>
+              )}
+
               {options.covered_call_candidates.length > 0 && (
                 <OptionsCandidateTable
                   title="Covered call candidates"
+                  symbol={symbol}
                   candidates={options.covered_call_candidates.slice(0, 3)}
+                  onAnalyzeOption={onAnalyzeOption}
                 />
               )}
 
               {options.csp_candidates.length > 0 && (
                 <OptionsCandidateTable
                   title="Cash-secured put candidates"
+                  symbol={symbol}
                   candidates={options.csp_candidates.slice(0, 3)}
+                  onAnalyzeOption={onAnalyzeOption}
                   className="mt-3"
                 />
               )}
@@ -369,6 +395,21 @@ export function SymbolIntelligencePanel({
             </Link>
           </div>
         )}
+
+        {onGoDeeper && (
+          <div className="border-t border-border/70 pt-3">
+            <button
+              type="button"
+              onClick={onGoDeeper}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-strong transition hover:underline"
+            >
+              <Sparkles className="h-3.5 w-3.5" aria-hidden />
+              {actionContext === "research"
+                ? "Go deeper with AI research chat"
+                : "Go deeper with full symbol analysis"}
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -376,64 +417,74 @@ export function SymbolIntelligencePanel({
 
 function OptionsCandidateTable({
   title,
+  symbol,
   candidates,
+  onAnalyzeOption,
   className,
 }: {
   title: string;
+  symbol?: string;
   candidates: NonNullable<
     SymbolIntelligence["options_scorecard"]
   >["covered_call_candidates"];
+  onAnalyzeOption?: (prompt: string) => void;
   className?: string;
 }) {
   return (
     <div className={className}>
       <p className="mb-1.5 text-xs font-medium text-foreground">{title}</p>
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[320px] text-left text-xs">
-          <thead className="bg-background/60 text-muted">
-            <tr>
-              <th className="px-3 py-2 font-medium">Strike</th>
-              <th className="px-3 py-2 font-medium">Exp</th>
-              <th className="px-3 py-2 font-medium">Delta</th>
-              <th className="px-3 py-2 font-medium">OI</th>
-              <th className="px-3 py-2 font-medium">Bid</th>
-            </tr>
-          </thead>
-          <tbody>
-            {candidates.map((candidate) => (
-              <tr
-                key={`${candidate.side}-${candidate.strike}-${candidate.expiration}`}
-                className="border-t border-border"
-              >
-                <td className="px-3 py-2">
+      <ul className="space-y-2">
+        {candidates.map((candidate) => (
+          <li
+            key={`${candidate.side}-${candidate.strike}-${candidate.expiration}`}
+            className="rounded-xl border border-border bg-background/60 px-3 py-2.5"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">
                   {formatUsd(candidate.strike, {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 2,
                   })}{" "}
-                  {formatStrikeSide(candidate.side)}
-                </td>
-                <td className="px-3 py-2">
+                  {formatStrikeSide(candidate.side)} ·{" "}
                   {formatExpiration(candidate.expiration)}
-                </td>
-                <td className="px-3 py-2 tabular-nums">
-                  {candidate.delta != null ? candidate.delta.toFixed(2) : "—"}
-                </td>
-                <td className="px-3 py-2 tabular-nums">
-                  {candidate.open_interest ?? "—"}
-                </td>
-                <td className="px-3 py-2 tabular-nums">
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  Δ {candidate.delta != null ? candidate.delta.toFixed(2) : "—"}
+                  {" · "}
+                  OI {candidate.open_interest ?? "—"}
+                  {" · "}
+                  Bid{" "}
                   {candidate.bid != null
                     ? formatUsd(candidate.bid, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })
                     : "—"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  {" · "}
+                  Score {candidate.score.toFixed(2)}
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-foreground">
+                  {candidate.rationale}
+                </p>
+              </div>
+              {onAnalyzeOption && symbol && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onAnalyzeOption(
+                      buildOptionCandidatePrompt(symbol, candidate),
+                    )
+                  }
+                  className="shrink-0 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
+                >
+                  Analyze strike
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -25,6 +25,7 @@ interface ConversationPaneProps {
   loading: boolean;
   onClear?: () => void;
   onFollowUpPrompt?: (prompt: string) => void;
+  historyControl?: React.ReactNode;
 }
 
 function CopyMessageButton({ content }: { content: string }) {
@@ -68,6 +69,7 @@ export function ConversationPane({
   loading,
   onClear,
   onFollowUpPrompt,
+  historyControl,
 }: ConversationPaneProps) {
   const lastUserRef = useRef<HTMLDivElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -125,17 +127,20 @@ export function ConversationPane({
         <div className="text-xs font-medium uppercase tracking-wide text-muted">
           Conversation
         </div>
-        {canClear && (
-          <Button
-            size="xs"
-            variant="ghost"
-            className="text-muted hover:text-foreground"
-            onClick={onClear}
-          >
-            <Trash2 className="h-3 w-3" aria-hidden="true" />
-            Clear
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {historyControl}
+          {canClear && (
+            <Button
+              size="xs"
+              variant="ghost"
+              className="text-muted hover:text-foreground"
+              onClick={onClear}
+            >
+              <Trash2 className="h-3 w-3" aria-hidden="true" />
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
       <div

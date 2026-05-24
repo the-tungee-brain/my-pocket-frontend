@@ -1,11 +1,13 @@
 import type {
   IntelligenceSignal,
+  OptionsStrikeCandidate,
   ProactiveAlert,
   PortfolioIntelligence,
   SignalSeverity,
   SymbolIntelligence,
 } from "@/app/types/intelligence";
 import type { Position, SchwabAccounts } from "@/app/types/schwab";
+import type { SuggestedAnalysisAction } from "@/app/types/schwab";
 import { suggestedActionToQuickActionId } from "@/lib/recentOrders";
 
 const SEVERITY_ORDER: Record<SignalSeverity, number> = {
@@ -148,6 +150,91 @@ export function signalToQuickActionId(
     default:
       return context === "research" ? "key-risks" : "daily-summary";
   }
+}
+
+export function buildOptionCandidatePrompt(
+  symbol: string,
+  candidate: OptionsStrikeCandidate,
+): string {
+  const side =
+    candidate.side === "call" ? "covered call" : "cash-secured put";
+  const expiration = candidate.expiration.slice(0, 10);
+  const delta =
+    candidate.delta != null ? ` (delta ${candidate.delta.toFixed(2)})` : "";
+  const score = candidate.score.toFixed(2);
+
+  return (
+    `Analyze the ${side} at $${candidate.strike} expiring ${expiration} for ${symbol.toUpperCase()}${delta}. ` +
+    `Score ${score}. ${candidate.rationale} ` +
+    `Compare to my current positions and recommend whether to open, roll, or avoid this strike.`
+  );
+}
+
+export function isTaxAction(action: string): boolean {
+  const normalized = action.toLowerCase();
+  return normalized.includes("tax");
+}
+
+export function isWashSaleText(text: string): boolean {
+  return text.toLowerCase().includes("wash sale");
+}
+
+export type TaxAlertItem = {
+  id: string;
+  label: string;
+  reason: string;
+  symbol?: string | null;
+  actionId: string;
+};
+
+export function collectTaxAlertItems(
+  alerts: ProactiveAlert[],
+  suggestedActions: SuggestedAnalysisAction[] = [],
+  symbol?: string | null,
+): TaxAlertItem[] {
+  const symbolUpper = symbol?.toUpperCase() ?? null;
+  const items: TaxAlertItem[] = [];
+  const seen = new Set<string>();
+
+  const add = (item: TaxAlertItem) => {
+    const key = `${item.actionId}:${item.symbol ?? ""}:${item.reason.slice(0, 80)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    items.push(item);
+  };
+
+  for (const alert of alerts) {
+    if (!isTaxAction(alert.action) && !isWashSaleText(alert.reason)) continue;
+    if (symbolUpper && alert.symbol && alert.symbol.toUpperCase() !== symbolUpper) {
+      continue;
+    }
+    add({
+      id: `alert-${alert.action}-${alert.symbol ?? "portfolio"}`,
+      label: alert.label,
+      reason: alert.reason,
+      symbol: alert.symbol,
+      actionId: alertToQuickActionId(alert),
+    });
+  }
+
+  for (const suggestion of suggestedActions) {
+    if (!isTaxAction(suggestion.action) && !isWashSaleText(suggestion.reason)) {
+      continue;
+    }
+    add({
+      id: `suggestion-${suggestion.action}-${suggestion.priority}`,
+      label: suggestion.label,
+      reason: suggestion.reason,
+      symbol: symbolUpper,
+      actionId: suggestedActionToQuickActionId(suggestion.action),
+    });
+  }
+
+  return items.sort((a, b) => {
+    const aWash = isWashSaleText(a.reason) ? 0 : 1;
+    const bWash = isWashSaleText(b.reason) ? 0 : 1;
+    return aWash - bWash;
+  });
 }
 
 export function hasPortfolioBriefContent(

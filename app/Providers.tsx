@@ -81,6 +81,11 @@ type PositionsContextValue = {
     actionId: string;
   }) => Promise<void>;
   hydrateChatFromServer: (activeChatKey: string) => Promise<void>;
+  restoreChatSession: (
+    activeChatKey: string,
+    sessionId: string,
+    messages: ChatMessage[],
+  ) => void;
   clearChatHistory: (activeChatKey: string) => Promise<boolean>;
   account: SchwabAccounts | null;
   cashSecuredPutSummary: CashSecuredPutSummary | null;
@@ -443,6 +448,27 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     [accessToken, ensureSymbolChatState],
   );
 
+  const restoreChatSession = useCallback(
+    (
+      activeChatKey: string,
+      sessionId: string,
+      messages: ChatMessage[],
+    ) => {
+      if (activeChatKey === "__NONE__") return;
+      setChatBySymbol((prev) => ({
+        ...prev,
+        [activeChatKey]: {
+          ...ensureSymbolChatState(activeChatKey, prev[activeChatKey]),
+          messages,
+          sessionId,
+          historyHydrated: true,
+          loading: false,
+        },
+      }));
+    },
+    [ensureSymbolChatState],
+  );
+
   const clearChatHistory = useCallback(
     async (activeChatKey: string): Promise<boolean> => {
       if (!accessToken || activeChatKey === "__NONE__") return false;
@@ -785,6 +811,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       sendPrompt,
       sendQuickAction,
       hydrateChatFromServer,
+      restoreChatSession,
       clearChatHistory,
       account,
       cashSecuredPutSummary,
@@ -809,6 +836,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       sendPrompt,
       sendQuickAction,
       hydrateChatFromServer,
+      restoreChatSession,
       clearChatHistory,
       account,
       cashSecuredPutSummary,
