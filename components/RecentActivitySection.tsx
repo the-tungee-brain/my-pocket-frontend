@@ -1,20 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { ArrowRightLeft, RefreshCw } from "lucide-react";
 import type {
   RecentActivitySummary,
   RecentOrderEntry,
+  RecentOrderLegEntry,
   SuggestedAnalysisAction,
 } from "@/app/types/schwab";
 import { fetchRecentOrders } from "@/lib/apiClient";
 import {
+  formatLegContractLabel,
+  formatLegFillPrice,
+  formatLegPremium,
+  formatLegQuantity,
+  formatLegTotalCash,
+  formatOrderContractLabel,
   formatOrderFillTime,
   formatOrderFillPrice,
   formatOrderPremiumPerContract,
   formatOrderQuantity,
   formatOrderTotalCash,
   formatOrderSide,
+  formatOrderStrategyBadge,
+  groupOrdersForDisplay,
+  isMultiLegOrder,
   pickSuggestedActions,
   suggestedActionToQuickActionId,
 } from "@/lib/recentOrders";
@@ -34,6 +44,107 @@ type Props = {
   className?: string;
 };
 
+function StrategyBadge({ label }: { label: string }) {
+  return (
+    <span className="mt-0.5 inline-flex max-w-full rounded-full bg-accent-muted px-2 py-0.5 text-[10px] font-medium text-accent-strong">
+      {label}
+    </span>
+  );
+}
+
+function OrderLegSubRow({
+  leg,
+  compact,
+}: {
+  leg: RecentOrderLegEntry;
+  compact?: boolean;
+}) {
+  return (
+    <tr className="border-t border-border/60 bg-surface-elevated/20">
+      <td className="px-4 py-2 text-left text-xs text-muted" />
+      <td className="px-4 py-2 text-left text-xs text-muted">
+        <span className="pl-3">↳ {formatLegContractLabel(leg) ?? "Leg"}</span>
+      </td>
+      <td className="px-4 py-2 text-left text-xs text-muted">
+        {formatOrderSide(leg.instruction)}
+      </td>
+      <td className="px-4 py-2 text-right tabular-nums text-xs text-muted">
+        {formatLegQuantity(leg)}
+      </td>
+      <td className="px-4 py-2 text-right tabular-nums text-xs text-muted">
+        {formatLegFillPrice(leg)}
+      </td>
+      <td className="px-4 py-2 text-right tabular-nums text-xs text-muted">
+        {formatLegPremium(leg)}
+      </td>
+      <td className="px-4 py-2 text-right tabular-nums text-xs text-muted">
+        {formatLegTotalCash(leg)}
+      </td>
+      {!compact && <td className="px-4 py-2 text-left text-xs text-muted" />}
+    </tr>
+  );
+}
+
+function OrderRow({
+  order,
+  compact,
+  showRollBadge = true,
+}: {
+  order: RecentOrderEntry;
+  compact?: boolean;
+  showRollBadge?: boolean;
+}) {
+  const contractLabel = formatOrderContractLabel(order);
+  const strategyBadge = showRollBadge ? formatOrderStrategyBadge(order) : null;
+  const extraLegs = (order.legs ?? []).slice(1);
+  const showLegRows = isMultiLegOrder(order) && extraLegs.length > 0;
+
+  return (
+    <>
+      <tr className="border-t border-border">
+        <td className="px-4 py-2.5 text-left text-xs text-muted">
+          {formatOrderFillTime(order.fillTime)}
+        </td>
+        <td className="px-4 py-2.5 text-left text-xs">
+          <div className="font-mono font-medium">{order.symbol}</div>
+          {contractLabel && (
+            <div className="mt-0.5 text-[11px] text-muted">{contractLabel}</div>
+          )}
+          {strategyBadge && <StrategyBadge label={strategyBadge} />}
+        </td>
+        <td className="px-4 py-2.5 text-left text-xs">
+          {formatOrderSide(order.side)}
+        </td>
+        <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+          {formatOrderQuantity(order)}
+        </td>
+        <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+          {formatOrderFillPrice(order)}
+        </td>
+        <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+          {formatOrderPremiumPerContract(order)}
+        </td>
+        <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+          {formatOrderTotalCash(order)}
+        </td>
+        {!compact && (
+          <td className="px-4 py-2.5 text-left text-xs text-muted">
+            {order.orderType ?? "—"}
+          </td>
+        )}
+      </tr>
+      {showLegRows &&
+        extraLegs.map((leg, index) => (
+          <OrderLegSubRow
+            key={`${order.orderId ?? order.fillTime}-leg-${leg.legId ?? index}`}
+            leg={leg}
+            compact={compact}
+          />
+        ))}
+    </>
+  );
+}
+
 function OrderRows({
   orders,
   compact,
@@ -49,6 +160,8 @@ function OrderRows({
     );
   }
 
+  const displayGroups = groupOrdersForDisplay(orders);
+
   return (
     <>
       <div className="hidden sm:block">
@@ -56,82 +169,136 @@ function OrderRows({
           <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
             <tr>
               <th className="w-[12%] px-4 py-2.5 text-left">Filled</th>
-              <th className="w-[10%] px-4 py-2.5 text-left">Symbol</th>
-              <th className="w-[14%] px-4 py-2.5 text-left">Side</th>
+              <th className="w-[18%] px-4 py-2.5 text-left">Symbol / contract</th>
+              <th className="w-[12%] px-4 py-2.5 text-left">Side</th>
               <th className="w-[8%] px-4 py-2.5 text-right">Qty</th>
               <th className="w-[12%] px-4 py-2.5 text-right">Fill</th>
-              <th className="w-[14%] px-4 py-2.5 text-right">Premium</th>
-              <th className="w-[14%] px-4 py-2.5 text-right">Total cash</th>
+              <th className="w-[12%] px-4 py-2.5 text-right">Premium</th>
+              <th className="w-[12%] px-4 py-2.5 text-right">Total cash</th>
               {!compact && (
                 <th className="w-[10%] px-4 py-2.5 text-left">Type</th>
               )}
             </tr>
           </thead>
           <tbody>
-            {orders.map((order, index) => (
-              <tr
-                key={`${order.orderId ?? order.fillTime ?? index}-${order.side}`}
-                className="border-t border-border"
-              >
-                <td className="px-4 py-2.5 text-left text-xs text-muted">
-                  {formatOrderFillTime(order.fillTime)}
-                </td>
-                <td className="px-4 py-2.5 font-mono text-left text-xs font-medium">
-                  {order.symbol}
-                </td>
-                <td className="px-4 py-2.5 text-left text-xs">
-                  {formatOrderSide(order.side)}
-                </td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-xs">
-                  {formatOrderQuantity(order)}
-                </td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-xs">
-                  {formatOrderFillPrice(order)}
-                </td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-xs">
-                  {formatOrderPremiumPerContract(order)}
-                </td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-xs">
-                  {formatOrderTotalCash(order)}
-                </td>
-                {!compact && (
-                  <td className="px-4 py-2.5 text-left text-xs text-muted">
-                    {order.orderType ?? "—"}
-                  </td>
-                )}
-              </tr>
-            ))}
+            {displayGroups.map((group) => {
+              if (group.kind === "roll") {
+                return (
+                  <Fragment key={group.groupId}>
+                    <tr className="border-t border-border bg-accent-muted/20">
+                      <td
+                        colSpan={compact ? 7 : 8}
+                        className="px-4 py-2 text-left text-[11px] font-medium text-accent-strong"
+                      >
+                        {group.label}
+                      </td>
+                    </tr>
+                    {group.orders.map((order, index) => (
+                      <OrderRow
+                        key={`${group.groupId}-${order.orderId ?? index}`}
+                        order={order}
+                        compact={compact}
+                        showRollBadge={false}
+                      />
+                    ))}
+                  </Fragment>
+                );
+              }
+
+              return (
+                <OrderRow
+                  key={`${group.order.orderId ?? group.order.fillTime}-${group.order.side}`}
+                  order={group.order}
+                  compact={compact}
+                />
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       <div className="divide-y divide-border sm:hidden">
-        {orders.map((order, index) => (
-          <div
-            key={`${order.orderId ?? order.fillTime ?? index}-mobile`}
-            className="px-4 py-3"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-sm font-medium">
-                {order.symbol}
-              </span>
-              <span className="text-xs text-muted">
-                {formatOrderFillTime(order.fillTime)}
-              </span>
-            </div>
-            <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted">
-              <span>{formatOrderSide(order.side)}</span>
-              <span className="tabular-nums text-right">
-                {formatOrderQuantity(order)} @ {formatOrderFillPrice(order)}
-                {order.totalCash != null
-                  ? ` (${formatOrderTotalCash(order)} total)`
-                  : ""}
-              </span>
-            </div>
-          </div>
-        ))}
+        {displayGroups.map((group) => {
+          if (group.kind === "roll") {
+            return (
+              <div key={group.groupId} className="bg-accent-muted/10">
+                <div className="border-b border-border px-4 py-2 text-[11px] font-medium text-accent-strong">
+                  {group.label}
+                </div>
+                {group.orders.map((order, index) => (
+                  <OrderMobileCard
+                    key={`${group.groupId}-${order.orderId ?? index}`}
+                    order={order}
+                    showRollBadge={false}
+                  />
+                ))}
+              </div>
+            );
+          }
+
+          return (
+            <OrderMobileCard
+              key={`${group.order.orderId ?? group.order.fillTime}-mobile`}
+              order={group.order}
+            />
+          );
+        })}
       </div>
     </>
+  );
+}
+
+function OrderMobileCard({
+  order,
+  showRollBadge = true,
+}: {
+  order: RecentOrderEntry;
+  showRollBadge?: boolean;
+}) {
+  const contractLabel = formatOrderContractLabel(order);
+  const strategyBadge = showRollBadge ? formatOrderStrategyBadge(order) : null;
+  const extraLegs = (order.legs ?? []).slice(1);
+
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-sm font-medium">{order.symbol}</span>
+        <span className="text-xs text-muted">
+          {formatOrderFillTime(order.fillTime)}
+        </span>
+      </div>
+      {contractLabel && (
+        <p className="mt-0.5 text-[11px] text-muted">{contractLabel}</p>
+      )}
+      {strategyBadge && (
+        <div className="mt-1">
+          <StrategyBadge label={strategyBadge} />
+        </div>
+      )}
+      <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted">
+        <span>{formatOrderSide(order.side)}</span>
+        <span className="tabular-nums text-right">
+          {formatOrderQuantity(order)} @ {formatOrderFillPrice(order)}
+          {order.totalCash != null
+            ? ` (${formatOrderTotalCash(order)} total)`
+            : ""}
+        </span>
+      </div>
+      {extraLegs.map((leg, index) => (
+        <div
+          key={`${order.orderId ?? order.fillTime}-mobile-leg-${leg.legId ?? index}`}
+          className="mt-1 border-l border-border pl-3 text-[11px] text-muted"
+        >
+          <span>{formatOrderSide(leg.instruction)}</span>
+          {" · "}
+          <span>{formatLegContractLabel(leg) ?? "Leg"}</span>
+          {" · "}
+          <span className="tabular-nums">
+            {formatLegQuantity(leg)} @ {formatLegFillPrice(leg)}
+          </span>
+        </div>
+      ))}
+    </div>
   );
 }
 

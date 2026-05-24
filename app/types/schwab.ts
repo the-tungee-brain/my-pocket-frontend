@@ -179,6 +179,23 @@ export type AssignmentRiskSummary = {
   positions: AssignmentRiskPositionEntry[];
 };
 
+export type RecentOrderLegEntry = {
+  legId?: number | null;
+  instruction: string;
+  quantity?: number | null;
+  assetType?: string | null;
+  optionSymbol?: string | null;
+  underlyingSymbol?: string | null;
+  strike?: number | null;
+  expiration?: string | null;
+  putCall?: string | null;
+  contractLabel?: string | null;
+  averageFillPrice?: number | null;
+  premiumPerContract?: number | null;
+  totalCash?: number | null;
+  positionEffect?: string | null;
+};
+
 export type RecentOrderEntry = {
   orderId?: number | null;
   symbol: string;
@@ -194,6 +211,16 @@ export type RecentOrderEntry = {
   taxLotMethod?: string | null;
   assetType?: string | null;
   description?: string | null;
+  legCount?: number;
+  strategyLabel?: string | null;
+  contractLabel?: string | null;
+  strike?: number | null;
+  expiration?: string | null;
+  putCall?: string | null;
+  legs?: RecentOrderLegEntry[];
+  activityGroupId?: string | null;
+  activityGroupKind?: "roll" | "spread" | string | null;
+  activityGroupLabel?: string | null;
 };
 
 export type SuggestedAnalysisAction = {
