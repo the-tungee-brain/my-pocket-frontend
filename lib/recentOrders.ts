@@ -46,7 +46,7 @@ export function formatOrderFillPrice(order: RecentOrderEntry): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  return isOptionOrder(order) ? `${price}/ct` : price;
+  return isOptionOrder(order) ? `${price}/ct` : `${price}/sh`;
 }
 
 export function formatOrderPremiumPerContract(order: RecentOrderEntry): string {
