@@ -6,6 +6,7 @@ import {
   ResearchBulletList,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
+import { StreamingResearchContent } from "@/components/StreamingResearchContent";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 type BusinessSectionProps = {
@@ -15,16 +16,27 @@ type BusinessSectionProps = {
 export function BusinessSection({ symbol }: BusinessSectionProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
-  const { business, isLoading, error } = useBusinessDetails(symbol, {
-    accessToken,
-  });
+  const { business, streamMarkdown, isStreaming, isLoading, error } =
+    useBusinessDetails(symbol, {
+      accessToken,
+    });
 
-  if (isLoading) {
+  if (isLoading && !business && !streamMarkdown) {
     return <p className="text-sm text-muted">Loading business details…</p>;
   }
 
-  if (error) {
+  if (error && !business && !streamMarkdown) {
     return <ErrorBanner message={error} />;
+  }
+
+  if (!business && streamMarkdown) {
+    return (
+      <StreamingResearchContent
+        markdown={streamMarkdown}
+        isStreaming={isStreaming}
+        statusLabel="Generating business overview…"
+      />
+    );
   }
 
   if (!business) {

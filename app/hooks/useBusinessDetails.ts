@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/apiClient";
+import { apiFetch, streamGet } from "@/lib/apiClient";
+import { isAbortError } from "@/lib/isAbortError";
 
 export type BusinessBlock = {
   whatTheyDo: string;
@@ -25,6 +26,8 @@ export function useBusinessDetails(
   { accessToken }: UseBusinessDetailsOptions = {},
 ) {
   const [business, setBusiness] = useState<BusinessBlock | null>(null);
+  const [streamMarkdown, setStreamMarkdown] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(!!symbol);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,38 +36,46 @@ export function useBusinessDetails(
 
     if (!key) {
       setBusiness(null);
+      setStreamMarkdown("");
+      setIsStreaming(false);
       setIsLoading(false);
       setError(null);
       return;
     }
 
+    const symbolKey = key;
+
     if (!accessToken) {
       setBusiness(null);
+      setStreamMarkdown("");
+      setIsStreaming(false);
       setIsLoading(false);
       setError("Missing access token");
       return;
     }
 
-    const cached = businessDetailsCache.get(key);
+    const cached = businessDetailsCache.get(symbolKey);
     if (cached) {
       setBusiness(cached);
+      setStreamMarkdown("");
+      setIsStreaming(false);
       setIsLoading(false);
       setError(null);
       return;
     }
 
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
+    const token = accessToken;
 
-    async function load() {
-      setIsLoading(true);
-      setError(null);
-
+    async function loadJson() {
       try {
         const res = await apiFetch(
-          `/research/business?symbol=${encodeURIComponent(key!)}`,
+          `/research/business?symbol=${encodeURIComponent(symbolKey)}`,
           {
             method: "GET",
-            accessToken: accessToken!,
+            accessToken: token,
+            signal,
           },
         );
 
@@ -73,28 +84,67 @@ export function useBusinessDetails(
         }
 
         const data: BusinessBlock = await res.json();
-        if (cancelled) return;
+        if (signal.aborted) return;
 
-        businessDetailsCache.set(key!, data);
+        businessDetailsCache.set(symbolKey, data);
         setBusiness(data);
+        setStreamMarkdown("");
         setError(null);
-      } catch (e: any) {
-        if (cancelled) return;
-        setError(e?.message ?? "Error fetching business details");
-        setBusiness(null);
+      } catch (e: unknown) {
+        if (signal.aborted || isAbortError(e)) return;
+        const message =
+          e instanceof Error ? e.message : "Error fetching business details";
+        setError((prev) => prev ?? message);
       } finally {
-        if (!cancelled) {
+        if (!signal.aborted) {
           setIsLoading(false);
+          setIsStreaming(false);
         }
       }
     }
 
-    load();
+    async function loadStream() {
+      setIsStreaming(true);
+      let buffer = "";
+
+      try {
+        await streamGet(
+          `/research/business?symbol=${encodeURIComponent(symbolKey)}&stream=true`,
+          token,
+          (chunk) => {
+            if (signal.aborted) return;
+            buffer += chunk;
+            setStreamMarkdown(buffer);
+          },
+          { signal },
+        );
+        if (signal.aborted) return;
+        setError(null);
+      } catch (e: unknown) {
+        if (signal.aborted || isAbortError(e)) return;
+        const message =
+          e instanceof Error ? e.message : "Error streaming business details";
+        setError((prev) => prev ?? message);
+      } finally {
+        if (!signal.aborted) {
+          setIsStreaming(false);
+          setIsLoading((loading) => loading && !businessDetailsCache.has(symbolKey));
+        }
+      }
+    }
+
+    setBusiness(null);
+    setStreamMarkdown("");
+    setIsLoading(true);
+    setError(null);
+
+    void loadStream();
+    void loadJson();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [symbol, accessToken]);
 
-  return { business, isLoading, error };
+  return { business, streamMarkdown, isStreaming, isLoading, error };
 }

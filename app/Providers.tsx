@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { useSession } from "next-auth/react";
-import { apiFetch, streamAnalysis } from "@/lib/apiClient";
+import { apiFetch, streamAnalysis, streamResearchChat } from "@/lib/apiClient";
 import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
 import { DEFAULT_CHAT_MODEL } from "@/lib/chatModels";
@@ -18,7 +18,7 @@ import {
   loadPersistedChat,
   persistChatState,
 } from "@/lib/chatPersistence";
-import { formatQuickActionMessage, isFreeFormQuickAction } from "@/lib/quickActions";
+import { formatQuickActionMessage, getQuickActionApiAction, isFreeFormQuickAction } from "@/lib/quickActions";
 import { Position, SchwabAccounts } from "./types/schwab";
 import { MainView } from "@/components/NavList";
 import { usePathname } from "next/navigation";
@@ -262,54 +262,77 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
             ? selectedSymbol
             : (selectedSymbol ?? "UNKNOWN");
 
-      try {
-        let assistantContent = "";
+      const appendAssistantChunk = (chunk: string, assistantContent: { current: string }) => {
+        assistantContent.current += chunk;
 
-        await streamAnalysis(
-          {
-            account: account,
-            positions: positionsForSelectedSymbol,
-            symbol: symbolForApi,
-            action: "free-form",
-            prompt: userInput,
-            model: state.model,
-          },
-          accessToken,
-          (chunk) => {
-            assistantContent += chunk;
+        setChatBySymbol((prev) => {
+          const prevState = ensureSymbolChatState(
+            activeChatKey,
+            prev[activeChatKey],
+          );
+          const messages = [...prevState.messages];
+          const last = messages[messages.length - 1];
 
-            setChatBySymbol((prev) => {
-              const prevState = ensureSymbolChatState(
-                activeChatKey,
-                prev[activeChatKey],
-              );
-              const messages = [...prevState.messages];
-              const last = messages[messages.length - 1];
-
-              if (last && last.role === "assistant") {
-                messages[messages.length - 1] = {
-                  ...last,
-                  content: assistantContent,
-                };
-              } else {
-                messages.push({
-                  id: `assistant-${activeChatKey}-${Date.now()}`,
-                  role: "assistant",
-                  content: assistantContent,
-                });
-              }
-
-              return {
-                ...prev,
-                [activeChatKey]: {
-                  ...prevState,
-                  messages,
-                  loading: true,
-                },
-              };
+          if (last && last.role === "assistant") {
+            messages[messages.length - 1] = {
+              ...last,
+              content: assistantContent.current,
+            };
+          } else {
+            messages.push({
+              id: `assistant-${activeChatKey}-${Date.now()}`,
+              role: "assistant",
+              content: assistantContent.current,
             });
-          },
-        );
+          }
+
+          return {
+            ...prev,
+            [activeChatKey]: {
+              ...prevState,
+              messages,
+              loading: true,
+            },
+          };
+        });
+      };
+
+      try {
+        const assistantContent = { current: "" };
+
+        if (selectedView === "research") {
+          if (!symbolForApi) return;
+
+          await streamResearchChat(
+            {
+              symbol: symbolForApi,
+              prompt: userInput,
+              model: state.model,
+            },
+            accessToken,
+            (chunk) => appendAssistantChunk(chunk, assistantContent),
+          );
+        } else {
+          await streamAnalysis(
+            {
+              account: account,
+              positions: positionsForSelectedSymbol,
+              symbol: symbolForApi,
+              action: "free-form",
+              prompt: userInput,
+              model: state.model,
+            },
+            accessToken,
+            (chunk) => appendAssistantChunk(chunk, assistantContent),
+          );
+        }
+
+        if (!assistantContent.current.trim()) {
+          appendAssistantChunk(
+            "Sorry, I didn't get a response back. Please try again or rephrase your question.",
+            assistantContent,
+          );
+        }
       } catch {
         setChatBySymbol((prev) => {
           const prevState = ensureSymbolChatState(
@@ -327,7 +350,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
                   id: `error-${activeChatKey}-${Date.now()}`,
                   role: "assistant",
                   content:
-                    "Sorry, something went wrong while analyzing this position.",
+                    selectedView === "research"
+                      ? "Sorry, something went wrong while researching this stock."
+                      : "Sorry, something went wrong while analyzing this position.",
                 },
               ],
             },
@@ -410,54 +435,77 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
       const freeForm = isFreeFormQuickAction(actionId);
 
-      try {
-        let assistantContent = "";
+      const appendAssistantChunk = (chunk: string, assistantContent: { current: string }) => {
+        assistantContent.current += chunk;
 
-        await streamAnalysis(
-          {
-            account: account,
-            positions: positionsForSelectedSymbol ?? [],
-            symbol: symbolForApi,
-            action: freeForm ? "free-form" : actionId,
-            prompt: freeForm ? userMessage.content : null,
-            model: state.model,
-          },
-          accessToken,
-          (chunk) => {
-            assistantContent += chunk;
+        setChatBySymbol((prev) => {
+          const prevState = ensureSymbolChatState(
+            activeChatKey,
+            prev[activeChatKey],
+          );
+          const messages = [...prevState.messages];
+          const last = messages[messages.length - 1];
 
-            setChatBySymbol((prev) => {
-              const prevState = ensureSymbolChatState(
-                activeChatKey,
-                prev[activeChatKey],
-              );
-              const messages = [...prevState.messages];
-              const last = messages[messages.length - 1];
-
-              if (last && last.role === "assistant") {
-                messages[messages.length - 1] = {
-                  ...last,
-                  content: assistantContent,
-                };
-              } else {
-                messages.push({
-                  id: `assistant-${activeChatKey}-${actionId}-${Date.now()}`,
-                  role: "assistant",
-                  content: assistantContent,
-                });
-              }
-
-              return {
-                ...prev,
-                [activeChatKey]: {
-                  ...prevState,
-                  messages,
-                  loading: true,
-                },
-              };
+          if (last && last.role === "assistant") {
+            messages[messages.length - 1] = {
+              ...last,
+              content: assistantContent.current,
+            };
+          } else {
+            messages.push({
+              id: `assistant-${activeChatKey}-${actionId}-${Date.now()}`,
+              role: "assistant",
+              content: assistantContent.current,
             });
-          },
-        );
+          }
+
+          return {
+            ...prev,
+            [activeChatKey]: {
+              ...prevState,
+              messages,
+              loading: true,
+            },
+          };
+        });
+      };
+
+      try {
+        const assistantContent = { current: "" };
+
+        if (selectedView === "research") {
+          if (!symbolForApi) return;
+
+          await streamResearchChat(
+            {
+              symbol: symbolForApi,
+              prompt: userMessage.content,
+              model: state.model,
+            },
+            accessToken,
+            (chunk) => appendAssistantChunk(chunk, assistantContent),
+          );
+        } else {
+          await streamAnalysis(
+            {
+              account: account,
+              positions: positionsForSelectedSymbol ?? [],
+              symbol: symbolForApi,
+              action: freeForm ? "free-form" : getQuickActionApiAction(actionId),
+              prompt: freeForm ? userMessage.content : null,
+              model: state.model,
+            },
+            accessToken,
+            (chunk) => appendAssistantChunk(chunk, assistantContent),
+          );
+        }
+
+        if (!assistantContent.current.trim()) {
+          appendAssistantChunk(
+            "Sorry, I didn't get a response back. Please try again or rephrase your question.",
+            assistantContent,
+          );
+        }
       } catch {
         setChatBySymbol((prev) => {
           const prevState = ensureSymbolChatState(
@@ -475,7 +523,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
                   id: `error-${activeChatKey}-${actionId}-${Date.now()}`,
                   role: "assistant",
                   content:
-                    "Sorry, something went wrong while analyzing this position.",
+                    selectedView === "research"
+                      ? "Sorry, something went wrong while researching this stock."
+                      : "Sorry, something went wrong while analyzing this position.",
                 },
               ],
             },

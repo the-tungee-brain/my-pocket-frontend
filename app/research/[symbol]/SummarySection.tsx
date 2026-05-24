@@ -7,6 +7,7 @@ import {
   ResearchBulletList,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
+import { StreamingResearchContent } from "@/components/StreamingResearchContent";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FileText } from "lucide-react";
@@ -18,9 +19,10 @@ type SummarySectionProps = {
 export function SummarySection({ symbol }: SummarySectionProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
-  const { summary, isLoading, error } = useStockSummary(symbol, {
-    accessToken,
-  });
+  const { summary, streamMarkdown, isStreaming, isLoading, error } =
+    useStockSummary(symbol, {
+      accessToken,
+    });
 
   const sentiment = summary?.sentiment;
 
@@ -31,7 +33,7 @@ export function SummarySection({ symbol }: SummarySectionProps) {
         ? "bg-danger/10 text-danger border-danger/30"
         : "bg-muted-bg text-muted border-border";
 
-  if (isLoading && !summary) {
+  if (isLoading && !summary && !streamMarkdown) {
     return (
       <div className="space-y-3">
         <div className="h-4 w-3/4 animate-pulse rounded bg-muted-bg" />
@@ -41,8 +43,18 @@ export function SummarySection({ symbol }: SummarySectionProps) {
     );
   }
 
-  if (error) {
+  if (error && !summary && !streamMarkdown) {
     return <ErrorBanner message={error} />;
+  }
+
+  if (!summary && streamMarkdown) {
+    return (
+      <StreamingResearchContent
+        markdown={streamMarkdown}
+        isStreaming={isStreaming}
+        statusLabel="Generating summary…"
+      />
+    );
   }
 
   if (!summary) {

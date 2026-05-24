@@ -13,16 +13,45 @@ import type { MainView } from "@/components/NavList";
 export type QuickAction = {
   id: string;
   label: string;
+  /** Value sent to the backend `action` field (natural language supported). */
+  apiAction?: string;
   icon: LucideIcon;
   /** When set, sends a free-form prompt instead of a backend action id. */
   prompt?: (target: string) => string;
+  /** Natural-language text shown as the user message in chat. */
+  message?: (target: string) => string;
 };
 
 export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
-  { id: "daily-summary", label: "Daily summary", icon: CalendarDays },
-  { id: "risk-check", label: "Risk check", icon: ShieldAlert },
-  { id: "tax-angle", label: "Tax angle", icon: Scale },
-  { id: "what-changed", label: "What changed", icon: CircleHelp },
+  {
+    id: "daily-summary",
+    label: "Daily summary",
+    apiAction: "daily summary",
+    message: (target) => `Give me a daily summary of ${target}.`,
+    icon: CalendarDays,
+  },
+  {
+    id: "risk-check",
+    label: "Risk check",
+    apiAction: "risk check",
+    message: (target) => `What are the main risks in ${target} right now?`,
+    icon: ShieldAlert,
+  },
+  {
+    id: "tax-angle",
+    label: "Tax angle",
+    apiAction: "tax angle",
+    message: (target) =>
+      `What tax considerations should I keep in mind for ${target}?`,
+    icon: Scale,
+  },
+  {
+    id: "what-changed",
+    label: "What changed",
+    apiAction: "what changed",
+    message: (target) => `What changed in ${target} recently?`,
+    icon: CircleHelp,
+  },
 ];
 
 export const RESEARCH_QUICK_ACTIONS: QuickAction[] = [
@@ -75,12 +104,19 @@ export function getQuickActionLabel(actionId: string): string {
   return findQuickAction(actionId)?.label ?? actionId;
 }
 
+export function getQuickActionApiAction(actionId: string): string {
+  const action = findQuickAction(actionId);
+  if (!action) return actionId;
+  return action.apiAction ?? action.label;
+}
+
 export function formatQuickActionMessage(
   actionId: string,
   target: string,
 ): string {
   const action = findQuickAction(actionId);
   if (action?.prompt) return action.prompt(target);
+  if (action?.message) return action.message(target);
 
   const actionLabel = getQuickActionLabel(actionId);
   return `${actionLabel} for ${target}`;

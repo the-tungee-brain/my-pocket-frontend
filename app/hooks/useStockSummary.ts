@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/apiClient";
+import { apiFetch, streamGet } from "@/lib/apiClient";
+import { isAbortError } from "@/lib/isAbortError";
 
 export type Sentiment = "Bullish" | "Neutral" | "Bearish";
 
@@ -27,6 +28,8 @@ export function useStockSummary(
   { accessToken }: UseStockSummaryOptions = {},
 ) {
   const [summary, setSummary] = useState<StockSummary | null>(null);
+  const [streamMarkdown, setStreamMarkdown] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(!!symbol);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,38 +38,46 @@ export function useStockSummary(
 
     if (!key) {
       setSummary(null);
+      setStreamMarkdown("");
+      setIsStreaming(false);
       setIsLoading(false);
       setError(null);
       return;
     }
 
+    const symbolKey = key;
+
     if (!accessToken) {
       setSummary(null);
+      setStreamMarkdown("");
+      setIsStreaming(false);
       setIsLoading(false);
       setError("Missing access token");
       return;
     }
 
-    const cached = stockSummaryCache.get(key);
+    const cached = stockSummaryCache.get(symbolKey);
     if (cached) {
       setSummary(cached);
+      setStreamMarkdown("");
+      setIsStreaming(false);
       setIsLoading(false);
       setError(null);
       return;
     }
 
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
+    const token = accessToken;
 
-    async function load() {
-      setIsLoading(true);
-      setError(null);
-
+    async function loadJson() {
       try {
         const res = await apiFetch(
-          `/research/summary?symbol=${encodeURIComponent(key!)}`,
+          `/research/summary?symbol=${encodeURIComponent(symbolKey)}`,
           {
             method: "GET",
-            accessToken: accessToken!,
+            accessToken: token,
+            signal,
           },
         );
 
@@ -75,28 +86,67 @@ export function useStockSummary(
         }
 
         const data: StockSummary = await res.json();
-        if (cancelled) return;
+        if (signal.aborted) return;
 
-        stockSummaryCache.set(key!, data);
+        stockSummaryCache.set(symbolKey, data);
         setSummary(data);
+        setStreamMarkdown("");
         setError(null);
-      } catch (e: any) {
-        if (cancelled) return;
-        setError(e?.message ?? "Error fetching stock summary");
-        setSummary(null);
+      } catch (e: unknown) {
+        if (signal.aborted || isAbortError(e)) return;
+        const message =
+          e instanceof Error ? e.message : "Error fetching stock summary";
+        setError((prev) => prev ?? message);
       } finally {
-        if (!cancelled) {
+        if (!signal.aborted) {
           setIsLoading(false);
+          setIsStreaming(false);
         }
       }
     }
 
-    load();
+    async function loadStream() {
+      setIsStreaming(true);
+      let buffer = "";
+
+      try {
+        await streamGet(
+          `/research/summary?symbol=${encodeURIComponent(symbolKey)}&stream=true`,
+          token,
+          (chunk) => {
+            if (signal.aborted) return;
+            buffer += chunk;
+            setStreamMarkdown(buffer);
+          },
+          { signal },
+        );
+        if (signal.aborted) return;
+        setError(null);
+      } catch (e: unknown) {
+        if (signal.aborted || isAbortError(e)) return;
+        const message =
+          e instanceof Error ? e.message : "Error streaming stock summary";
+        setError((prev) => prev ?? message);
+      } finally {
+        if (!signal.aborted) {
+          setIsStreaming(false);
+          setIsLoading((loading) => loading && !stockSummaryCache.has(symbolKey));
+        }
+      }
+    }
+
+    setSummary(null);
+    setStreamMarkdown("");
+    setIsLoading(true);
+    setError(null);
+
+    void loadStream();
+    void loadJson();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [symbol, accessToken]);
 
-  return { summary, isLoading, error };
+  return { summary, streamMarkdown, isStreaming, isLoading, error };
 }
