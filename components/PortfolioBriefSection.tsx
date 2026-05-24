@@ -87,10 +87,6 @@ export function PortfolioBriefSection({
 
   const hasContent = hasPortfolioBriefContent(mergedBrief);
 
-  if (!loading && !error && !hasContent) {
-    return null;
-  }
-
   const signals = sortSignalsBySeverity(mergedBrief?.signals ?? []);
   const alerts = dedupeAlerts([
     ...(mergedBrief?.alerts ?? []),
@@ -263,7 +259,9 @@ export function PortfolioBriefSection({
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                 <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                Signals
+                {signals.some((signal) => signal.kind === "holding")
+                  ? "Top holdings"
+                  : "Signals"}
               </div>
               <ul className="space-y-2">
                 {signals.slice(0, 5).map((signal, index) => (
@@ -284,6 +282,13 @@ export function PortfolioBriefSection({
                 ))}
               </ul>
             </div>
+          )}
+
+          {!loading && !error && !hasContent && (
+            <p className="text-sm text-muted">
+              No urgent signals right now. Use suggested actions below or ask
+              the assistant for a daily summary or risk check.
+            </p>
           )}
 
           {!!alerts.length && onRunAlert && (

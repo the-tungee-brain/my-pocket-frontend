@@ -49,7 +49,13 @@ export async function fetchPortfolioBrief(
   );
 
   if (!res.ok) {
-    throw new Error(`Failed to load portfolio brief (${res.status})`);
+    const error = new Error(
+      res.status === 404
+        ? "Portfolio brief endpoint is not available."
+        : `Failed to load portfolio brief (${res.status})`,
+    ) as Error & { status?: number };
+    error.status = res.status;
+    throw error;
   }
 
   return res.json() as Promise<PortfolioIntelligence>;

@@ -1,4 +1,9 @@
-import type { ProactiveAlert, SignalSeverity } from "@/app/types/intelligence";
+import type {
+  ProactiveAlert,
+  PortfolioIntelligence,
+  SignalSeverity,
+} from "@/app/types/intelligence";
+import type { Position, SchwabAccounts } from "@/app/types/schwab";
 import { suggestedActionToQuickActionId } from "@/lib/recentOrders";
 
 const SEVERITY_ORDER: Record<SignalSeverity, number> = {
@@ -56,7 +61,7 @@ export function dedupeAlerts(alerts: ProactiveAlert[]): ProactiveAlert[] {
 }
 
 export function hasPortfolioBriefContent(
-  brief: import("@/app/types/intelligence").PortfolioIntelligence | null,
+  brief: PortfolioIntelligence | null,
 ): boolean {
   if (!brief) return false;
   return (
@@ -67,4 +72,82 @@ export function hasPortfolioBriefContent(
     (brief.digest?.top_news.length ?? 0) > 0 ||
     (brief.digest?.earnings_this_week.length ?? 0) > 0
   );
+}
+
+function positionSymbol(position: Position): string {
+  if (position.instrument.assetType === "OPTION") {
+    return (
+      position.instrument.underlyingSymbol ?? position.instrument.symbol
+    ).toUpperCase();
+  }
+  return position.instrument.symbol.toUpperCase();
+}
+
+/** Lightweight brief when the API intelligence layer is unavailable. */
+export function buildLocalPortfolioBrief(
+  positions: Position[],
+  account: SchwabAccounts | null,
+  alerts: ProactiveAlert[] = [],
+): PortfolioIntelligence | null {
+  if (!account || !positions.length) return null;
+
+  const bySymbol = new Map<string, number>();
+  for (const position of positions) {
+    const symbol = positionSymbol(position);
+    bySymbol.set(
+      symbol,
+      (bySymbol.get(symbol) ?? 0) + Math.abs(position.marketValue),
+    );
+  }
+
+  const liquidation =
+    account.securitiesAccount.currentBalances.liquidationValue ?? 0;
+  const totalMarketValue = [...bySymbol.values()].reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+  const weightBase = liquidation > 0 ? liquidation : totalMarketValue;
+  if (weightBase <= 0) {
+    return alerts.length ? { signals: [], digest: null, alerts } : null;
+  }
+
+  const signals: PortfolioIntelligence["signals"] = [];
+  const ranked = [...bySymbol.entries()].sort((a, b) => b[1] - a[1]);
+
+  for (const [symbol, marketValue] of ranked) {
+    const weight = (marketValue / weightBase) * 100;
+    if (weight >= 30) {
+      signals.push({
+        kind: "concentration",
+        severity: "critical",
+        message: `${symbol} is ${weight.toFixed(1)}% of portfolio — above the 30% concentration limit.`,
+        symbol,
+      });
+    } else if (weight >= 20) {
+      signals.push({
+        kind: "concentration",
+        severity: "warning",
+        message: `${symbol} is ${weight.toFixed(1)}% of portfolio — elevated concentration.`,
+        symbol,
+      });
+    }
+  }
+
+  if (!signals.length) {
+    for (const [symbol, marketValue] of ranked.slice(0, 5)) {
+      const weight = (marketValue / weightBase) * 100;
+      signals.push({
+        kind: "holding",
+        severity: "info",
+        message: `${symbol} is ${weight.toFixed(1)}% of portfolio.`,
+        symbol,
+      });
+    }
+  }
+
+  return {
+    signals: sortSignalsBySeverity(signals),
+    digest: null,
+    alerts: dedupeAlerts(alerts),
+  };
 }

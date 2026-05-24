@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { usePositionsContext } from "../Providers";
 import { useTabs } from "@/app/contexts/TabContext";
@@ -13,7 +13,10 @@ import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { usePortfolioBrief } from "@/app/hooks/usePortfolioBrief";
 import type { ProactiveAlert } from "@/app/types/intelligence";
-import { alertToQuickActionId } from "@/lib/intelligence";
+import {
+  alertToQuickActionId,
+  buildLocalPortfolioBrief,
+} from "@/lib/intelligence";
 
 export default function PortfolioPage() {
   const router = useRouter();
@@ -28,11 +31,19 @@ export default function PortfolioPage() {
     account,
     recentActivity,
     proactiveAlerts,
+    portfolioBrief: accountBrief,
     refreshPositions,
     sessionAccessToken,
     sendQuickAction,
   } = usePositionsContext();
   const { activeTab } = useTabs();
+
+  const localBrief = useMemo(
+    () => buildLocalPortfolioBrief(allPositions, account, proactiveAlerts),
+    [allPositions, account, proactiveAlerts],
+  );
+
+  const seedBrief = accountBrief ?? localBrief;
 
   const {
     brief,
@@ -42,7 +53,10 @@ export default function PortfolioPage() {
     refetch: refetchBrief,
   } = usePortfolioBrief(sessionAccessToken, {
     enabled: !loading && allPositions.length > 0,
+    initialBrief: seedBrief,
   });
+
+  const displayBrief = brief ?? seedBrief;
 
   const showNewsHint =
     activeTab === "assistant" && !loading && symbols.length > 0;
@@ -87,6 +101,9 @@ export default function PortfolioPage() {
     refetchBrief();
   }, [refreshPositions, refetchBrief]);
 
+  const showBriefSection =
+    !loading && sessionAccessToken && allPositions.length > 0;
+
   return (
     <>
       {error && <ErrorBanner message={error} className="mb-3" />}
@@ -95,13 +112,13 @@ export default function PortfolioPage() {
 
       {showNewsHint && <NewsHintBanner symbols={symbols} />}
 
-      {!loading && sessionAccessToken && allPositions.length > 0 && (
+      {showBriefSection && (
         <PortfolioBriefSection
           className="mb-4"
-          brief={brief}
+          brief={displayBrief}
           fallbackAlerts={proactiveAlerts}
-          loading={briefLoading}
-          error={briefError}
+          loading={briefLoading && !displayBrief}
+          error={displayBrief ? null : briefError}
           lastUpdated={briefLastUpdated}
           onRefresh={handleRefreshAll}
           onRunAlert={handleRunAlert}
