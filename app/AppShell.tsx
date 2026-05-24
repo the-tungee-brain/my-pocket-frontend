@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu, Search } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChatBox } from "@/components/ChatBox";
 import { ConversationPane } from "@/components/ConversationPane";
 import { DesktopNav } from "@/components/DesktopNav";
@@ -10,6 +10,7 @@ import { SchwabConnectCard } from "@/components/SchwabConnectCard";
 import { Button } from "@/components/ui/Button";
 import { useTabs } from "./contexts/TabContext";
 import { usePositionsContext } from "./Providers";
+import { useInsights } from "./hooks/useInsights";
 
 const MIN_ROWS = 1;
 const MAX_ROWS = 24;
@@ -29,6 +30,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ensureSymbolChatState,
     sendPrompt,
     sendQuickAction,
+    account,
+    sessionAccessToken,
   } = usePositionsContext();
 
   const { activeTab } = useTabs();
@@ -44,6 +47,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const currentChat =
     activeChatKey === "__NONE__" ? undefined : chatBySymbol[activeChatKey];
+
+  const insightsPositions =
+    selectedView === "portfolio" ? allPositions : positionsForSelectedSymbol;
+
+  const insightsLabel = useMemo(() => {
+    if (activeTab !== "assistant" || selectedView === "research") return null;
+    if (!insightsPositions?.length) return null;
+    return selectedView === "portfolio" ? "PORTFOLIO" : selectedSymbol;
+  }, [
+    activeTab,
+    selectedView,
+    insightsPositions,
+    selectedSymbol,
+  ]);
+
+  const { loading: insightsLoading } = useInsights(
+    {
+      label: insightsLabel,
+      positions: insightsLabel ? insightsPositions : null,
+      account,
+      accessToken: sessionAccessToken || null,
+    },
+    "gpt-5.4",
+  );
 
   const handleChatInputChange = (value: string) => {
     if (activeChatKey === "__NONE__") return;
@@ -97,7 +124,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleSendMessage = async () => {
     if (activeChatKey === "__NONE__") return;
-    if (currentChat?.loading) return;
+    if (currentChat?.loading || insightsLoading) return;
     const input = (currentChat?.input ?? "").trim();
     if (!input) return;
 
@@ -117,6 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleQuickAction = async (id: string) => {
     if (activeChatKey === "__NONE__") return;
+    if (currentChat?.loading || insightsLoading) return;
 
     await sendQuickAction({
       activeChatKey,
@@ -220,6 +248,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   mode={selectedView}
                   selectedSymbol={selectedSymbol}
                   currentChat={currentChat}
+                  insightsLoading={insightsLoading}
                   inputRows={inputRows}
                   modelMenuRef={modelMenuRef}
                   onChangeInput={handleChatInputChange}

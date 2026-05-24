@@ -33,6 +33,7 @@ interface ChatBoxProps {
   mode: MainView;
   selectedSymbol: string | null;
   currentChat: SymbolChatState | undefined;
+  insightsLoading?: boolean;
   inputRows: number;
   modelMenuRef: RefObject<HTMLDivElement | null>;
   onChangeInput: (value: string) => void;
@@ -46,6 +47,7 @@ export function ChatBox({
   mode,
   selectedSymbol,
   currentChat,
+  insightsLoading = false,
   inputRows,
   modelMenuRef,
   onChangeInput,
@@ -61,8 +63,9 @@ export function ChatBox({
         ? `your ${selectedSymbol} position`
         : "this position";
   const inputValue = currentChat?.input ?? "";
-  const isLoading = !!currentChat?.loading;
-  const canSend = !isLoading && inputValue.trim().length > 0;
+  const isChatLoading = !!currentChat?.loading;
+  const isBusy = isChatLoading || insightsLoading;
+  const canSend = !isBusy && inputValue.trim().length > 0;
 
   return (
     <div className="bg-gradient-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
@@ -77,7 +80,7 @@ export function ChatBox({
 
         <QuickAnalysisBar
           symbol={mode === "portfolio" ? "PORTFOLIO" : (selectedSymbol ?? "")}
-          loading={isLoading}
+          loading={isBusy}
           onRunAction={(id) => void onSendQuickAction(id)}
         />
 
@@ -90,12 +93,14 @@ export function ChatBox({
         >
           <textarea
             rows={inputRows}
-            disabled={isLoading}
+            disabled={isBusy}
             aria-label={`Ask about ${placeholderLabel}`}
             className="max-h-52 min-h-12 w-full resize-none rounded-xl bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground outline-none ring-1 ring-transparent transition placeholder:text-neutral-500 focus:ring-border disabled:cursor-not-allowed disabled:opacity-60"
             placeholder={
-              isLoading
-                ? "Waiting for response…"
+              isBusy
+                ? insightsLoading && !isChatLoading
+                  ? "Waiting for initial analysis…"
+                  : "Waiting for response…"
                 : `Ask anything about ${placeholderLabel}…`
             }
             value={inputValue}
@@ -119,7 +124,7 @@ export function ChatBox({
             >
               <button
                 type="button"
-                disabled={isLoading}
+                disabled={isBusy}
                 onClick={onToggleModelMenu}
                 className={[
                   "flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-foreground",
@@ -150,10 +155,10 @@ export function ChatBox({
               <button
                 type="submit"
                 disabled={!canSend}
-                aria-busy={isLoading}
+                aria-busy={isBusy}
                 className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-neutral-900 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isLoading ? (
+                {isBusy ? (
                   "Analyzing…"
                 ) : (
                   <>
