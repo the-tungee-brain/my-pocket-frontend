@@ -1,6 +1,8 @@
 "use client";
 
 import { Dispatch, SetStateAction } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Wallet } from "lucide-react";
 import { NavList, MainView } from "@/components/NavList";
 
 interface MobileNavProps {
@@ -24,8 +26,6 @@ export function MobileNav({
   selectedView,
   setSelectedView,
 }: MobileNavProps) {
-  if (!mobileNavOpen) return null;
-
   const handleSetView = (v: MainView) => {
     setSelectedView(v);
     setMobileNavOpen(false);
@@ -38,39 +38,67 @@ export function MobileNav({
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex md:hidden">
-      <button
-        type="button"
-        aria-label="Close mobile navigation"
-        className="fixed inset-0 bg-black/40"
-        onClick={() => setMobileNavOpen(false)}
-      />
-      <aside className="relative z-50 flex h-full w-64 flex-col border-r border-border bg-secondary">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div />
-          <button
+    <AnimatePresence>
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-40 flex md:hidden">
+          <motion.button
             type="button"
+            aria-label="Close mobile navigation"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setMobileNavOpen(false)}
-            className="text-xs text-neutral-400 hover:text-neutral-200"
-          >
-            Close
-          </button>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto px-2 pb-3">
-          <NavList
-            loading={loading}
-            symbols={symbols}
-            selectedSymbol={selectedSymbol}
-            setSelectedSymbol={handleSetSymbol}
-            selectedView={selectedView}
-            setSelectedView={handleSetView}
-            containerClassName="flex flex-col gap-2"
-            portfolioButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors"
-            symbolButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm transition-colors"
           />
-        </nav>
-      </aside>
-    </div>
+
+          <motion.aside
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 320 }}
+            className="relative z-50 flex h-full w-72 flex-col border-r border-border bg-secondary shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+                  <Wallet className="h-4 w-4" aria-hidden="true" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold tracking-tight">
+                    PowerPocket
+                  </div>
+                  <div className="text-[10px] text-muted">
+                    Portfolio workspace
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(false)}
+                aria-label="Close navigation"
+                className="rounded-lg p-1.5 text-muted transition hover:bg-muted-bg hover:text-foreground"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto px-2 py-3 scrollbar-dark">
+              <NavList
+                loading={loading}
+                symbols={symbols}
+                selectedSymbol={selectedSymbol}
+                setSelectedSymbol={handleSetSymbol}
+                selectedView={selectedView}
+                setSelectedView={handleSetView}
+                containerClassName="flex flex-col gap-2"
+                portfolioButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors"
+                symbolButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm transition-colors"
+              />
+            </nav>
+          </motion.aside>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Bot, User } from "lucide-react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
+import { cn } from "@/lib/utils";
 
 export type ChatMessage = {
   id: string;
@@ -50,12 +52,26 @@ export function ConversationPane({
 
   const label = symbol === "PORTFOLIO" ? "portfolio" : symbol;
 
+  if (messages.length === 0 && !loading) {
+    return (
+      <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-dashed border-border bg-muted-bg/30 px-6 py-10 text-center">
+        <Bot className="mx-auto mb-3 h-8 w-8 text-muted" aria-hidden="true" />
+        <p className="text-sm font-medium text-foreground">
+          Ask anything about your {label}
+        </p>
+        <p className="mt-1 text-xs text-muted">
+          Use quick prompts below or type your own question
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto mt-4 max-w-3xl py-3">
-      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-foreground">
-        Conversation for {label}
+      <div className="mb-4 text-xs font-medium uppercase tracking-wide text-muted">
+        Conversation
       </div>
-      <div className="space-y-6 pr-1">
+      <div className="space-y-4 pr-1">
         {messages.map((m, idx) => {
           const isAssistant = m.role === "assistant";
           const isLastUser =
@@ -66,26 +82,45 @@ export function ConversationPane({
             <div
               key={m.id}
               ref={isLastUser ? lastUserRef : null}
-              className={
-                isAssistant ? "flex justify-start" : "flex justify-end"
-              }
+              className={cn(
+                "flex gap-3",
+                isAssistant ? "justify-start" : "justify-end",
+              )}
             >
+              {isAssistant && (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+                  <Bot className="h-3.5 w-3.5" aria-hidden="true" />
+                </div>
+              )}
+
               <div
-                className={
+                className={cn(
+                  "min-w-0 max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
                   isAssistant
-                    ? "w-full max-w-3xl rounded-2xl bg-transparent text-base leading-relaxed text-foreground"
-                    : "inline-block max-w-[80%] rounded-2xl bg-secondary px-4 pt-3 text-base leading-relaxed text-foreground"
-                }
+                    ? "border border-border bg-surface-elevated text-foreground"
+                    : "bg-secondary text-foreground",
+                )}
               >
                 <MarkdownRenderer content={m.content} />
               </div>
+
+              {!isAssistant && (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted-bg text-muted">
+                  <User className="h-3.5 w-3.5" aria-hidden="true" />
+                </div>
+              )}
             </div>
           );
         })}
 
-        {loading && <ThinkingSpinner />}
-
-        <div />
+        {loading && (
+          <div className="flex gap-3">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <Bot className="h-3.5 w-3.5" aria-hidden="true" />
+            </div>
+            <ThinkingSpinner />
+          </div>
+        )}
       </div>
     </div>
   );

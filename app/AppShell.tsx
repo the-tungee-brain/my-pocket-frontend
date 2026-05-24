@@ -141,7 +141,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         : (selectedSymbol ?? "Position");
 
   return (
-    <main className="flex min-h-screen text-neutral-50">
+    <main className="flex min-h-screen text-foreground">
       <DesktopNav
         loading={loading}
         symbols={symbols}
@@ -163,14 +163,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       />
 
       <section className="flex min-h-screen flex-1 flex-col">
-        <div className="sticky top-0 z-30 border-b border-border bg-secondary/95 backdrop-blur">
+        <div className="sticky top-0 z-30 border-b border-border bg-secondary/80 backdrop-blur-md">
           <div className="flex min-h-14 items-center justify-between gap-3 px-4">
             <Button
               onClick={() => setMobileNavOpen(true)}
               size="xs"
               variant="ghost"
               aria-label="Open navigation"
-              className="text-neutral-400 hover:text-neutral-100 md:hidden"
+              className="text-muted hover:text-foreground md:hidden"
             >
               <Menu className="h-4 w-4" aria-hidden="true" />
             </Button>
@@ -181,13 +181,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   {headerLabel}
                 </span>
                 {selectedView === "research" && (
-                  <Search
-                    className="h-3.5 w-3.5 text-neutral-500"
-                    aria-hidden="true"
-                  />
+                  <Search className="h-3.5 w-3.5 text-muted" aria-hidden="true" />
                 )}
               </div>
-              <div className="truncate text-[11px] text-neutral-500">
+              <div className="truncate text-[11px] text-muted">
                 {selectedView === "portfolio"
                   ? `${symbols.length} tracked ${symbols.length === 1 ? "symbol" : "symbols"}`
                   : selectedView === "research"

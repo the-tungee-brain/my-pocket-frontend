@@ -1,13 +1,8 @@
 "use client";
 
-type Option = {
-  id: string;
-  label: string;
-};
-
 type DropdownProps = {
   open: boolean;
-  options: Option[];
+  options: string[];
   value: string;
   onChange: (id: string) => void;
   onClose: () => void;
@@ -29,13 +24,13 @@ export function Dropdown({
       </div>
       <div className="max-h-72 overflow-y-auto py-1">
         {options.map((option) => {
-          const isActive = option.id === value;
+          const isActive = option === value;
           return (
             <button
-              key={option.id}
+              key={option}
               type="button"
               onClick={() => {
-                onChange(option.id);
+                onChange(option);
                 onClose();
               }}
               className={[
@@ -45,7 +40,7 @@ export function Dropdown({
                 isActive ? "bg-neutral-800/80 border border-border" : "",
               ].join(" ")}
             >
-              <span className="truncate">{option.label}</span>
+              <span className="truncate">{option}</span>
               {isActive && (
                 <span className="ml-2 rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-400">
                   Active

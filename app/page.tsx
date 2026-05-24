@@ -18,8 +18,14 @@ export default function Home() {
 
   if (status === "loading") {
     return (
-      <main className="flex min-h-screen items-center justify-center text-neutral-50">
-        <p className="text-sm text-neutral-400">Loading…</p>
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative flex h-8 w-8 items-center justify-center">
+            <span className="absolute h-8 w-8 animate-ping rounded-full bg-accent/20" />
+            <span className="relative h-3 w-3 rounded-full bg-accent-strong" />
+          </div>
+          <p className="text-sm text-muted">Loading…</p>
+        </div>
       </main>
     );
   }

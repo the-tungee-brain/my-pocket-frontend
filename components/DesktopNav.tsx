@@ -1,5 +1,6 @@
 "use client";
 
+import { Wallet } from "lucide-react";
 import { NavList, MainView } from "@/components/NavList";
 
 interface DesktopNavProps {
@@ -20,11 +21,18 @@ export function DesktopNav({
   setSelectedView,
 }: DesktopNavProps) {
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 border-r border-border bg-secondary p-3 text-sm text-foreground md:flex md:flex-col">
-      <div className="mb-3 rounded-xl border border-border bg-background/60 px-3 py-3">
-        <div className="text-sm font-semibold tracking-tight">My Pocket</div>
-        <div className="mt-0.5 text-[11px] text-neutral-500">
-          Portfolio workspace
+    <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r border-border bg-secondary p-3 text-sm text-foreground md:flex">
+      <div className="mb-3 flex items-center gap-2.5 rounded-xl border border-border bg-background/60 px-3 py-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+          <Wallet className="h-4 w-4" aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold tracking-tight">
+            PowerPocket
+          </div>
+          <div className="truncate text-[11px] text-muted">
+            Portfolio workspace
+          </div>
         </div>
       </div>
 
@@ -35,7 +43,7 @@ export function DesktopNav({
         setSelectedSymbol={setSelectedSymbol}
         selectedView={selectedView}
         setSelectedView={setSelectedView}
-        containerClassName="flex-1 flex flex-col gap-2 overflow-y-auto"
+        containerClassName="flex-1 flex flex-col gap-2 overflow-y-auto scrollbar-dark"
         portfolioButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors"
         symbolButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm transition-colors"
       />

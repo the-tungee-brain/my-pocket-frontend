@@ -38,7 +38,7 @@ export function useInsights(
     account: SchwabAccounts | null;
     accessToken: string | null;
   },
-  model: string = "gpt-4.1-mini",
+  model: string = "gpt-5.4",
 ): InsightState {
   const { label, positions, account, accessToken } = opts;
   const [state, setState] = useState<InsightState>({

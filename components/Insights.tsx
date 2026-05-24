@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Lightbulb } from "lucide-react";
 import { MarkdownRenderer } from "./ui/MarkdownRenderer";
 import { ThinkingSpinner } from "./ui/ThinkingSpinner";
 import { usePositionsContext } from "@/app/Providers";
@@ -32,26 +33,42 @@ export function Insights({
       account,
       accessToken: sessionAccessToken || null,
     },
-    "gpt-4.1-mini",
+    "gpt-5.4",
   );
 
   if (!positions?.length) return null;
 
+  const title = symbol ? `${symbol} insights` : "Portfolio insights";
+
   return (
-    <section className="mx-auto mt-6 max-w-3xl rounded-xl border border-border bg-secondary/60 px-4 py-3">
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-400">
-        Insights
-      </h2>
-
-      {loading && <ThinkingSpinner message={thinkingMessage} />}
-
-      {error && <p className="text-sm text-red-400">{error}</p>}
-
-      {!loading && !error && content && (
-        <div className="mt-2 text-sm text-foreground">
-          <MarkdownRenderer content={content} />
+    <section className="mx-auto mt-6 max-w-3xl overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-sm">
+      <div className="flex items-center gap-2.5 border-b border-border bg-surface-elevated/50 px-4 py-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+          <Lightbulb className="h-4 w-4" aria-hidden="true" />
         </div>
-      )}
+        <div>
+          <h2 className="text-sm font-semibold capitalize text-foreground">
+            {title}
+          </h2>
+          <p className="text-[11px] text-muted">AI-generated analysis</p>
+        </div>
+      </div>
+
+      <div className="px-4 py-4">
+        {loading && <ThinkingSpinner message={thinkingMessage} />}
+
+        {error && (
+          <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
+            {error}
+          </p>
+        )}
+
+        {!loading && !error && content && (
+          <div className="text-sm leading-relaxed text-foreground">
+            <MarkdownRenderer content={content} />
+          </div>
+        )}
+      </div>
     </section>
   );
 }

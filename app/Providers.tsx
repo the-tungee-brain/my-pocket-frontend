@@ -89,7 +89,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       loading: false,
       input: "",
       messages: [],
-      model: "gpt-4.1-mini",
+      model: "gpt-5-mini",
       modelMenuOpen: false,
       ...base,
     }),

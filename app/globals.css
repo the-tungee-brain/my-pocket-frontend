@@ -7,6 +7,18 @@
   --secondary: #f3f3f3;
   --border   : #e5e5e5;
 
+  --accent       : #10b981;
+  --accent-muted : #10b9811a;
+  --accent-strong: #34d399;
+
+  --muted      : #737373;
+  --muted-bg   : #f5f5f5;
+
+  --success: #059669;
+  --danger : #e11d48;
+
+  --surface-elevated: #fafafa;
+
   --scrollbar-track      : transparent;
   --scrollbar-thumb      : #c4c4c4;
   --scrollbar-thumb-hover: #a0a0a0;
@@ -17,16 +29,35 @@
   --color-foreground: var(--foreground);
   --color-secondary : var(--secondary);
   --color-border    : var(--border);
-  --font-sans       : var(--font-geist-sans);
-  --font-mono       : var(--font-geist-mono);
+  --color-accent    : var(--accent);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-strong: var(--accent-strong);
+  --color-muted     : var(--muted);
+  --color-muted-bg  : var(--muted-bg);
+  --color-success   : var(--success);
+  --color-danger    : var(--danger);
+  --color-surface-elevated: var(--surface-elevated);
+  --font-sans       : var(--font-inter);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #171615;
-    --foreground: #d6d5d5;
-    --secondary : #1d1c1b;
-    --border    : oklch(87.35% 0.002 67.8 / 0.14);
+    --background: #121110;
+    --foreground: #e8e7e6;
+    --secondary : #1a1918;
+    --border    : oklch(87.35% 0.002 67.8 / 0.12);
+
+    --accent       : #34d399;
+    --accent-muted : #10b9811f;
+    --accent-strong: #6ee7b7;
+
+    --muted    : #8a8988;
+    --muted-bg : #222120;
+
+    --success: #34d399;
+    --danger : #fb7185;
+
+    --surface-elevated: #1e1d1c;
 
     --scrollbar-track      : transparent;
     --scrollbar-thumb      : #3a3a39;
@@ -43,14 +74,14 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--foreground) 55%, transparent);
+  outline: 2px solid color-mix(in oklab, var(--accent) 65%, transparent);
   outline-offset: 2px;
 }
 
 body {
   background : var(--background);
   color      : var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 
 .markdown-table thead tr {
@@ -79,4 +110,11 @@ body {
 
 .scrollbar-dark::-webkit-scrollbar-thumb:hover {
   background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Reusable surface card */
+.surface-card {
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--secondary) 85%, var(--background));
 }

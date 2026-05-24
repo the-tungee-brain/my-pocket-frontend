@@ -2,112 +2,100 @@
 
 import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
-import { TrendingUp, BrainCircuit, ShieldCheck, BarChart3 } from "lucide-react";
+import {
+  BarChart3,
+  BrainCircuit,
+  BriefcaseBusiness,
+  CircleDollarSign,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 export default function AuthPage() {
   return (
-    <div className="min-h-screen bg-linear-to-b from-black via-zinc-950 to-zinc-900 text-white font-sans">
-      <main className="mx-auto flex min-h-screen max-w-6xl flex-col items-center justify-center px-6 py-16 lg:flex-row lg:gap-16">
+    <div className="min-h-screen bg-background text-foreground">
+      <main className="mx-auto flex min-h-screen max-w-6xl flex-col items-center justify-center gap-12 px-6 py-12 lg:flex-row lg:gap-16 lg:py-16">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.45 }}
           className="flex-1"
         >
-          <div className="mb-6 inline-flex items-center rounded-full border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 shadow-lg">
-            AI-Powered Portfolio Intelligence
+          <div className="mb-6 flex items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <Wallet className="h-4 w-4" aria-hidden="true" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold tracking-tight">PowerPocket</div>
+              <div className="text-[11px] text-muted">Portfolio workspace</div>
+            </div>
           </div>
 
-          <h1 className="max-w-3xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl">
-            Analyze Your Portfolio with
-            <span className="bg-linear-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-              {" "}
-              AI-Powered Insights
-            </span>
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-muted">
+            <Sparkles className="h-3.5 w-3.5 text-accent-strong" aria-hidden="true" />
+            AI-powered portfolio intelligence
+          </div>
+
+          <h1 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+            Analyze your portfolio with{" "}
+            <span className="text-accent-strong">AI insights</span>
           </h1>
 
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted">
             PowerPocket combines real-time brokerage data, market news,
-            financial fundamentals, and AI analysis to help investors make
-            smarter portfolio decisions.
+            financial fundamentals, and AI analysis to help you make smarter
+            portfolio decisions.
           </p>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
             <FeatureCard
-              icon={<TrendingUp className="h-6 w-6" />}
-              title="Real-Time Portfolio Tracking"
-              description="Connect brokerage accounts to monitor holdings, positions, and portfolio performance."
+              icon={TrendingUp}
+              title="Real-time tracking"
+              description="Connect Schwab to monitor holdings, positions, and performance."
             />
-
             <FeatureCard
-              icon={<BrainCircuit className="h-6 w-6" />}
-              title="AI Investment Analysis"
-              description="Generate AI-powered buy, hold, sell, and risk-management recommendations."
+              icon={BrainCircuit}
+              title="AI analysis"
+              description="Get buy, hold, sell, and risk-management recommendations."
             />
-
             <FeatureCard
-              icon={<BarChart3 className="h-6 w-6" />}
-              title="Financial & Market Insights"
-              description="Analyze company fundamentals, earnings, market trends, and financial news."
+              icon={BarChart3}
+              title="Market insights"
+              description="Analyze fundamentals, earnings, trends, and financial news."
             />
-
             <FeatureCard
-              icon={<ShieldCheck className="h-6 w-6" />}
-              title="Secure Brokerage Integration"
-              description="Securely integrate brokerage APIs for real-time investment intelligence."
+              icon={ShieldCheck}
+              title="Secure integration"
+              description="Brokerage APIs connected securely for real-time intelligence."
             />
           </div>
 
-          <div className="mt-10 flex flex-wrap items-center gap-4">
+          <div className="mt-8">
             <Button
               onClick={() => signIn("google")}
-              className="h-12 rounded-xl px-8 text-base"
-              size="default"
+              size="lg"
+              className="rounded-xl px-8"
             >
               Sign in with Google
             </Button>
+            <p className="mt-3 text-xs text-muted">
+              Connect your Schwab account after signing in.
+            </p>
           </div>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
-          className="mt-16 flex-1 lg:mt-0"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.1 }}
+          className="w-full max-w-md flex-1 lg:max-w-lg"
         >
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/80 p-6 shadow-2xl backdrop-blur">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-zinc-500">Portfolio Value</p>
-                <h2 className="text-4xl font-bold">$248,420</h2>
-              </div>
-
-              <div className="rounded-2xl bg-emerald-500/10 px-4 py-2 text-emerald-400">
-                +12.4%
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <PortfolioRow
-                symbol="NVDA"
-                action="BUY"
-                summary="Strong AI growth momentum and positive earnings outlook."
-              />
-
-              <PortfolioRow
-                symbol="AAPL"
-                action="HOLD"
-                summary="Stable cash flow with moderate upside potential."
-              />
-
-              <PortfolioRow
-                symbol="TSLA"
-                action="REDUCE"
-                summary="High volatility and elevated valuation risk detected."
-              />
-            </div>
-          </div>
+          <AppPreview />
         </motion.div>
       </main>
     </div>
@@ -115,22 +103,140 @@ export default function AuthPage() {
 }
 
 function FeatureCard({
-  icon,
+  icon: Icon,
   title,
   description,
 }: {
-  icon: React.ReactNode;
+  icon: typeof TrendingUp;
   title: string;
   description: string;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 shadow-lg backdrop-blur transition-all hover:border-zinc-700 hover:bg-zinc-900">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-800 text-emerald-400">
-        {icon}
+    <div className="rounded-2xl border border-border bg-secondary/60 p-4 transition-colors hover:bg-secondary">
+      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+        <Icon className="h-4 w-4" aria-hidden="true" />
       </div>
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <p className="mt-1 text-xs leading-relaxed text-muted">{description}</p>
+    </div>
+  );
+}
 
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="mt-2 text-sm leading-6 text-zinc-400">{description}</p>
+function AppPreview() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-lg shadow-black/10">
+      <div className="flex">
+        <div className="hidden w-44 shrink-0 border-r border-border bg-secondary p-3 sm:block">
+          <div className="mb-3 flex items-center gap-2 rounded-xl border border-border bg-background/60 px-2.5 py-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <Wallet className="h-3.5 w-3.5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <div className="truncate text-[11px] font-semibold">PowerPocket</div>
+              <div className="truncate text-[9px] text-muted">Portfolio workspace</div>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <PreviewNavItem
+              icon={BriefcaseBusiness}
+              label="My portfolio"
+              sublabel="Overview"
+              active
+            />
+            <PreviewNavItem icon={Search} label="Research" sublabel="Snapshots" />
+            <div className="my-2 h-px bg-border" />
+            <p className="px-1 text-[9px] font-semibold uppercase tracking-wide text-muted">
+              Positions
+            </p>
+            <PreviewNavItem icon={CircleDollarSign} label="NVDA" mono />
+            <PreviewNavItem icon={CircleDollarSign} label="AAPL" mono />
+            <PreviewNavItem icon={CircleDollarSign} label="MSFT" mono />
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="border-b border-border bg-surface-elevated/50 px-4 py-3">
+            <p className="text-xs font-semibold">Portfolio</p>
+            <p className="text-[10px] text-muted">3 tracked symbols</p>
+          </div>
+
+          <div className="space-y-3 p-4">
+            <div className="overflow-hidden rounded-xl border border-border bg-secondary/80">
+              <div className="flex items-center gap-2 border-b border-border bg-surface-elevated/50 px-3 py-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent-muted text-accent-strong">
+                  <Sparkles className="h-3 w-3" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold">Portfolio insights</p>
+                  <p className="text-[9px] text-muted">AI-generated analysis</p>
+                </div>
+              </div>
+              <div className="space-y-2 px-3 py-3">
+                <div className="h-2 w-full rounded-full bg-muted-bg" />
+                <div className="h-2 w-4/5 rounded-full bg-muted-bg" />
+                <div className="h-2 w-3/5 rounded-full bg-muted-bg" />
+              </div>
+            </div>
+
+            <PortfolioRow
+              symbol="NVDA"
+              action="BUY"
+              summary="Strong AI growth momentum and positive earnings outlook."
+            />
+            <PortfolioRow
+              symbol="AAPL"
+              action="HOLD"
+              summary="Stable cash flow with moderate upside potential."
+            />
+            <PortfolioRow
+              symbol="TSLA"
+              action="REDUCE"
+              summary="High volatility and elevated valuation risk detected."
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PreviewNavItem({
+  icon: Icon,
+  label,
+  sublabel,
+  mono,
+  active,
+}: {
+  icon: typeof BriefcaseBusiness;
+  label: string;
+  sublabel?: string;
+  mono?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-lg px-2 py-1.5",
+        active ? "bg-muted-bg" : "",
+      )}
+    >
+      <Icon
+        className={cn(
+          "h-3 w-3 shrink-0",
+          active ? "text-accent-strong" : "text-muted",
+        )}
+        aria-hidden="true"
+      />
+      <div className="min-w-0">
+        <p className={cn("truncate text-[10px]", mono && "font-mono")}>{label}</p>
+        {sublabel && (
+          <p className="truncate text-[9px] text-muted">{sublabel}</p>
+        )}
+      </div>
+      {active && (
+        <span className="ml-auto h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
+      )}
     </div>
   );
 }
@@ -141,28 +247,26 @@ function PortfolioRow({
   summary,
 }: {
   symbol: string;
-  action: string;
+  action: "BUY" | "HOLD" | "REDUCE";
   summary: string;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-black/40 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">{symbol}</h3>
-          <p className="mt-1 text-sm text-zinc-400">{summary}</p>
+    <div className="rounded-xl border border-border bg-background/40 px-3 py-2.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="font-mono text-xs font-semibold">{symbol}</h3>
+          <p className="mt-0.5 text-[10px] leading-relaxed text-muted">{summary}</p>
         </div>
-
-        <div
-          className={`rounded-xl px-3 py-1 text-sm font-medium ${
-            action === "BUY"
-              ? "bg-emerald-500/10 text-emerald-400"
-              : action === "HOLD"
-                ? "bg-yellow-500/10 text-yellow-400"
-                : "bg-red-500/10 text-red-400"
-          }`}
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+            action === "BUY" && "bg-accent-muted text-accent-strong",
+            action === "HOLD" && "bg-muted-bg text-muted",
+            action === "REDUCE" && "bg-danger/10 text-danger",
+          )}
         >
           {action}
-        </div>
+        </span>
       </div>
     </div>
   );

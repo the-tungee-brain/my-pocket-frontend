@@ -16,8 +16,17 @@ type SymbolChatState = {
 };
 
 const MODEL_OPTIONS = [
-  { id: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
-  { id: "gpt-4.1", label: "GPT-4.1" },
+  "gpt-5.4",
+  "gpt-5.1",
+  "gpt-5-mini",
+  "gpt-5-nano",
+  "o3",
+  "o4-mini",
+  "gpt-4.1",
+  "gpt-4.1-mini",
+  "gpt-4.1-nano",
+  "gpt-4o",
+  "gpt-4o-mini",
 ];
 
 interface ChatBoxProps {
@@ -57,8 +66,11 @@ export function ChatBox({
   return (
     <div className="bg-gradient-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-border bg-secondary/95 p-3 shadow-lg shadow-black/10 backdrop-blur">
-        <div className="flex items-center gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
-          <Sparkles className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
+        <div className="flex items-center gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted">
+          <Sparkles
+            className="h-3.5 w-3.5 text-accent-strong"
+            aria-hidden="true"
+          />
           Assistant prompts
         </div>
 
@@ -118,9 +130,7 @@ export function ChatBox({
                 ].join(" ")}
               >
                 <span className="max-w-30 truncate text-neutral-200">
-                  {MODEL_OPTIONS.find(
-                    (m) => m.id === (currentChat?.model || "gpt-4.1-mini"),
-                  )?.label ?? "GPT-4.1 Mini"}
+                  {currentChat?.model || "gpt-5-mini"}
                 </span>
                 <ChevronDown
                   className="h-3 w-3 text-neutral-400"
@@ -131,7 +141,7 @@ export function ChatBox({
               <Dropdown
                 open={!!currentChat?.modelMenuOpen}
                 options={MODEL_OPTIONS}
-                value={currentChat?.model || "gpt-4.1-mini"}
+                value={currentChat?.model || "gpt-5-mini"}
                 onChange={onModelChange}
                 onClose={onToggleModelMenu}
               />
@@ -146,7 +156,10 @@ export function ChatBox({
                 ) : (
                   <>
                     Send
-                    <SendHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+                    <SendHorizontal
+                      className="h-3.5 w-3.5"
+                      aria-hidden="true"
+                    />
                   </>
                 )}
               </button>

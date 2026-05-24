@@ -87,8 +87,8 @@ export function NavList({
           className={[
             "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
             isPortfolio
-              ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-300"
-              : "border-neutral-700 bg-neutral-900/60 text-neutral-300",
+              ? "border-accent/60 bg-accent-muted text-accent-strong"
+              : "border-border bg-muted-bg text-muted",
           ].join(" ")}
         >
           <BriefcaseBusiness className="h-3.5 w-3.5" aria-hidden="true" />
@@ -100,7 +100,7 @@ export function NavList({
           </span>
         </div>
         {isPortfolio && (
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
         )}
       </button>
 
@@ -124,8 +124,8 @@ export function NavList({
           className={[
             "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
             isResearch
-              ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-300"
-              : "border-neutral-700 bg-neutral-900/60 text-neutral-300",
+              ? "border-accent/60 bg-accent-muted text-accent-strong"
+              : "border-border bg-muted-bg text-muted",
           ].join(" ")}
         >
           <Search className="h-3.5 w-3.5" aria-hidden="true" />
@@ -137,7 +137,7 @@ export function NavList({
           </span>
         </div>
         {isResearch && (
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
         )}
       </button>
 
@@ -195,8 +195,8 @@ export function NavList({
                 <CircleDollarSign
                   className={
                     isActive
-                      ? "h-3.5 w-3.5 text-emerald-300"
-                      : "h-3.5 w-3.5 text-neutral-500"
+                      ? "h-3.5 w-3.5 text-accent-strong"
+                      : "h-3.5 w-3.5 text-muted"
                   }
                   aria-hidden="true"
                 />
@@ -204,7 +204,7 @@ export function NavList({
               </span>
 
               {isActive && (
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
               )}
             </button>
           );
