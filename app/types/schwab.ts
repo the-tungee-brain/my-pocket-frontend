@@ -31,6 +31,8 @@ export type Position = {
   shortOpenProfitLoss?: number | null;
   previousSessionShortQuantity?: number | null;
   currentDayCost: number;
+  /** Detected by backend: covered_call, cash_secured_put, etc. */
+  optionStrategy?: string | null;
 };
 
 export type InitialBalances = {
@@ -146,4 +148,33 @@ export type CashSecuredPutSummary = {
   totalReservedCash: number;
   availableCashAfterReserves: number | null;
   positions: CashSecuredPutPositionSummary[];
+};
+
+export type AssignmentRiskLevel =
+  | "critical"
+  | "high"
+  | "moderate"
+  | "watch"
+  | "low";
+
+export type AssignmentRiskPositionEntry = {
+  symbol: string;
+  underlyingSymbol: string;
+  strategy: string;
+  putCall: string;
+  contracts: number;
+  strike: number | null;
+  expiration: string;
+  daysToExpiration: number;
+  underlyingPrice?: number | null;
+  moneyness: string;
+  riskLevel: AssignmentRiskLevel | string;
+  assignmentCashRequired?: number | null;
+};
+
+export type AssignmentRiskSummary = {
+  asOf: string;
+  withinDays: number;
+  scopeSymbol?: string | null;
+  positions: AssignmentRiskPositionEntry[];
 };

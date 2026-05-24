@@ -19,7 +19,12 @@ import {
   persistChatState,
 } from "@/lib/chatPersistence";
 import { formatQuickActionMessage, getQuickActionApiAction, isFreeFormQuickAction } from "@/lib/quickActions";
-import { Position, SchwabAccounts, CashSecuredPutSummary } from "./types/schwab";
+import {
+  Position,
+  SchwabAccounts,
+  CashSecuredPutSummary,
+  AssignmentRiskSummary,
+} from "./types/schwab";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
 import { MainView } from "@/components/NavList";
 import { usePathname } from "next/navigation";
@@ -68,9 +73,77 @@ type PositionsContextValue = {
   }) => Promise<void>;
   account: SchwabAccounts | null;
   cashSecuredPutSummary: CashSecuredPutSummary | null;
+  assignmentRiskSummary: AssignmentRiskSummary | null;
 };
 
 const PositionsContext = createContext<PositionsContextValue | null>(null);
+
+const PERSIST_DEBOUNCE_MS = 500;
+
+type SetChatBySymbol = React.Dispatch<React.SetStateAction<ChatStateMap>>;
+
+function createStreamingAssistantUpdater(
+  activeChatKey: string,
+  setChatBySymbol: SetChatBySymbol,
+  ensureSymbolChatState: (
+    key: string,
+    base?: Partial<SymbolChatState>,
+  ) => SymbolChatState,
+  idSuffix = "",
+) {
+  const assistantContent = { current: "" };
+  const assistantId = `assistant-${activeChatKey}${idSuffix ? `-${idSuffix}` : ""}-${Date.now()}`;
+  let rafId: number | null = null;
+
+  const flush = () => {
+    rafId = null;
+    const content = assistantContent.current;
+
+    setChatBySymbol((prev) => {
+      const prevState = ensureSymbolChatState(activeChatKey, prev[activeChatKey]);
+      const messages = [...prevState.messages];
+      const last = messages[messages.length - 1];
+
+      if (last?.role === "assistant" && last.id === assistantId) {
+        messages[messages.length - 1] = { ...last, content };
+      } else {
+        messages.push({
+          id: assistantId,
+          role: "assistant",
+          content,
+        });
+      }
+
+      return {
+        ...prev,
+        [activeChatKey]: {
+          ...prevState,
+          messages,
+          loading: true,
+        },
+      };
+    });
+  };
+
+  const appendChunk = (chunk: string) => {
+    assistantContent.current += chunk;
+    if (rafId == null) {
+      rafId = requestAnimationFrame(flush);
+    }
+  };
+
+  const flushNow = () => {
+    if (rafId != null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    if (assistantContent.current) {
+      flush();
+    }
+  };
+
+  return { appendChunk, flushNow, assistantContent };
+}
 
 export function usePositionsContext() {
   const ctx = useContext(PositionsContext);
@@ -88,12 +161,17 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<SchwabAccounts | null>(null);
   const [cashSecuredPutSummary, setCashSecuredPutSummary] =
     useState<CashSecuredPutSummary | null>(null);
+  const [assignmentRiskSummary, setAssignmentRiskSummary] =
+    useState<AssignmentRiskSummary | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [selectedView, setSelectedView] = useState<MainView>("research");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
   const chatHydratedRef = useRef(false);
+  const chatBySymbolRef = useRef(chatBySymbol);
+  const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  chatBySymbolRef.current = chatBySymbol;
   const accessToken = session?.accessToken ?? "";
   const chatUserId = session?.user?.email ?? session?.user?.id ?? null;
 
@@ -135,8 +213,38 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!chatUserId || !chatHydratedRef.current) return;
-    persistChatState(chatUserId, chatBySymbol);
+
+    if (persistTimeoutRef.current) {
+      clearTimeout(persistTimeoutRef.current);
+    }
+
+    persistTimeoutRef.current = setTimeout(() => {
+      persistChatState(chatUserId, chatBySymbolRef.current);
+      persistTimeoutRef.current = null;
+    }, PERSIST_DEBOUNCE_MS);
+
+    return () => {
+      if (persistTimeoutRef.current) {
+        clearTimeout(persistTimeoutRef.current);
+        persistTimeoutRef.current = null;
+      }
+    };
   }, [chatBySymbol, chatUserId]);
+
+  useEffect(() => {
+    if (!chatUserId) return;
+
+    const flushPersist = () => {
+      if (!chatHydratedRef.current) return;
+      persistChatState(chatUserId, chatBySymbolRef.current);
+    };
+
+    window.addEventListener("beforeunload", flushPersist);
+    return () => {
+      window.removeEventListener("beforeunload", flushPersist);
+      flushPersist();
+    };
+  }, [chatUserId]);
 
   useEffect(() => {
     if (!pathname) return;
@@ -171,6 +279,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           setPositionMap({});
           setAccount(null);
           setCashSecuredPutSummary(null);
+          setAssignmentRiskSummary(null);
           setSelectedSymbol(null);
           return;
         }
@@ -179,6 +288,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           schwab_positions: PositionMap;
           account: SchwabAccounts;
           cashSecuredPutSummary?: CashSecuredPutSummary;
+          assignmentRiskSummary?: AssignmentRiskSummary;
         };
         const map = data.schwab_positions ?? {};
         const loadedAccount = data.account ?? null;
@@ -192,6 +302,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           data.cashSecuredPutSummary ??
             summarizeCspCashReserves(flatPositions, cashBalance),
         );
+        setAssignmentRiskSummary(data.assignmentRiskSummary ?? null);
 
         const symbolsOnly = Object.keys(map).sort();
         setSelectedSymbol((current) =>
@@ -204,6 +315,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         setPositionMap({});
         setAccount(null);
         setCashSecuredPutSummary(null);
+        setAssignmentRiskSummary(null);
         setSelectedSymbol(null);
       } finally {
         setLoading(false);
@@ -278,44 +390,13 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
             ? selectedSymbol
             : (selectedSymbol ?? "UNKNOWN");
 
-      const appendAssistantChunk = (chunk: string, assistantContent: { current: string }) => {
-        assistantContent.current += chunk;
-
-        setChatBySymbol((prev) => {
-          const prevState = ensureSymbolChatState(
-            activeChatKey,
-            prev[activeChatKey],
-          );
-          const messages = [...prevState.messages];
-          const last = messages[messages.length - 1];
-
-          if (last && last.role === "assistant") {
-            messages[messages.length - 1] = {
-              ...last,
-              content: assistantContent.current,
-            };
-          } else {
-            messages.push({
-              id: `assistant-${activeChatKey}-${Date.now()}`,
-              role: "assistant",
-              content: assistantContent.current,
-            });
-          }
-
-          return {
-            ...prev,
-            [activeChatKey]: {
-              ...prevState,
-              messages,
-              loading: true,
-            },
-          };
-        });
-      };
+      const streamer = createStreamingAssistantUpdater(
+        activeChatKey,
+        setChatBySymbol,
+        ensureSymbolChatState,
+      );
 
       try {
-        const assistantContent = { current: "" };
-
         if (selectedView === "research") {
           if (!symbolForApi) return;
 
@@ -326,7 +407,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
               model: state.model,
             },
             accessToken,
-            (chunk) => appendAssistantChunk(chunk, assistantContent),
+            streamer.appendChunk,
           );
         } else {
           await streamAnalysis(
@@ -339,16 +420,17 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
               model: state.model,
             },
             accessToken,
-            (chunk) => appendAssistantChunk(chunk, assistantContent),
+            streamer.appendChunk,
           );
         }
 
-        if (!assistantContent.current.trim()) {
-          appendAssistantChunk(
+        if (!streamer.assistantContent.current.trim()) {
+          streamer.appendChunk(
             "Sorry, I didn't get a response back. Please try again or rephrase your question.",
-            assistantContent,
           );
         }
+
+        streamer.flushNow();
       } catch {
         setChatBySymbol((prev) => {
           const prevState = ensureSymbolChatState(
@@ -451,44 +533,14 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
       const freeForm = isFreeFormQuickAction(actionId);
 
-      const appendAssistantChunk = (chunk: string, assistantContent: { current: string }) => {
-        assistantContent.current += chunk;
-
-        setChatBySymbol((prev) => {
-          const prevState = ensureSymbolChatState(
-            activeChatKey,
-            prev[activeChatKey],
-          );
-          const messages = [...prevState.messages];
-          const last = messages[messages.length - 1];
-
-          if (last && last.role === "assistant") {
-            messages[messages.length - 1] = {
-              ...last,
-              content: assistantContent.current,
-            };
-          } else {
-            messages.push({
-              id: `assistant-${activeChatKey}-${actionId}-${Date.now()}`,
-              role: "assistant",
-              content: assistantContent.current,
-            });
-          }
-
-          return {
-            ...prev,
-            [activeChatKey]: {
-              ...prevState,
-              messages,
-              loading: true,
-            },
-          };
-        });
-      };
+      const streamer = createStreamingAssistantUpdater(
+        activeChatKey,
+        setChatBySymbol,
+        ensureSymbolChatState,
+        actionId,
+      );
 
       try {
-        const assistantContent = { current: "" };
-
         if (selectedView === "research") {
           if (!symbolForApi) return;
 
@@ -499,7 +551,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
               model: state.model,
             },
             accessToken,
-            (chunk) => appendAssistantChunk(chunk, assistantContent),
+            streamer.appendChunk,
           );
         } else {
           await streamAnalysis(
@@ -512,16 +564,17 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
               model: state.model,
             },
             accessToken,
-            (chunk) => appendAssistantChunk(chunk, assistantContent),
+            streamer.appendChunk,
           );
         }
 
-        if (!assistantContent.current.trim()) {
-          appendAssistantChunk(
+        if (!streamer.assistantContent.current.trim()) {
+          streamer.appendChunk(
             "Sorry, I didn't get a response back. Please try again or rephrase your question.",
-            assistantContent,
           );
         }
+
+        streamer.flushNow();
       } catch {
         setChatBySymbol((prev) => {
           const prevState = ensureSymbolChatState(
@@ -587,6 +640,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       sendQuickAction,
       account,
       cashSecuredPutSummary,
+      assignmentRiskSummary,
     }),
     [
       accessToken,
@@ -604,6 +658,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       sendQuickAction,
       account,
       cashSecuredPutSummary,
+      assignmentRiskSummary,
     ],
   );
 

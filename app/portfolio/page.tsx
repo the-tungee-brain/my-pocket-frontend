@@ -16,6 +16,7 @@ export default function PortfolioPage() {
     symbols,
     positionMap,
     cashSecuredPutSummary,
+    assignmentRiskSummary,
     account,
   } = usePositionsContext();
   const { activeTab } = useTabs();
@@ -37,6 +38,7 @@ export default function PortfolioPage() {
         symbols={symbols}
         positionMap={positionMap}
         cashSecuredPutSummary={cashSecuredPutSummary}
+        assignmentRiskSummary={assignmentRiskSummary}
         cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
       />
 

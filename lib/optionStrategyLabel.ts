@@ -44,11 +44,27 @@ export function isCoveredCall(
   return shares >= position.shortQuantity * SHARES_PER_OPTION_CONTRACT;
 }
 
+const BACKEND_STRATEGY_LABELS: Record<string, string> = {
+  cash_secured_put: "Cash-secured put",
+  covered_call: "Covered call",
+  naked_call: "Uncovered call",
+  long_call: "Call owned",
+  long_put: "Put owned",
+  unknown: "Option",
+};
+
 export function optionStrategyLabel(
   position: Position,
   siblingPositions: Position[] = [],
 ): string | null {
   if (position.instrument.assetType !== "OPTION") return null;
+
+  if (position.optionStrategy) {
+    return (
+      BACKEND_STRATEGY_LABELS[position.optionStrategy] ??
+      position.optionStrategy.replaceAll("_", " ")
+    );
+  }
 
   const { putCall } = position.instrument;
 
@@ -79,5 +95,11 @@ export function isHighlightedOptionStrategy(
   position: Position,
   siblingPositions: Position[] = [],
 ): boolean {
+  if (
+    position.optionStrategy === "cash_secured_put" ||
+    position.optionStrategy === "covered_call"
+  ) {
+    return true;
+  }
   return isCashSecuredPut(position) || isCoveredCall(position, siblingPositions);
 }

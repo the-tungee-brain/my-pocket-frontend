@@ -5,6 +5,7 @@ import {
   Scale,
   ShieldAlert,
   ShieldCheck,
+  Timer,
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
@@ -51,6 +52,14 @@ export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
     apiAction: "what changed",
     message: (target) => `What changed in ${target} recently?`,
     icon: CircleHelp,
+  },
+  {
+    id: "assignment-risk",
+    label: "Assignment risk",
+    apiAction: "assignment risk",
+    message: (target) =>
+      `Review assignment and call-away risk for ${target} over the next two weeks.`,
+    icon: Timer,
   },
 ];
 

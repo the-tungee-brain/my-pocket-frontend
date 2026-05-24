@@ -70,39 +70,28 @@ export function ConversationPane({
   onFollowUpPrompt,
 }: ConversationPaneProps) {
   const lastUserRef = useRef<HTMLDivElement | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
   const prevLoadingRef = useRef(loading);
   const prevMessageCountRef = useRef(messages.length);
+  const prevUserMessageCountRef = useRef(0);
   const [liveAnnouncement, setLiveAnnouncement] = useState("");
 
   useEffect(() => {
-    if (!messages.length) return;
+    const userMessageCount = messages.filter((m) => m.role === "user").length;
 
-    const lastUserIndex = [...messages]
-      .map((m, i) => ({ ...m, i }))
-      .filter((m) => m.role === "user")
-      .at(-1)?.i;
-
-    if (lastUserIndex == null) return;
-
-    const el = lastUserRef.current;
-    if (!el) return;
-
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [messages.length, messages]);
-
-  useEffect(() => {
-    const lastMessage = messages.at(-1);
-
-    if (messages.length > prevMessageCountRef.current && lastMessage?.role === "user") {
+    if (userMessageCount > prevUserMessageCountRef.current) {
       setLiveAnnouncement("Your message was sent.");
+      lastUserRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     } else if (loading && !prevLoadingRef.current) {
       setLiveAnnouncement("Assistant is responding.");
     } else if (!loading && prevLoadingRef.current) {
       setLiveAnnouncement("Assistant finished responding.");
+      endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
 
     prevLoadingRef.current = loading;
     prevMessageCountRef.current = messages.length;
+    prevUserMessageCountRef.current = userMessageCount;
   }, [messages, loading]);
 
   if (!symbol) return null;
@@ -221,6 +210,7 @@ export function ConversationPane({
             <ThinkingSpinner />
           </div>
         )}
+        <div ref={endRef} aria-hidden="true" />
       </div>
     </div>
   );

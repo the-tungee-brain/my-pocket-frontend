@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { BriefcaseBusiness } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
-import { Position, CashSecuredPutSummary as CashSecuredPutSummaryData } from "@/app/types/schwab";
+import { Position, CashSecuredPutSummary as CashSecuredPutSummaryData, AssignmentRiskSummary as AssignmentRiskSummaryData } from "@/app/types/schwab";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
+import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
 import { formatSignedUsd } from "@/lib/formatCurrency";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,7 @@ type Props = {
   symbols: string[];
   positionMap: PositionMap;
   cashSecuredPutSummary?: CashSecuredPutSummaryData | null;
+  assignmentRiskSummary?: AssignmentRiskSummaryData | null;
   cashBalance?: number | null;
 };
 
@@ -45,6 +47,7 @@ export function PortfolioOverview({
   symbols,
   positionMap,
   cashSecuredPutSummary,
+  assignmentRiskSummary,
   cashBalance,
 }: Props) {
   const { authorized: schwabAuthorized, loading: schwabLoading } =
@@ -167,6 +170,13 @@ export function PortfolioOverview({
         <CashSecuredPutSummary
           summary={cashSecuredPutSummary}
           cashBalance={cashBalance}
+          className="mb-4"
+        />
+      )}
+
+      {assignmentRiskSummary && (
+        <AssignmentRiskSummary
+          summary={assignmentRiskSummary}
           className="mb-4"
         />
       )}

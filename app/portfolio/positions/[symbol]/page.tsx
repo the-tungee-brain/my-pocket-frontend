@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { usePositionsContext } from "@/app/Providers";
 import { AccountPositionList } from "@/components/AccountPositionList";
 import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
+import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
 import { Insights } from "@/components/Insights";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
 import { CompanyNews } from "@/components/CompanyNews";
@@ -14,11 +15,12 @@ import { StockChart } from "@/components/StockChart";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useStockData } from "@/app/hooks/useStockData";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
+import { filterAssignmentRiskSummary } from "@/lib/assignmentRiskSummary";
 
 export default function SymbolPage() {
   const { symbol } = useParams<{ symbol: string }>();
   const { activeTab } = useTabs();
-  const { error, positionMap, setSelectedView, setSelectedSymbol, account } =
+  const { error, positionMap, setSelectedView, setSelectedSymbol, account, assignmentRiskSummary } =
     usePositionsContext();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
@@ -62,6 +64,11 @@ export default function SymbolPage() {
       )
     : null;
 
+  const symbolAssignmentRiskSummary =
+    assignmentRiskSummary && symbol
+      ? filterAssignmentRiskSummary(assignmentRiskSummary, symbol)
+      : null;
+
   const handlePeriodChange = (newPeriod: string) => {
     setPeriod(newPeriod);
   };
@@ -101,6 +108,15 @@ export default function SymbolPage() {
               <CashSecuredPutSummary
                 summary={symbolCspSummary}
                 cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
+                compact
+              />
+            </div>
+          )}
+
+          {symbolAssignmentRiskSummary && (
+            <div className="mb-4">
+              <AssignmentRiskSummary
+                summary={symbolAssignmentRiskSummary}
                 compact
               />
             </div>
