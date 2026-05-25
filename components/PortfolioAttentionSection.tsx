@@ -200,6 +200,8 @@ export function PortfolioAttentionSection({
     });
   };
 
+  const hasTaxSection = visibleTax.length > 0;
+
   return (
     <section
       className={cn(
@@ -208,7 +210,12 @@ export function PortfolioAttentionSection({
       )}
       aria-label="Needs attention"
     >
-      <div className="flex items-start gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
+      <div
+        className={cn(
+          "flex items-start gap-3 border-b bg-surface-elevated/50 px-4 py-3",
+          hasTaxSection ? "border-amber-500/20" : "border-border",
+        )}
+      >
         <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-200">
           <AlertTriangle className="h-4 w-4" aria-hidden />
         </div>
