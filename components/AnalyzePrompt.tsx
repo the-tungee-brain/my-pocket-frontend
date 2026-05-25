@@ -28,7 +28,7 @@ export function AnalyzePrompt({
 
   const description = isPortfolio
     ? "See how your holdings are spread across names, sectors, and cash — where you're concentrated, and how to balance the mix."
-    : "Summarizes your holdings, P/L, options risk, and one recommended next step — without leaving this page.";
+    : "Summarizes your holdings, P/L, options risk, and one recommended next step.";
 
   const buttonClass = cn(
     "mt-5 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
@@ -51,7 +51,9 @@ export function AnalyzePrompt({
           <Sparkles className="h-5 w-5" aria-hidden />
         </div>
         <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="mt-1.5 text-sm leading-relaxed text-muted">{description}</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-muted">
+          {description}
+        </p>
         <button
           type="button"
           disabled={loading}
