@@ -39,7 +39,9 @@ export function positionCostBasis(position: Position): number | null {
   const avgCost = positionAverageCost(position);
   const qty = Math.abs(position.longQuantity - position.shortQuantity);
   if (avgCost != null && qty > 0) {
-    return avgCost * qty;
+    const multiplier =
+      position.instrument.assetType === "OPTION" ? 100 : 1;
+    return avgCost * qty * multiplier;
   }
 
   return null;
