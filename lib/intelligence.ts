@@ -300,6 +300,7 @@ export function hasSymbolIntelligenceContent(
     (intelligence.optionsScorecard?.coveredCallCandidates?.length ?? 0) > 0 ||
     (intelligence.optionsScorecard?.cspCandidates?.length ?? 0) > 0 ||
     (intelligence.optionsScorecard?.assignmentFlags?.length ?? 0) > 0 ||
+    (intelligence.optionChainPreview?.rows?.length ?? 0) > 0 ||
     (intelligence.rollSuggestions?.length ?? 0) > 0 ||
     !!intelligence.cachedResearch?.investmentThesis ||
     (intelligence.cachedResearch?.keyStrengths?.length ?? 0) > 0 ||

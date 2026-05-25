@@ -85,6 +85,27 @@ export type OptionsScorecard = {
   assignmentFlags: string[];
 };
 
+export type OptionChainSideQuote = {
+  bid?: number | null;
+  ask?: number | null;
+  delta?: number | null;
+  openInterest?: number | null;
+  iv?: number | null;
+};
+
+export type OptionChainTableRow = {
+  strike: number;
+  call?: OptionChainSideQuote | null;
+  put?: OptionChainSideQuote | null;
+};
+
+export type OptionChainPreview = {
+  expiration?: string | null;
+  strikeCount?: number;
+  underlyingPrice?: number | null;
+  rows: OptionChainTableRow[];
+};
+
 export type CachedResearchSnippet = {
   sentiment?: string | null;
   investmentThesis?: string | null;
@@ -100,6 +121,7 @@ export type SymbolIntelligence = {
   peerComparison?: PeerComparison | null;
   eventTimeline?: EventTimelineEntry[];
   optionsScorecard?: OptionsScorecard | null;
+  optionChainPreview?: OptionChainPreview | null;
   rollSuggestions?: OptionRollSuggestion[];
   cachedResearch?: CachedResearchSnippet | null;
   dataGaps?: string[];

@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import type {
   IntelligenceSignal,
+  OptionChainPreview,
+  OptionChainSideQuote,
   OptionsStrikeCandidate,
   SymbolIntelligence,
 } from "@/app/types/intelligence";
@@ -73,6 +75,21 @@ function formatStrikeSide(side: "call" | "put") {
   return side === "call" ? "Call" : "Put";
 }
 
+function formatOptionPrice(value?: number | null) {
+  if (value == null || value === 0) return "—";
+  return formatUsd(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatOptionIv(value?: number | null) {
+  if (value == null) return "—";
+  return `${value.toFixed(0)}%`;
+}
+
+function formatOptionDelta(value?: number | null) {
+  if (value == null) return "—";
+  return value.toFixed(2);
+}
+
 function isTimelineExternalLink(entry: {
   kind: string;
   url?: string | null;
@@ -101,6 +118,7 @@ export function SymbolIntelligencePanel({
   const peers = intelligence?.peerComparison;
   const timeline = intelligence?.eventTimeline ?? [];
   const options = intelligence?.optionsScorecard;
+  const optionChain = intelligence?.optionChainPreview;
   const rollSuggestions = intelligence?.rollSuggestions ?? [];
   const research = intelligence?.cachedResearch;
   const symbol = intelligence?.symbol;
@@ -391,6 +409,10 @@ export function SymbolIntelligencePanel({
           </div>
         )}
 
+        {optionChain && (optionChain.rows?.length ?? 0) > 0 && (
+          <OptionChainPreviewTable preview={optionChain} compact={compact} />
+        )}
+
         {options &&
           ((options.assignmentFlags?.length ?? 0) > 0 ||
             (options.coveredCallCandidates?.length ?? 0) > 0 ||
@@ -490,6 +512,128 @@ export function SymbolIntelligencePanel({
   );
 }
 
+function OptionSideMetrics({
+  quote,
+  className,
+}: {
+  quote?: OptionChainSideQuote | null;
+  className?: string;
+}) {
+  return (
+    <div className={cn("grid grid-cols-5 gap-2 text-[11px]", className)}>
+      <div>
+        <p className="text-muted">Bid</p>
+        <p className="mt-0.5 tabular-nums font-medium text-foreground">
+          {formatOptionPrice(quote?.bid)}
+        </p>
+      </div>
+      <div>
+        <p className="text-muted">Ask</p>
+        <p className="mt-0.5 tabular-nums font-medium text-foreground">
+          {formatOptionPrice(quote?.ask)}
+        </p>
+      </div>
+      <div>
+        <p className="text-muted">Δ</p>
+        <p className="mt-0.5 tabular-nums font-medium text-foreground">
+          {formatOptionDelta(quote?.delta)}
+        </p>
+      </div>
+      <div>
+        <p className="text-muted">OI</p>
+        <p className="mt-0.5 tabular-nums font-medium text-foreground">
+          {quote?.openInterest != null ? quote.openInterest.toLocaleString() : "—"}
+        </p>
+      </div>
+      <div>
+        <p className="text-muted">IV</p>
+        <p className="mt-0.5 tabular-nums font-medium text-foreground">
+          {formatOptionIv(quote?.iv)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function OptionChainPreviewTable({
+  preview,
+  compact = false,
+}: {
+  preview: OptionChainPreview;
+  compact?: boolean;
+}) {
+  const rows = preview.rows.slice(0, compact ? 5 : preview.rows.length);
+
+  return (
+    <div>
+      <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium uppercase tracking-wide text-muted">
+        <Target className="h-3.5 w-3.5" aria-hidden />
+        Option chain
+        {preview.expiration && (
+          <span className="normal-case text-foreground">
+            · {formatExpiration(preview.expiration)}
+          </span>
+        )}
+        {preview.strikeCount != null && (
+          <span className="normal-case text-muted">
+            · {preview.strikeCount} up/down strikes
+          </span>
+        )}
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <table className="w-full min-w-[720px] text-left text-xs">
+          <thead className="bg-background/60 text-muted">
+            <tr>
+              <th className="px-3 py-2 font-medium">Strike</th>
+              <th className="px-3 py-2 font-medium">Call bid</th>
+              <th className="px-3 py-2 font-medium">Call ask</th>
+              <th className="px-3 py-2 font-medium">Call Δ</th>
+              <th className="px-3 py-2 font-medium">Call OI</th>
+              <th className="px-3 py-2 font-medium">Call IV</th>
+              <th className="px-3 py-2 font-medium">Put bid</th>
+              <th className="px-3 py-2 font-medium">Put ask</th>
+              <th className="px-3 py-2 font-medium">Put Δ</th>
+              <th className="px-3 py-2 font-medium">Put OI</th>
+              <th className="px-3 py-2 font-medium">Put IV</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.strike} className="border-t border-border">
+                <td className="px-3 py-2 font-mono font-medium tabular-nums">
+                  {formatUsd(row.strike, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2,
+                  })}
+                </td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.bid)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.ask)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionDelta(row.call?.delta)}</td>
+                <td className="px-3 py-2 tabular-nums">
+                  {row.call?.openInterest != null
+                    ? row.call.openInterest.toLocaleString()
+                    : "—"}
+                </td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionIv(row.call?.iv)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.bid)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.ask)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionDelta(row.put?.delta)}</td>
+                <td className="px-3 py-2 tabular-nums">
+                  {row.put?.openInterest != null
+                    ? row.put.openInterest.toLocaleString()
+                    : "—"}
+                </td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionIv(row.put?.iv)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function OptionsCandidateTable({
   title,
   symbol,
@@ -524,19 +668,8 @@ function OptionsCandidateTable({
                   {formatStrikeSide(candidate.side)} ·{" "}
                   {formatExpiration(candidate.expiration)}
                 </p>
-                <p className="mt-1 text-xs text-muted">
-                  Δ {candidate.delta != null ? candidate.delta.toFixed(2) : "—"}
-                  {" · "}
-                  OI {candidate.openInterest ?? "—"}
-                  {" · "}
-                  Bid{" "}
-                  {candidate.bid != null
-                    ? formatUsd(candidate.bid, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })
-                    : "—"}
-                  {" · "}
+                <OptionSideMetrics quote={candidate} className="mt-2" />
+                <p className="mt-2 text-[11px] text-muted">
                   Score {candidate.score.toFixed(2)}
                 </p>
                 <p className="mt-1.5 text-xs leading-relaxed text-foreground">
