@@ -18,7 +18,6 @@ import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSna
 import { AlertBadge } from "@/components/AlertBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
-import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 import { usePositionsContext } from "@/app/Providers";
 import { useInsights } from "@/app/hooks/useInsights";
 import { Position } from "@/app/types/schwab";
@@ -669,17 +668,21 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     : symbol!;
   const analyzeLabel = isPortfolio ? "Analyze portfolio" : "Analyze position";
   const hasContent = !!content;
-  const isIdle =
+  const isInitialLoading =
     showPortfolioAnalysis &&
-    !requested &&
+    requested &&
+    loading &&
+    !content &&
+    !hasCachedInsights;
+  const showAnalyzePrompt =
+    showPortfolioAnalysis &&
     !hasCachedInsights &&
     !hasContent &&
-    !loading &&
-    !error;
+    !error &&
+    (!requested || isInitialLoading);
   const showAnalysisOutput =
     showPortfolioAnalysis &&
-    (requested || hasCachedInsights || hasContent || error);
-  const showAnalyzePrompt = isIdle;
+    (hasCachedInsights || hasContent || error || (requested && !isInitialLoading));
 
   const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
   const openPL = sumOpenProfitLoss(positions);
@@ -697,6 +700,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const symbolCount = isPortfolio ? Object.keys(positionMap ?? {}).length : 0;
 
   const handleStart = () => {
+    if (loading) return;
     setRequested(true);
     if (isPortfolio) {
       document
@@ -723,8 +727,8 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
 
   const showReanalyze =
     showPortfolioAnalysis &&
-    (requested || hasCachedInsights) &&
-    (hasContent || loading || error);
+    !isInitialLoading &&
+    (hasCachedInsights || hasContent || error || (requested && loading));
 
   const headerReanalyzeButton =
     embedded &&
@@ -751,12 +755,6 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
 
       {showAnalysisOutput && (
         <div className="border-t border-border/70 px-4 py-4">
-          {loading && !content && (
-            <ThinkingSpinner
-              message={`Analyzing ${isPortfolio ? "portfolio" : symbol}…`}
-            />
-          )}
-
           {error && (
             <ErrorBanner message={error} onRetry={refetch} className="mb-3" />
           )}
