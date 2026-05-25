@@ -15,6 +15,7 @@ import {
   alertToQuickActionId,
   dedupeAlerts,
   filterNonTaxAlerts,
+  formatSectorLabel,
   hasPortfolioBriefContent,
   signalSeverityClass,
   signalSeverityLabel,
@@ -179,7 +180,7 @@ export function PortfolioBriefSection({
                   <div key={sector.sector}>
                     <div className="mb-1 flex items-center justify-between gap-2 text-xs">
                       <span className="font-medium text-foreground">
-                        {sector.sector}
+                        {formatSectorLabel(sector.sector)}
                       </span>
                       <span className="tabular-nums text-muted">
                         {sector.weightPct.toFixed(1)}%

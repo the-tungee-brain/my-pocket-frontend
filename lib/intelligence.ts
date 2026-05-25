@@ -54,6 +54,24 @@ export function signalSeverityClass(severity: SignalSeverity): string {
   }
 }
 
+const UNKNOWN_SECTOR_VALUES = new Set([
+  "",
+  "unknown",
+  "unknown sector",
+  "n/a",
+  "na",
+  "none",
+  "uncategorized",
+]);
+
+export function formatSectorLabel(sector: string | null | undefined): string {
+  const cleaned = sector?.trim() ?? "";
+  if (!cleaned || UNKNOWN_SECTOR_VALUES.has(cleaned.toLowerCase())) {
+    return "Misc";
+  }
+  return cleaned;
+}
+
 export function dedupeAlerts(alerts: ProactiveAlert[]): ProactiveAlert[] {
   const seen = new Set<string>();
   const result: ProactiveAlert[] = [];
