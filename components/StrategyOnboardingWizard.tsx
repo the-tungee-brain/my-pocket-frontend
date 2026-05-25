@@ -85,9 +85,10 @@ export function StrategyOnboardingWizard({
   );
 
   const showSymbolSuggestions =
-    step === "configure" &&
+    (step === "configure" || step === "review") &&
     selectedStrategy !== null &&
-    selectedStrategy !== "etf-core";
+    selectedStrategy !== "etf-core" &&
+    symbols.length === 0;
 
   const prepareSuggestionsProfile = useCallback(async () => {
     if (!onSaveDraft || !selectedStrategy) return;
@@ -116,6 +117,8 @@ export function StrategyOnboardingWizard({
     enabled: showSymbolSuggestions && !!onSaveDraft,
     prepareProfile: prepareSuggestionsProfile,
   });
+
+  const topPick = suggestions?.picks?.[0] ?? null;
 
   const addSymbol = (symbol: string) => {
     const upper = symbol.toUpperCase();
@@ -178,9 +181,16 @@ export function StrategyOnboardingWizard({
       if (selectedStrategy === "etf-core") {
         return etfPrimary.trim().length > 0 && etfBond.trim().length > 0;
       }
-      return symbols.length > 0;
+      return true;
     }
     return true;
+  };
+
+  const canFinish = () => {
+    if (selectedStrategy === "etf-core") {
+      return etfPrimary.trim().length > 0 && etfBond.trim().length > 0;
+    }
+    return symbols.length > 0;
   };
 
   const goNext = () => {
@@ -455,6 +465,61 @@ export function StrategyOnboardingWizard({
               ) : (
                 <ReviewRow label="Symbols" value={symbols.join(", ") || "—"} />
               )}
+              {selectedStrategy !== "etf-core" && symbols.length === 0 && (
+                <div className="rounded-xl border border-accent/25 bg-accent-muted/15 p-3">
+                  {suggestionsLoading && (
+                    <p className="text-xs text-muted">
+                      Loading your top symbol suggestion…
+                    </p>
+                  )}
+                  {!suggestionsLoading && topPick && (
+                    <>
+                      <div className="flex items-start gap-2">
+                        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground">
+                            Use our top pick for your strategy?
+                          </p>
+                          <p className="mt-1 text-xs leading-relaxed text-muted">
+                            {topPick.companyName
+                              ? `${topPick.symbol} · ${topPick.companyName}`
+                              : topPick.symbol}
+                            {topPick.fitScore > 0
+                              ? ` · ${Math.round(topPick.fitScore * 100)}% fit`
+                              : ""}
+                          </p>
+                          <p className="mt-2 text-xs leading-relaxed text-muted">
+                            {topPick.rationale}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" onClick={() => addSymbol(topPick.symbol)}>
+                          Use top pick · {topPick.symbol}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setStep("configure")}>
+                          Choose manually
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                  {!suggestionsLoading && !topPick && (
+                    <>
+                      <p className="text-xs text-muted">
+                        Pick at least one symbol before starting your journey.
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-3"
+                        onClick={() => setStep("configure")}
+                      >
+                        Choose symbols
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
               <p className="text-xs text-muted">
                 We'll create a guided checklist and suggest your next step on
                 the portfolio page.
@@ -481,7 +546,11 @@ export function StrategyOnboardingWizard({
               <ArrowRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={() => void handleFinish()} isLoading={submitting}>
+            <Button
+              onClick={() => void handleFinish()}
+              isLoading={submitting}
+              disabled={!canFinish()}
+            >
               Start my journey
             </Button>
           )}
