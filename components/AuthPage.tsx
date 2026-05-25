@@ -105,7 +105,7 @@ export default function AuthPage() {
           </h1>
 
           <p className="mt-4 max-w-xl text-base leading-relaxed text-muted">
-            PowerPocket combines real-time brokerage data, market news,
+            Tomcrest combines real-time brokerage data, market news,
             financial fundamentals, and AI analysis to help you make smarter
             portfolio decisions.
           </p>
@@ -208,7 +208,7 @@ function AppPreview() {
             </div>
             <div className="min-w-0">
               <div className="truncate text-[11px] font-semibold">
-                PowerPocket
+                Tomcrest
               </div>
               <div className="truncate text-[9px] text-muted">
                 Portfolio workspace

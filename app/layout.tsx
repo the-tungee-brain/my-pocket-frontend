@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "PowerPocket",
-  description: "AI bot for your stock portfolio",
+  title: "Tomcrest",
+  description: "AI portfolio intelligence by Tomcrest",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

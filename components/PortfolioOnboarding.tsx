@@ -126,7 +126,7 @@ export function PortfolioOnboarding() {
               Getting started
             </p>
             <h2 className="mt-1 text-sm font-semibold text-foreground">
-              Set up PowerPocket in {steps.length} steps
+              Set up Tomcrest in {steps.length} steps
             </h2>
             <p className="mt-0.5 text-xs text-muted">
               {completedCount} of {steps.length} complete

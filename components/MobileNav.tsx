@@ -137,7 +137,7 @@ export function MobileNav({
                     id="mobile-nav-title"
                     className="text-sm font-semibold tracking-tight"
                   >
-                    PowerPocket
+                    Tomcrest
                   </div>
                   <div className="text-[10px] text-muted">
                     Portfolio workspace

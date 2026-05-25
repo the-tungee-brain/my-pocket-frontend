@@ -32,7 +32,7 @@ export function DesktopNav({
         </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold tracking-tight">
-            PowerPocket
+            Tomcrest
           </div>
           <div className="truncate text-[11px] text-muted">
             Portfolio workspace
