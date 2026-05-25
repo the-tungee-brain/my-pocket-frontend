@@ -25,6 +25,7 @@ import {
   CashSecuredPutSummary,
   AssignmentRiskSummary,
   RecentActivitySummary,
+  PortfolioMetrics,
 } from "./types/schwab";
 import type { ProactiveAlert, PortfolioIntelligence } from "./types/intelligence";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
@@ -93,6 +94,7 @@ type PositionsContextValue = {
   recentActivity: RecentActivitySummary | null;
   proactiveAlerts: ProactiveAlert[];
   portfolioBrief: PortfolioIntelligence | null;
+  portfolioMetrics: PortfolioMetrics | null;
   refreshPositions: (refresh?: boolean) => Promise<void>;
 };
 
@@ -188,6 +190,8 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const [proactiveAlerts, setProactiveAlerts] = useState<ProactiveAlert[]>([]);
   const [portfolioBrief, setPortfolioBrief] =
     useState<PortfolioIntelligence | null>(null);
+  const [portfolioMetrics, setPortfolioMetrics] =
+    useState<PortfolioMetrics | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [selectedView, setSelectedView] = useState<MainView>("research");
   const [loading, setLoading] = useState(false);
@@ -227,6 +231,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       setRecentActivity(data.recentActivity ?? null);
       setProactiveAlerts(data.proactiveAlerts ?? []);
       setPortfolioBrief(data.portfolioBrief ?? null);
+      setPortfolioMetrics(data.portfolioMetrics ?? null);
 
       const symbolsOnly = Object.keys(map).sort();
       setSelectedSymbol((current) =>
@@ -256,6 +261,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         setRecentActivity(null);
         setProactiveAlerts([]);
         setPortfolioBrief(null);
+        setPortfolioMetrics(null);
         setSelectedSymbol(null);
       } finally {
         setLoading(false);
@@ -819,6 +825,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       recentActivity,
       proactiveAlerts,
       portfolioBrief,
+      portfolioMetrics,
       refreshPositions,
     }),
     [
@@ -844,6 +851,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       recentActivity,
       proactiveAlerts,
       portfolioBrief,
+      portfolioMetrics,
       refreshPositions,
     ],
   );

@@ -38,6 +38,17 @@ export type Position = {
   currentDayCost: number;
   /** Detected by backend: covered_call, cash_secured_put, etc. */
   optionStrategy?: string | null;
+  /** Computed by backend from Schwab position fields */
+  costBasis?: number | null;
+  openProfitLoss?: number | null;
+  openProfitLossPct?: number | null;
+  portfolioWeightPct?: number | null;
+};
+
+export type PortfolioMetrics = {
+  totalOpenProfitLoss?: number | null;
+  totalCostBasis?: number | null;
+  openProfitLossPct?: number | null;
 };
 
 export type InitialBalances = {
@@ -266,4 +277,5 @@ export type AccountPositionsResponse = {
   recentActivity?: RecentActivitySummary | null;
   proactiveAlerts?: ProactiveAlert[];
   portfolioBrief?: PortfolioIntelligence | null;
+  portfolioMetrics?: PortfolioMetrics | null;
 };

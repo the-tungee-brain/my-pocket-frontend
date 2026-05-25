@@ -10,11 +10,6 @@ import {
   optionStrategyLabel,
 } from "@/lib/optionStrategyLabel";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
-import {
-  positionCostBasis,
-  positionOpenProfitLoss,
-  positionOpenProfitLossPct,
-} from "@/lib/positionMetrics";
 import { cn } from "@/lib/utils";
 
 export type PositionMap = Record<string, Position[]>;
@@ -198,10 +193,7 @@ export function AccountPositionList({
                     <div>
                       <p className="text-muted">Cost</p>
                       <p className="mt-0.5 tabular-nums font-medium">
-                        {(() => {
-                          const cost = positionCostBasis(p);
-                          return cost != null ? formatUsd(cost) : "—";
-                        })()}
+                        {p.costBasis != null ? formatUsd(p.costBasis) : "—"}
                       </p>
                     </div>
                     <div>
@@ -212,41 +204,35 @@ export function AccountPositionList({
                     </div>
                     <div>
                       <p className="text-muted">Open P/L</p>
-                      {(() => {
-                        const openPL = positionOpenProfitLoss(p);
-                        const openPLPct = positionOpenProfitLossPct(p);
-                        if (openPL == null) {
-                          return (
-                            <p className="mt-0.5 tabular-nums font-medium text-muted">
-                              —
-                            </p>
-                          );
-                        }
-                        const isPositive = openPL >= 0;
-                        return (
-                          <>
+                      {p.openProfitLoss == null ? (
+                        <p className="mt-0.5 tabular-nums font-medium text-muted">
+                          —
+                        </p>
+                      ) : (
+                        <>
+                          <p
+                            className={cn(
+                              "mt-0.5 tabular-nums font-medium",
+                              p.openProfitLoss >= 0 ? "text-success" : "text-danger",
+                            )}
+                          >
+                            {formatSignedUsd(p.openProfitLoss)}
+                          </p>
+                          {p.openProfitLossPct != null && (
                             <p
                               className={cn(
-                                "mt-0.5 tabular-nums font-medium",
-                                isPositive ? "text-success" : "text-danger",
+                                "tabular-nums text-[11px]",
+                                p.openProfitLoss >= 0
+                                  ? "text-success"
+                                  : "text-danger",
                               )}
                             >
-                              {formatSignedUsd(openPL)}
+                              ({p.openProfitLossPct >= 0 ? "+" : ""}
+                              {p.openProfitLossPct.toFixed(2)}%)
                             </p>
-                            {openPLPct != null && (
-                              <p
-                                className={cn(
-                                  "tabular-nums text-[11px]",
-                                  isPositive ? "text-success" : "text-danger",
-                                )}
-                              >
-                                ({openPLPct >= 0 ? "+" : ""}
-                                {openPLPct.toFixed(2)}%)
-                              </p>
-                            )}
-                          </>
-                        );
-                      })()}
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="mt-2 text-xs">
@@ -283,9 +269,6 @@ export function AccountPositionList({
                 const qty = p.longQuantity - p.shortQuantity;
                 const isPositive = p.currentDayProfitLoss >= 0;
                 const reserved = cspReservedCash(p);
-                const cost = positionCostBasis(p);
-                const openPL = positionOpenProfitLoss(p);
-                const openPLPct = positionOpenProfitLossPct(p);
 
                 return (
                   <tr
@@ -312,7 +295,7 @@ export function AccountPositionList({
                       {qty.toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {cost != null ? formatUsd(cost) : "—"}
+                      {p.costBasis != null ? formatUsd(p.costBasis) : "—"}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
                       ${p.marketValue.toLocaleString()}
@@ -320,20 +303,20 @@ export function AccountPositionList({
                     <td
                       className={cn(
                         "px-4 py-3 text-right tabular-nums",
-                        openPL == null
+                        p.openProfitLoss == null
                           ? "text-muted"
-                          : openPL >= 0
+                          : p.openProfitLoss >= 0
                             ? "text-success"
                             : "text-danger",
                       )}
                     >
-                      {openPL != null ? (
+                      {p.openProfitLoss != null ? (
                         <>
-                          {formatSignedUsd(openPL)}
-                          {openPLPct != null && (
+                          {formatSignedUsd(p.openProfitLoss)}
+                          {p.openProfitLossPct != null && (
                             <span className="block text-[11px] opacity-80">
-                              ({openPLPct >= 0 ? "+" : ""}
-                              {openPLPct.toFixed(2)}%)
+                              ({p.openProfitLossPct >= 0 ? "+" : ""}
+                              {p.openProfitLossPct.toFixed(2)}%)
                             </span>
                           )}
                         </>

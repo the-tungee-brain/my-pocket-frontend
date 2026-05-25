@@ -3,11 +3,11 @@
 import { AlertTriangle, BriefcaseBusiness } from "lucide-react";
 import type {
   CashSecuredPutSummary,
+  PortfolioMetrics,
   Position,
   SchwabAccounts,
 } from "@/app/types/schwab";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
-import { sumOpenProfitLoss } from "@/lib/positionMetrics";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -16,6 +16,7 @@ type Props = {
   symbols: string[];
   account: SchwabAccounts | null;
   cashSecuredPutSummary?: CashSecuredPutSummary | null;
+  portfolioMetrics?: PortfolioMetrics | null;
   className?: string;
 };
 
@@ -53,6 +54,7 @@ export function PortfolioSnapshot({
   symbols,
   account,
   cashSecuredPutSummary,
+  portfolioMetrics,
   className,
 }: Props) {
   if (loading) {
@@ -90,7 +92,7 @@ export function PortfolioSnapshot({
     (sum, p) => sum + p.currentDayProfitLoss,
     0,
   );
-  const totalOpenPL = sumOpenProfitLoss(allPositions);
+  const totalOpenPL = portfolioMetrics?.totalOpenProfitLoss ?? null;
   const cspReserved = cashSecuredPutSummary?.totalReservedCash ?? 0;
   const cashAfterCsp =
     cashSecuredPutSummary?.availableCashAfterReserves ??

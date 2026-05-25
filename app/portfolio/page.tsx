@@ -40,6 +40,7 @@ export default function PortfolioPage() {
     recentActivity,
     proactiveAlerts,
     portfolioBrief: accountBrief,
+    portfolioMetrics,
     refreshPositions,
     sessionAccessToken,
     sendQuickAction,
@@ -189,6 +190,7 @@ export default function PortfolioPage() {
         symbols={symbols}
         account={account}
         cashSecuredPutSummary={cashSecuredPutSummary}
+        portfolioMetrics={portfolioMetrics}
       />
 
       {showContent && (
@@ -232,9 +234,6 @@ export default function PortfolioPage() {
         loading={loading}
         allPositions={allPositions}
         positionMap={positionMap}
-        liquidationValue={
-          account?.securitiesAccount.currentBalances.liquidationValue
-        }
         symbolAlertMap={symbolAlertMap}
       />
 

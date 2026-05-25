@@ -14,9 +14,9 @@ import type { SymbolAlertSummary } from "@/lib/intelligence";
 import { SEVERITY_ORDER } from "@/lib/intelligence";
 import {
   openProfitLossPct,
-  portfolioWeightPct,
   sumCostBasis,
   sumOpenProfitLoss,
+  sumPortfolioWeight,
 } from "@/lib/positionMetrics";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,6 @@ type Props = {
   loading: boolean;
   allPositions: Position[];
   positionMap: PositionMap;
-  liquidationValue?: number | null;
   symbolAlertMap?: Record<string, SymbolAlertSummary>;
   className?: string;
 };
@@ -39,10 +38,7 @@ type SymbolSummary = {
   weightPct: number | null;
 };
 
-function buildSymbolSummaries(
-  positionMap: PositionMap,
-  liquidationValue?: number | null,
-): SymbolSummary[] {
+function buildSymbolSummaries(positionMap: PositionMap): SymbolSummary[] {
   return Object.entries(positionMap)
     .map(([symbol, positions]) => {
       const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
@@ -56,7 +52,7 @@ function buildSymbolSummaries(
         dayPL: positions.reduce((sum, p) => sum + p.currentDayProfitLoss, 0),
         openPL,
         costBasis,
-        weightPct: portfolioWeightPct(totalValue, liquidationValue),
+        weightPct: sumPortfolioWeight(positions),
       };
     })
     .sort((a, b) => b.totalValue - a.totalValue);
@@ -66,7 +62,6 @@ export function PortfolioOverview({
   loading,
   allPositions,
   positionMap,
-  liquidationValue,
   symbolAlertMap = {},
   className,
 }: Props) {
@@ -84,7 +79,7 @@ export function PortfolioOverview({
     void connectSchwab();
   };
 
-  const symbolSummaries = buildSymbolSummaries(positionMap, liquidationValue)
+  const symbolSummaries = buildSymbolSummaries(positionMap)
     .sort((a, b) => {
       const alertA = symbolAlertMap[a.symbol];
       const alertB = symbolAlertMap[b.symbol];
