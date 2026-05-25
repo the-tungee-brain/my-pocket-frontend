@@ -59,7 +59,7 @@ const FOLLOW_UP_RULES: FollowUpRule[] = [
     id: "redeploy-proceeds",
     label: "Where to redeploy proceeds",
     prompt:
-      "Where should I redeploy the proceeds from that trim — hold cash, add a diversified ETF, or rotate into another holding? Pick one specific path for me.",
+      "Where should I redeploy the proceeds from that trim — hold cash, add to an underweight holding from my targets, or rotate into another position I already own? Pick one specific path for me.",
     priority: 1,
     when: (content) =>
       REDEPLOY_RE.test(content) ||
