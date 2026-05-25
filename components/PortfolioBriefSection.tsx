@@ -396,23 +396,33 @@ export function PortfolioBriefSection({
                         key={`${item.headline}-${index}`}
                         className="rounded-xl border border-border bg-background/60 px-3 py-2"
                       >
+                        {item.source && (
+                          <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                            <span className="font-mono font-semibold text-accent-strong">
+                              {item.source}
+                            </span>
+                          </div>
+                        )}
                         {item.url ? (
                           <a
                             href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-medium leading-relaxed text-foreground underline-offset-2 hover:text-accent-strong hover:underline"
+                            className={cn(
+                              "block text-sm font-medium leading-relaxed text-foreground underline-offset-2 hover:text-accent-strong hover:underline",
+                              item.source && "mt-1",
+                            )}
                           >
                             {item.headline}
                           </a>
                         ) : (
-                          <p className="text-sm leading-relaxed text-foreground">
+                          <p
+                            className={cn(
+                              "text-sm leading-relaxed text-foreground",
+                              item.source && "mt-1",
+                            )}
+                          >
                             {item.headline}
-                          </p>
-                        )}
-                        {item.source && (
-                          <p className="mt-1 text-[11px] text-muted">
-                            {item.source}
                           </p>
                         )}
                       </li>
@@ -506,21 +516,23 @@ export function PortfolioBriefSection({
                             </span>
                           )}
                         </div>
-                        <p className="mt-1 text-sm leading-relaxed text-foreground">
-                          {item.headline}
-                        </p>
-                        {item.url && (
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-accent-strong hover:underline"
-                          >
-                            Read article
-                            <ExternalLink className="h-3 w-3" aria-hidden />
-                            <span className="sr-only"> (opens in new tab)</span>
-                          </a>
-                        )}
+                        <div className="mt-1 flex items-start justify-between gap-3">
+                          <p className="min-w-0 flex-1 text-sm leading-relaxed text-foreground">
+                            {item.headline}
+                          </p>
+                          {item.url && (
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-accent-strong hover:underline"
+                            >
+                              Read article
+                              <ExternalLink className="h-3 w-3" aria-hidden />
+                              <span className="sr-only"> (opens in new tab)</span>
+                            </a>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
