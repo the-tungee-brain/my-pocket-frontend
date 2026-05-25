@@ -55,7 +55,10 @@ export function AnalyzePrompt({
         <button
           type="button"
           disabled={loading}
-          onClick={onClick}
+          onClick={() => {
+            if (loading) return;
+            onClick();
+          }}
           className={buttonClass}
         >
           <Sparkles

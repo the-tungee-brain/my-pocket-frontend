@@ -11,11 +11,11 @@ import {
   RefreshCw,
 } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
+import { formatInsightsAnalyzedAt } from "@/lib/insightsCache";
 import { AnalyzePrompt } from "@/components/AnalyzePrompt";
 import { AlertBadge } from "@/components/AlertBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
-import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 import { usePositionsContext } from "@/app/Providers";
 import { useInsights } from "@/app/hooks/useInsights";
 import { Position } from "@/app/types/schwab";
@@ -551,7 +551,8 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     [symbol],
   );
 
-  const { loading, error, content, refetch } = useInsights(
+  const { loading, error, content, analyzedAt, hasCachedInsights, refetch } =
+    useInsights(
     {
       label,
       positions,
@@ -565,6 +566,12 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   );
 
   useEffect(() => {
+    if (hasCachedInsights && !requested) {
+      setRequested(true);
+    }
+  }, [hasCachedInsights, requested]);
+
+  useEffect(() => {
     if (autoStart) setRequested(true);
   }, [autoStart]);
 
@@ -574,14 +581,14 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
 
   useEffect(() => {
     const handlePositionAnalyze = (event: Event) => {
-      if (isPortfolio) return;
+      if (isPortfolio || loading) return;
       const detail = (event as CustomEvent<{ symbol?: string }>).detail;
       if (symbol && detail?.symbol && detail.symbol !== symbol) return;
       setRequested(true);
     };
 
     const handlePortfolioAnalyze = () => {
-      if (!isPortfolio) return;
+      if (!isPortfolio || loading) return;
       setRequested(true);
     };
 
@@ -591,7 +598,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       window.removeEventListener(ANALYZE_POSITION_EVENT, handlePositionAnalyze);
       window.removeEventListener(ANALYZE_PORTFOLIO_EVENT, handlePortfolioAnalyze);
     };
-  }, [isPortfolio, symbol]);
+  }, [isPortfolio, loading, symbol]);
 
   const symbolSummaries = useMemo(() => {
     if (!isPortfolio || !positionMap) return [];
@@ -618,9 +625,12 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const title = isPortfolio ? "Holdings" : symbol!;
   const analyzeLabel = isPortfolio ? "Analyze portfolio" : "Analyze position";
   const hasContent = !!content;
-  const isIdle = !requested && !hasContent && !loading && !error;
-  const showAnalysisOutput = requested || hasContent || error;
-  const showAnalyzePrompt = isIdle;
+  const isIdle = !requested && !hasCachedInsights && !hasContent && !loading && !error;
+  const showInitialLoading = loading && !hasContent && !error;
+  const showAnalysisOutput =
+    (requested || hasCachedInsights || hasContent || error) &&
+    !showInitialLoading;
+  const showAnalyzePrompt = isIdle || showInitialLoading;
 
   const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
   const openPL = sumOpenProfitLoss(positions);
@@ -637,11 +647,18 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
 
   const symbolCount = isPortfolio ? Object.keys(positionMap ?? {}).length : 0;
 
-  const handleStart = () => setRequested(true);
+  const handleStart = () => {
+    if (loading) return;
+    setRequested(true);
+  };
 
   const handleRefresh = () => {
+    if (loading) return;
+    if (!requested) {
+      setRequested(true);
+      return;
+    }
     if (hasContent || error) refetch();
-    else setRequested(true);
   };
 
   const handleFollowUp = () => {
@@ -675,7 +692,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
               </p>
             </div>
           </div>
-          {requested && (
+          {(requested || hasCachedInsights) && (hasContent || loading || error) && (
             <button
               type="button"
               disabled={loading}
@@ -686,7 +703,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
                 className={cn("h-3.5 w-3.5", loading && "animate-spin")}
                 aria-hidden
               />
-              Refresh
+              Re-analyze
             </button>
           )}
         </div>
@@ -791,12 +808,6 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
 
       {showAnalysisOutput && (
         <div className="border-t border-border/70 px-4 py-4">
-          {loading && !content && (
-            <ThinkingSpinner
-              message={`Analyzing ${isPortfolio ? "portfolio" : symbol}…`}
-            />
-          )}
-
           {error && (
             <ErrorBanner message={error} onRetry={refetch} className="mb-3" />
           )}
@@ -834,7 +845,9 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
           {hasContent && !loading && (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3">
               <p className="text-[11px] text-muted">
-                Generated from your Schwab holdings
+                {analyzedAt
+                  ? `Analyzed ${formatInsightsAnalyzedAt(analyzedAt)} · from your Schwab holdings`
+                  : "Generated from your Schwab holdings"}
               </p>
               <button
                 type="button"

@@ -1,7 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { streamAnalysis } from "@/lib/apiClient";
+import {
+  buildInsightsCacheKey,
+  clearInsightsCache,
+  readInsightsCache,
+  writeInsightsCache,
+  type InsightsCacheEntry,
+} from "@/lib/insightsCache";
 import {
   buildStructuredAnalyzeRequest,
   structuredAnalyzeDisplayMessage,
@@ -12,6 +19,8 @@ type InsightState = {
   loading: boolean;
   error: string | null;
   content: string | null;
+  analyzedAt: number | null;
+  hasCachedInsights: boolean;
   refetch: () => void;
 };
 
@@ -22,23 +31,20 @@ type InFlightEntry = {
   listeners: Set<Listener>;
 };
 
-const cache = new Map<string, { content: string }>();
+const memoryCache = new Map<string, InsightsCacheEntry>();
 const inFlight = new Map<string, InFlightEntry>();
 
-function makeKey(
+function getCachedEntry(
+  cacheKey: string,
   label: string,
-  positions: Position[],
-  structuredAnalyze?: boolean,
-): string {
-  return JSON.stringify({
-    label,
-    structuredAnalyze: !!structuredAnalyze,
-    positions: positions.map((p) => ({
-      symbol: p.instrument.symbol,
-      longQuantity: p.longQuantity,
-      shortQuantity: p.shortQuantity,
-    })),
-  });
+): InsightsCacheEntry | null {
+  const inMemory = memoryCache.get(cacheKey);
+  if (inMemory) return inMemory;
+  const stored = readInsightsCache(cacheKey, label);
+  if (stored) {
+    memoryCache.set(cacheKey, stored);
+  }
+  return stored;
 }
 
 export function useInsights(
@@ -65,18 +71,61 @@ export function useInsights(
     structuredAnalyze = false,
     userDisplayMessage = null,
   } = opts;
-  const [retryCount, setRetryCount] = useState(0);
+
+  const cacheKey = useMemo(() => {
+    if (!label || !positions?.length) return null;
+    return buildInsightsCacheKey(label, positions, structuredAnalyze);
+  }, [label, positions, structuredAnalyze]);
+
+  const bypassCacheRef = useRef(false);
+  const [fetchGeneration, setFetchGeneration] = useState(0);
   const [state, setState] = useState<Omit<InsightState, "refetch">>({
     loading: false,
     error: null,
     content: null,
+    analyzedAt: null,
+    hasCachedInsights: false,
   });
 
   const refetch = useCallback(() => {
-    if (!label || !positions?.length) return;
-    cache.delete(makeKey(label, positions, structuredAnalyze));
-    setRetryCount((c) => c + 1);
-  }, [label, positions, structuredAnalyze]);
+    if (!cacheKey) return;
+    memoryCache.delete(cacheKey);
+    clearInsightsCache(cacheKey);
+    bypassCacheRef.current = true;
+    setFetchGeneration((generation) => generation + 1);
+  }, [cacheKey]);
+
+  useEffect(() => {
+    if (!cacheKey || !label) {
+      setState({
+        loading: false,
+        error: null,
+        content: null,
+        analyzedAt: null,
+        hasCachedInsights: false,
+      });
+      return;
+    }
+
+    const cached = getCachedEntry(cacheKey, label);
+    if (cached) {
+      setState((previous) => ({
+        ...previous,
+        content: cached.content,
+        analyzedAt: cached.fetchedAt,
+        hasCachedInsights: true,
+        error: null,
+      }));
+      return;
+    }
+
+    setState((previous) => ({
+      ...previous,
+      hasCachedInsights: false,
+      analyzedAt: null,
+      content: enabled ? previous.content : null,
+    }));
+  }, [cacheKey, enabled, label]);
 
   useEffect(() => {
     if (
@@ -84,43 +133,61 @@ export function useInsights(
       !label ||
       !positions?.length ||
       !account ||
-      !accessToken
+      !accessToken ||
+      !cacheKey
     ) {
       if (!enabled) {
-        setState({ loading: false, error: null, content: null });
+        setState((previous) => ({
+          ...previous,
+          loading: false,
+        }));
       }
       return;
     }
 
-    const key = makeKey(label, positions, structuredAnalyze);
+    const shouldBypassCache = bypassCacheRef.current;
+    bypassCacheRef.current = false;
 
-    const cached = cache.get(key);
+    const cached = shouldBypassCache ? null : getCachedEntry(cacheKey, label);
     if (cached) {
-      setState({ loading: false, error: null, content: cached.content });
+      setState({
+        loading: false,
+        error: null,
+        content: cached.content,
+        analyzedAt: cached.fetchedAt,
+        hasCachedInsights: true,
+      });
       return;
     }
 
     let cancelled = false;
 
-    let entry = inFlight.get(key);
+    let entry = inFlight.get(cacheKey);
     if (entry) {
-      setState({
+      setState((previous) => ({
+        ...previous,
         loading: true,
         error: null,
-        content: entry.buffer || null,
-      });
+        content: entry!.buffer || previous.content,
+      }));
 
       const listener: Listener = (done, error) => {
         if (cancelled) return;
         if (error) {
-          setState({ loading: false, error, content: null });
-        } else {
-          setState({
-            loading: !done,
-            error: null,
-            content: entry!.buffer || null,
-          });
+          setState((previous) => ({
+            ...previous,
+            loading: false,
+            error,
+          }));
+          return;
         }
+
+        setState((previous) => ({
+          ...previous,
+          loading: !done,
+          error: null,
+          content: entry!.buffer || previous.content,
+        }));
       };
 
       entry.listeners.add(listener);
@@ -135,20 +202,30 @@ export function useInsights(
       buffer: "",
       listeners: new Set<Listener>(),
     };
-    inFlight.set(key, entry);
-    setState({ loading: true, error: null, content: null });
+    inFlight.set(cacheKey, entry);
+    setState((previous) => ({
+      ...previous,
+      loading: true,
+      error: null,
+    }));
 
     const listener: Listener = (done, error) => {
       if (cancelled) return;
       if (error) {
-        setState({ loading: false, error, content: null });
-      } else {
-        setState({
-          loading: !done,
-          error: null,
-          content: entry!.buffer || null,
-        });
+        setState((previous) => ({
+          ...previous,
+          loading: false,
+          error,
+        }));
+        return;
       }
+
+      setState((previous) => ({
+        ...previous,
+        loading: !done,
+        error: null,
+        content: entry!.buffer || previous.content,
+      }));
     };
 
     entry.listeners.add(listener);
@@ -182,22 +259,31 @@ export function useInsights(
         await streamAnalysis(body, accessToken, (chunk) => {
           entry!.buffer += chunk;
 
-          for (const l of entry!.listeners) {
-            l(false);
+          for (const activeListener of entry!.listeners) {
+            activeListener(false);
           }
         });
 
-        cache.set(key, { content: entry!.buffer });
+        const stored = writeInsightsCache(cacheKey, entry!.buffer);
+        memoryCache.set(cacheKey, stored);
 
-        for (const l of entry!.listeners) {
-          l(true);
+        setState({
+          loading: false,
+          error: null,
+          content: stored.content,
+          analyzedAt: stored.fetchedAt,
+          hasCachedInsights: true,
+        });
+
+        for (const activeListener of entry!.listeners) {
+          activeListener(true);
         }
       } catch {
-        for (const l of entry!.listeners) {
-          l(true, "Failed to load insights.");
+        for (const activeListener of entry!.listeners) {
+          activeListener(true, "Failed to load insights.");
         }
       } finally {
-        inFlight.delete(key);
+        inFlight.delete(cacheKey);
       }
     })();
 
@@ -214,8 +300,9 @@ export function useInsights(
     prompt,
     structuredAnalyze,
     userDisplayMessage,
-    retryCount,
+    fetchGeneration,
     enabled,
+    cacheKey,
   ]);
 
   return { ...state, refetch };

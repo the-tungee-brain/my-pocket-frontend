@@ -245,8 +245,9 @@ export default function PortfolioPage() {
   );
 
   const handleAnalyzePortfolio = useCallback(() => {
+    if (portfolioAnalysisLoading) return;
     requestPortfolioAnalysis();
-  }, []);
+  }, [portfolioAnalysisLoading]);
 
   const handleTaxAlert = useCallback(
     (item: TaxAlertItem) => {
@@ -363,9 +364,7 @@ export default function PortfolioPage() {
         cashSecuredPutSummary={cashSecuredPutSummary}
         portfolioMetrics={portfolioMetrics}
         onAnalyzePortfolio={showContent ? handleAnalyzePortfolio : undefined}
-        analysisLoading={
-          activeSection === "holdings" && portfolioAnalysisLoading
-        }
+        analysisLoading={portfolioAnalysisLoading}
       />
 
       {showContent && (
@@ -405,6 +404,7 @@ export default function PortfolioPage() {
               error={displayBrief ? null : briefError}
               lastUpdated={briefLastUpdated}
               onGoDeeper={handleAnalyzePortfolio}
+              analyzeLoading={portfolioAnalysisLoading}
               hideSuggestedActions
             />
           )}

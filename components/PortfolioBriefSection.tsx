@@ -48,6 +48,7 @@ type Props = {
   lastUpdated?: number | null;
   onRunAlert?: (alert: ProactiveAlert) => void;
   onGoDeeper?: () => void;
+  analyzeLoading?: boolean;
   hideSuggestedActions?: boolean;
   className?: string;
 };
@@ -199,6 +200,7 @@ export function PortfolioBriefSection({
   lastUpdated = null,
   onRunAlert,
   onGoDeeper,
+  analyzeLoading = false,
   hideSuggestedActions = false,
   className,
 }: Props) {
@@ -308,7 +310,7 @@ export function PortfolioBriefSection({
 
         <div className="flex shrink-0 items-center gap-2 pt-0.5">
           {onGoDeeper && !expanded && (
-            <AskAIChip onClick={onGoDeeper} />
+            <AskAIChip onClick={onGoDeeper} disabled={analyzeLoading} />
           )}
           <button
             type="button"
@@ -526,8 +528,9 @@ export function PortfolioBriefSection({
                 <div className="border-t border-border/70 pt-3">
                   <button
                     type="button"
+                    disabled={analyzeLoading}
                     onClick={onGoDeeper}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-strong transition hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-strong transition hover:underline disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Sparkles className="h-3.5 w-3.5" aria-hidden />
                     Go deeper with full AI portfolio analysis
