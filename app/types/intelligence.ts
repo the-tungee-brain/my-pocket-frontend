@@ -18,6 +18,7 @@ export type PortfolioNewsItem = {
   headline: string;
   sentiment?: string | null;
   weightPct?: number | null;
+  url?: string | null;
 };
 
 export type MarketNewsItem = {

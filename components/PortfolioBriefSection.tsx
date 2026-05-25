@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   CalendarDays,
   ChevronDown,
+  ExternalLink,
   GitCompareArrows,
   Newspaper,
   PieChart,
@@ -508,6 +509,18 @@ export function PortfolioBriefSection({
                         <p className="mt-1 text-sm leading-relaxed text-foreground">
                           {item.headline}
                         </p>
+                        {item.url && (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-accent-strong hover:underline"
+                          >
+                            Read article
+                            <ExternalLink className="h-3 w-3" aria-hidden />
+                            <span className="sr-only"> (opens in new tab)</span>
+                          </a>
+                        )}
                       </li>
                     ))}
                   </ul>
