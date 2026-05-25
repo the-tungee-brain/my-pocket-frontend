@@ -20,7 +20,7 @@ export function SymbolSearchField({
   value,
   onChange,
   onSelect,
-  placeholder = "Search symbol, e.g. AAPL",
+  placeholder = "Search symbol or company, e.g. AAPL",
   limit = 8,
   className,
 }: Props) {
@@ -105,6 +105,11 @@ export function SymbolSearchField({
                   <span className="font-mono font-semibold text-foreground">
                     {item.symbol}
                   </span>
+                  {item.name && (
+                    <span className="mt-0.5 block truncate text-xs text-muted">
+                      {item.name}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

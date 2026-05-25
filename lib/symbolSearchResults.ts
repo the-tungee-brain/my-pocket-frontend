@@ -7,7 +7,7 @@ function readSymbol(value: unknown): string | null {
 
   if (typeof value === "object" && value !== null) {
     const record = value as Record<string, unknown>;
-    for (const key of ["symbol", "ticker", "name"]) {
+    for (const key of ["symbol", "ticker"]) {
       const candidate = record[key];
       if (typeof candidate === "string" && candidate.trim()) {
         return candidate.trim().toUpperCase();
@@ -15,6 +15,18 @@ function readSymbol(value: unknown): string | null {
     }
   }
 
+  return null;
+}
+
+function readName(value: unknown): string | null {
+  if (typeof value !== "object" || value === null) return null;
+  const record = value as Record<string, unknown>;
+  for (const key of ["name", "companyName", "title", "description"]) {
+    const candidate = record[key];
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
   return null;
 }
 
@@ -39,12 +51,7 @@ export function normalizeSymbolSearchResults(data: unknown): TickerSymbolItem[] 
     seen.add(symbol);
     normalized.push({
       symbol,
-      created_at:
-        typeof item === "object" &&
-        item !== null &&
-        typeof (item as Record<string, unknown>).created_at === "string"
-          ? ((item as Record<string, unknown>).created_at as string)
-          : "",
+      name: readName(item),
     });
   }
 

@@ -42,10 +42,15 @@ export function SymbolSearchResult({
           className="flex min-w-0 flex-1 items-center justify-between gap-3 px-3 py-3 text-left transition hover:bg-secondary/80"
           onClick={() => onSelect(item)}
         >
-          <span className="font-mono font-semibold text-foreground">
-            {item.symbol}
-          </span>
-          <span className="inline-flex items-center gap-1 text-xs text-muted">
+          <div className="min-w-0">
+            <span className="font-mono font-semibold text-foreground">
+              {item.symbol}
+            </span>
+            {item.name && (
+              <p className="truncate text-xs text-muted">{item.name}</p>
+            )}
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted">
             Open
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </span>

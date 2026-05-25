@@ -138,7 +138,7 @@ export default function ResearchPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleInputKeyDown}
-              placeholder="Search symbol, e.g. NVDA"
+              placeholder="Search symbol or company, e.g. NVDA"
               role="combobox"
               aria-label="Search ticker symbol"
               aria-autocomplete="list"
