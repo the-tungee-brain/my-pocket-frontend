@@ -234,6 +234,9 @@ export default function PortfolioPage() {
         loading={loading}
         allPositions={allPositions}
         positionMap={positionMap}
+        liquidationValue={
+          account?.securitiesAccount.currentBalances.liquidationValue
+        }
         symbolAlertMap={symbolAlertMap}
       />
 

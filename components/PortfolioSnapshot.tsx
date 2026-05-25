@@ -8,6 +8,7 @@ import type {
   SchwabAccounts,
 } from "@/app/types/schwab";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
+import { sumOpenProfitLoss } from "@/lib/positionMetrics";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -92,7 +93,8 @@ export function PortfolioSnapshot({
     (sum, p) => sum + p.currentDayProfitLoss,
     0,
   );
-  const totalOpenPL = portfolioMetrics?.totalOpenProfitLoss ?? null;
+  const totalOpenPL =
+    portfolioMetrics?.totalOpenProfitLoss ?? sumOpenProfitLoss(allPositions);
   const cspReserved = cashSecuredPutSummary?.totalReservedCash ?? 0;
   const cashAfterCsp =
     cashSecuredPutSummary?.availableCashAfterReserves ??
