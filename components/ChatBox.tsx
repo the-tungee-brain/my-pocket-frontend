@@ -31,6 +31,7 @@ interface ChatBoxProps {
   onToggleModelMenu: () => void;
   onModelChange: (model: string) => void;
   onCollapse?: () => void;
+  contextLabel?: string;
 }
 
 export function ChatBox({
@@ -45,6 +46,7 @@ export function ChatBox({
   onToggleModelMenu,
   onModelChange,
   onCollapse,
+  contextLabel,
 }: ChatBoxProps) {
   const placeholderLabel =
     mode === "portfolio"
@@ -88,13 +90,20 @@ export function ChatBox({
   return (
     <div className="bg-linear-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-border bg-secondary/95 p-3 shadow-lg shadow-black/10 backdrop-blur">
-        <div className="flex items-center justify-between gap-2 px-1">
-          <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-            <Sparkles
-              className="h-3.5 w-3.5 text-accent-strong"
-              aria-hidden="true"
-            />
-            Assistant prompts
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+              <Sparkles
+                className="h-3.5 w-3.5 text-accent-strong"
+                aria-hidden="true"
+              />
+              Assistant
+            </div>
+            {contextLabel && (
+              <span className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[10px] font-medium normal-case tracking-normal text-foreground">
+                {contextLabel}
+              </span>
+            )}
           </div>
           {onCollapse && (
             <button

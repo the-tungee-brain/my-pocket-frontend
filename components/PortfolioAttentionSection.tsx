@@ -14,6 +14,7 @@ import {
 import { findQuickAction } from "@/lib/quickActions";
 import { pickSuggestedActions, suggestedActionToQuickActionId } from "@/lib/recentOrders";
 import { cn } from "@/lib/utils";
+import { AskAIChip } from "@/components/AskAIChip";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 const MAX_VISIBLE = 5;
@@ -249,14 +250,17 @@ export function PortfolioAttentionSection({
                       </p>
                     </div>
                     {onRunTax && (
-                      <button
-                        type="button"
-                        onClick={() => onRunTax(item)}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
-                      >
-                        <Icon className="h-3.5 w-3.5" aria-hidden />
-                        Review
-                      </button>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <AskAIChip onClick={() => onRunTax(item)} />
+                        <button
+                          type="button"
+                          onClick={() => onRunTax(item)}
+                          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
+                        >
+                          <Icon className="h-3.5 w-3.5" aria-hidden />
+                          Review
+                        </button>
+                      </div>
                     )}
                   </div>
                 </li>
@@ -296,13 +300,7 @@ export function PortfolioAttentionSection({
                           <X className="h-3.5 w-3.5" />
                         </button>
                       )}
-                      <button
-                        type="button"
-                        disabled={!onRunAttentionItem && !onRunAlert}
-                        title={item.reason}
-                        onClick={() => handleAttentionItem(item)}
-                        className="inline-flex max-w-full flex-col items-start gap-0.5 pr-6 text-left disabled:opacity-60"
-                      >
+                      <div className="inline-flex max-w-full flex-col items-start gap-1 pr-6 text-left">
                         <span className="inline-flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-foreground">
                           <Icon className="h-3.5 w-3.5 shrink-0 text-accent-strong" aria-hidden />
                           {item.label}
@@ -320,7 +318,13 @@ export function PortfolioAttentionSection({
                         <span className="line-clamp-2 text-[11px] text-muted">
                           {item.reason}
                         </span>
-                      </button>
+                        {(onRunAttentionItem || onRunAlert) && (
+                          <AskAIChip
+                            className="mt-1"
+                            onClick={() => handleAttentionItem(item)}
+                          />
+                        )}
+                      </div>
                     </div>
                   );
                 })}

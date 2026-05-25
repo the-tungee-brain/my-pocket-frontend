@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { usePositionsContext } from "../Providers";
 import { usePortfolioSection } from "@/app/contexts/PortfolioSectionContext";
 import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
@@ -57,6 +58,8 @@ export default function PortfolioPage() {
     schwabReauth,
   } = usePositionsContext();
   const { activeSection, setActiveSection } = usePortfolioSection();
+  const searchParams = useSearchParams();
+  const defaultTabApplied = useRef(false);
   const [showStrategySetup, setShowStrategySetup] = useState(false);
   const [strategyDismissed, setStrategyDismissed] = useState(true);
 
@@ -245,6 +248,25 @@ export default function PortfolioPage() {
 
   const activityBadgeCount = recentActivity?.recentOrderCount ?? 0;
 
+  useEffect(() => {
+    if (defaultTabApplied.current || loading || allPositions.length === 0) return;
+    if (searchParams.get("section")) {
+      defaultTabApplied.current = true;
+      return;
+    }
+    if (todayBadgeCount === 0 && activityBadgeCount > 0) {
+      setActiveSection("activity");
+    }
+    defaultTabApplied.current = true;
+  }, [
+    activityBadgeCount,
+    allPositions.length,
+    loading,
+    searchParams,
+    setActiveSection,
+    todayBadgeCount,
+  ]);
+
   return (
     <>
       {schwabReauth && (
@@ -300,6 +322,7 @@ export default function PortfolioPage() {
           onMarkLearned={(stepId) =>
             void markStep(stepId, "completed").then(() => refreshRecommendations())
           }
+          hideNextActions={todayBadgeCount > 0}
         />
       )}
 

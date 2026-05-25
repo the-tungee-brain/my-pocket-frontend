@@ -34,6 +34,7 @@ type Props = {
   onRunAction: (action: StrategyNextAction) => void;
   onMarkLearned?: (stepId: string) => void;
   onAddSuggestedSymbol?: (symbol: string) => void;
+  hideNextActions?: boolean;
   className?: string;
 };
 
@@ -43,6 +44,7 @@ export function StrategyJourneyPanel({
   onRunAction,
   onMarkLearned,
   onAddSuggestedSymbol,
+  hideNextActions = false,
   className,
 }: Props) {
   const router = useRouter();
@@ -72,7 +74,7 @@ export function StrategyJourneyPanel({
         return;
       }
       if (action.symbol) {
-        router.push(symbolHubPath(action.symbol, "position"));
+        router.push(symbolHubPath(action.symbol, "overview"));
       }
       onRunAction(action);
     },
@@ -149,7 +151,7 @@ export function StrategyJourneyPanel({
               </div>
             )}
 
-            {nextActions.length > 0 && (
+            {nextActions.length > 0 && !hideNextActions && (
               <div className="mb-4 rounded-xl border border-border bg-background/50 p-3">
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
                   Next up

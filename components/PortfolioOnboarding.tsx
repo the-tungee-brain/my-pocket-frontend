@@ -30,6 +30,8 @@ type Step = {
   done: boolean;
 };
 
+const CORE_STEP_IDS = ["connect", "holdings", "assistant"] as const;
+
 export function PortfolioOnboarding() {
   const { authorized: schwabAuthorized, loading: schwabLoading } =
     useSchwabStatus();
@@ -88,10 +90,18 @@ export function PortfolioOnboarding() {
     ],
   );
 
-  const completedCount = steps.filter((step) => step.done).length;
-  const allDone = completedCount === steps.length;
+  const coreSteps = steps.filter((step) =>
+    (CORE_STEP_IDS as readonly string[]).includes(step.id),
+  );
+  const optionalSteps = steps.filter(
+    (step) => !(CORE_STEP_IDS as readonly string[]).includes(step.id),
+  );
 
-  if (dismissed || schwabLoading || positionsLoading || allDone) {
+  const completedCount = coreSteps.filter((step) => step.done).length;
+  const allCoreDone = completedCount === coreSteps.length;
+  const pendingOptional = optionalSteps.filter((step) => !step.done);
+
+  if (dismissed || schwabLoading || positionsLoading || allCoreDone) {
     return null;
   }
 
@@ -126,10 +136,10 @@ export function PortfolioOnboarding() {
               Getting started
             </p>
             <h2 className="mt-1 text-sm font-semibold text-foreground">
-              Set up Tomcrest in {steps.length} steps
+              Set up Tomcrest in {coreSteps.length} steps
             </h2>
             <p className="mt-0.5 text-xs text-muted">
-              {completedCount} of {steps.length} complete
+              {completedCount} of {coreSteps.length} complete
             </p>
           </div>
           <Button
@@ -144,7 +154,7 @@ export function PortfolioOnboarding() {
         </div>
 
         <ol className="space-y-3">
-          {steps.map((step, index) => {
+          {coreSteps.map((step, index) => {
             const StepIcon = stepIcon(step.id);
 
             return (
@@ -214,6 +224,26 @@ export function PortfolioOnboarding() {
             );
           })}
         </ol>
+
+        {pendingOptional.length > 0 && (
+          <p className="mt-3 border-t border-border/60 pt-3 text-[11px] text-muted">
+            Explore:{" "}
+            {!optionalSteps.find((s) => s.id === "research")?.done && (
+              <Link
+                href="/research"
+                className="font-medium text-accent-strong hover:underline"
+              >
+                Research a symbol
+              </Link>
+            )}
+            {!optionalSteps.find((s) => s.id === "research")?.done &&
+              !optionalSteps.find((s) => s.id === "watchlist")?.done &&
+              " · "}
+            {!optionalSteps.find((s) => s.id === "watchlist")?.done && (
+              <span>Star symbols in Research for your watchlist</span>
+            )}
+          </p>
+        )}
       </div>
     </section>
   );

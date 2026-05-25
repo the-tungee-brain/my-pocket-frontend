@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { AppShell } from "@/app/AppShell";
 
 export default function ResearchLayout({
@@ -7,5 +8,9 @@ export default function ResearchLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <AppShell>{children}</AppShell>;
+  return (
+    <Suspense fallback={null}>
+      <AppShell>{children}</AppShell>
+    </Suspense>
+  );
 }

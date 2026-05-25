@@ -34,6 +34,7 @@ import {
   hasPortfolioChangeDetails,
   PortfolioChangesBody,
 } from "@/components/PortfolioChangesSection";
+import { AskAIChip } from "@/components/AskAIChip";
 import { cn } from "@/lib/utils";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 
@@ -165,13 +166,13 @@ export function PortfolioBriefSection({
       )}
       aria-label="Portfolio brief"
     >
-      <button
-        type="button"
-        aria-expanded={expanded}
-        onClick={() => setExpanded((open) => !open)}
-        className="flex w-full items-start justify-between gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3 text-left transition hover:bg-surface-elevated/70"
-      >
-        <div className="flex min-w-0 items-start gap-2.5">
+      <div className="flex items-start justify-between gap-2 border-b border-border bg-surface-elevated/50 px-4 py-3">
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((open) => !open)}
+          className="flex min-w-0 flex-1 items-start gap-2.5 text-left transition hover:opacity-90"
+        >
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
             <Sparkles className="h-4 w-4" aria-hidden />
           </div>
@@ -210,16 +211,28 @@ export function PortfolioBriefSection({
               </p>
             )}
           </div>
-        </div>
+        </button>
 
-        <ChevronDown
-          className={cn(
-            "mt-1 h-4 w-4 shrink-0 text-muted transition-transform",
-            expanded && "rotate-180",
+        <div className="flex shrink-0 items-center gap-2 pt-0.5">
+          {onGoDeeper && !expanded && (
+            <AskAIChip onClick={onGoDeeper} />
           )}
-          aria-hidden
-        />
-      </button>
+          <button
+            type="button"
+            aria-label={expanded ? "Collapse brief" : "Expand brief"}
+            onClick={() => setExpanded((open) => !open)}
+            className="rounded-lg p-1 text-muted transition hover:bg-muted-bg hover:text-foreground"
+          >
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 transition-transform",
+                expanded && "rotate-180",
+              )}
+              aria-hidden
+            />
+          </button>
+        </div>
+      </div>
 
       {error && (
         <div className="px-4 pt-3">

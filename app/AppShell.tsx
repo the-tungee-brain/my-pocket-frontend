@@ -2,7 +2,7 @@
 
 import { ChevronUp, Menu, Search, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChatSessionHistory } from "@/components/ChatSessionHistory";
 import { ChatBox } from "@/components/ChatBox";
 import { ConversationPane } from "@/components/ConversationPane";
@@ -62,6 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { showToast } = useToast();
 
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const researchMatch = pathname.match(/^\/research\/([^/]+)(?:\/([^/]+))?/);
   const researchSymbol = researchMatch?.[1]?.toUpperCase();
@@ -292,6 +293,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     selectedView === "portfolio" ||
     (selectedView === "research" && !!routeSymbol);
 
+  const portfolioSection = searchParams.get("section");
+  const chatContextLabel =
+    selectedView === "portfolio"
+      ? `Portfolio · ${
+          portfolioSection === "holdings"
+            ? "Holdings"
+            : portfolioSection === "activity"
+              ? "Activity"
+              : "Today"
+        }`
+      : selectedView === "research" && researchSymbol
+        ? `${researchSymbol} · ${researchTabLabel(pathname.split("/")[3])}`
+        : selectedSymbol
+          ? `${selectedSymbol} · Position`
+          : undefined;
+
   const chatBoxProps = {
     mode: selectedView,
     selectedSymbol:
@@ -306,6 +323,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     onSendQuickAction: (id: string) => void handleQuickAction(id),
     onToggleModelMenu: toggleModelMenu,
     onModelChange: handleModelChange,
+    contextLabel: chatContextLabel,
   };
 
   const mobileChatLabel =
