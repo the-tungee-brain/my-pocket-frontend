@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   ArrowRightLeft,
   CalendarDays,
+  ChevronDown,
   FileText,
   GitCompareArrows,
   Newspaper,
@@ -13,6 +14,8 @@ import {
   Target,
   ExternalLink,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import type {
   IntelligenceSignal,
   OptionChainPreview,
@@ -34,6 +37,7 @@ import { formatUsd } from "@/lib/formatCurrency";
 import { formatFriendlyDate, formatOptionExpiration } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -97,6 +101,60 @@ function isTimelineExternalLink(entry: {
   return (
     !!entry.url &&
     (entry.kind === "news" || entry.kind === "press_release")
+  );
+}
+
+function IntelligenceSection({
+  title,
+  icon: Icon,
+  defaultOpen = false,
+  compact = false,
+  children,
+}: {
+  title: string;
+  icon: LucideIcon;
+  defaultOpen?: boolean;
+  compact?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  if (!compact) {
+    return (
+      <div>
+        <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+          <Icon className="h-3.5 w-3.5" aria-hidden />
+          {title}
+        </div>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-background/40">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+      >
+        <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+          <Icon className="h-3.5 w-3.5" aria-hidden />
+          {title}
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 text-muted transition",
+            open && "rotate-180",
+          )}
+          aria-hidden
+        />
+      </button>
+      {open && (
+        <div className="border-t border-border/70 px-3 pb-3 pt-1">{children}</div>
+      )}
+    </div>
   );
 }
 
@@ -178,12 +236,26 @@ export function SymbolIntelligencePanel({
 
         {error && <ErrorBanner message={error} />}
 
+        {intelligence?.reauthRequired && (
+          <SchwabConnectionBanner
+            message="Reconnect Schwab to include live positions and option chain data in this panel."
+            authorizationUrl={intelligence.authorizationUrl}
+          />
+        )}
+
+        {intelligence?.partial && !intelligence.reauthRequired && (
+          <p className="rounded-lg border border-border bg-background/60 px-3 py-2 text-xs text-muted">
+            Some live Schwab data is unavailable. Research signals are still shown.
+          </p>
+        )}
+
         {!!signals.length && (
-          <div>
-            <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-              <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-              Signals
-            </div>
+          <IntelligenceSection
+            title="Signals"
+            icon={AlertTriangle}
+            defaultOpen
+            compact={compact}
+          >
             <ul className="space-y-2">
               {signals.slice(0, compact ? 3 : 6).map((signal, index) => {
                 const actionId = signalToQuickActionId(signal, actionContext);
@@ -220,24 +292,24 @@ export function SymbolIntelligencePanel({
                 );
               })}
             </ul>
-          </div>
+          </IntelligenceSection>
         )}
 
         {research &&
           (research.investmentThesis ||
             (research.keyStrengths?.length ?? 0) > 0 ||
             (research.keyRisks?.length ?? 0) > 0) && (
-            <div>
-              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-                <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                Cached thesis
+          <IntelligenceSection
+            title="Cached thesis"
+            icon={Sparkles}
+            compact={compact}
+          >
+              <div className="space-y-2 rounded-xl border border-border bg-background/60 px-3 py-3">
                 {research.sentiment && (
-                  <span className="rounded-full bg-muted-bg px-2 py-0.5 text-[10px] capitalize text-muted">
+                  <span className="inline-flex rounded-full bg-muted-bg px-2 py-0.5 text-[10px] capitalize text-muted">
                     {research.sentiment}
                   </span>
                 )}
-              </div>
-              <div className="space-y-2 rounded-xl border border-border bg-background/60 px-3 py-3">
                 {research.investmentThesis && (
                   <p className="text-sm leading-relaxed text-foreground">
                     {research.investmentThesis}
@@ -264,15 +336,15 @@ export function SymbolIntelligencePanel({
                   </div>
                 )}
               </div>
-            </div>
-          )}
+          </IntelligenceSection>
+        )}
 
         {peers && (peers.peers.length > 0 || peers.summary) && (
-          <div>
-            <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-              <GitCompareArrows className="h-3.5 w-3.5" aria-hidden />
-              Peer comparison
-            </div>
+          <IntelligenceSection
+            title="Peer comparison"
+            icon={GitCompareArrows}
+            compact={compact}
+          >
             {peers.summary && (
               <p className="mb-2 text-sm text-foreground">{peers.summary}</p>
             )}
@@ -309,15 +381,15 @@ export function SymbolIntelligencePanel({
                 </tbody>
               </table>
             </div>
-          </div>
+          </IntelligenceSection>
         )}
 
         {!!timeline.length && (
-          <div>
-            <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-              <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-              Recent events
-            </div>
+          <IntelligenceSection
+            title="Recent events"
+            icon={CalendarDays}
+            compact={compact}
+          >
             <ul className="space-y-2">
               {timeline.slice(0, compact ? 4 : 8).map((entry, index) => {
                 const Icon = timelineIcon(entry.kind);
@@ -363,15 +435,16 @@ export function SymbolIntelligencePanel({
                 );
               })}
             </ul>
-          </div>
+          </IntelligenceSection>
         )}
 
         {!!rollSuggestions.length && symbol && (
-          <div>
-            <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-              <ArrowRightLeft className="h-3.5 w-3.5" aria-hidden />
-              Roll suggestions
-            </div>
+          <IntelligenceSection
+            title="Roll suggestions"
+            icon={ArrowRightLeft}
+            defaultOpen
+            compact={compact}
+          >
             <ul className="space-y-2">
               {rollSuggestions.slice(0, compact ? 2 : 4).map((suggestion) => (
                 <li
@@ -407,27 +480,35 @@ export function SymbolIntelligencePanel({
                 </li>
               ))}
             </ul>
-          </div>
+          </IntelligenceSection>
         )}
 
         {optionChain && (optionChain.rows?.length ?? 0) > 0 && (
-          <OptionChainPreviewTable preview={optionChain} compact={compact} />
+          <IntelligenceSection title="Option chain" icon={Target} compact={compact}>
+            <OptionChainPreviewTable
+              preview={optionChain}
+              compact={compact}
+              hideTitle
+            />
+          </IntelligenceSection>
         )}
 
         {options &&
           ((options.assignmentFlags?.length ?? 0) > 0 ||
             (options.coveredCallCandidates?.length ?? 0) > 0 ||
             (options.cspCandidates?.length ?? 0) > 0) && (
+          <IntelligenceSection
+            title="Options scorecard"
+            icon={Target}
+            defaultOpen={(options.assignmentFlags?.length ?? 0) > 0}
+            compact={compact}
+          >
             <div>
-              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-                <Target className="h-3.5 w-3.5" aria-hidden />
-                Options scorecard
-                {options.underlyingPrice != null && (
-                  <span className="font-mono normal-case text-foreground">
-                    @ {formatUsd(options.underlyingPrice)}
-                  </span>
-                )}
-              </div>
+              {options.underlyingPrice != null && (
+                <p className="mb-2 font-mono text-xs text-foreground">
+                  Underlying @ {formatUsd(options.underlyingPrice)}
+                </p>
+              )}
 
               {(options.assignmentFlags?.length ?? 0) > 0 && (
                 <ul className="mb-3 space-y-1">
@@ -475,7 +556,8 @@ export function SymbolIntelligencePanel({
                 />
               )}
             </div>
-          )}
+          </IntelligenceSection>
+        )}
 
         {researchBasePath && symbol && !compact && (
           <div className="flex flex-wrap gap-2 pt-1">
@@ -559,7 +641,7 @@ function OptionSideMetrics({
         </p>
       </div>
       <div>
-        <p className="text-muted">Open int</p>
+        <p className="text-muted">Open interest</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
           {quote?.openInterest != null ? quote.openInterest.toLocaleString() : "—"}
         </p>
@@ -577,33 +659,37 @@ function OptionSideMetrics({
 function OptionChainPreviewTable({
   preview,
   compact = false,
+  hideTitle = false,
 }: {
   preview: OptionChainPreview;
   compact?: boolean;
+  hideTitle?: boolean;
 }) {
   const rows = preview.rows.slice(0, compact ? 5 : preview.rows.length);
 
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium uppercase tracking-wide text-muted">
-        <Target className="h-3.5 w-3.5" aria-hidden />
-        Option chain
-        {preview.expiration && (
-          <span className="normal-case text-foreground">
-            · {formatOptionExpiration(preview.expiration)}
-          </span>
-        )}
-        {preview.strikeCount != null && (
-          <span className="normal-case text-muted">
-            · {preview.strikeCount} up/down strikes
-          </span>
-        )}
-        {preview.underlyingPrice != null && (
-          <span className="normal-case text-foreground">
-            · {formatUsd(preview.underlyingPrice)}
-          </span>
-        )}
-      </div>
+      {!hideTitle && (
+        <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium uppercase tracking-wide text-muted">
+          <Target className="h-3.5 w-3.5" aria-hidden />
+          Option chain
+          {preview.expiration && (
+            <span className="normal-case text-foreground">
+              · {formatOptionExpiration(preview.expiration)}
+            </span>
+          )}
+          {preview.strikeCount != null && (
+            <span className="normal-case text-muted">
+              · {preview.strikeCount} up/down strikes
+            </span>
+          )}
+          {preview.underlyingPrice != null && (
+            <span className="normal-case text-foreground">
+              · {formatUsd(preview.underlyingPrice)}
+            </span>
+          )}
+        </div>
+      )}
       <p className="mb-2 text-[11px] text-muted">
         Bid/ask require live OPR quotes. When Schwab returns null bid/ask, last uses
         prior close and mark uses the model price.
@@ -620,7 +706,7 @@ function OptionChainPreviewTable({
               <th className="px-3 py-2 font-medium">Call last</th>
               <th className="px-3 py-2 font-medium">Call delta</th>
               <th className="px-3 py-2 font-medium">Call theta</th>
-              <th className="px-3 py-2 font-medium">Call open int</th>
+              <th className="px-3 py-2 font-medium">Call open interest</th>
               <th className="px-3 py-2 font-medium">Call impl vol</th>
               <th className="px-3 py-2 font-medium">Put bid</th>
               <th className="px-3 py-2 font-medium">Put ask</th>
@@ -628,7 +714,7 @@ function OptionChainPreviewTable({
               <th className="px-3 py-2 font-medium">Put last</th>
               <th className="px-3 py-2 font-medium">Put delta</th>
               <th className="px-3 py-2 font-medium">Put theta</th>
-              <th className="px-3 py-2 font-medium">Put open int</th>
+              <th className="px-3 py-2 font-medium">Put open interest</th>
               <th className="px-3 py-2 font-medium">Put impl vol</th>
             </tr>
           </thead>

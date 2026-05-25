@@ -11,7 +11,6 @@ import { TaxWashSaleStrip } from "@/components/TaxWashSaleStrip";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
-import { SymbolAlertStrip } from "@/components/SymbolAlertStrip";
 import { SymbolIntelligencePanel } from "@/components/SymbolIntelligencePanel";
 import { CompanyNews } from "@/components/CompanyNews";
 import { useTabs } from "@/app/contexts/TabContext";
@@ -20,9 +19,9 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useStockData } from "@/app/hooks/useStockData";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
 import { filterAssignmentRiskSummary } from "@/lib/assignmentRiskSummary";
-import { alertToQuickActionId, collectTaxAlertItems, mergeDisplayAlerts } from "@/lib/intelligence";
+import { collectTaxAlertItems, mergeDisplayAlerts } from "@/lib/intelligence";
 import type { TaxAlertItem } from "@/lib/intelligence";
-import type { IntelligenceSignal, ProactiveAlert } from "@/app/types/intelligence";
+import type { IntelligenceSignal } from "@/app/types/intelligence";
 
 export default function SymbolPage() {
   const { symbol } = useParams<{ symbol: string }>();
@@ -94,20 +93,6 @@ export default function SymbolPage() {
     setInterval(newInterval);
   };
 
-  const handleRunAlert = useCallback(
-    (alert: ProactiveAlert) => {
-      if (!symbol) return;
-      void sendQuickAction({
-        activeChatKey: symbol,
-        selectedView: "symbol",
-        selectedSymbol: symbol,
-        positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
-        actionId: alertToQuickActionId(alert),
-      });
-    },
-    [symbol, sendQuickAction, positionsForSelectedSymbol],
-  );
-
   const handleRunSignal = useCallback(
     (_signal: IntelligenceSignal, actionId: string) => {
       if (!symbol) return;
@@ -135,11 +120,6 @@ export default function SymbolPage() {
     },
     [symbol, sendPrompt, positionsForSelectedSymbol],
   );
-
-  const symbolAlerts = [
-    ...(portfolioBrief?.alerts ?? []),
-    ...proactiveAlerts,
-  ];
 
   const taxItems = useMemo(
     () =>
@@ -200,15 +180,6 @@ export default function SymbolPage() {
           role="tabpanel"
           aria-labelledby="tab-assistant"
         >
-          {symbol && (
-            <SymbolAlertStrip
-              className="mb-4"
-              symbol={symbol}
-              alerts={symbolAlerts}
-              onRunAlert={handleRunAlert}
-            />
-          )}
-
           {symbol && taxItems.length > 0 && (
             <TaxWashSaleStrip
               className="mb-4"

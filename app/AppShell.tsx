@@ -391,7 +391,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {children}
 
               {showConversation && labelSymbol && (
-                <ConversationPane
+                <div id="assistant-chat">
+                  <ConversationPane
                   symbol={labelSymbol}
                   messages={currentChat?.messages ?? []}
                   loading={!!currentChat?.loading}
@@ -410,6 +411,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     ) : null
                   }
                 />
+                </div>
               )}
             </div>
 

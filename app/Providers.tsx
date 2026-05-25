@@ -19,6 +19,8 @@ import {
   persistChatState,
 } from "@/lib/chatPersistence";
 import { formatQuickActionMessage, getQuickActionApiAction, isFreeFormQuickAction } from "@/lib/quickActions";
+import { scrollToAssistantChat } from "@/lib/scrollToChat";
+import type { SchwabReauthDetail } from "@/lib/schwabReauth";
 import {
   Position,
   SchwabAccounts,
@@ -96,6 +98,8 @@ type PositionsContextValue = {
   portfolioBrief: PortfolioIntelligence | null;
   portfolioMetrics: PortfolioMetrics | null;
   refreshPositions: (refresh?: boolean) => Promise<void>;
+  schwabReauth: SchwabReauthDetail | null;
+  clearSchwabReauth: () => void;
 };
 
 const PositionsContext = createContext<PositionsContextValue | null>(null);
@@ -196,6 +200,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const [selectedView, setSelectedView] = useState<MainView>("research");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [schwabReauth, setSchwabReauth] = useState<SchwabReauthDetail | null>(
+    null,
+  );
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
   const chatHydratedRef = useRef(false);
   const chatBySymbolRef = useRef(chatBySymbol);
@@ -252,8 +259,18 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         setError(null);
         const data = await fetchAccountPositions(accessToken, { refresh });
         applyPositionsPayload(data);
-      } catch {
-        setError("Failed to load positions");
+        setSchwabReauth(null);
+      } catch (err) {
+        const apiError = err as Error & {
+          reauth?: SchwabReauthDetail | null;
+        };
+        if (apiError.reauth?.reauthRequired) {
+          setSchwabReauth(apiError.reauth);
+          setError(apiError.message);
+        } else {
+          setSchwabReauth(null);
+          setError("Failed to load positions");
+        }
         setPositionMap({});
         setAccount(null);
         setCashSecuredPutSummary(null);
@@ -555,6 +572,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           },
         };
       });
+      scrollToAssistantChat();
 
       const symbolForApi =
         selectedView === "portfolio"
@@ -698,6 +716,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           },
         };
       });
+      scrollToAssistantChat();
 
       const symbolForApi =
         selectedView === "portfolio"
@@ -827,6 +846,8 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       portfolioBrief,
       portfolioMetrics,
       refreshPositions,
+      schwabReauth,
+      clearSchwabReauth: () => setSchwabReauth(null),
     }),
     [
       accessToken,
@@ -853,6 +874,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       portfolioBrief,
       portfolioMetrics,
       refreshPositions,
+      schwabReauth,
     ],
   );
 

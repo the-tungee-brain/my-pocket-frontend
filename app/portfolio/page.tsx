@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { usePositionsContext } from "../Providers";
 import { useTabs } from "@/app/contexts/TabContext";
+import { usePortfolioSection } from "@/app/contexts/PortfolioSectionContext";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { PortfolioAttentionSection } from "@/components/PortfolioAttentionSection";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
@@ -11,8 +12,10 @@ import { PortfolioChangesSection } from "@/components/PortfolioChangesSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
+import { PortfolioSectionTabBar } from "@/components/PortfolioSectionTabBar";
 import { NewsHintBanner } from "@/components/NewsHintBanner";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
+import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useMorningBrief } from "@/app/hooks/useMorningBrief";
 import type { AttentionItem, ProactiveAlert } from "@/app/types/intelligence";
@@ -44,8 +47,10 @@ export default function PortfolioPage() {
     refreshPositions,
     sessionAccessToken,
     sendQuickAction,
+    schwabReauth,
   } = usePositionsContext();
   const { activeTab } = useTabs();
+  const { activeSection, setActiveSection } = usePortfolioSection();
 
   const localBrief = buildLocalPortfolioBrief(allPositions, account, proactiveAlerts);
   const seedBrief = accountBrief ?? localBrief;
@@ -177,7 +182,14 @@ export default function PortfolioPage() {
 
   return (
     <>
-      {error && <ErrorBanner message={error} className="mb-3" />}
+      {schwabReauth && (
+        <SchwabConnectionBanner
+          message={schwabReauth.message}
+          authorizationUrl={schwabReauth.authorizationUrl}
+        />
+      )}
+
+      {error && !schwabReauth && <ErrorBanner message={error} className="mb-3" />}
 
       <PortfolioOnboarding />
 
@@ -194,69 +206,78 @@ export default function PortfolioPage() {
       />
 
       {showContent && (
-        <PortfolioAttentionSection
-          className="mb-4"
-          taxItems={taxItems}
-          alerts={mergedAlerts}
-          attentionItems={attentionQueue}
-          suggestedActions={recentActivity?.suggestedActions ?? []}
-          onRunAlert={handleRunAlert}
-          onRunAttentionItem={handleRunAttentionItem}
-          onDismissAttention={handleDismissAttention}
-          onRunTax={handleTaxAlert}
-          onRunActionId={handleSuggestedAction}
+        <PortfolioSectionTabBar
+          activeSection={activeSection}
+          onChange={setActiveSection}
         />
       )}
 
-      {showBriefSection && (
+      {showContent && activeSection === "today" && (
         <>
-          <PortfolioChangesSection
+          <PortfolioAttentionSection
             className="mb-4"
-            changes={morningBrief?.changes}
-            loading={briefLoading && !morningBrief}
+            taxItems={taxItems}
+            alerts={mergedAlerts}
+            attentionItems={attentionQueue}
+            suggestedActions={recentActivity?.suggestedActions ?? []}
+            onRunAlert={handleRunAlert}
+            onRunAttentionItem={handleRunAttentionItem}
+            onDismissAttention={handleDismissAttention}
+            onRunTax={handleTaxAlert}
+            onRunActionId={handleSuggestedAction}
           />
-          <PortfolioBriefSection
+
+          {showBriefSection && (
+            <>
+              <PortfolioChangesSection
+                className="mb-4"
+                changes={morningBrief?.changes}
+                loading={briefLoading && !morningBrief}
+              />
+              <PortfolioBriefSection
+                className="mb-4"
+                brief={displayBrief}
+                fallbackAlerts={proactiveAlerts}
+                loading={briefLoading && !displayBrief}
+                error={displayBrief ? null : briefError}
+                lastUpdated={briefLastUpdated}
+                onRefresh={handleRefreshAll}
+                onGoDeeper={handleGoDeeper}
+                hideSuggestedActions
+              />
+            </>
+          )}
+        </>
+      )}
+
+      {showContent && activeSection === "holdings" && (
+        <>
+          <PortfolioOverview
             className="mb-4"
-            brief={displayBrief}
-            fallbackAlerts={proactiveAlerts}
-            loading={briefLoading && !displayBrief}
-            error={displayBrief ? null : briefError}
-            lastUpdated={briefLastUpdated}
-            onRefresh={handleRefreshAll}
-            onGoDeeper={handleGoDeeper}
-            hideSuggestedActions
+            loading={loading}
+            allPositions={allPositions}
+            positionMap={positionMap}
+            liquidationValue={
+              account?.securitiesAccount.currentBalances.liquidationValue
+            }
+            symbolAlertMap={symbolAlertMap}
+          />
+
+          <PortfolioRiskSection
+            className="mb-4"
+            cashSecuredPutSummary={cashSecuredPutSummary}
+            assignmentRiskSummary={assignmentRiskSummary}
+            cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
           />
         </>
       )}
 
-      <PortfolioOverview
-        className="mb-4"
-        loading={loading}
-        allPositions={allPositions}
-        positionMap={positionMap}
-        liquidationValue={
-          account?.securitiesAccount.currentBalances.liquidationValue
-        }
-        symbolAlertMap={symbolAlertMap}
-      />
-
-      {showContent && (
-        <PortfolioRiskSection
-          className="mb-4"
-          cashSecuredPutSummary={cashSecuredPutSummary}
-          assignmentRiskSummary={assignmentRiskSummary}
-          cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
-        />
-      )}
-
-      {!loading && sessionAccessToken && (
+      {showContent && activeSection === "activity" && sessionAccessToken && (
         <RecentActivitySection
           accessToken={sessionAccessToken}
           summary={recentActivity}
           onRefresh={() => refreshPositions(true)}
           onRunSuggestedAction={handleSuggestedAction}
-          hideSuggestedActions
-          compact
         />
       )}
     </>

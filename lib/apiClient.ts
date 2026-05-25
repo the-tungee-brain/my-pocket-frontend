@@ -1,5 +1,7 @@
 import { API_BASE_URL } from "./config";
 import { isAbortError } from "./isAbortError";
+import { readSchwabReauthFromResponse } from "./schwabReauth";
+import type { SchwabReauthDetail } from "./schwabReauth";
 import type { AccountPositionsResponse, RecentOrdersResponse } from "@/app/types/schwab";
 import type {
   MorningBrief,
@@ -28,6 +30,11 @@ function buildQuery(params: Record<string, string | number | boolean | undefined
   return query ? `?${query}` : "";
 }
 
+export type ApiError = Error & {
+  status?: number;
+  reauth?: SchwabReauthDetail | null;
+};
+
 export async function fetchAccountPositions(
   accessToken: string,
   options: { refresh?: boolean } = {},
@@ -38,7 +45,13 @@ export async function fetchAccountPositions(
   );
 
   if (!res.ok) {
-    throw new Error(`Failed to load positions (${res.status})`);
+    const reauth = await readSchwabReauthFromResponse(res);
+    const error = new Error(
+      reauth?.message ?? `Failed to load positions (${res.status})`,
+    ) as ApiError;
+    error.status = res.status;
+    error.reauth = reauth;
+    throw error;
   }
 
   return res.json() as Promise<AccountPositionsResponse>;

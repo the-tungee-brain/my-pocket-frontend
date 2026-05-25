@@ -132,6 +132,8 @@ export type SymbolIntelligence = {
   cachedResearch?: CachedResearchSnippet | null;
   dataGaps?: string[];
   partial?: boolean;
+  reauthRequired?: boolean;
+  authorizationUrl?: string | null;
 };
 
 export type OptionRollSuggestion = {
