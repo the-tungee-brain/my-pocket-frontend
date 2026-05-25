@@ -10,6 +10,7 @@ import type {
 import type { Position, SchwabAccounts } from "@/app/types/schwab";
 import type { SuggestedAnalysisAction } from "@/app/types/schwab";
 import { suggestedActionToQuickActionId } from "@/lib/recentOrders";
+import { formatOptionExpiration } from "@/lib/dateUtils";
 
 const SEVERITY_ORDER: Record<SignalSeverity, number> = {
   critical: 0,
@@ -159,7 +160,7 @@ export function buildOptionCandidatePrompt(
 ): string {
   const side =
     candidate.side === "call" ? "covered call" : "cash-secured put";
-  const expiration = candidate.expiration.slice(0, 10);
+  const expiration = formatOptionExpiration(candidate.expiration);
   const delta =
     candidate.delta != null ? ` (delta ${candidate.delta.toFixed(2)})` : "";
   const score = candidate.score.toFixed(2);
@@ -183,8 +184,8 @@ export function buildRollSuggestionPrompt(
 
   return (
     `Should I roll my short ${side} on ${symbol.toUpperCase()} from ` +
-    `$${suggestion.currentStrike} (${suggestion.currentExpiration.slice(0, 10)}) to ` +
-    `$${suggestion.suggestedStrike} (${suggestion.suggestedExpiration.slice(0, 10)})?` +
+    `$${suggestion.currentStrike} (${formatOptionExpiration(suggestion.currentExpiration)}) to ` +
+    `$${suggestion.suggestedStrike} (${formatOptionExpiration(suggestion.suggestedExpiration)})?` +
     credit +
     ` ${suggestion.rationale}`
   );

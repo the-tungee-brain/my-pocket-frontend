@@ -74,6 +74,7 @@ export type OptionsStrikeCandidate = {
   bid?: number | null;
   ask?: number | null;
   lastPrice?: number | null;
+  mark?: number | null;
   theta?: number | null;
   iv?: number | null;
   score: number;
@@ -90,6 +91,7 @@ export type OptionsScorecard = {
 export type OptionChainSideQuote = {
   bid?: number | null;
   ask?: number | null;
+  mark?: number | null;
   lastPrice?: number | null;
   delta?: number | null;
   theta?: number | null;

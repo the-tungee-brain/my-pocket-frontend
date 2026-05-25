@@ -127,7 +127,7 @@ export async function fetchSymbolIntelligence(
     `/research/intelligence${buildQuery({
       symbol: symbol.toUpperCase(),
       include_options:
-        options.includeOptions === false ? false : undefined,
+        options.includeOptions === false ? false : true,
     })}`,
     { method: "GET", accessToken },
   );

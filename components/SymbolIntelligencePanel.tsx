@@ -31,6 +31,7 @@ import {
 } from "@/lib/intelligence";
 import { findQuickAction } from "@/lib/quickActions";
 import { formatUsd } from "@/lib/formatCurrency";
+import { formatFriendlyDate, formatOptionExpiration } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
@@ -63,12 +64,6 @@ function timelineIcon(kind: string) {
     default:
       return CalendarDays;
   }
-}
-
-function formatExpiration(expiration: string) {
-  const date = new Date(`${expiration}T12:00:00`);
-  if (Number.isNaN(date.getTime())) return expiration;
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function formatStrikeSide(side: "call" | "put") {
@@ -338,7 +333,8 @@ export function SymbolIntelligencePanel({
                     />
                     <div className="min-w-0">
                       <p className="text-[10px] uppercase tracking-wide text-muted">
-                        {entry.date} · {entry.kind.replace(/_/g, " ")}
+                        {formatFriendlyDate(entry.date, { weekday: true })} ·{" "}
+                        {entry.kind.replace(/_/g, " ")}
                       </p>
                       {linkable ? (
                         <a
@@ -392,7 +388,7 @@ export function SymbolIntelligencePanel({
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 2,
                     })}{" "}
-                    · {formatExpiration(suggestion.suggestedExpiration)}
+                    · {formatOptionExpiration(suggestion.suggestedExpiration)}
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-muted">
                     {suggestion.rationale}
@@ -525,7 +521,7 @@ function OptionSideMetrics({
   className?: string;
 }) {
   return (
-    <div className={cn("grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4 lg:grid-cols-7", className)}>
+    <div className={cn("grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4 lg:grid-cols-8", className)}>
       <div>
         <p className="text-muted">Bid</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
@@ -539,31 +535,37 @@ function OptionSideMetrics({
         </p>
       </div>
       <div>
+        <p className="text-muted">Mark</p>
+        <p className="mt-0.5 tabular-nums font-medium text-foreground">
+          {formatOptionPrice(quote?.mark)}
+        </p>
+      </div>
+      <div>
         <p className="text-muted">Last</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
           {formatOptionPrice(quote?.lastPrice)}
         </p>
       </div>
       <div>
-        <p className="text-muted">Δ</p>
+        <p className="text-muted">Delta</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
           {formatOptionDelta(quote?.delta)}
         </p>
       </div>
       <div>
-        <p className="text-muted">Θ</p>
+        <p className="text-muted">Theta</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
           {formatOptionTheta(quote?.theta)}
         </p>
       </div>
       <div>
-        <p className="text-muted">OI</p>
+        <p className="text-muted">Open int</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
           {quote?.openInterest != null ? quote.openInterest.toLocaleString() : "—"}
         </p>
       </div>
       <div>
-        <p className="text-muted">IV</p>
+        <p className="text-muted">Impl vol</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
           {formatOptionIv(quote?.iv)}
         </p>
@@ -588,7 +590,7 @@ function OptionChainPreviewTable({
         Option chain
         {preview.expiration && (
           <span className="normal-case text-foreground">
-            · {formatExpiration(preview.expiration)}
+            · {formatOptionExpiration(preview.expiration)}
           </span>
         )}
         {preview.strikeCount != null && (
@@ -596,27 +598,38 @@ function OptionChainPreviewTable({
             · {preview.strikeCount} up/down strikes
           </span>
         )}
+        {preview.underlyingPrice != null && (
+          <span className="normal-case text-foreground">
+            · {formatUsd(preview.underlyingPrice)}
+          </span>
+        )}
       </div>
+      <p className="mb-2 text-[11px] text-muted">
+        Bid/ask require live OPR quotes. When Schwab returns null bid/ask, last uses
+        prior close and mark uses the model price.
+      </p>
 
       <div className="overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[1100px] text-left text-xs">
+        <table className="w-full min-w-[1240px] text-left text-xs">
           <thead className="bg-background/60 text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">Strike</th>
               <th className="px-3 py-2 font-medium">Call bid</th>
               <th className="px-3 py-2 font-medium">Call ask</th>
+              <th className="px-3 py-2 font-medium">Call mark</th>
               <th className="px-3 py-2 font-medium">Call last</th>
-              <th className="px-3 py-2 font-medium">Call Δ</th>
-              <th className="px-3 py-2 font-medium">Call Θ</th>
-              <th className="px-3 py-2 font-medium">Call OI</th>
-              <th className="px-3 py-2 font-medium">Call IV</th>
+              <th className="px-3 py-2 font-medium">Call delta</th>
+              <th className="px-3 py-2 font-medium">Call theta</th>
+              <th className="px-3 py-2 font-medium">Call open int</th>
+              <th className="px-3 py-2 font-medium">Call impl vol</th>
               <th className="px-3 py-2 font-medium">Put bid</th>
               <th className="px-3 py-2 font-medium">Put ask</th>
+              <th className="px-3 py-2 font-medium">Put mark</th>
               <th className="px-3 py-2 font-medium">Put last</th>
-              <th className="px-3 py-2 font-medium">Put Δ</th>
-              <th className="px-3 py-2 font-medium">Put Θ</th>
-              <th className="px-3 py-2 font-medium">Put OI</th>
-              <th className="px-3 py-2 font-medium">Put IV</th>
+              <th className="px-3 py-2 font-medium">Put delta</th>
+              <th className="px-3 py-2 font-medium">Put theta</th>
+              <th className="px-3 py-2 font-medium">Put open int</th>
+              <th className="px-3 py-2 font-medium">Put impl vol</th>
             </tr>
           </thead>
           <tbody>
@@ -630,6 +643,7 @@ function OptionChainPreviewTable({
                 </td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.bid)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.ask)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.mark)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.lastPrice)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionDelta(row.call?.delta)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionTheta(row.call?.theta)}</td>
@@ -641,6 +655,7 @@ function OptionChainPreviewTable({
                 <td className="px-3 py-2 tabular-nums">{formatOptionIv(row.call?.iv)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.bid)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.ask)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.mark)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.lastPrice)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionDelta(row.put?.delta)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionTheta(row.put?.theta)}</td>
@@ -691,7 +706,7 @@ function OptionsCandidateTable({
                     maximumFractionDigits: 2,
                   })}{" "}
                   {formatStrikeSide(candidate.side)} ·{" "}
-                  {formatExpiration(candidate.expiration)}
+                  {formatOptionExpiration(candidate.expiration)}
                 </p>
                 <OptionSideMetrics quote={candidate} className="mt-2" />
                 <p className="mt-2 text-[11px] text-muted">

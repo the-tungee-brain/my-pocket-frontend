@@ -3,6 +3,7 @@
 import { Timer } from "lucide-react";
 import type { AssignmentRiskSummary as AssignmentRiskSummaryData } from "@/app/types/schwab";
 import { formatUsd } from "@/lib/formatCurrency";
+import { formatOptionExpiration } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -24,15 +25,6 @@ function riskBadgeClass(level: string) {
     "inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
     RISK_STYLES[level] ?? RISK_STYLES.watch,
   );
-}
-
-function formatExpiration(expiration: string) {
-  const date = new Date(`${expiration}T12:00:00`);
-  if (Number.isNaN(date.getTime())) return expiration;
-  return date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function formatStrategy(strategy: string) {
@@ -90,12 +82,6 @@ export function AssignmentRiskSummary({
         {summary.positions.map((entry) => {
           const label = entry.underlyingSymbol ?? entry.symbol;
           const optionType = entry.putCall === "PUT" ? "put" : "call";
-          const dteLabel =
-            entry.daysToExpiration === 0
-              ? "Today"
-              : entry.daysToExpiration === 1
-                ? "1 day"
-                : `${entry.daysToExpiration} days`;
 
           return (
             <li
@@ -117,8 +103,8 @@ export function AssignmentRiskSummary({
                   </span>
                 </p>
                 <p className="mt-0.5 text-xs text-muted">
-                  {formatStrategy(entry.strategy)} · expires{" "}
-                  {formatExpiration(entry.expiration)} ({dteLabel})
+                  {formatStrategy(entry.strategy)} ·{" "}
+                  {formatOptionExpiration(entry.expiration)}
                   {entry.moneyness !== "unknown" && (
                     <> · {entry.moneyness}</>
                   )}
