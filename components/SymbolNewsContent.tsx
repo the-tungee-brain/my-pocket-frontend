@@ -18,7 +18,7 @@ export function SymbolNewsContent({ symbol }: Props) {
     error,
     lastUpdated,
     refetch,
-  } = useCompanyNews(symbol, accessToken, "news");
+  } = useCompanyNews(symbol, accessToken);
 
   return (
     <CompanyNews

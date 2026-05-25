@@ -1,8 +1,9 @@
-export function scrollToAssistantChat(behavior: ScrollBehavior = "smooth") {
-  if (typeof window === "undefined") return;
-
+export function scrollToChat() {
   window.requestAnimationFrame(() => {
-    const target = document.getElementById("assistant-chat");
-    target?.scrollIntoView({ behavior, block: "start" });
+    document
+      .getElementById("assistant-chat")
+      ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
 }
+
+export const scrollToAssistantChat = scrollToChat;

@@ -2,9 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { usePositionsContext } from "../Providers";
-import { useTabs } from "@/app/contexts/TabContext";
 import { usePortfolioSection } from "@/app/contexts/PortfolioSectionContext";
 import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
@@ -17,7 +15,6 @@ import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
 import { StrategyJourneyPanel } from "@/components/StrategyJourneyPanel";
 import { StrategyOnboardingWizard } from "@/components/StrategyOnboardingWizard";
 import { PortfolioSectionTabBar } from "@/components/PortfolioSectionTabBar";
-import { NewsHintBanner } from "@/components/NewsHintBanner";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -38,11 +35,10 @@ import {
   dismissStrategyOnboarding,
   isStrategyOnboardingDismissed,
 } from "@/lib/onboardingStorage";
-import { symbolHubPath } from "@/lib/symbolRoutes";
+import { scrollToChat } from "@/lib/scrollToChat";
 import { buildAddSymbolUpdate } from "@/lib/strategyStockSuggestions";
 
 export default function PortfolioPage() {
-  const router = useRouter();
   const {
     error,
     allPositions,
@@ -61,7 +57,6 @@ export default function PortfolioPage() {
     sendQuickAction,
     schwabReauth,
   } = usePositionsContext();
-  const { activeTab } = useTabs();
   const { activeSection, setActiveSection } = usePortfolioSection();
   const [showStrategySetup, setShowStrategySetup] = useState(false);
   const [strategyDismissed, setStrategyDismissed] = useState(true);
@@ -82,7 +77,6 @@ export default function PortfolioPage() {
     markStep,
     refreshRecommendations,
     saveProfile,
-    refetch: refetchStrategy,
   } = useStrategyJourney(sessionAccessToken ?? undefined);
 
   const showStrategyWizard =
@@ -124,9 +118,6 @@ export default function PortfolioPage() {
     recentActivity?.suggestedActions ?? [],
   );
 
-  const showNewsHint =
-    activeTab === "assistant" && !loading && symbols.length > 0;
-
   const handleSuggestedAction = useCallback(
     (actionId: string) => {
       void sendQuickAction({
@@ -136,6 +127,7 @@ export default function PortfolioPage() {
         positionsForSelectedSymbol: allPositions,
         actionId,
       });
+      scrollToChat();
     },
     [allPositions, sendQuickAction],
   );
@@ -143,23 +135,9 @@ export default function PortfolioPage() {
   const handleRunAlert = useCallback(
     (alert: ProactiveAlert) => {
       const actionId = alertToQuickActionId(alert);
-      const symbol = alert.symbol?.toUpperCase();
-
-      if (symbol) {
-        router.push(symbolHubPath(symbol, "position"));
-        void sendQuickAction({
-          activeChatKey: symbol,
-          selectedView: "research",
-          selectedSymbol: symbol,
-          positionsForSelectedSymbol: positionMap[symbol] ?? [],
-          actionId,
-        });
-        return;
-      }
-
       handleSuggestedAction(actionId);
     },
-    [handleSuggestedAction, positionMap, router, sendQuickAction],
+    [handleSuggestedAction],
   );
 
   const handleRunAttentionItem = useCallback(
@@ -188,28 +166,20 @@ export default function PortfolioPage() {
     [refetchMorningBrief, sessionAccessToken],
   );
 
-  const handleRefreshAll = useCallback(async () => {
-    await refreshPositions(true);
-    refetchMorningBrief();
-    await refetchStrategy();
-    await refreshRecommendations();
-  }, [refreshPositions, refetchMorningBrief, refetchStrategy, refreshRecommendations]);
-
   const handleStrategyAction = useCallback(
     (action: StrategyNextAction) => {
       if (action.actionId) {
         void sendQuickAction({
-          activeChatKey: action.symbol ?? "__PORTFOLIO_CHAT__",
-          selectedView: action.symbol ? "research" : "portfolio",
+          activeChatKey: "__PORTFOLIO_CHAT__",
+          selectedView: "portfolio",
           selectedSymbol: action.symbol ?? null,
-          positionsForSelectedSymbol: action.symbol
-            ? (positionMap[action.symbol] ?? [])
-            : allPositions,
+          positionsForSelectedSymbol: allPositions,
           actionId: action.actionId,
         });
+        scrollToChat();
       }
     },
-    [allPositions, positionMap, sendQuickAction],
+    [allPositions, sendQuickAction],
   );
 
   const handleCompleteStrategyOnboarding = useCallback(
@@ -249,25 +219,14 @@ export default function PortfolioPage() {
       positionsForSelectedSymbol: allPositions,
       actionId: "daily-summary",
     });
+    scrollToChat();
   }, [allPositions, sendQuickAction]);
 
   const handleTaxAlert = useCallback(
     (item: TaxAlertItem) => {
-      if (item.symbol) {
-        router.push(symbolHubPath(item.symbol, "position"));
-        void sendQuickAction({
-          activeChatKey: item.symbol,
-          selectedView: "research",
-          selectedSymbol: item.symbol,
-          positionsForSelectedSymbol: positionMap[item.symbol] ?? [],
-          actionId: item.actionId,
-        });
-        return;
-      }
-
       handleSuggestedAction(item.actionId);
     },
-    [handleSuggestedAction, positionMap, router, sendQuickAction],
+    [handleSuggestedAction],
   );
 
   const showContent = !loading && allPositions.length > 0;
@@ -332,9 +291,9 @@ export default function PortfolioPage() {
         />
       )}
 
-      {!showStrategyWizard && !needsOnboarding && <PortfolioOnboarding />}
-
-      {showNewsHint && <NewsHintBanner symbols={symbols} />}
+      {!showStrategyWizard && !needsOnboarding && !showStrategyJourney && (
+        <PortfolioOnboarding />
+      )}
 
       <PortfolioSnapshot
         className="mb-4"
@@ -382,7 +341,6 @@ export default function PortfolioPage() {
                 loading={briefLoading && !displayBrief}
                 error={displayBrief ? null : briefError}
                 lastUpdated={briefLastUpdated}
-                onRefresh={handleRefreshAll}
                 onGoDeeper={handleGoDeeper}
                 hideSuggestedActions
               />

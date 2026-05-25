@@ -485,7 +485,7 @@ export function StrategyOnboardingWizard({
                 <ReviewRow label="Symbols" value={symbols.join(", ") || "—"} />
               )}
               {selectedStrategy !== "etf-core" && (
-                <div className="rounded-xl border border-accent/25 bg-accent-muted/15 p-3">
+                <div className="rounded-xl bg-accent-muted/15 p-3">
                   {symbols.length === 0 && (
                     <>
                       {suggestionsLoading && (

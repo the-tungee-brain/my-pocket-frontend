@@ -9,9 +9,7 @@ import { ConversationPane } from "@/components/ConversationPane";
 import { DesktopNav } from "@/components/DesktopNav";
 import { MobileNav } from "@/components/MobileNav";
 import { HeaderActions } from "@/components/HeaderActions";
-import { TopTabBar } from "@/components/TopTabBar";
 import { Button } from "@/components/ui/Button";
-import { useTabs } from "./contexts/TabContext";
 import { useToast } from "./contexts/ToastContext";
 import { usePositionsContext } from "./Providers";
 import { researchTabLabel } from "@/components/ResearchTabBar";
@@ -63,7 +61,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const { showToast } = useToast();
 
-  const { activeTab, setActiveTab } = useTabs();
   const pathname = usePathname();
 
   const researchMatch = pathname.match(/^\/research\/([^/]+)(?:\/([^/]+))?/);
@@ -84,14 +81,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     activeChatKey === "__NONE__" ? undefined : chatBySymbol[activeChatKey];
 
   useEffect(() => {
-    setMobileChatExpanded(false);
-  }, [activeChatKey]);
+    if (researchSymbol) {
+      setMobileChatExpanded(true);
+      return;
+    }
 
-  useEffect(() => {
     if ((currentChat?.messages.length ?? 0) > 0 || currentChat?.loading) {
       setMobileChatExpanded(true);
+    } else {
+      setMobileChatExpanded(false);
     }
-  }, [currentChat?.loading, currentChat?.messages.length, activeChatKey]);
+  }, [
+    researchSymbol,
+    currentChat?.loading,
+    currentChat?.messages.length,
+    activeChatKey,
+  ]);
 
   const researchPositions =
     researchSymbol && positionMap[researchSymbol]
@@ -284,7 +289,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           : "Position details and assistant context";
 
   const showConversation =
-    (selectedView !== "research" && activeTab === "assistant") ||
+    selectedView === "portfolio" ||
     (selectedView === "research" && !!routeSymbol);
 
   const chatBoxProps = {
@@ -374,16 +379,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
               <HeaderActions />
             </div>
-
-            {selectedView !== "research" && (
-              <div className="border-t border-border px-4 py-2 md:hidden">
-                <TopTabBar
-                  activeTab={activeTab}
-                  onChange={setActiveTab}
-                  showNews={selectedView === "symbol"}
-                />
-              </div>
-            )}
           </div>
 
           <div className="flex flex-1 flex-col">

@@ -6,7 +6,6 @@ import {
   CalendarDays,
   Newspaper,
   PieChart,
-  RefreshCw,
   Sparkles,
   TrendingUp,
 } from "lucide-react";
@@ -23,7 +22,6 @@ import {
 } from "@/lib/intelligence";
 import { findQuickAction } from "@/lib/quickActions";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
-import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
 import { symbolHubPath } from "@/lib/symbolRoutes";
@@ -34,7 +32,6 @@ type Props = {
   loading?: boolean;
   error?: string | null;
   lastUpdated?: number | null;
-  onRefresh?: () => void;
   onRunAlert?: (alert: ProactiveAlert) => void;
   onGoDeeper?: () => void;
   hideSuggestedActions?: boolean;
@@ -80,7 +77,6 @@ export function PortfolioBriefSection({
   loading = false,
   error = null,
   lastUpdated = null,
-  onRefresh,
   onRunAlert,
   onGoDeeper,
   hideSuggestedActions = false,
@@ -127,27 +123,11 @@ export function PortfolioBriefSection({
             )}
           </div>
         </div>
-
-        {onRefresh && (
-          <Button
-            size="xs"
-            variant="outline"
-            disabled={loading}
-            onClick={onRefresh}
-            aria-label="Refresh portfolio brief"
-          >
-            <RefreshCw
-              className={cn("h-3.5 w-3.5", loading && "animate-spin")}
-              aria-hidden
-            />
-            Refresh
-          </Button>
-        )}
       </div>
 
       {error && (
         <div className="px-4 pt-3">
-          <ErrorBanner message={error} onRetry={onRefresh} />
+          <ErrorBanner message={error} />
         </div>
       )}
 

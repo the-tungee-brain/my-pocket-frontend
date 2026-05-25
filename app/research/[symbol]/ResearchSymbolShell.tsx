@@ -7,6 +7,7 @@ import { ResearchTabBar, researchTabLabel } from "@/components/ResearchTabBar";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { addRecentSymbol } from "@/lib/recentSymbols";
 import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
+import { usePositionsContext } from "@/app/Providers";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
 
@@ -17,10 +18,12 @@ type Props = {
 
 export function ResearchSymbolShell({ symbol, children }: Props) {
   const pathname = usePathname();
+  const { positionMap } = usePositionsContext();
   const [collapsed, setCollapsed] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const symbolUpper = symbol.toUpperCase();
   const activeTab = pathname.split("/")[3] ?? "overview";
+  const hasPosition = (positionMap[symbolUpper]?.length ?? 0) > 0;
 
   useResearchSearchShortcut();
 
@@ -60,7 +63,9 @@ export function ResearchSymbolShell({ symbol, children }: Props) {
           <Breadcrumbs
             className="mb-3"
             items={[
-              { label: "Portfolio", href: "/portfolio" },
+              ...(hasPosition
+                ? [{ label: "Portfolio", href: "/portfolio" }]
+                : []),
               { label: "Research", href: "/research" },
               { label: symbolUpper, href: symbolHubPath(symbolUpper, "overview") },
               { label: researchTabLabel(activeTab) },

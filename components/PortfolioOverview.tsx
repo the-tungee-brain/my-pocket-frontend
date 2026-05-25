@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BriefcaseBusiness } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
 import { Position } from "@/app/types/schwab";
@@ -74,6 +75,7 @@ export function PortfolioOverview({
   symbolAlertMap = {},
   className,
 }: Props) {
+  const router = useRouter();
   const { authorized: schwabAuthorized, loading: schwabLoading } =
     useSchwabStatus();
   const {
@@ -177,21 +179,28 @@ export function PortfolioOverview({
                   return (
                 <tr
                   key={symbol}
-                  className="border-t border-border transition-colors hover:bg-muted-bg/40"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => router.push(symbolHubPath(symbol, "position"))}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      router.push(symbolHubPath(symbol, "position"));
+                    }
+                  }}
+                  className="cursor-pointer border-t border-border transition-colors hover:bg-muted-bg/40"
                 >
                   <td className="px-4 py-3 text-left">
                     <div className="flex items-center gap-2">
-                      <Link
-                        href={symbolHubPath(symbol, "position")}
-                        className="font-mono font-medium text-foreground hover:text-accent-strong"
-                      >
+                      <span className="font-mono font-medium text-foreground">
                         {symbol}
-                      </Link>
+                      </span>
                       {symbolAlertMap[symbol] && (
                         <AlertBadge summary={symbolAlertMap[symbol]} compact />
                       )}
                       <Link
                         href={symbolHubPath(symbol, "overview")}
+                        onClick={(event) => event.stopPropagation()}
                         className="text-[10px] font-medium text-muted hover:text-accent-strong"
                       >
                         Research
@@ -265,18 +274,16 @@ export function PortfolioOverview({
               const openPLPct = openProfitLossPct(openPL, costBasis);
 
               return (
-            <div
+            <Link
               key={symbol}
+              href={symbolHubPath(symbol, "position")}
               className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted-bg/40"
             >
               <div>
                 <div className="flex items-center gap-2">
-                  <Link
-                    href={symbolHubPath(symbol, "position")}
-                    className="font-mono font-medium text-foreground hover:text-accent-strong"
-                  >
+                  <span className="font-mono font-medium text-foreground">
                     {symbol}
-                  </Link>
+                  </span>
                   {symbolAlertMap[symbol] && (
                     <AlertBadge summary={symbolAlertMap[symbol]} compact />
                   )}
@@ -287,12 +294,25 @@ export function PortfolioOverview({
                     {positions.length === 1 ? "position" : "positions"}
                     {weightPct != null && ` · ${weightPct.toFixed(1)}%`}
                   </p>
-                  <Link
-                    href={symbolHubPath(symbol, "overview")}
+                  <span
+                    role="link"
+                    tabIndex={0}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      router.push(symbolHubPath(symbol, "overview"));
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        router.push(symbolHubPath(symbol, "overview"));
+                      }
+                    }}
                     className="text-[10px] font-medium text-muted hover:text-accent-strong"
                   >
                     Research
-                  </Link>
+                  </span>
                 </div>
                 {costBasis != null && (
                   <p className="mt-1 text-[11px] text-muted">
@@ -300,10 +320,7 @@ export function PortfolioOverview({
                   </p>
                 )}
               </div>
-              <Link
-                href={symbolHubPath(symbol, "position")}
-                className="text-right"
-              >
+              <div className="text-right">
                 <p className="tabular-nums font-medium">
                   ${totalValue.toLocaleString()}
                 </p>
@@ -326,8 +343,8 @@ export function PortfolioOverview({
                 >
                   Today {formatSignedUsd(dayPL)}
                 </p>
-              </Link>
-            </div>
+              </div>
+            </Link>
               );
             },
           )}
