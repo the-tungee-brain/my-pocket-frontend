@@ -9,16 +9,19 @@ import {
   writeInsightsCache,
   type InsightsCacheEntry,
 } from "@/lib/insightsCache";
+import { parseStructuredAnalysis } from "@/lib/parseStructuredAnalysis";
 import {
   buildStructuredAnalyzeRequest,
   structuredAnalyzeDisplayMessage,
 } from "@/lib/structuredAnalysis";
+import type { StructuredAnalysis } from "@/app/types/analysis";
 import type { Position, SchwabAccounts } from "@/app/types/schwab";
 
 type InsightState = {
   loading: boolean;
   error: string | null;
   content: string | null;
+  structuredAnalysis: StructuredAnalysis | null;
   analyzedAt: number | null;
   hasCachedInsights: boolean;
   refetch: () => void;
@@ -79,13 +82,19 @@ export function useInsights(
 
   const bypassCacheRef = useRef(false);
   const [fetchGeneration, setFetchGeneration] = useState(0);
-  const [state, setState] = useState<Omit<InsightState, "refetch">>({
+  const [state, setState] = useState<Omit<InsightState, "refetch" | "structuredAnalysis">>({
     loading: false,
     error: null,
     content: null,
     analyzedAt: null,
     hasCachedInsights: false,
   });
+
+  const structuredAnalysis = useMemo(
+    () =>
+      structuredAnalyze ? parseStructuredAnalysis(state.content) : null,
+    [structuredAnalyze, state.content],
+  );
 
   const refetch = useCallback(() => {
     if (!cacheKey) return;
@@ -322,5 +331,5 @@ export function useInsights(
     cacheKey,
   ]);
 
-  return { ...state, refetch };
+  return { ...state, structuredAnalysis, refetch };
 }

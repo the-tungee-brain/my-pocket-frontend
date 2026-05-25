@@ -14,6 +14,7 @@ import {
 import type { PositionMap } from "@/components/AccountPositionList";
 import { formatInsightsAnalyzedAt } from "@/lib/insightsCache";
 import { AnalyzePrompt } from "@/components/AnalyzePrompt";
+import { StructuredAnalysisView } from "@/components/StructuredAnalysisView";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import { AlertBadge } from "@/components/AlertBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -590,7 +591,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     [symbol],
   );
 
-  const { loading, error, content, analyzedAt, hasCachedInsights, refetch } =
+  const { loading, error, content, structuredAnalysis, analyzedAt, hasCachedInsights, refetch } =
     useInsights(
     {
       label,
@@ -668,21 +669,21 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     : symbol!;
   const analyzeLabel = isPortfolio ? "Analyze portfolio" : "Analyze position";
   const hasContent = !!content;
+  const hasDisplayableAnalysis = !!structuredAnalysis || (!loading && !!content);
   const isInitialLoading =
     showPortfolioAnalysis &&
     requested &&
     loading &&
-    !content &&
-    !hasCachedInsights;
+    !structuredAnalysis;
   const showAnalyzePrompt =
     showPortfolioAnalysis &&
     !hasCachedInsights &&
-    !hasContent &&
+    !hasDisplayableAnalysis &&
     !error &&
     (!requested || isInitialLoading);
   const showAnalysisOutput =
     showPortfolioAnalysis &&
-    (hasCachedInsights || hasContent || error || (requested && !isInitialLoading));
+    (hasDisplayableAnalysis || error || (hasCachedInsights && hasContent));
 
   const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
   const openPL = sumOpenProfitLoss(positions);
@@ -728,7 +729,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const showReanalyze =
     showPortfolioAnalysis &&
     !isInitialLoading &&
-    (hasCachedInsights || hasContent || error || (requested && loading));
+    (hasCachedInsights || hasDisplayableAnalysis || error || (requested && loading));
 
   const headerReanalyzeButton =
     embedded &&
@@ -759,7 +760,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
             <ErrorBanner message={error} onRetry={refetch} className="mb-3" />
           )}
 
-          {content && (
+          {hasDisplayableAnalysis && (
             <div
               className={cn(
                 "text-sm leading-relaxed text-foreground",
@@ -769,14 +770,18 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
               <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted">
                 AI analysis
               </p>
-              <MarkdownRenderer content={content} />
-              {loading && (
-                <p className="mt-3 text-[11px] text-muted">Still writing…</p>
+              {structuredAnalysis ? (
+                <StructuredAnalysisView
+                  analysis={structuredAnalysis}
+                  loading={loading}
+                />
+              ) : (
+                content && <MarkdownRenderer content={content} />
               )}
             </div>
           )}
 
-          {requested && !loading && !error && !content && (
+          {requested && !loading && !error && !hasDisplayableAnalysis && (
             <div className="space-y-3 py-4 text-center">
               <p className="text-sm text-muted">Analysis unavailable right now.</p>
               <button
@@ -789,7 +794,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
             </div>
           )}
 
-          {hasContent && !loading && (
+          {hasDisplayableAnalysis && !loading && (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3">
               <p className="text-[11px] text-muted">
                 {analyzedAt

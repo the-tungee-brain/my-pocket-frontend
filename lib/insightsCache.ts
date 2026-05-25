@@ -23,7 +23,7 @@ export function buildInsightsCacheKey(
 ): string {
   return JSON.stringify({
     label,
-    structuredAnalyze: !!structuredAnalyze,
+    structuredAnalyze: structuredAnalyze ? "v1" : false,
     positions: positions.map((position) => ({
       symbol: position.instrument.symbol,
       longQuantity: position.longQuantity,

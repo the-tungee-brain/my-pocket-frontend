@@ -1,5 +1,7 @@
 import type { Position, SchwabAccounts } from "@/app/types/schwab";
 
+export const STRUCTURED_ANALYSIS_SCHEMA = "portfolio_analysis_v1";
+
 export type StructuredAnalyzeRequestBody = {
   account: SchwabAccounts;
   positions: Position[];
@@ -7,6 +9,8 @@ export type StructuredAnalyzeRequestBody = {
   action: "free-form";
   prompt: null;
   user_display_message: string;
+  response_format: typeof STRUCTURED_ANALYSIS_SCHEMA;
+  analysis_instructions: string;
   model?: string;
 };
 
@@ -24,6 +28,8 @@ export function buildStructuredAnalyzeRequest(input: {
     action: "free-form",
     prompt: null,
     user_display_message: input.userDisplayMessage,
+    response_format: STRUCTURED_ANALYSIS_SCHEMA,
+    analysis_instructions: STRUCTURED_ANALYSIS_INSTRUCTIONS,
     model: input.model,
   };
 }
@@ -37,3 +43,22 @@ export function structuredAnalyzeDisplayMessage(input: {
   }
   return `Analyze my ${input.symbol.toUpperCase()} position.`;
 }
+
+export const STRUCTURED_ANALYSIS_INSTRUCTIONS = `Return ONLY valid JSON matching this schema (no markdown fences, no prose outside JSON):
+{
+  "summary": "2-3 sentence overall read",
+  "recommendedAction": {
+    "title": "Short action label",
+    "reason": "Why this is the best next step",
+    "symbol": "OPTIONAL_TICKER or null"
+  },
+  "sections": [
+    {
+      "id": "optional_slug",
+      "title": "Section title",
+      "body": "Optional short paragraph",
+      "bullets": ["Optional bullet points"]
+    }
+  ]
+}
+Use 2-5 sections max. Lead with diversification for portfolio analysis. Keep bullets concise.`;
