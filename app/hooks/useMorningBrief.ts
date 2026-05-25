@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchMorningBrief } from "@/lib/apiClient";
 import type { MorningBrief, PortfolioIntelligence } from "@/app/types/intelligence";
 
@@ -18,6 +18,8 @@ export function useMorningBrief(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const initialBriefRef = useRef(initialBrief);
+  initialBriefRef.current = initialBrief;
 
   const portfolioBrief = useMemo<PortfolioIntelligence | null>(() => {
     if (morningBrief) {
@@ -49,7 +51,7 @@ export function useMorningBrief(
             ? (err as Error & { status?: number }).status
             : undefined;
 
-        if ((status === 404 || status === 401) && initialBrief) {
+        if ((status === 404 || status === 401) && initialBriefRef.current) {
           setMorningBrief(null);
           setError(null);
           return;
@@ -60,7 +62,7 @@ export function useMorningBrief(
         setLoading(false);
       }
     },
-    [accessToken, enabled, initialBrief],
+    [accessToken, enabled],
   );
 
   useEffect(() => {
