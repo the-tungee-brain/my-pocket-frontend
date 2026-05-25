@@ -13,7 +13,7 @@ import {
 } from "@/lib/intelligence";
 import { findQuickAction } from "@/lib/quickActions";
 import { pickSuggestedActions, suggestedActionToQuickActionId } from "@/lib/recentOrders";
-import { cn } from "@/lib/utils";
+import { capitalizeFirstLetter, cn } from "@/lib/utils";
 import { AskAIChip } from "@/components/AskAIChip";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -310,7 +310,7 @@ export function PortfolioAttentionSection({
                       <div className="inline-flex max-w-full flex-col items-start gap-1 pr-6 text-left">
                         <span className="inline-flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-foreground">
                           <Icon className="h-3.5 w-3.5 shrink-0 text-accent-strong" aria-hidden />
-                          {item.label}
+                          {capitalizeFirstLetter(item.label)}
                           {item.symbol && (
                             <span className="font-mono text-accent-strong">
                               {item.symbol}
