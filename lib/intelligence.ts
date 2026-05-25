@@ -301,6 +301,7 @@ export function hasPortfolioBriefContent(
     (brief.signals?.length ?? 0) > 0 ||
     (brief.alerts?.length ?? 0) > 0 ||
     !!brief.digest?.macroRegime ||
+    (brief.digest?.macroNews?.length ?? 0) > 0 ||
     (brief.digest?.sectorWeights?.length ?? 0) > 0 ||
     (brief.digest?.topNews?.length ?? 0) > 0 ||
     (brief.digest?.earningsThisWeek?.length ?? 0) > 0

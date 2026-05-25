@@ -20,9 +20,16 @@ export type PortfolioNewsItem = {
   weightPct?: number | null;
 };
 
+export type MarketNewsItem = {
+  headline: string;
+  source?: string | null;
+  url?: string | null;
+};
+
 export type PortfolioDigest = {
   sectorWeights: SectorWeight[];
   macroRegime?: string | null;
+  macroNews?: MarketNewsItem[];
   topNews: PortfolioNewsItem[];
   earningsThisWeek: string[];
 };

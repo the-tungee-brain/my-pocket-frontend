@@ -166,6 +166,15 @@ function buildBriefPreview(
     if (highlights.length >= 2) break;
   }
 
+  if (highlights.length < 2 && digest?.macroNews?.[0]) {
+    const item = digest.macroNews[0];
+    addHighlight(
+      "market-news",
+      item.source ?? "Market",
+      item.headline,
+    );
+  }
+
   if (highlights.length < 2 && digest?.topNews?.[0]) {
     const item = digest.topNews[0];
     addHighlight(
@@ -371,6 +380,43 @@ export function PortfolioBriefSection({
                   <p className="text-sm leading-relaxed text-foreground">
                     {digest.macroRegime}
                   </p>
+                </div>
+              )}
+
+              {!!digest?.macroNews?.length && (
+                <div>
+                  <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+                    <Newspaper className="h-3.5 w-3.5" aria-hidden />
+                    Market headlines
+                  </div>
+                  <ul className="space-y-2">
+                    {digest.macroNews.slice(0, 5).map((item, index) => (
+                      <li
+                        key={`${item.headline}-${index}`}
+                        className="rounded-xl border border-border bg-background/60 px-3 py-2"
+                      >
+                        {item.url ? (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium leading-relaxed text-foreground underline-offset-2 hover:text-accent-strong hover:underline"
+                          >
+                            {item.headline}
+                          </a>
+                        ) : (
+                          <p className="text-sm leading-relaxed text-foreground">
+                            {item.headline}
+                          </p>
+                        )}
+                        {item.source && (
+                          <p className="mt-1 text-[11px] text-muted">
+                            {item.source}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
