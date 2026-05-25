@@ -36,7 +36,11 @@ import {
   isStrategyOnboardingDismissed,
 } from "@/lib/onboardingStorage";
 import { scrollToChat } from "@/lib/scrollToChat";
-import { ANALYZE_PORTFOLIO_EVENT, PORTFOLIO_ANALYSIS_SECTION_ID } from "@/lib/positionAnalysis";
+import {
+  ANALYZE_PORTFOLIO_EVENT,
+  PORTFOLIO_ANALYSIS_SECTION_ID,
+  requestPortfolioAnalysis,
+} from "@/lib/positionAnalysis";
 import { buildAddSymbolUpdate } from "@/lib/strategyStockSuggestions";
 
 export default function PortfolioPage() {
@@ -64,6 +68,7 @@ export default function PortfolioPage() {
   const [showStrategySetup, setShowStrategySetup] = useState(false);
   const [strategyDismissed, setStrategyDismissed] = useState(true);
   const [pendingPortfolioAnalysis, setPendingPortfolioAnalysis] = useState(false);
+  const [portfolioAnalysisLoading, setPortfolioAnalysisLoading] = useState(false);
 
   useEffect(() => {
     setStrategyDismissed(isStrategyOnboardingDismissed());
@@ -239,16 +244,9 @@ export default function PortfolioPage() {
     [refreshRecommendations, saveProfile, strategyProfile],
   );
 
-  const handleGoDeeper = useCallback(() => {
-    void sendQuickAction({
-      activeChatKey: "__PORTFOLIO_CHAT__",
-      selectedView: "portfolio",
-      selectedSymbol: null,
-      positionsForSelectedSymbol: allPositions,
-      actionId: "daily-summary",
-    });
-    scrollToChat();
-  }, [allPositions, sendQuickAction]);
+  const handleAnalyzePortfolio = useCallback(() => {
+    requestPortfolioAnalysis();
+  }, []);
 
   const handleTaxAlert = useCallback(
     (item: TaxAlertItem) => {
@@ -364,6 +362,10 @@ export default function PortfolioPage() {
         account={account}
         cashSecuredPutSummary={cashSecuredPutSummary}
         portfolioMetrics={portfolioMetrics}
+        onAnalyzePortfolio={showContent ? handleAnalyzePortfolio : undefined}
+        analysisLoading={
+          activeSection === "holdings" && portfolioAnalysisLoading
+        }
       />
 
       {showContent && (
@@ -402,7 +404,7 @@ export default function PortfolioPage() {
               loading={briefLoading && !displayBrief}
               error={displayBrief ? null : briefError}
               lastUpdated={briefLastUpdated}
-              onGoDeeper={handleGoDeeper}
+              onGoDeeper={handleAnalyzePortfolio}
               hideSuggestedActions
             />
           )}
@@ -421,6 +423,7 @@ export default function PortfolioPage() {
             symbolAlertMap={symbolAlertMap}
             className="mx-auto mb-4 max-w-3xl"
             autoStart={pendingPortfolioAnalysis}
+            onLoadingChange={setPortfolioAnalysisLoading}
             onAskFollowUp={() => scrollToChat()}
           />
 

@@ -9,9 +9,9 @@ import {
   LockKeyhole,
   MessageSquare,
   RefreshCw,
-  Sparkles,
 } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
+import { AnalyzePrompt } from "@/components/AnalyzePrompt";
 import { AlertBadge } from "@/components/AlertBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
@@ -112,61 +112,6 @@ function StatChip({
       >
         {value}
       </p>
-    </div>
-  );
-}
-
-function AnalyzePrompt({
-  isPortfolio,
-  symbol,
-  label,
-  loading,
-  onClick,
-}: {
-  isPortfolio: boolean;
-  symbol: string | null;
-  label: string;
-  loading: boolean;
-  onClick: () => void;
-}) {
-  const title = isPortfolio
-    ? "Get an AI read on your portfolio"
-    : `Get an AI read on ${symbol}`;
-
-  const description = isPortfolio
-    ? "Summarizes concentration, options risk, notable movers, and one recommended next step — without leaving this page."
-    : "Summarizes your holdings, P/L, options risk, and one recommended next step — without leaving this page.";
-
-  return (
-    <div className="border-t border-border bg-linear-to-b from-surface-elevated/30 to-transparent px-4 py-6 sm:py-7">
-      <div className="mx-auto flex max-w-md flex-col items-center text-center">
-        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-accent/25 bg-accent-muted/70 text-accent-strong shadow-sm">
-          <Sparkles className="h-5 w-5" aria-hidden />
-        </div>
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="mt-1.5 text-sm leading-relaxed text-muted">{description}</p>
-        <button
-          type="button"
-          disabled={loading}
-          onClick={onClick}
-          className={cn(
-            "mt-5 inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            loading
-              ? "cursor-wait border-border bg-muted-bg text-muted"
-              : "border-accent/35 bg-accent-muted/50 text-accent-strong shadow-sm hover:border-accent/55 hover:bg-accent-muted active:scale-[0.98]",
-          )}
-        >
-          <Sparkles
-            className={cn(
-              "h-4 w-4",
-              loading && "animate-pulse motion-reduce:animate-none",
-            )}
-            aria-hidden
-          />
-          {loading ? "Analyzing…" : label}
-        </button>
-      </div>
     </div>
   );
 }
@@ -669,11 +614,12 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     ? PORTFOLIO_ANALYSIS_SECTION_ID
     : SYMBOL_ANALYSIS_SECTION_ID;
 
-  const title = isPortfolio ? "Portfolio" : symbol!;
+  const title = isPortfolio ? "Holdings" : symbol!;
   const analyzeLabel = isPortfolio ? "Analyze portfolio" : "Analyze position";
   const hasContent = !!content;
   const isIdle = !requested && !hasContent && !loading && !error;
   const showAnalysisOutput = requested || hasContent || error;
+  const showAnalyzePrompt = isIdle;
 
   const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
   const openPL = sumOpenProfitLoss(positions);
@@ -723,7 +669,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
               <h2 className="text-sm font-semibold text-foreground">{title}</h2>
               <p className="text-[11px] text-muted">
                 {isPortfolio
-                  ? `${symbolCount} symbols · holdings & AI review`
+                  ? `${symbolCount} ${symbolCount === 1 ? "symbol" : "symbols"} · ${positions.length} ${positions.length === 1 ? "position" : "positions"}`
                   : `${positions.length} ${positions.length === 1 ? "leg" : "legs"} · holdings & AI review`}
               </p>
             </div>
@@ -744,29 +690,31 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
           )}
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <StatChip label="Value" value={formatUsd(totalValue)} />
-          <StatChip
-            label="Open P/L"
-            value={
-              openPL != null
-                ? `${formatSignedUsd(openPL)}${
-                    openPLPctVal != null
-                      ? ` (${openPLPctVal >= 0 ? "+" : ""}${openPLPctVal.toFixed(1)}%)`
-                      : ""
-                  }`
-                : "—"
-            }
-            tone={openTone}
-          />
-          <StatChip label="Today" value={formatSignedUsd(dayPL)} tone={dayTone} />
-        </div>
+        {!isPortfolio && (
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <StatChip label="Value" value={formatUsd(totalValue)} />
+            <StatChip
+              label="Open P/L"
+              value={
+                openPL != null
+                  ? `${formatSignedUsd(openPL)}${
+                      openPLPctVal != null
+                        ? ` (${openPLPctVal >= 0 ? "+" : ""}${openPLPctVal.toFixed(1)}%)`
+                        : ""
+                    }`
+                  : "—"
+              }
+              tone={openTone}
+            />
+            <StatChip label="Today" value={formatSignedUsd(dayPL)} tone={dayTone} />
+          </div>
+        )}
       </div>
 
       {isPortfolio && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Holdings
+            By symbol
           </p>
           <div className="flex flex-wrap items-center gap-2">
             {alertSymbolCount > 0 && (
@@ -813,7 +761,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
         </div>
       )}
 
-      <div className="border-b border-border bg-background/20">
+      <div className="bg-background/20">
         {isPortfolio ? (
           alertsOnly && symbolSummaries.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-muted">
@@ -830,7 +778,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
         )}
       </div>
 
-      {isIdle && (
+      {showAnalyzePrompt && (
         <AnalyzePrompt
           isPortfolio={isPortfolio}
           symbol={symbol}
@@ -841,7 +789,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       )}
 
       {showAnalysisOutput && (
-        <div className="px-4 py-4">
+        <div className="border-t border-border/70 px-4 py-4">
           {loading && !content && (
             <ThinkingSpinner
               message={`Analyzing ${isPortfolio ? "portfolio" : symbol}…`}

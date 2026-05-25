@@ -85,40 +85,108 @@ function AlertChip({
   );
 }
 
-function buildPreviewBullets(
+function truncateText(text: string, maxLength: number) {
+  const trimmed = text.trim();
+  if (trimmed.length <= maxLength) return trimmed;
+  return `${trimmed.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+type BriefHighlight = {
+  id: string;
+  label: string;
+  text: string;
+};
+
+type BriefPreview = {
+  lead: string;
+  highlights: BriefHighlight[];
+  urgentLead: boolean;
+};
+
+function buildBriefPreview(
   brief: PortfolioIntelligence,
   changes?: PortfolioChanges | null,
-): string[] {
-  const bullets: string[] = [];
+): BriefPreview {
   const digest = brief.digest;
   const signals = sortSignalsBySeverity(brief.signals ?? []);
+  const highlights: BriefHighlight[] = [];
 
-  if (digest?.macroRegime) {
-    bullets.push(digest.macroRegime);
+  const urgentSignal = signals.find(
+    (signal) => signal.severity === "critical" || signal.severity === "warning",
+  );
+  const topSignal = urgentSignal ?? signals[0];
+
+  let lead = "";
+  let urgentLead = false;
+
+  if (urgentSignal) {
+    lead = urgentSignal.message;
+    urgentLead = true;
+  } else if (changes?.summary) {
+    lead = changes.summary;
+  } else if (digest?.macroRegime) {
+    lead = truncateText(digest.macroRegime, 180);
+  } else if (topSignal) {
+    lead = topSignal.message;
+  } else if (digest?.topNews?.[0]) {
+    const item = digest.topNews[0];
+    lead = truncateText(`${item.symbol}: ${item.headline}`, 180);
+  } else if ((digest?.earningsThisWeek?.length ?? 0) > 0) {
+    lead = `Earnings this week: ${digest!.earningsThisWeek.slice(0, 3).join(", ")}`;
+  }
+
+  const addHighlight = (id: string, label: string, text: string) => {
+    if (highlights.length >= 2) return;
+    const normalized = text.trim();
+    if (!normalized || normalized === lead.trim()) return;
+    if (highlights.some((item) => item.text === normalized)) return;
+    highlights.push({
+      id,
+      label,
+      text: truncateText(normalized, 120),
+    });
+  };
+
+  if (changes?.summary && changes.summary !== lead) {
+    addHighlight("changes", "Since yesterday", changes.summary);
+  }
+
+  if (digest?.macroRegime && digest.macroRegime !== lead) {
+    addHighlight("macro", "Macro", digest.macroRegime);
   }
 
   for (const signal of signals) {
-    if (bullets.length >= 3) break;
-    if (!bullets.includes(signal.message)) {
-      bullets.push(signal.message);
-    }
+    if (signal.message === lead) continue;
+    addHighlight(
+      `signal-${signal.symbol ?? signal.kind}`,
+      signal.symbol ?? "Signal",
+      signal.message,
+    );
+    if (highlights.length >= 2) break;
   }
 
-  if (bullets.length < 3 && changes?.summary) {
-    bullets.push(changes.summary);
-  }
-
-  if (bullets.length < 3 && digest?.topNews?.[0]) {
-    bullets.push(`${digest.topNews[0].symbol}: ${digest.topNews[0].headline}`);
-  }
-
-  if (bullets.length < 3 && (digest?.earningsThisWeek?.length ?? 0) > 0) {
-    bullets.push(
-      `Earnings this week: ${digest!.earningsThisWeek.slice(0, 3).join(", ")}`,
+  if (highlights.length < 2 && digest?.topNews?.[0]) {
+    const item = digest.topNews[0];
+    addHighlight(
+      `news-${item.symbol}`,
+      item.symbol,
+      item.headline,
     );
   }
 
-  return bullets.slice(0, 3);
+  if (highlights.length < 2 && (digest?.earningsThisWeek?.length ?? 0) > 0) {
+    addHighlight(
+      "earnings",
+      "Earnings",
+      digest!.earningsThisWeek.slice(0, 4).join(", "),
+    );
+  }
+
+  return {
+    lead: lead || "Your daily portfolio snapshot",
+    highlights,
+    urgentLead,
+  };
 }
 
 export function PortfolioBriefSection({
@@ -149,14 +217,15 @@ export function PortfolioBriefSection({
     dedupeAlerts([...(mergedBrief?.alerts ?? []), ...fallbackAlerts]),
   ).slice(0, 6);
   const digest = mergedBrief?.digest;
-  const previewBullets = mergedBrief
-    ? buildPreviewBullets(mergedBrief, changes)
-    : [];
-  const summaryLine =
-    digest?.macroRegime ??
-    changes?.summary ??
-    previewBullets[0] ??
-    "Your daily portfolio snapshot";
+  const preview = mergedBrief
+    ? buildBriefPreview(mergedBrief, changes)
+    : {
+        lead: "Your daily portfolio snapshot",
+        highlights: [],
+        urgentLead: false,
+      };
+
+  const hasBodyBelowHeader = expanded || !!error;
 
   return (
     <section
@@ -166,7 +235,12 @@ export function PortfolioBriefSection({
       )}
       aria-label="Portfolio brief"
     >
-      <div className="flex items-start justify-between gap-2 border-b border-border bg-surface-elevated/50 px-4 py-3">
+      <div
+        className={cn(
+          "flex items-start justify-between gap-2 bg-surface-elevated/50 px-4 py-3",
+          hasBodyBelowHeader && "border-b border-border",
+        )}
+      >
         <button
           type="button"
           aria-expanded={expanded}
@@ -177,37 +251,56 @@ export function PortfolioBriefSection({
             <Sparkles className="h-4 w-4" aria-hidden />
           </div>
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-foreground">
-              Morning brief
-            </h2>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <h2 className="text-sm font-semibold text-foreground">
+                Morning brief
+              </h2>
+              {lastUpdated != null && (
+                <span className="text-[10px] text-muted">
+                  {formatRelativeUpdatedAt(lastUpdated)}
+                </span>
+              )}
+            </div>
+
             {!expanded && (
               <>
-                <p className="mt-0.5 line-clamp-2 text-sm text-foreground/90">
-                  {summaryLine}
-                </p>
-                {previewBullets.length > 1 && (
-                  <ul className="mt-2 space-y-1">
-                    {previewBullets.slice(1, 3).map((bullet) => (
-                      <li
-                        key={bullet}
-                        className="flex items-start gap-1.5 text-xs text-muted"
-                      >
-                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
-                        <span className="line-clamp-2">{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
+                {loading && !hasContent ? (
+                  <p className="mt-1 text-sm text-muted">Loading your brief…</p>
+                ) : (
+                  <>
+                    <p
+                      className={cn(
+                        "mt-1 text-sm leading-snug text-foreground line-clamp-3",
+                        preview.urgentLead && "font-medium",
+                      )}
+                    >
+                      {preview.lead}
+                    </p>
+                    {preview.highlights.length > 0 && (
+                      <ul className="mt-2 space-y-1.5">
+                        {preview.highlights.map((item) => (
+                          <li
+                            key={item.id}
+                            className="flex min-w-0 items-baseline gap-2 text-xs leading-relaxed"
+                          >
+                            <span className="shrink-0 font-medium uppercase tracking-wide text-[10px] text-muted">
+                              {item.label}
+                            </span>
+                            <span className="min-w-0 line-clamp-2 text-muted">
+                              {item.text}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
                 )}
               </>
             )}
+
             {expanded && (
-              <p className="text-[11px] text-muted">
-                Macro context, sector mix, changes, and what to watch today
-              </p>
-            )}
-            {lastUpdated != null && (
-              <p className="mt-0.5 text-[10px] text-muted">
-                Updated {formatRelativeUpdatedAt(lastUpdated)}
+              <p className="mt-1 text-xs leading-relaxed text-muted line-clamp-2">
+                {preview.lead}
               </p>
             )}
           </div>
@@ -239,13 +332,6 @@ export function PortfolioBriefSection({
           <ErrorBanner message={error} />
         </div>
       )}
-
-      {loading && !hasContent && !expanded ? (
-        <div className="space-y-2 px-4 py-3">
-          <div className="h-4 w-2/3 animate-pulse rounded bg-muted-bg" />
-          <div className="h-3 w-1/2 animate-pulse rounded bg-muted-bg/80" />
-        </div>
-      ) : null}
 
       {expanded && (
         <div className="space-y-4 px-4 py-4">
@@ -280,7 +366,9 @@ export function PortfolioBriefSection({
                     <TrendingUp className="h-3.5 w-3.5" aria-hidden />
                     Macro
                   </div>
-                  <p className="text-sm text-foreground">{digest.macroRegime}</p>
+                  <p className="text-sm leading-relaxed text-foreground">
+                    {digest.macroRegime}
+                  </p>
                 </div>
               )}
 
@@ -369,7 +457,7 @@ export function PortfolioBriefSection({
                             </span>
                           )}
                         </div>
-                        <p className="mt-1 text-sm text-foreground">
+                        <p className="mt-1 text-sm leading-relaxed text-foreground">
                           {item.headline}
                         </p>
                       </li>
@@ -400,7 +488,9 @@ export function PortfolioBriefSection({
                         >
                           {signalSeverityLabel(signal.severity)}
                         </span>
-                        <p className="text-sm text-foreground">{signal.message}</p>
+                        <p className="min-w-0 text-sm leading-relaxed text-foreground">
+                          {signal.message}
+                        </p>
                       </li>
                     ))}
                   </ul>

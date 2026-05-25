@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, BriefcaseBusiness } from "lucide-react";
+import { AnalyzePrompt } from "@/components/AnalyzePrompt";
 import type {
   CashSecuredPutSummary,
   PortfolioMetrics,
@@ -18,6 +19,8 @@ type Props = {
   account: SchwabAccounts | null;
   cashSecuredPutSummary?: CashSecuredPutSummary | null;
   portfolioMetrics?: PortfolioMetrics | null;
+  onAnalyzePortfolio?: () => void;
+  analysisLoading?: boolean;
   className?: string;
 };
 
@@ -56,6 +59,8 @@ export function PortfolioSnapshot({
   account,
   cashSecuredPutSummary,
   portfolioMetrics,
+  onAnalyzePortfolio,
+  analysisLoading = false,
   className,
 }: Props) {
   if (loading) {
@@ -203,6 +208,15 @@ export function PortfolioSnapshot({
             />
           )}
         </div>
+      )}
+
+      {onAnalyzePortfolio && (
+        <AnalyzePrompt
+          isPortfolio
+          label="Analyze portfolio"
+          loading={analysisLoading}
+          onClick={onAnalyzePortfolio}
+        />
       )}
     </section>
   );
