@@ -18,10 +18,10 @@ function readSymbol(value: unknown): string | null {
   return null;
 }
 
-function readName(value: unknown): string | null {
+function readTitle(value: unknown): string | null {
   if (typeof value !== "object" || value === null) return null;
   const record = value as Record<string, unknown>;
-  for (const key of ["name", "companyName", "title", "description"]) {
+  for (const key of ["title", "name", "companyName", "description"]) {
     const candidate = record[key];
     if (typeof candidate === "string" && candidate.trim()) {
       return candidate.trim();
@@ -51,7 +51,7 @@ export function normalizeSymbolSearchResults(data: unknown): TickerSymbolItem[] 
     seen.add(symbol);
     normalized.push({
       symbol,
-      name: readName(item),
+      title: readTitle(item),
     });
   }
 

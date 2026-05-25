@@ -46,8 +46,8 @@ export function SymbolSearchResult({
             <span className="font-mono font-semibold text-foreground">
               {item.symbol}
             </span>
-            {item.name && (
-              <p className="truncate text-xs text-muted">{item.name}</p>
+            {item.title && (
+              <p className="truncate text-xs text-muted">{item.title}</p>
             )}
           </div>
           <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted">

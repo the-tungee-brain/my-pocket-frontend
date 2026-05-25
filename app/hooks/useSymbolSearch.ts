@@ -6,7 +6,7 @@ import { normalizeSymbolSearchResults } from "@/lib/symbolSearchResults";
 
 export type TickerSymbolItem = {
   symbol: string;
-  name?: string | null;
+  title?: string | null;
 };
 
 type UseSymbolSearchOptions = {

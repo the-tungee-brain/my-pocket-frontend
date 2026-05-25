@@ -105,9 +105,9 @@ export function SymbolSearchField({
                   <span className="font-mono font-semibold text-foreground">
                     {item.symbol}
                   </span>
-                  {item.name && (
+                  {item.title && (
                     <span className="mt-0.5 block truncate text-xs text-muted">
-                      {item.name}
+                      {item.title}
                     </span>
                   )}
                 </button>
