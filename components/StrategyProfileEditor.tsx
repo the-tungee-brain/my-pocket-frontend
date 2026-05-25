@@ -7,7 +7,6 @@ import {
   RefreshCw,
   TrendingUp,
 } from "lucide-react";
-import { useSymbolSearch } from "@/app/hooks/useSymbolSearch";
 import { useStrategyStockSuggestions } from "@/app/hooks/useStrategyStockSuggestions";
 import type {
   IncomeVsGrowth,
@@ -18,6 +17,7 @@ import type {
   UserInvestmentProfile,
 } from "@/app/types/strategy";
 import { StrategyStockSuggestionsPanel } from "@/components/StrategyStockSuggestionsPanel";
+import { SymbolSearchField } from "@/components/SymbolSearchField";
 import { Button } from "@/components/ui/Button";
 import { updateInvestmentProfile } from "@/lib/apiClient";
 import { cn } from "@/lib/utils";
@@ -64,11 +64,6 @@ export function StrategyProfileEditor({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const { results: searchResults } = useSymbolSearch(symbolInput, {
-    accessToken,
-    limit: 8,
-  });
-
   useEffect(() => {
     setValues(profileToFormValues(profile));
   }, [profile]);
@@ -96,12 +91,14 @@ export function StrategyProfileEditor({
     suggestions,
     loading: suggestionsLoading,
     error: suggestionsError,
+    refetch: refetchSuggestions,
+    stale: suggestionsStale,
   } = useStrategyStockSuggestions({
     accessToken,
     strategy: values.primaryStrategy,
     enabled: showSymbolSuggestions,
     prepareProfile: prepareSuggestionsProfile,
-    refreshKey: [
+    contextKey: [
       values.primaryStrategy,
       values.symbols.join(","),
       values.etfPrimary,
@@ -247,6 +244,8 @@ export function StrategyProfileEditor({
                   summary={suggestions?.summary}
                   loading={suggestionsLoading}
                   error={suggestionsError}
+                  stale={suggestionsStale}
+                  onRefresh={() => void refetchSuggestions()}
                   onAddSymbol={(symbol) => patch({ etfPrimary: symbol.toUpperCase() })}
                   selectedSymbols={[values.etfPrimary, values.etfBond].filter(Boolean)}
                 />
@@ -259,14 +258,16 @@ export function StrategyProfileEditor({
                   summary={suggestions?.summary}
                   loading={suggestionsLoading}
                   error={suggestionsError}
+                  stale={suggestionsStale}
+                  onRefresh={() => void refetchSuggestions()}
                   onAddSymbol={addSymbol}
                   selectedSymbols={values.symbols}
                 />
                 <SymbolConfig
+                  accessToken={accessToken}
                   values={values}
                   symbolInput={symbolInput}
                   onSymbolInputChange={setSymbolInput}
-                  searchResults={searchResults}
                   onAddSymbol={addSymbol}
                   onRemoveSymbol={removeSymbol}
                 />
@@ -367,42 +368,28 @@ function EtfConfig({
 }
 
 function SymbolConfig({
+  accessToken,
   values,
   symbolInput,
   onSymbolInputChange,
-  searchResults,
   onAddSymbol,
   onRemoveSymbol,
 }: {
+  accessToken: string;
   values: StrategyFormValues;
   symbolInput: string;
   onSymbolInputChange: (value: string) => void;
-  searchResults: { symbol: string }[];
   onAddSymbol: (symbol: string) => void;
   onRemoveSymbol: (symbol: string) => void;
 }) {
   return (
     <>
-      <input
+      <SymbolSearchField
+        accessToken={accessToken}
         value={symbolInput}
-        onChange={(event) => onSymbolInputChange(event.target.value)}
-        placeholder="Search symbol, e.g. AAPL"
-        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+        onChange={onSymbolInputChange}
+        onSelect={onAddSymbol}
       />
-      {searchResults.length > 0 && symbolInput.trim() && (
-        <div className="rounded-lg border border-border bg-background">
-          {searchResults.map((item) => (
-            <button
-              key={item.symbol}
-              type="button"
-              onClick={() => onAddSymbol(item.symbol)}
-              className="block w-full px-3 py-2 text-left text-sm hover:bg-muted-bg"
-            >
-              {item.symbol}
-            </button>
-          ))}
-        </div>
-      )}
       <div className="flex flex-wrap gap-2">
         {values.symbols.map((symbol) => (
           <button

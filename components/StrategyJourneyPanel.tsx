@@ -14,7 +14,6 @@ import {
 import type {
   InvestmentStrategy,
   StrategyCatalogItem,
-  UserStrategyJourney,
 } from "@/app/types/strategy";
 import { StrategyFlowDiagram } from "@/components/StrategyFlowDiagram";
 import { getStrategyFlow } from "@/lib/strategyFlows";
@@ -25,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type Props = {
-  journey: UserStrategyJourney;
+  strategy: InvestmentStrategy;
   catalogItem?: StrategyCatalogItem | null;
   className?: string;
 };
@@ -42,7 +41,7 @@ const STRATEGY_ICONS: Record<
 };
 
 export function StrategyJourneyPanel({
-  journey,
+  strategy,
   catalogItem,
   className,
 }: Props) {
@@ -60,15 +59,15 @@ export function StrategyJourneyPanel({
     });
   };
 
-  const flow = useMemo(() => getStrategyFlow(journey.strategy), [journey.strategy]);
+  const flow = useMemo(() => getStrategyFlow(strategy), [strategy]);
 
-  const strategyTitle = catalogItem?.title ?? formatStrategyTitle(journey.strategy);
+  const strategyTitle = catalogItem?.title ?? formatStrategyTitle(strategy);
   const strategySubtitle =
     catalogItem?.subtitle ?? "Your guided investing playbook";
   const strategyDescription =
     catalogItem?.description ??
     "Expand to see how this strategy works step by step.";
-  const StrategyIcon = STRATEGY_ICONS[journey.strategy] ?? Sparkles;
+  const StrategyIcon = STRATEGY_ICONS[strategy] ?? Sparkles;
 
   return (
     <section className={cn("mx-auto mb-4 w-full max-w-3xl", className)}>

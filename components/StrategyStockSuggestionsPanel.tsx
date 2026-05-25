@@ -10,6 +10,8 @@ type Props = {
   summary?: string | null;
   loading?: boolean;
   error?: string | null;
+  stale?: boolean;
+  onRefresh?: () => void;
   onAddSymbol: (symbol: string) => void;
   selectedSymbols?: string[];
   className?: string;
@@ -21,6 +23,8 @@ export function StrategyStockSuggestionsPanel({
   summary,
   loading = false,
   error = null,
+  stale = false,
+  onRefresh,
   onAddSymbol,
   selectedSymbols = [],
   className,
@@ -45,17 +49,30 @@ export function StrategyStockSuggestionsPanel({
         className,
       )}
     >
-      <div className="mb-3 flex items-start gap-2">
-        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" />
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-accent-strong">
-            AI suggestions for your strategy
-          </p>
-          {!compact && summary && (
-            <p className="mt-1 text-xs leading-relaxed text-muted">{summary}</p>
-          )}
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent-strong">
+              AI suggestions for your strategy
+            </p>
+            {!compact && summary && (
+              <p className="mt-1 text-xs leading-relaxed text-muted">{summary}</p>
+            )}
+          </div>
         </div>
+        {stale && onRefresh && !loading && (
+          <Button size="xs" variant="outline" onClick={onRefresh}>
+            Refresh
+          </Button>
+        )}
       </div>
+
+      {stale && !loading && picks.length > 0 && (
+        <p className="mb-3 text-xs text-muted">
+          Preferences changed — refresh for updated suggestions.
+        </p>
+      )}
 
       {loading && (
         <p className="text-xs text-muted">Finding symbols that fit your preferences…</p>

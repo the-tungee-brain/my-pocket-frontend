@@ -58,7 +58,9 @@ export function useStrategyJourney(
 
       if (profileData?.primaryStrategy) {
         const [journeyData, recs] = await Promise.all([
-          fetchStrategyJourney(accessToken, profileData.primaryStrategy),
+          fetchStrategyJourney(accessToken, profileData.primaryStrategy).catch(
+            () => null,
+          ),
           fetchStrategyRecommendations(
             accessToken,
             profileData.primaryStrategy,
@@ -111,15 +113,16 @@ export function useStrategyJourney(
       });
       setProfile(next);
       if (next.primaryStrategy) {
-        const journeyData = await fetchStrategyJourney(
-          accessToken,
-          next.primaryStrategy,
-        );
+        const [journeyData, recs] = await Promise.all([
+          fetchStrategyJourney(accessToken, next.primaryStrategy).catch(
+            () => null,
+          ),
+          fetchStrategyRecommendations(
+            accessToken,
+            next.primaryStrategy,
+          ).catch(() => null),
+        ]);
         setJourney(journeyData);
-        const recs = await fetchStrategyRecommendations(
-          accessToken,
-          next.primaryStrategy,
-        ).catch(() => null);
         setRecommendations(recs);
       }
       return next;
@@ -171,16 +174,16 @@ export function useStrategyJourney(
       const next = await updateInvestmentProfile(accessToken, update);
       setProfile(next);
 
-      const journeyData = await fetchStrategyJourney(
-        accessToken,
-        values.primaryStrategy,
-      );
+      const [journeyData, recs] = await Promise.all([
+        fetchStrategyJourney(accessToken, values.primaryStrategy).catch(
+          () => null,
+        ),
+        fetchStrategyRecommendations(
+          accessToken,
+          values.primaryStrategy,
+        ).catch(() => null),
+      ]);
       setJourney(journeyData);
-
-      const recs = await fetchStrategyRecommendations(
-        accessToken,
-        values.primaryStrategy,
-      ).catch(() => null);
       setRecommendations(recs);
 
       return next;

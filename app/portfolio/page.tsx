@@ -96,7 +96,6 @@ export default function PortfolioPage() {
   const {
     catalog,
     profile: strategyProfile,
-    journey,
     needsOnboarding,
     loading: strategyLoading,
     chooseStrategy,
@@ -114,7 +113,7 @@ export default function PortfolioPage() {
   const showStrategyJourney =
     !!sessionAccessToken &&
     !!strategyProfile?.onboardingCompletedAt &&
-    !!journey &&
+    !!strategyProfile.primaryStrategy &&
     !showStrategySetup;
 
   const localBrief = buildLocalPortfolioBrief(allPositions, account, proactiveAlerts);
@@ -302,10 +301,13 @@ export default function PortfolioPage() {
         </div>
       )}
 
-      {showStrategyJourney && journey && (
+      {showStrategyJourney && strategyProfile?.primaryStrategy && (
         <StrategyJourneyPanel
-          journey={journey}
-          catalogItem={catalog.find((item) => item.id === journey.strategy) ?? null}
+          strategy={strategyProfile.primaryStrategy}
+          catalogItem={
+            catalog.find((item) => item.id === strategyProfile.primaryStrategy) ??
+            null
+          }
         />
       )}
 

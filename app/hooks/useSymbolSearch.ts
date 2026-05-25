@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
+import { normalizeSymbolSearchResults } from "@/lib/symbolSearchResults";
 
 export type TickerSymbolItem = {
   symbol: string;
@@ -82,10 +83,10 @@ export function useSymbolSearch(
           throw new Error("Failed to search symbols");
         }
 
-        const data: TickerSymbolItem[] = await res.json();
+        const data = await res.json();
         if (cancelled) return;
 
-        setResults(data);
+        setResults(normalizeSymbolSearchResults(data));
         setError(null);
       } catch (e: any) {
         if (cancelled) return;

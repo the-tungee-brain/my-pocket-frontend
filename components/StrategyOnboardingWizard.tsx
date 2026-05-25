@@ -11,7 +11,6 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
-import { useSymbolSearch } from "@/app/hooks/useSymbolSearch";
 import { useStrategyStockSuggestions } from "@/app/hooks/useStrategyStockSuggestions";
 import type {
   IncomeVsGrowth,
@@ -22,6 +21,7 @@ import type {
   UserInvestmentProfileUpdate,
 } from "@/app/types/strategy";
 import { StrategyStockSuggestionsPanel } from "@/components/StrategyStockSuggestionsPanel";
+import { SymbolSearchField } from "@/components/SymbolSearchField";
 import { Button } from "@/components/ui/Button";
 import { buildPreferencesDraftUpdate, supportsStrategyStockSuggestions } from "@/lib/strategyStockSuggestions";
 import { cn } from "@/lib/utils";
@@ -74,11 +74,6 @@ export function StrategyOnboardingWizard({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { results: searchResults } = useSymbolSearch(symbolInput, {
-    accessToken,
-    limit: 8,
-  });
-
   const selectedCatalogItem = useMemo(
     () => catalog.find((item) => item.id === selectedStrategy) ?? null,
     [catalog, selectedStrategy],
@@ -114,12 +109,15 @@ export function StrategyOnboardingWizard({
     suggestions,
     loading: suggestionsLoading,
     error: suggestionsError,
+    refetch: refetchSuggestions,
+    stale: suggestionsStale,
   } = useStrategyStockSuggestions({
     accessToken,
     strategy: selectedStrategy,
     enabled: showSymbolSuggestions && !!onSaveDraft,
     prepareProfile: prepareSuggestionsProfile,
-    refreshKey: [
+    prepareOnAutoFetch: true,
+    contextKey: [
       selectedStrategy,
       symbols.join(","),
       etfPrimary,
@@ -380,6 +378,8 @@ export function StrategyOnboardingWizard({
                     summary={suggestions?.summary}
                     loading={suggestionsLoading}
                     error={suggestionsError}
+                    stale={suggestionsStale}
+                    onRefresh={() => void refetchSuggestions()}
                     onAddSymbol={(symbol) => setEtfPrimary(symbol.toUpperCase())}
                     selectedSymbols={[etfPrimary, etfBond].filter(Boolean)}
                   />
@@ -431,29 +431,17 @@ export function StrategyOnboardingWizard({
                     summary={suggestions?.summary}
                     loading={suggestionsLoading}
                     error={suggestionsError}
+                    stale={suggestionsStale}
+                    onRefresh={() => void refetchSuggestions()}
                     onAddSymbol={addSymbol}
                     selectedSymbols={symbols}
                   />
-                  <input
+                  <SymbolSearchField
+                    accessToken={accessToken}
                     value={symbolInput}
-                    onChange={(event) => setSymbolInput(event.target.value)}
-                    placeholder="Search symbol, e.g. AAPL"
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                    onChange={setSymbolInput}
+                    onSelect={addSymbol}
                   />
-                  {searchResults.length > 0 && symbolInput.trim() && (
-                    <div className="rounded-lg border border-border bg-background">
-                      {searchResults.map((item) => (
-                        <button
-                          key={item.symbol}
-                          type="button"
-                          onClick={() => addSymbol(item.symbol)}
-                          className="block w-full px-3 py-2 text-left text-sm hover:bg-muted-bg"
-                        >
-                          {item.symbol}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                   <div className="flex flex-wrap gap-2">
                     {symbols.map((symbol) => (
                       <button
@@ -547,6 +535,8 @@ export function StrategyOnboardingWizard({
                       summary={suggestions?.summary}
                       loading={suggestionsLoading}
                       error={suggestionsError}
+                      stale={suggestionsStale}
+                      onRefresh={() => void refetchSuggestions()}
                       onAddSymbol={addSymbol}
                       selectedSymbols={symbols}
                       compact

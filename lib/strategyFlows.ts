@@ -132,7 +132,7 @@ export const STRATEGY_FLOWS: Record<InvestmentStrategy, StrategyFlowDefinition> 
         {
           id: "rebalance",
           title: "Rebalance over time",
-          caption: "Trim winners and add to laggards when drift is large.",
+          caption: "When you're off target, sell a bit of what's up and buy what's down.",
         },
         {
           id: "hold",
