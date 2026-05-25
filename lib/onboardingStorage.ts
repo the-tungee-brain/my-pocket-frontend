@@ -3,6 +3,18 @@ const RESEARCH_STORAGE_KEY = "powerpocket-research-onboarding-dismissed";
 const WATCHLIST_HINT_KEY = "powerpocket-watchlist-hint-dismissed";
 const STRATEGY_ONBOARDING_DISMISSED_KEY = "powerpocket-strategy-onboarding-dismissed";
 
+const STRATEGY_JOURNEY_COLLAPSED_KEY = "powerpocket-strategy-journey-collapsed";
+
+export function isStrategyJourneyCollapsed(): boolean {
+  if (typeof window === "undefined") return true;
+  return localStorage.getItem(STRATEGY_JOURNEY_COLLAPSED_KEY) !== "0";
+}
+
+export function setStrategyJourneyCollapsed(collapsed: boolean): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STRATEGY_JOURNEY_COLLAPSED_KEY, collapsed ? "1" : "0");
+}
+
 export function isStrategyOnboardingDismissed(): boolean {
   if (typeof window === "undefined") return false;
   return localStorage.getItem(STRATEGY_ONBOARDING_DISMISSED_KEY) === "1";

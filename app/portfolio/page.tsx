@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePositionsContext } from "../Providers";
 import { usePortfolioSection } from "@/app/contexts/PortfolioSectionContext";
 import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
-import { PortfolioAttentionSection } from "@/components/PortfolioAttentionSection";
+import { PortfolioAttentionSection, countAttentionItems } from "@/components/PortfolioAttentionSection";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
-import { PortfolioChangesSection } from "@/components/PortfolioChangesSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
@@ -233,6 +232,19 @@ export default function PortfolioPage() {
   const showBriefSection = showContent && sessionAccessToken;
   const attentionQueue = morningBrief?.attentionQueue ?? [];
 
+  const todayBadgeCount = useMemo(
+    () =>
+      countAttentionItems({
+        taxItems,
+        alerts: mergedAlerts,
+        attentionItems: attentionQueue,
+        suggestedActions: recentActivity?.suggestedActions ?? [],
+      }),
+    [attentionQueue, mergedAlerts, recentActivity?.suggestedActions, taxItems],
+  );
+
+  const activityBadgeCount = recentActivity?.recentOrderCount ?? 0;
+
   return (
     <>
       {schwabReauth && (
@@ -309,6 +321,10 @@ export default function PortfolioPage() {
         <PortfolioSectionTabBar
           activeSection={activeSection}
           onChange={setActiveSection}
+          badges={{
+            today: todayBadgeCount,
+            activity: activityBadgeCount,
+          }}
         />
       )}
 
@@ -328,23 +344,18 @@ export default function PortfolioPage() {
           />
 
           {showBriefSection && (
-            <>
-              <PortfolioChangesSection
-                className="mb-4"
-                changes={morningBrief?.changes}
-                loading={briefLoading && !morningBrief}
-              />
-              <PortfolioBriefSection
-                className="mb-4"
-                brief={displayBrief}
-                fallbackAlerts={proactiveAlerts}
-                loading={briefLoading && !displayBrief}
-                error={displayBrief ? null : briefError}
-                lastUpdated={briefLastUpdated}
-                onGoDeeper={handleGoDeeper}
-                hideSuggestedActions
-              />
-            </>
+            <PortfolioBriefSection
+              className="mb-4"
+              brief={displayBrief}
+              changes={morningBrief?.changes}
+              changesLoading={briefLoading && !morningBrief}
+              fallbackAlerts={proactiveAlerts}
+              loading={briefLoading && !displayBrief}
+              error={displayBrief ? null : briefError}
+              lastUpdated={briefLastUpdated}
+              onGoDeeper={handleGoDeeper}
+              hideSuggestedActions
+            />
           )}
         </>
       )}
@@ -377,6 +388,7 @@ export default function PortfolioPage() {
           summary={recentActivity}
           onRefresh={() => refreshPositions(true)}
           onRunSuggestedAction={handleSuggestedAction}
+          hideSuggestedActions
         />
       )}
     </>

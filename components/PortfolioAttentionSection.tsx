@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { AlertTriangle, CheckCircle2, Scale, Sparkles, X } from "lucide-react";
 import type { AttentionItem, ProactiveAlert } from "@/app/types/intelligence";
 import type { SuggestedAnalysisAction } from "@/app/types/schwab";
@@ -14,6 +15,8 @@ import { findQuickAction } from "@/lib/quickActions";
 import { pickSuggestedActions, suggestedActionToQuickActionId } from "@/lib/recentOrders";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/EmptyState";
+
+const MAX_VISIBLE = 5;
 
 type Props = {
   taxItems: TaxAlertItem[];
@@ -64,23 +67,17 @@ function AlertChip({
   );
 }
 
-export function PortfolioAttentionSection({
+export function countAttentionItems({
   taxItems,
   alerts,
   attentionItems = [],
   suggestedActions = [],
-  onRunAlert,
-  onRunAttentionItem,
-  onDismissAttention,
-  onRunTax,
-  onRunActionId,
-  className,
-}: Props) {
+}: Pick<Props, "taxItems" | "alerts" | "attentionItems" | "suggestedActions">) {
   const useAttentionQueue = attentionItems.length > 0;
   const generalAlerts = useAttentionQueue
     ? []
-    : dedupeAlerts(filterNonTaxAlerts(alerts)).slice(0, 6);
-  const queueItems = useAttentionQueue ? attentionItems.slice(0, 8) : [];
+    : dedupeAlerts(filterNonTaxAlerts(alerts));
+  const queueItems = useAttentionQueue ? attentionItems : [];
 
   const alertActionKeys = new Set(
     [
@@ -98,11 +95,75 @@ export function PortfolioAttentionSection({
     return !alertActionKeys.has(actionId.toLowerCase());
   });
 
-  const hasContent =
-    taxItems.length > 0 ||
-    generalAlerts.length > 0 ||
-    queueItems.length > 0 ||
-    extraSuggestions.length > 0;
+  return (
+    taxItems.length +
+    queueItems.length +
+    generalAlerts.length +
+    extraSuggestions.length
+  );
+}
+
+export function PortfolioAttentionSection({
+  taxItems,
+  alerts,
+  attentionItems = [],
+  suggestedActions = [],
+  onRunAlert,
+  onRunAttentionItem,
+  onDismissAttention,
+  onRunTax,
+  onRunActionId,
+  className,
+}: Props) {
+  const [showAll, setShowAll] = useState(false);
+
+  const useAttentionQueue = attentionItems.length > 0;
+  const generalAlerts = useAttentionQueue
+    ? []
+    : dedupeAlerts(filterNonTaxAlerts(alerts));
+  const queueItems = useAttentionQueue ? attentionItems : [];
+
+  const alertActionKeys = new Set(
+    [
+      ...taxItems.map((item) => item.actionId),
+      ...generalAlerts.map(alertToQuickActionId),
+      ...queueItems.map((item) => item.action),
+    ].map((id) => id.toLowerCase()),
+  );
+
+  const extraSuggestions = pickSuggestedActions(
+    filterNonTaxSuggestedActions(suggestedActions),
+    4,
+  ).filter((item) => {
+    const actionId = suggestedActionToQuickActionId(item.action);
+    return !alertActionKeys.has(actionId.toLowerCase());
+  });
+
+  const totalCount =
+    taxItems.length +
+    queueItems.length +
+    generalAlerts.length +
+    extraSuggestions.length;
+  const hiddenCount = Math.max(0, totalCount - MAX_VISIBLE);
+
+  const visibleTax = showAll ? taxItems : taxItems.slice(0, MAX_VISIBLE);
+  let remaining = showAll ? Infinity : MAX_VISIBLE - visibleTax.length;
+
+  const visibleQueue = showAll
+    ? queueItems
+    : queueItems.slice(0, Math.max(0, remaining));
+  remaining -= visibleQueue.length;
+
+  const visibleAlerts = showAll
+    ? generalAlerts
+    : generalAlerts.slice(0, Math.max(0, remaining));
+  remaining -= visibleAlerts.length;
+
+  const visibleSuggestions = showAll
+    ? extraSuggestions
+    : extraSuggestions.slice(0, Math.max(0, remaining));
+
+  const hasContent = totalCount > 0;
 
   if (!hasContent) {
     return (
@@ -153,12 +214,12 @@ export function PortfolioAttentionSection({
         <div>
           <h2 className="text-sm font-semibold text-foreground">Needs attention</h2>
           <p className="text-[11px] text-muted">
-            Tax flags, risk alerts, and suggested follow-ups in one place
+            {totalCount} item{totalCount === 1 ? "" : "s"} need your review
           </p>
         </div>
       </div>
 
-      {taxItems.length > 0 && (
+      {visibleTax.length > 0 && (
         <div className="border-b border-amber-500/20 bg-amber-500/5">
           <div className="flex items-center gap-2 px-4 pt-3">
             <Scale className="h-3.5 w-3.5 text-amber-800 dark:text-amber-200" aria-hidden />
@@ -167,7 +228,7 @@ export function PortfolioAttentionSection({
             </p>
           </div>
           <ul className="divide-y divide-border/60">
-            {taxItems.map((item) => {
+            {visibleTax.map((item) => {
               const quickAction = findQuickAction(item.actionId);
               const Icon = quickAction?.icon ?? Scale;
 
@@ -205,15 +266,17 @@ export function PortfolioAttentionSection({
         </div>
       )}
 
-      {(queueItems.length > 0 || generalAlerts.length > 0 || extraSuggestions.length > 0) && (
+      {(visibleQueue.length > 0 ||
+        visibleAlerts.length > 0 ||
+        visibleSuggestions.length > 0) && (
         <div className="space-y-3 px-4 py-3">
-          {queueItems.length > 0 && (
+          {visibleQueue.length > 0 && (
             <div>
               <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
                 Priority queue
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
-                {queueItems.map((item) => {
+                {visibleQueue.map((item) => {
                   const actionId = item.action;
                   const quickAction = findQuickAction(actionId);
                   const Icon = quickAction?.icon ?? Sparkles;
@@ -265,13 +328,13 @@ export function PortfolioAttentionSection({
             </div>
           )}
 
-          {generalAlerts.length > 0 && (
+          {visibleAlerts.length > 0 && (
             <div>
               <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
                 Suggested actions
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
-                {generalAlerts.map((alert) => {
+                {visibleAlerts.map((alert) => {
                   const actionId = alertToQuickActionId(alert);
                   const quickAction = findQuickAction(actionId);
                   const Icon = quickAction?.icon ?? Sparkles;
@@ -304,15 +367,15 @@ export function PortfolioAttentionSection({
             </div>
           )}
 
-          {extraSuggestions.length > 0 && onRunActionId && (
+          {visibleSuggestions.length > 0 && onRunActionId && (
             <div>
-              {generalAlerts.length === 0 && (
+              {visibleAlerts.length === 0 && (
                 <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
                   From recent trades
                 </p>
               )}
               <div className="grid gap-2 sm:grid-cols-2">
-                {extraSuggestions.map((item) => (
+                {visibleSuggestions.map((item) => (
                   <AlertChip
                     key={`${item.action}-${item.priority}`}
                     label={item.label}
@@ -324,6 +387,18 @@ export function PortfolioAttentionSection({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {!showAll && hiddenCount > 0 && (
+        <div className="border-t border-border px-4 py-2.5">
+          <button
+            type="button"
+            onClick={() => setShowAll(true)}
+            className="text-xs font-medium text-accent-strong transition hover:underline"
+          >
+            Show {hiddenCount} more
+          </button>
         </div>
       )}
     </section>

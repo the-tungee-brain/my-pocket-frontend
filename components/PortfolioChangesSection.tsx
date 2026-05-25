@@ -17,13 +17,15 @@ type Props = {
   className?: string;
 };
 
-function formatPct(value: number | null | undefined) {
+export function formatPortfolioChangePct(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return "—";
   const prefix = value > 0 ? "+" : "";
   return `${prefix}${value.toFixed(2)}%`;
 }
 
-function hasChangeDetails(changes: PortfolioChanges | null | undefined) {
+export function hasPortfolioChangeDetails(
+  changes: PortfolioChanges | null | undefined,
+) {
   if (!changes) return false;
 
   return (
@@ -96,6 +98,106 @@ function ChangesSkeleton() {
   );
 }
 
+export function PortfolioChangesBody({
+  changes,
+}: {
+  changes: PortfolioChanges | null | undefined;
+}) {
+  if (!hasPortfolioChangeDetails(changes)) {
+    return <ChangesEmptyState />;
+  }
+
+  return (
+    <div className="space-y-3">
+      {changes?.liquidationValueChangePct != null && (
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2.5">
+          {changes.liquidationValueChangePct >= 0 ? (
+            <ArrowUpRight className="h-4 w-4 text-emerald-600" aria-hidden />
+          ) : (
+            <ArrowDownRight className="h-4 w-4 text-danger" aria-hidden />
+          )}
+          <span className="text-sm text-foreground">
+            Portfolio value{" "}
+            <span className="font-semibold tabular-nums">
+              {formatPortfolioChangePct(changes.liquidationValueChangePct)}
+            </span>
+          </span>
+        </div>
+      )}
+
+      {(changes?.newSymbols?.length ?? 0) > 0 && (
+        <div>
+          <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+            <Plus className="h-3.5 w-3.5" aria-hidden />
+            Added
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {changes!.newSymbols.map((symbol) => (
+              <span
+                key={symbol}
+                className="rounded-full border border-border bg-background px-3 py-1 font-mono text-[11px]"
+              >
+                {symbol}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(changes?.removedSymbols?.length ?? 0) > 0 && (
+        <div>
+          <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+            <Minus className="h-3.5 w-3.5" aria-hidden />
+            Removed
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {changes!.removedSymbols.map((symbol) => (
+              <span
+                key={symbol}
+                className="rounded-full border border-border bg-background px-3 py-1 font-mono text-[11px]"
+              >
+                {symbol}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(changes?.weightChanges?.length ?? 0) > 0 && (
+        <div>
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+            Largest weight shifts
+          </p>
+          <ul className="space-y-2">
+            {changes!.weightChanges.slice(0, 4).map((item) => (
+              <li
+                key={item.symbol}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background/60 px-3 py-2"
+              >
+                <span className="font-mono text-sm font-medium">
+                  {item.symbol}
+                </span>
+                <span className="text-xs tabular-nums text-muted">
+                  {item.previousWeightPct.toFixed(1)}% →{" "}
+                  {item.currentWeightPct.toFixed(1)}%
+                  <span
+                    className={cn(
+                      "ml-2 font-semibold",
+                      item.changePct >= 0 ? "text-emerald-600" : "text-danger",
+                    )}
+                  >
+                    {formatPortfolioChangePct(item.changePct)}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PortfolioChangesSection({
   changes,
   loading = false,
@@ -109,102 +211,10 @@ export function PortfolioChangesSection({
     );
   }
 
-  if (!hasChangeDetails(changes)) {
-    return (
-      <SectionShell className={className} summary={changes?.summary}>
-        <ChangesEmptyState />
-      </SectionShell>
-    );
-  }
-
   return (
     <SectionShell className={className} summary={changes?.summary}>
-      <div className="space-y-3 px-4 py-4">
-        {changes?.liquidationValueChangePct != null && (
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2.5">
-            {changes.liquidationValueChangePct >= 0 ? (
-              <ArrowUpRight className="h-4 w-4 text-emerald-600" aria-hidden />
-            ) : (
-              <ArrowDownRight className="h-4 w-4 text-danger" aria-hidden />
-            )}
-            <span className="text-sm text-foreground">
-              Portfolio value{" "}
-              <span className="font-semibold tabular-nums">
-                {formatPct(changes.liquidationValueChangePct)}
-              </span>
-            </span>
-          </div>
-        )}
-
-        {(changes?.newSymbols?.length ?? 0) > 0 && (
-          <div>
-            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-              <Plus className="h-3.5 w-3.5" aria-hidden />
-              Added
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {changes!.newSymbols.map((symbol) => (
-                <span
-                  key={symbol}
-                  className="rounded-full border border-border bg-background px-3 py-1 font-mono text-[11px]"
-                >
-                  {symbol}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {(changes?.removedSymbols?.length ?? 0) > 0 && (
-          <div>
-            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-              <Minus className="h-3.5 w-3.5" aria-hidden />
-              Removed
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {changes!.removedSymbols.map((symbol) => (
-                <span
-                  key={symbol}
-                  className="rounded-full border border-border bg-background px-3 py-1 font-mono text-[11px]"
-                >
-                  {symbol}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {(changes?.weightChanges?.length ?? 0) > 0 && (
-          <div>
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-              Largest weight shifts
-            </p>
-            <ul className="space-y-2">
-              {changes!.weightChanges.slice(0, 4).map((item) => (
-                <li
-                  key={item.symbol}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background/60 px-3 py-2"
-                >
-                  <span className="font-mono text-sm font-medium">
-                    {item.symbol}
-                  </span>
-                  <span className="text-xs tabular-nums text-muted">
-                    {item.previousWeightPct.toFixed(1)}% →{" "}
-                    {item.currentWeightPct.toFixed(1)}%
-                    <span
-                      className={cn(
-                        "ml-2 font-semibold",
-                        item.changePct >= 0 ? "text-emerald-600" : "text-danger",
-                      )}
-                    >
-                      {formatPct(item.changePct)}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+      <div className="px-4 py-4">
+        <PortfolioChangesBody changes={changes} />
       </div>
     </SectionShell>
   );
