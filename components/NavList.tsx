@@ -16,11 +16,11 @@ import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import { useWatchlist } from "@/app/hooks/useWatchlist";
 import { useToast } from "@/app/contexts/ToastContext";
-import { tabQuerySuffix, useTabs } from "@/app/contexts/TabContext";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/Button";
 import { AlertBadge } from "./AlertBadge";
 import type { SymbolAlertSummary } from "@/lib/intelligence";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 
 export type MainView = "portfolio" | "symbol" | "research";
 
@@ -54,7 +54,6 @@ export function NavList({
 }: NavListProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { activeTab } = useTabs();
   const { symbols: watchlist, remove: removeFromWatchlist } = useWatchlist();
   const { showToast } = useToast();
 
@@ -71,12 +70,13 @@ export function NavList({
 
   const isPortfolio = pathname === "/portfolio";
   const isResearch = pathname.startsWith("/research");
-  const activeSymbol = pathname.startsWith("/portfolio/positions/")
-    ? pathname.split("/").at(-1)
+  const { symbol: hubSymbol } = pathname.match(/^\/research\/([^/]+)/)
+    ? { symbol: pathname.split("/")[2]?.toUpperCase() ?? null }
+    : { symbol: null };
+  const legacySymbol = pathname.startsWith("/portfolio/positions/")
+    ? pathname.split("/").at(-1)?.toUpperCase() ?? null
     : null;
-  const activeResearchSymbol = pathname.startsWith("/research/")
-    ? pathname.split("/")[2]?.toUpperCase()
-    : null;
+  const activeResearchSymbol = hubSymbol;
 
   const showSchwabStatus =
     schwabAuthorized !== null && schwabAuthorized !== undefined;
@@ -205,7 +205,7 @@ export function NavList({
 
       <div className="mt-1 flex-1 space-y-1 overflow-y-auto px-1">
         {symbols.map((sym) => {
-          const isActive = activeSymbol === sym;
+          const isActive = hubSymbol === sym || legacySymbol === sym;
           const alertSummary = symbolAlertMap[sym];
 
           return (
@@ -221,11 +221,9 @@ export function NavList({
                 disabled={loading}
                 aria-current={isActive ? "page" : undefined}
                 onClick={() => {
-                  setSelectedView("symbol");
-                  setSelectedSymbol(sym);
-                  router.replace(
-                    `/portfolio/positions/${sym}${tabQuerySuffix(activeTab)}`,
-                  );
+                  setSelectedView("research");
+                  setSelectedSymbol(null);
+                  router.replace(symbolHubPath(sym, "position"));
                 }}
                 className={cn(
                   "flex min-w-0 flex-1 items-center gap-2 text-left",
@@ -251,7 +249,7 @@ export function NavList({
                 onClick={() => {
                   setSelectedView("research");
                   setSelectedSymbol(null);
-                  router.replace(`/research/${sym}/overview`);
+                  router.replace(symbolHubPath(sym, "overview"));
                 }}
                 className="shrink-0 rounded p-1 text-muted transition hover:bg-muted-bg hover:text-accent-strong"
               >
@@ -309,7 +307,7 @@ export function NavList({
                   onClick={() => {
                     setSelectedView("research");
                     setSelectedSymbol(null);
-                    router.replace(`/research/${sym}/overview`);
+                    router.replace(symbolHubPath(sym, "overview"));
                   }}
                   className="flex min-w-0 flex-1 items-center gap-2 text-left"
                 >

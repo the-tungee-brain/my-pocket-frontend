@@ -6,6 +6,7 @@ import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { usePositionsContext } from "@/app/Providers";
 import { SymbolIntelligencePanel } from "@/components/SymbolIntelligencePanel";
 import type { IntelligenceSignal } from "@/app/types/intelligence";
+import { symbolChatKey } from "@/lib/chatKeys";
 
 type Props = {
   symbol: string;
@@ -16,6 +17,7 @@ export function SymbolIntelligenceSection({ symbol }: Props) {
   const accessToken = session?.accessToken as string | undefined;
   const { positionMap, sendQuickAction, sendPrompt } = usePositionsContext();
   const symbolUpper = symbol.toUpperCase();
+  const chatKey = symbolChatKey(symbolUpper) ?? symbolUpper;
 
   const { intelligence, loading, error, refetch } = useSymbolIntelligence(
     symbol,
@@ -24,7 +26,6 @@ export function SymbolIntelligenceSection({ symbol }: Props) {
 
   const handleRunSignal = useCallback(
     (_signal: IntelligenceSignal, actionId: string) => {
-      const chatKey = `__RESEARCH_${symbolUpper}__`;
       void sendQuickAction({
         activeChatKey: chatKey,
         selectedView: "research",
@@ -33,31 +34,31 @@ export function SymbolIntelligenceSection({ symbol }: Props) {
         actionId,
       });
     },
-    [symbolUpper, sendQuickAction, positionMap],
+    [chatKey, symbolUpper, sendQuickAction, positionMap],
   );
 
   const handleAnalyzeOption = useCallback(
     (prompt: string) => {
       void sendPrompt({
-        activeChatKey: `__RESEARCH_${symbolUpper}__`,
+        activeChatKey: chatKey,
         selectedView: "research",
         selectedSymbol: symbolUpper,
         positionsForSelectedSymbol: positionMap[symbolUpper] ?? [],
         prompt,
       });
     },
-    [symbolUpper, sendPrompt, positionMap],
+    [chatKey, symbolUpper, sendPrompt, positionMap],
   );
 
   const handleGoDeeper = useCallback(() => {
     void sendQuickAction({
-      activeChatKey: `__RESEARCH_${symbolUpper}__`,
+      activeChatKey: chatKey,
       selectedView: "research",
       selectedSymbol: symbolUpper,
       positionsForSelectedSymbol: positionMap[symbolUpper] ?? [],
       actionId: "daily-summary",
     });
-  }, [symbolUpper, sendQuickAction, positionMap]);
+  }, [chatKey, symbolUpper, sendQuickAction, positionMap]);
 
   return (
     <SymbolIntelligencePanel

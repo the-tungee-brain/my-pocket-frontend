@@ -25,6 +25,7 @@ import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 
 type Props = {
   brief: PortfolioIntelligence | null;
@@ -212,7 +213,7 @@ export function PortfolioBriefSection({
                 {digest.earningsThisWeek.map((symbol) => (
                   <Link
                     key={symbol}
-                    href={`/portfolio/positions/${symbol}`}
+                    href={symbolHubPath(symbol, "position")}
                     className="rounded-full border border-border bg-background px-3 py-1 font-mono text-[11px] font-medium text-foreground transition hover:border-accent/40 hover:text-accent-strong"
                   >
                     {symbol}
@@ -236,7 +237,7 @@ export function PortfolioBriefSection({
                   >
                     <div className="flex flex-wrap items-center gap-2 text-[11px]">
                       <Link
-                        href={`/portfolio/positions/${item.symbol}`}
+                        href={symbolHubPath(item.symbol, "position")}
                         className="font-mono font-semibold text-accent-strong hover:underline"
                       >
                         {item.symbol}

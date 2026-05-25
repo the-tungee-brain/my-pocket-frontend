@@ -1,4 +1,5 @@
 import type { ChatMessage } from "@/components/ConversationPane";
+import { migrateChatKeyMap } from "@/lib/chatKeys";
 
 type PersistedChatState = {
   input: string;
@@ -87,21 +88,30 @@ function readLegacySessionChat(userId: string): PersistedChatMap | null {
   return parsePersistedChat(raw);
 }
 
+function migratePersistedChat(map: PersistedChatMap): PersistedChatMap {
+  return migrateChatKeyMap(map, (existing, incoming) => {
+    if (!existing) return incoming;
+    if (incoming.messages.length > existing.messages.length) return incoming;
+    return existing;
+  });
+}
+
 export function loadPersistedChat(userId: string): PersistedChatMap {
   if (typeof window === "undefined") return {};
 
   const raw = localStorage.getItem(storageKey(userId));
-  if (raw) return parsePersistedChat(raw);
+  if (raw) return migratePersistedChat(parsePersistedChat(raw));
 
   const legacy = readLegacySessionChat(userId);
   if (legacy && Object.keys(legacy).length > 0) {
+    const migrated = migratePersistedChat(legacy);
     try {
-      localStorage.setItem(storageKey(userId), JSON.stringify(legacy));
+      localStorage.setItem(storageKey(userId), JSON.stringify(migrated));
       sessionStorage.removeItem(legacyStorageKey(userId));
     } catch {
       // ignore migration errors
     }
-    return legacy;
+    return migrated;
   }
 
   return {};

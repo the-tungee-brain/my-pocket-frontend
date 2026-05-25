@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   LayoutDashboard,
   LineChart,
+  Newspaper,
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
@@ -15,6 +16,8 @@ import { cn } from "@/lib/utils";
 
 export type ResearchTabId =
   | "overview"
+  | "position"
+  | "news"
   | "business"
   | "earnings"
   | "fundamentals"
@@ -28,6 +31,8 @@ type Tab = {
 
 const tabs: Tab[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "position", label: "Position", icon: BriefcaseBusiness },
+  { id: "news", label: "News", icon: Newspaper },
   { id: "business", label: "Business", icon: BriefcaseBusiness },
   { id: "earnings", label: "Earnings", icon: TrendingUp },
   { id: "fundamentals", label: "Fundamentals", icon: FileSpreadsheet },

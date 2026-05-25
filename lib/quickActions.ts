@@ -180,13 +180,6 @@ export function restoreQuickActionDisplayMessage(
 
 export function chatDisplayTarget(activeChatKey: string): string {
   if (activeChatKey === "__PORTFOLIO_CHAT__") return "my portfolio";
-
-  if (activeChatKey.startsWith("__RESEARCH_") && activeChatKey.endsWith("__")) {
-    const symbol = activeChatKey.slice("__RESEARCH_".length, -2).trim();
-    return symbol ? symbol.toUpperCase() : "this symbol";
-  }
-
   if (activeChatKey.startsWith("__")) return "this position";
-
   return activeChatKey.toUpperCase();
 }

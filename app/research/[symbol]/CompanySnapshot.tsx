@@ -15,7 +15,7 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { WatchlistButton } from "@/components/WatchlistButton";
 import { WatchlistHint } from "@/components/WatchlistHint";
 import { usePositionsContext } from "@/app/Providers";
-import { tabQuerySuffix, useTabs } from "@/app/contexts/TabContext";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 
 type Props = { symbol: string; compact?: boolean };
 
@@ -33,7 +33,6 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
   const { positionMap } = usePositionsContext();
-  const { activeTab } = useTabs();
   const upperSymbol = symbol.toUpperCase();
   const userPositions = positionMap[upperSymbol];
 
@@ -110,7 +109,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           </div>
           {userPositions?.length ? (
             <Link
-              href={`/portfolio/positions/${upperSymbol}${tabQuerySuffix(activeTab)}`}
+              href={symbolHubPath(upperSymbol, "position")}
               className="hidden shrink-0 rounded-full border border-accent/40 bg-accent-muted px-2 py-0.5 text-[10px] font-medium text-accent-strong sm:inline-flex"
             >
               Your position
@@ -178,7 +177,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           )}
           {userPositions?.length ? (
             <Link
-              href={`/portfolio/positions/${upperSymbol}${tabQuerySuffix(activeTab)}`}
+              href={symbolHubPath(upperSymbol, "position")}
               className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent-muted px-2.5 py-0.5 text-[11px] font-medium text-accent-strong transition hover:bg-accent-muted/80"
             >
               <BriefcaseBusiness className="h-3 w-3" aria-hidden="true" />

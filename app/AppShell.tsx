@@ -15,7 +15,10 @@ import { useTabs } from "./contexts/TabContext";
 import { useToast } from "./contexts/ToastContext";
 import { usePositionsContext } from "./Providers";
 import { researchTabLabel } from "@/components/ResearchTabBar";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { cn } from "@/lib/utils";
+import { resolveActiveChatKey } from "@/lib/chatKeys";
+import { parseResearchRoute } from "@/lib/symbolRoutes";
 import {
   buildSymbolAlertMap,
   mergeDisplayAlerts,
@@ -65,17 +68,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const researchMatch = pathname.match(/^\/research\/([^/]+)(?:\/([^/]+))?/);
   const researchSymbol = researchMatch?.[1]?.toUpperCase();
+  const { symbol: routeSymbol } = parseResearchRoute(pathname);
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [inputRows, setInputRows] = useState(MIN_ROWS);
   const [mobileChatExpanded, setMobileChatExpanded] = useState(false);
 
-  const activeChatKey =
-    selectedView === "portfolio"
-      ? "__PORTFOLIO_CHAT__"
-      : selectedView === "research" && researchSymbol
-        ? `__RESEARCH_${researchSymbol}__`
-        : (selectedSymbol ?? "__NONE__");
+  const activeChatKey = resolveActiveChatKey({
+    selectedView,
+    selectedSymbol,
+    routeSymbol,
+  });
 
   const currentChat =
     activeChatKey === "__NONE__" ? undefined : chatBySymbol[activeChatKey];
@@ -282,7 +285,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const showConversation =
     (selectedView !== "research" && activeTab === "assistant") ||
-    selectedView === "research";
+    (selectedView === "research" && !!routeSymbol);
 
   const chatBoxProps = {
     mode: selectedView,
@@ -386,7 +389,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-1 flex-col">
             <div
               id="main-content"
-              className={cn("flex-1 overflow-y-auto px-4 pt-3 pb-2")}
+              className={cn(
+                "flex-1 overflow-y-auto px-4 pt-3 pb-2",
+                "max-md:pb-20",
+              )}
             >
               {children}
 
@@ -416,7 +422,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             {showChat && (
-              <div className="sticky bottom-0 z-20 md:hidden">
+              <div className="sticky bottom-14 z-20 md:hidden md:bottom-0">
                 {!mobileChatExpanded ? (
                   <button
                     type="button"
@@ -449,6 +455,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </section>
       </main>
+      <MobileBottomNav />
     </>
   );
 }

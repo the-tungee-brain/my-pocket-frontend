@@ -28,6 +28,7 @@ import {
 } from "@/lib/intelligence";
 import type { TaxAlertItem } from "@/lib/intelligence";
 import { dismissPortfolioAlert } from "@/lib/apiClient";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 
 export default function PortfolioPage() {
   const router = useRouter();
@@ -100,10 +101,10 @@ export default function PortfolioPage() {
       const symbol = alert.symbol?.toUpperCase();
 
       if (symbol) {
-        router.push(`/portfolio/positions/${symbol}`);
+        router.push(symbolHubPath(symbol, "position"));
         void sendQuickAction({
           activeChatKey: symbol,
-          selectedView: "symbol",
+          selectedView: "research",
           selectedSymbol: symbol,
           positionsForSelectedSymbol: positionMap[symbol] ?? [],
           actionId,
@@ -160,10 +161,10 @@ export default function PortfolioPage() {
   const handleTaxAlert = useCallback(
     (item: TaxAlertItem) => {
       if (item.symbol) {
-        router.push(`/portfolio/positions/${item.symbol}`);
+        router.push(symbolHubPath(item.symbol, "position"));
         void sendQuickAction({
           activeChatKey: item.symbol,
-          selectedView: "symbol",
+          selectedView: "research",
           selectedSymbol: item.symbol,
           positionsForSelectedSymbol: positionMap[item.symbol] ?? [],
           actionId: item.actionId,

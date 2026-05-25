@@ -22,6 +22,7 @@ import {
   sumPortfolioWeight,
 } from "@/lib/positionMetrics";
 import { cn } from "@/lib/utils";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 
 type Props = {
   loading: boolean;
@@ -181,7 +182,7 @@ export function PortfolioOverview({
                   <td className="px-4 py-3 text-left">
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/portfolio/positions/${symbol}`}
+                        href={symbolHubPath(symbol, "position")}
                         className="font-mono font-medium text-foreground hover:text-accent-strong"
                       >
                         {symbol}
@@ -190,7 +191,7 @@ export function PortfolioOverview({
                         <AlertBadge summary={symbolAlertMap[symbol]} compact />
                       )}
                       <Link
-                        href={`/research/${symbol}/overview`}
+                        href={symbolHubPath(symbol, "overview")}
                         className="text-[10px] font-medium text-muted hover:text-accent-strong"
                       >
                         Research
@@ -271,7 +272,7 @@ export function PortfolioOverview({
               <div>
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/portfolio/positions/${symbol}`}
+                    href={symbolHubPath(symbol, "position")}
                     className="font-mono font-medium text-foreground hover:text-accent-strong"
                   >
                     {symbol}
@@ -287,7 +288,7 @@ export function PortfolioOverview({
                     {weightPct != null && ` · ${weightPct.toFixed(1)}%`}
                   </p>
                   <Link
-                    href={`/research/${symbol}/overview`}
+                    href={symbolHubPath(symbol, "overview")}
                     className="text-[10px] font-medium text-muted hover:text-accent-strong"
                   >
                     Research
@@ -300,7 +301,7 @@ export function PortfolioOverview({
                 )}
               </div>
               <Link
-                href={`/portfolio/positions/${symbol}`}
+                href={symbolHubPath(symbol, "position")}
                 className="text-right"
               >
                 <p className="tabular-nums font-medium">

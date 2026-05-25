@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Scale, Sparkles, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Scale, Sparkles, X } from "lucide-react";
 import type { AttentionItem, ProactiveAlert } from "@/app/types/intelligence";
 import type { SuggestedAnalysisAction } from "@/app/types/schwab";
 import {
@@ -13,6 +13,7 @@ import {
 import { findQuickAction } from "@/lib/quickActions";
 import { pickSuggestedActions, suggestedActionToQuickActionId } from "@/lib/recentOrders";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type Props = {
   taxItems: TaxAlertItem[];
@@ -103,7 +104,21 @@ export function PortfolioAttentionSection({
     queueItems.length > 0 ||
     extraSuggestions.length > 0;
 
-  if (!hasContent) return null;
+  if (!hasContent) {
+    return (
+      <section
+        className={cn("mx-auto w-full max-w-3xl", className)}
+        aria-label="Needs attention"
+      >
+        <EmptyState
+          icon={CheckCircle2}
+          title="All clear"
+          description="No tax flags, risk alerts, or suggested follow-ups right now."
+          variant="solid"
+        />
+      </section>
+    );
+  }
 
   const handleAlertChip = (alert: ProactiveAlert) => {
     onRunAlert?.(alert);

@@ -2,6 +2,11 @@ import {
   chatDisplayTarget,
   restoreQuickActionDisplayMessage,
 } from "@/lib/quickActions";
+import {
+  isLegacyResearchChatKey,
+  PORTFOLIO_CHAT_KEY,
+  symbolFromLegacyResearchChatKey,
+} from "@/lib/chatKeys";
 import type { ChatMessage } from "@/components/ConversationPane";
 import type {
   ChatSessionKind,
@@ -20,26 +25,37 @@ export type ChatKeySessionQuery = {
   titlePrefix: string;
 };
 
+export function chatKeySessionQueries(
+  activeChatKey: string,
+): ChatKeySessionQuery[] {
+  if (activeChatKey === "__NONE__") return [];
+
+  if (activeChatKey === PORTFOLIO_CHAT_KEY) {
+    return [{ kind: "portfolio", titlePrefix: "Portfolio:" }];
+  }
+
+  if (isLegacyResearchChatKey(activeChatKey)) {
+    const symbol = symbolFromLegacyResearchChatKey(activeChatKey);
+    if (!symbol) return [];
+    return [
+      { kind: "portfolio", titlePrefix: `Symbol:${symbol}:` },
+      { kind: "research", titlePrefix: `Research:${symbol}:` },
+    ];
+  }
+
+  if (activeChatKey.startsWith("__")) return [];
+
+  const symbol = activeChatKey.toUpperCase();
+  return [
+    { kind: "portfolio", titlePrefix: `Symbol:${symbol}:` },
+    { kind: "research", titlePrefix: `Research:${symbol}:` },
+  ];
+}
+
 export function chatKeySessionQuery(
   activeChatKey: string,
 ): ChatKeySessionQuery | null {
-  if (activeChatKey === "__NONE__") return null;
-
-  if (activeChatKey === "__PORTFOLIO_CHAT__") {
-    return { kind: "portfolio", titlePrefix: "Portfolio:" };
-  }
-
-  if (activeChatKey.startsWith("__RESEARCH_") && activeChatKey.endsWith("__")) {
-    const symbol = activeChatKey.slice("__RESEARCH_".length, -2).toUpperCase();
-    return { kind: "research", titlePrefix: `Research:${symbol}:` };
-  }
-
-  if (activeChatKey.startsWith("__")) return null;
-
-  return {
-    kind: "portfolio",
-    titlePrefix: `Symbol:${activeChatKey.toUpperCase()}:`,
-  };
+  return chatKeySessionQueries(activeChatKey)[0] ?? null;
 }
 
 export function findLatestSessionForChatKey(
@@ -53,6 +69,26 @@ export function findLatestSessionForChatKey(
         (session.title?.startsWith(query.titlePrefix) ?? false),
     ) ?? null
   );
+}
+
+export function findLatestSessionForQueries(
+  sessions: ChatSessionSummary[],
+  queries: ChatKeySessionQuery[],
+): ChatSessionSummary | null {
+  let latest: ChatSessionSummary | null = null;
+
+  for (const query of queries) {
+    const match = findLatestSessionForChatKey(sessions, query);
+    if (!match) continue;
+    if (
+      !latest ||
+      new Date(match.updatedAt).getTime() > new Date(latest.updatedAt).getTime()
+    ) {
+      latest = match;
+    }
+  }
+
+  return latest;
 }
 
 export function mapServerMessages(
@@ -83,17 +119,27 @@ export async function listSessionsForChatKey(
   accessToken: string,
   activeChatKey: string,
 ): Promise<ChatSessionSummary[]> {
-  const query = chatKeySessionQuery(activeChatKey);
-  if (!query) return [];
+  const queries = chatKeySessionQueries(activeChatKey);
+  if (!queries.length) return [];
 
-  const kind = query.kind === "other" ? "all" : query.kind;
-  const sessionsResponse = await listChatSessions(accessToken, { kind });
-  return sessionsResponse.sessions
-    .filter((session) => session.title?.startsWith(query.titlePrefix) ?? false)
-    .sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  const kinds = new Set(queries.map((query) => query.kind));
+  const merged: ChatSessionSummary[] = [];
+
+  for (const kind of kinds) {
+    const resolvedKind = kind === "other" ? "all" : kind;
+    const sessionsResponse = await listChatSessions(accessToken, {
+      kind: resolvedKind,
+    });
+    merged.push(
+      ...sessionsResponse.sessions.filter((session) =>
+        queries.some((query) => session.title?.startsWith(query.titlePrefix)),
+      ),
     );
+  }
+
+  return merged.sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  );
 }
 
 export async function loadChatSessionById(
@@ -111,15 +157,21 @@ export async function loadChatHistoryForKey(
   accessToken: string,
   activeChatKey: string,
 ): Promise<{ sessionId: string; messages: ChatMessage[] } | null> {
-  const query = chatKeySessionQuery(activeChatKey);
-  if (!query) return null;
+  const queries = chatKeySessionQueries(activeChatKey);
+  if (!queries.length) return null;
 
-  const kind = query.kind === "other" ? "all" : query.kind;
-  const sessionsResponse = await listChatSessions(accessToken, { kind });
-  const session = findLatestSessionForChatKey(
-    sessionsResponse.sessions,
-    query,
-  );
+  const kinds = new Set(queries.map((query) => query.kind));
+  const mergedSessions: ChatSessionSummary[] = [];
+
+  for (const kind of kinds) {
+    const resolvedKind = kind === "other" ? "all" : kind;
+    const sessionsResponse = await listChatSessions(accessToken, {
+      kind: resolvedKind,
+    });
+    mergedSessions.push(...sessionsResponse.sessions);
+  }
+
+  const session = findLatestSessionForQueries(mergedSessions, queries);
   if (!session) return null;
 
   const messagesResponse = await getChatSessionMessages(
@@ -151,8 +203,8 @@ export async function clearChatHistoryForKey(
     return;
   }
 
-  const query = chatKeySessionQuery(activeChatKey);
-  if (!query) return;
-
-  await clearChatSessionsByPrefix(accessToken, query.titlePrefix);
+  const queries = chatKeySessionQueries(activeChatKey);
+  for (const query of queries) {
+    await clearChatSessionsByPrefix(accessToken, query.titlePrefix);
+  }
 }

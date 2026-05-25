@@ -588,7 +588,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       );
 
       try {
-        if (selectedView === "research") {
+        const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);
+
+        if (selectedView === "research" && !hasHoldingsContext) {
           if (!symbolForApi) return;
 
           await streamResearchChat(
@@ -604,7 +606,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           await streamAnalysis(
             {
               account: account,
-              positions: positionsForSelectedSymbol,
+              positions: positionsForSelectedSymbol ?? [],
               symbol: symbolForApi,
               action: "free-form",
               prompt: userInput,
@@ -735,7 +737,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       );
 
       try {
-        if (selectedView === "research") {
+        const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);
+
+        if (selectedView === "research" && !hasHoldingsContext) {
           if (!symbolForApi) return;
 
           await streamResearchChat(

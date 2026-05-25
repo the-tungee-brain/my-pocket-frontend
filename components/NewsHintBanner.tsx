@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Newspaper } from "lucide-react";
-import { tabQuerySuffix } from "@/app/contexts/TabContext";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 
 type Props = {
   symbols: string[];
@@ -20,13 +20,13 @@ export function NewsHintBanner({ symbols }: Props) {
       <p className="text-muted">
         <span className="font-medium text-foreground">News is per symbol.</span>{" "}
         Pick a holding from the sidebar, then open the{" "}
-        <span className="font-medium text-foreground">News</span> tab.
+        <span className="font-medium text-foreground">News</span> tab in the symbol hub.
         {exampleSymbol ? (
           <>
             {" "}
             For example,{" "}
             <Link
-              href={`/portfolio/positions/${exampleSymbol}${tabQuerySuffix("news")}`}
+              href={symbolHubPath(exampleSymbol, "news")}
               className="font-medium text-accent-strong hover:underline"
             >
               view news for {exampleSymbol}

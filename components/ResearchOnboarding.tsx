@@ -35,10 +35,11 @@ export function ResearchOnboarding() {
     setDismissed(isResearchOnboardingDismissed());
   }, []);
 
-  const hasResearchChat = Object.keys(chatBySymbol).some(
-    (key) =>
-      key.startsWith("__RESEARCH_") &&
-      (chatBySymbol[key]?.messages.length ?? 0) > 0,
+  const hasResearchChat = Object.entries(chatBySymbol).some(
+    ([key, state]) =>
+      key !== "__PORTFOLIO_CHAT__" &&
+      key !== "__NONE__" &&
+      (state?.messages.length ?? 0) > 0,
   );
 
   const hasOpenedSymbol = recentSymbols.length > 0;

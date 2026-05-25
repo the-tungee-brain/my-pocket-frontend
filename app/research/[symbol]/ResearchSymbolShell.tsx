@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { CompanySnapshot } from "./CompanySnapshot";
-import { ResearchTabBar } from "@/components/ResearchTabBar";
+import { ResearchTabBar, researchTabLabel } from "@/components/ResearchTabBar";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { addRecentSymbol } from "@/lib/recentSymbols";
 import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -15,8 +16,11 @@ type Props = {
 };
 
 export function ResearchSymbolShell({ symbol, children }: Props) {
+  const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const symbolUpper = symbol.toUpperCase();
+  const activeTab = pathname.split("/")[3] ?? "overview";
 
   useResearchSearchShortcut();
 
@@ -53,13 +57,15 @@ export function ResearchSymbolShell({ symbol, children }: Props) {
         )}
       >
         {!collapsed && (
-          <Link
-            href="/research"
-            className="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-muted transition hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Back to search
-          </Link>
+          <Breadcrumbs
+            className="mb-3"
+            items={[
+              { label: "Portfolio", href: "/portfolio" },
+              { label: "Research", href: "/research" },
+              { label: symbolUpper, href: symbolHubPath(symbolUpper, "overview") },
+              { label: researchTabLabel(activeTab) },
+            ]}
+          />
         )}
 
         <div className={cn("space-y-3", collapsed && "space-y-2")}>
