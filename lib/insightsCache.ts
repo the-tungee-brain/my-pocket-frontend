@@ -86,7 +86,11 @@ export function readInsightsCache(
 export function writeInsightsCache(
   cacheKey: string,
   content: string,
-): InsightsCacheEntry {
+): InsightsCacheEntry | null {
+  if (!content.trim()) {
+    return null;
+  }
+
   const entry: InsightsCacheEntry = {
     content,
     fetchedAt: Date.now(),

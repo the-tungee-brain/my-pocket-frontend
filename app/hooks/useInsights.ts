@@ -92,6 +92,10 @@ export function useInsights(
     memoryCache.delete(cacheKey);
     clearInsightsCache(cacheKey);
     bypassCacheRef.current = true;
+    setState((previous) => ({
+      ...previous,
+      error: null,
+    }));
     setFetchGeneration((generation) => generation + 1);
   }, [cacheKey]);
 
@@ -132,8 +136,6 @@ export function useInsights(
       !enabled ||
       !label ||
       !positions?.length ||
-      !account ||
-      !accessToken ||
       !cacheKey
     ) {
       if (!enabled) {
@@ -142,6 +144,15 @@ export function useInsights(
           loading: false,
         }));
       }
+      return;
+    }
+
+    if (!account || !accessToken) {
+      setState((previous) => ({
+        ...previous,
+        loading: true,
+        error: null,
+      }));
       return;
     }
 
@@ -264,15 +275,21 @@ export function useInsights(
           }
         });
 
+        if (!entry!.buffer.trim()) {
+          throw new Error("Empty analysis response");
+        }
+
         const stored = writeInsightsCache(cacheKey, entry!.buffer);
-        memoryCache.set(cacheKey, stored);
+        if (stored) {
+          memoryCache.set(cacheKey, stored);
+        }
 
         setState({
           loading: false,
           error: null,
-          content: stored.content,
-          analyzedAt: stored.fetchedAt,
-          hasCachedInsights: true,
+          content: entry!.buffer,
+          analyzedAt: stored?.fetchedAt ?? Date.now(),
+          hasCachedInsights: !!stored,
         });
 
         for (const activeListener of entry!.listeners) {

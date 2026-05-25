@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Filter,
   Lightbulb,
@@ -13,9 +14,11 @@ import {
 import type { PositionMap } from "@/components/AccountPositionList";
 import { formatInsightsAnalyzedAt } from "@/lib/insightsCache";
 import { AnalyzePrompt } from "@/components/AnalyzePrompt";
+import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import { AlertBadge } from "@/components/AlertBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 import { usePositionsContext } from "@/app/Providers";
 import { useInsights } from "@/app/hooks/useInsights";
 import { Position } from "@/app/types/schwab";
@@ -51,6 +54,8 @@ type PortfolioProps = {
   positionMap: PositionMap;
   liquidationValue?: number | null;
   symbolAlertMap?: Record<string, SymbolAlertSummary>;
+  /** Which slice of the portfolio panel to show on the current tab. */
+  portfolioView?: "analysis" | "holdings";
 };
 
 type SymbolProps = {
@@ -64,9 +69,34 @@ type CommonProps = {
   onAskFollowUp?: () => void;
   onLoadingChange?: (loading: boolean) => void;
   autoStart?: boolean;
+  /** Render only the analyze prompt/output block for embedding in another card. */
+  embedded?: boolean;
 };
 
 export type AnalysisPanelProps = CommonProps & (PortfolioProps | SymbolProps);
+
+function ReanalyzeButton({
+  loading,
+  onClick,
+}: {
+  loading: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={loading}
+      onClick={onClick}
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-muted transition hover:bg-muted-bg hover:text-foreground disabled:opacity-60"
+    >
+      <RefreshCw
+        className={cn("h-3.5 w-3.5", loading && "animate-spin")}
+        aria-hidden
+      />
+      Re-analyze
+    </button>
+  );
+}
 
 type SymbolSummary = {
   symbol: string;
@@ -524,12 +554,22 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
 }
 
 export function AnalysisPanel(props: AnalysisPanelProps) {
-  const { className, onAskFollowUp, onLoadingChange, autoStart = false } = props;
+  const {
+    className,
+    onAskFollowUp,
+    onLoadingChange,
+    autoStart = false,
+    embedded = false,
+  } = props;
   const isPortfolio = props.mode === "portfolio";
+  const portfolioView = isPortfolio ? (props.portfolioView ?? "holdings") : null;
+  const showPortfolioAnalysis = !isPortfolio || portfolioView === "analysis";
+  const showPortfolioHoldings = !isPortfolio || portfolioView === "holdings";
   const symbol = isPortfolio ? null : props.symbol.toUpperCase();
   const positions = props.positions;
 
   const { account, sessionAccessToken } = usePositionsContext();
+  const portfolioHeaderActionsEl = useContext(PortfolioSnapshotHeaderActionsContext);
   const [requested, setRequested] = useState(autoStart);
   const [sortKey, setSortKey] = useState<SortKey>("weight");
   const [alertsOnly, setAlertsOnly] = useState(false);
@@ -558,7 +598,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       positions,
       account,
       accessToken: sessionAccessToken || null,
-      enabled: requested,
+      enabled: requested && (!isPortfolio || showPortfolioAnalysis),
       structuredAnalyze: true,
       userDisplayMessage,
     },
@@ -588,7 +628,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     };
 
     const handlePortfolioAnalyze = () => {
-      if (!isPortfolio || loading) return;
+      if (!isPortfolio) return;
       setRequested(true);
     };
 
@@ -622,15 +662,24 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     ? PORTFOLIO_ANALYSIS_SECTION_ID
     : SYMBOL_ANALYSIS_SECTION_ID;
 
-  const title = isPortfolio ? "Holdings" : symbol!;
+  const title = isPortfolio
+    ? showPortfolioAnalysis
+      ? "Portfolio analysis"
+      : "Holdings"
+    : symbol!;
   const analyzeLabel = isPortfolio ? "Analyze portfolio" : "Analyze position";
   const hasContent = !!content;
-  const isIdle = !requested && !hasCachedInsights && !hasContent && !loading && !error;
-  const showInitialLoading = loading && !hasContent && !error;
+  const isIdle =
+    showPortfolioAnalysis &&
+    !requested &&
+    !hasCachedInsights &&
+    !hasContent &&
+    !loading &&
+    !error;
   const showAnalysisOutput =
-    (requested || hasCachedInsights || hasContent || error) &&
-    !showInitialLoading;
-  const showAnalyzePrompt = isIdle || showInitialLoading;
+    showPortfolioAnalysis &&
+    (requested || hasCachedInsights || hasContent || error);
+  const showAnalyzePrompt = isIdle;
 
   const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
   const openPL = sumOpenProfitLoss(positions);
@@ -648,17 +697,20 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const symbolCount = isPortfolio ? Object.keys(positionMap ?? {}).length : 0;
 
   const handleStart = () => {
-    if (loading) return;
     setRequested(true);
+    if (isPortfolio) {
+      document
+        .getElementById(PORTFOLIO_ANALYSIS_SECTION_ID)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   const handleRefresh = () => {
-    if (loading) return;
     if (!requested) {
-      setRequested(true);
+      handleStart();
       return;
     }
-    if (hasContent || error) refetch();
+    refetch();
   };
 
   const handleFollowUp = () => {
@@ -669,133 +721,24 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     scrollToChat();
   };
 
-  return (
-    <section
-      id={sectionId}
-      className={cn(
-        "overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-sm",
-        className,
-      )}
-    >
-      <div className="border-b border-border bg-surface-elevated/50 px-4 py-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-              <Lightbulb className="h-4 w-4" aria-hidden />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-              <p className="text-[11px] text-muted">
-                {isPortfolio
-                  ? `${symbolCount} ${symbolCount === 1 ? "symbol" : "symbols"} · ${positions.length} ${positions.length === 1 ? "position" : "positions"}`
-                  : `${positions.length} ${positions.length === 1 ? "leg" : "legs"} · holdings & AI review`}
-              </p>
-            </div>
-          </div>
-          {(requested || hasCachedInsights) && (hasContent || loading || error) && (
-            <button
-              type="button"
-              disabled={loading}
-              onClick={handleRefresh}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-muted transition hover:bg-muted-bg hover:text-foreground disabled:opacity-60"
-            >
-              <RefreshCw
-                className={cn("h-3.5 w-3.5", loading && "animate-spin")}
-                aria-hidden
-              />
-              Re-analyze
-            </button>
-          )}
-        </div>
+  const showReanalyze =
+    showPortfolioAnalysis &&
+    (requested || hasCachedInsights) &&
+    (hasContent || loading || error);
 
-        {!isPortfolio && (
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            <StatChip label="Value" value={formatUsd(totalValue)} />
-            <StatChip
-              label="Open P/L"
-              value={
-                openPL != null
-                  ? `${formatSignedUsd(openPL)}${
-                      openPLPctVal != null
-                        ? ` (${openPLPctVal >= 0 ? "+" : ""}${openPLPctVal.toFixed(1)}%)`
-                        : ""
-                    }`
-                  : "—"
-              }
-              tone={openTone}
-            />
-            <StatChip label="Today" value={formatSignedUsd(dayPL)} tone={dayTone} />
-          </div>
-        )}
-      </div>
+  const headerReanalyzeButton =
+    embedded &&
+    isPortfolio &&
+    showReanalyze &&
+    portfolioHeaderActionsEl
+      ? createPortal(
+          <ReanalyzeButton loading={loading} onClick={handleRefresh} />,
+          portfolioHeaderActionsEl,
+        )
+      : null;
 
-      {isPortfolio && (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            By symbol
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            {alertSymbolCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setAlertsOnly((on) => !on)}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
-                  alertsOnly
-                    ? "border-accent/40 bg-accent-muted text-accent-strong"
-                    : "border-border bg-background text-muted hover:text-foreground",
-                )}
-              >
-                <Filter className="h-3 w-3" aria-hidden />
-                Alerts ({alertSymbolCount})
-              </button>
-            )}
-            <div className="flex flex-wrap gap-1 rounded-lg bg-muted-bg/50 p-0.5">
-              {SORT_OPTIONS.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setSortKey(option.id)}
-                  className={cn(
-                    "rounded-md px-2 py-1 text-[11px] font-medium transition",
-                    sortKey === option.id
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted hover:text-foreground",
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!isPortfolio && positions.length > 1 && (
-        <div className="border-b border-border px-4 py-2.5">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Holdings
-          </p>
-        </div>
-      )}
-
-      <div className="bg-background/20">
-        {isPortfolio ? (
-          alertsOnly && symbolSummaries.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-muted">
-              No holdings match the alert filter.
-            </p>
-          ) : (
-            <PortfolioHoldingsTable
-              summaries={symbolSummaries}
-              symbolAlertMap={symbolAlertMap}
-            />
-          )
-        ) : (
-          <SymbolLegsTable positions={positions} />
-        )}
-      </div>
-
+  const analysisBlock = (
+    <>
       {showAnalyzePrompt && (
         <AnalyzePrompt
           isPortfolio={isPortfolio}
@@ -808,6 +751,12 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
 
       {showAnalysisOutput && (
         <div className="border-t border-border/70 px-4 py-4">
+          {loading && !content && (
+            <ThinkingSpinner
+              message={`Analyzing ${isPortfolio ? "portfolio" : symbol}…`}
+            />
+          )}
+
           {error && (
             <ErrorBanner message={error} onRetry={refetch} className="mb-3" />
           )}
@@ -861,6 +810,137 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
           )}
         </div>
       )}
+    </>
+  );
+
+  if (embedded && isPortfolio && showPortfolioAnalysis) {
+    return (
+      <>
+        {headerReanalyzeButton}
+        <div className={className}>{analysisBlock}</div>
+      </>
+    );
+  }
+
+  return (
+    <section
+      id={sectionId}
+      className={cn(
+        "overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-sm",
+        className,
+      )}
+    >
+      <div className="border-b border-border bg-surface-elevated/50 px-4 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <Lightbulb className="h-4 w-4" aria-hidden />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+              <p className="text-[11px] text-muted">
+                {isPortfolio
+                  ? showPortfolioAnalysis
+                    ? "AI review of concentration, options risk, and next steps"
+                    : `${symbolCount} ${symbolCount === 1 ? "symbol" : "symbols"} · ${positions.length} ${positions.length === 1 ? "position" : "positions"}`
+                  : `${positions.length} ${positions.length === 1 ? "leg" : "legs"} · holdings & AI review`}
+              </p>
+            </div>
+          </div>
+          {showReanalyze && (
+            <ReanalyzeButton loading={loading} onClick={handleRefresh} />
+          )}
+        </div>
+
+        {!isPortfolio && (
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <StatChip label="Value" value={formatUsd(totalValue)} />
+            <StatChip
+              label="Open P/L"
+              value={
+                openPL != null
+                  ? `${formatSignedUsd(openPL)}${
+                      openPLPctVal != null
+                        ? ` (${openPLPctVal >= 0 ? "+" : ""}${openPLPctVal.toFixed(1)}%)`
+                        : ""
+                    }`
+                  : "—"
+              }
+              tone={openTone}
+            />
+            <StatChip label="Today" value={formatSignedUsd(dayPL)} tone={dayTone} />
+          </div>
+        )}
+      </div>
+
+      {isPortfolio && showPortfolioHoldings && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+            By symbol
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {alertSymbolCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setAlertsOnly((on) => !on)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
+                  alertsOnly
+                    ? "border-accent/40 bg-accent-muted text-accent-strong"
+                    : "border-border bg-background text-muted hover:text-foreground",
+                )}
+              >
+                <Filter className="h-3 w-3" aria-hidden />
+                Alerts ({alertSymbolCount})
+              </button>
+            )}
+            <div className="flex flex-wrap gap-1 rounded-lg bg-muted-bg/50 p-0.5">
+              {SORT_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setSortKey(option.id)}
+                  className={cn(
+                    "rounded-md px-2 py-1 text-[11px] font-medium transition",
+                    sortKey === option.id
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted hover:text-foreground",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isPortfolio && positions.length > 1 && (
+        <div className="border-b border-border px-4 py-2.5">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+            Holdings
+          </p>
+        </div>
+      )}
+
+      <div className={cn("bg-background/20", !showPortfolioHoldings && "hidden")}>
+        {isPortfolio ? (
+          alertsOnly && symbolSummaries.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-muted">
+              No holdings match the alert filter.
+            </p>
+          ) : (
+            <PortfolioHoldingsTable
+              summaries={symbolSummaries}
+              symbolAlertMap={symbolAlertMap}
+            />
+          )
+        ) : (
+          <SymbolLegsTable positions={positions} />
+        )}
+      </div>
+
+      {analysisBlock}
     </section>
   );
 }

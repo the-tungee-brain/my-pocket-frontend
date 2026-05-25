@@ -1,7 +1,8 @@
 "use client";
 
 import { AlertTriangle, BriefcaseBusiness } from "lucide-react";
-import { AnalyzePrompt } from "@/components/AnalyzePrompt";
+import { useState, type ReactNode } from "react";
+import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import type {
   CashSecuredPutSummary,
   PortfolioMetrics,
@@ -10,6 +11,7 @@ import type {
 } from "@/app/types/schwab";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
 import { sumOpenProfitLoss } from "@/lib/positionMetrics";
+import { PORTFOLIO_ANALYSIS_SECTION_ID } from "@/lib/positionAnalysis";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -19,8 +21,7 @@ type Props = {
   account: SchwabAccounts | null;
   cashSecuredPutSummary?: CashSecuredPutSummary | null;
   portfolioMetrics?: PortfolioMetrics | null;
-  onAnalyzePortfolio?: () => void;
-  analysisLoading?: boolean;
+  children?: ReactNode;
   className?: string;
 };
 
@@ -59,10 +60,13 @@ export function PortfolioSnapshot({
   account,
   cashSecuredPutSummary,
   portfolioMetrics,
-  onAnalyzePortfolio,
-  analysisLoading = false,
+  children,
   className,
 }: Props) {
+  const [headerActionsEl, setHeaderActionsEl] = useState<HTMLDivElement | null>(
+    null,
+  );
+
   if (loading) {
     return (
       <section className={cn("mx-auto w-full max-w-3xl", className)}>
@@ -108,30 +112,37 @@ export function PortfolioSnapshot({
 
   return (
     <section
+      id={PORTFOLIO_ANALYSIS_SECTION_ID}
       className={cn(
         "mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
         className,
       )}
       aria-label="Portfolio snapshot"
     >
-      <div className="flex items-start gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
-        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-          <BriefcaseBusiness className="h-4 w-4" aria-hidden />
+      <div className="flex items-start justify-between gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+            <BriefcaseBusiness className="h-4 w-4" aria-hidden />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-sm font-semibold text-foreground">My portfolio</h1>
+            <p className="text-[11px] text-muted">
+              {symbols.length} {symbols.length === 1 ? "symbol" : "symbols"} ·{" "}
+              {allPositions.length}{" "}
+              {allPositions.length === 1 ? "position" : "positions"}
+            </p>
+          </div>
+          {isInCall && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-danger/40 bg-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger">
+              <AlertTriangle className="h-3 w-3" aria-hidden />
+              In call
+            </span>
+          )}
         </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-sm font-semibold text-foreground">My portfolio</h1>
-          <p className="text-[11px] text-muted">
-            {symbols.length} {symbols.length === 1 ? "symbol" : "symbols"} ·{" "}
-            {allPositions.length}{" "}
-            {allPositions.length === 1 ? "position" : "positions"}
-          </p>
-        </div>
-        {isInCall && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-danger/40 bg-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger">
-            <AlertTriangle className="h-3 w-3" aria-hidden />
-            In call
-          </span>
-        )}
+        <div
+          ref={setHeaderActionsEl}
+          className="flex shrink-0 items-center gap-2"
+        />
       </div>
 
       {isInCall && (
@@ -210,14 +221,9 @@ export function PortfolioSnapshot({
         </div>
       )}
 
-      {onAnalyzePortfolio && (
-        <AnalyzePrompt
-          isPortfolio
-          label="Analyze portfolio"
-          loading={analysisLoading}
-          onClick={onAnalyzePortfolio}
-        />
-      )}
+      <PortfolioSnapshotHeaderActionsContext.Provider value={headerActionsEl}>
+        {children}
+      </PortfolioSnapshotHeaderActionsContext.Provider>
     </section>
   );
 }

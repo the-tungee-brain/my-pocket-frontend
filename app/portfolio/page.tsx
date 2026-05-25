@@ -74,29 +74,26 @@ export default function PortfolioPage() {
     setStrategyDismissed(isStrategyOnboardingDismissed());
   }, []);
 
-  useEffect(() => {
-    const openHoldingsForAnalysis = () => {
-      setActiveSection("holdings");
-      setPendingPortfolioAnalysis(true);
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          document
-            .getElementById(PORTFOLIO_ANALYSIS_SECTION_ID)
-            ?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      });
-    };
+  const startPortfolioAnalysis = useCallback(() => {
+    setPendingPortfolioAnalysis(true);
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById(PORTFOLIO_ANALYSIS_SECTION_ID)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
 
-    window.addEventListener(ANALYZE_PORTFOLIO_EVENT, openHoldingsForAnalysis);
+  useEffect(() => {
+    window.addEventListener(ANALYZE_PORTFOLIO_EVENT, startPortfolioAnalysis);
     return () =>
-      window.removeEventListener(ANALYZE_PORTFOLIO_EVENT, openHoldingsForAnalysis);
-  }, [setActiveSection]);
+      window.removeEventListener(ANALYZE_PORTFOLIO_EVENT, startPortfolioAnalysis);
+  }, [startPortfolioAnalysis]);
 
   useEffect(() => {
-    if (activeSection !== "holdings" || !pendingPortfolioAnalysis) return;
+    if (!pendingPortfolioAnalysis) return;
     const timer = window.setTimeout(() => setPendingPortfolioAnalysis(false), 0);
     return () => window.clearTimeout(timer);
-  }, [activeSection, pendingPortfolioAnalysis]);
+  }, [pendingPortfolioAnalysis]);
 
   const {
     catalog,
@@ -245,9 +242,8 @@ export default function PortfolioPage() {
   );
 
   const handleAnalyzePortfolio = useCallback(() => {
-    if (portfolioAnalysisLoading) return;
     requestPortfolioAnalysis();
-  }, [portfolioAnalysisLoading]);
+  }, []);
 
   const handleTaxAlert = useCallback(
     (item: TaxAlertItem) => {
@@ -363,9 +359,24 @@ export default function PortfolioPage() {
         account={account}
         cashSecuredPutSummary={cashSecuredPutSummary}
         portfolioMetrics={portfolioMetrics}
-        onAnalyzePortfolio={showContent ? handleAnalyzePortfolio : undefined}
-        analysisLoading={portfolioAnalysisLoading}
-      />
+      >
+        {showContent && (
+          <AnalysisPanel
+            embedded
+            mode="portfolio"
+            portfolioView="analysis"
+            positions={allPositions}
+            positionMap={positionMap}
+            liquidationValue={
+              account?.securitiesAccount.currentBalances.liquidationValue
+            }
+            symbolAlertMap={symbolAlertMap}
+            autoStart={pendingPortfolioAnalysis}
+            onLoadingChange={setPortfolioAnalysisLoading}
+            onAskFollowUp={() => scrollToChat()}
+          />
+        )}
+      </PortfolioSnapshot>
 
       {showContent && (
         <PortfolioSectionTabBar
@@ -415,6 +426,7 @@ export default function PortfolioPage() {
         <>
           <AnalysisPanel
             mode="portfolio"
+            portfolioView="holdings"
             positions={allPositions}
             positionMap={positionMap}
             liquidationValue={
@@ -422,9 +434,6 @@ export default function PortfolioPage() {
             }
             symbolAlertMap={symbolAlertMap}
             className="mx-auto mb-4 max-w-3xl"
-            autoStart={pendingPortfolioAnalysis}
-            onLoadingChange={setPortfolioAnalysisLoading}
-            onAskFollowUp={() => scrollToChat()}
           />
 
           <PortfolioRiskSection
