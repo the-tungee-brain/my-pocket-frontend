@@ -90,6 +90,11 @@ function formatOptionDelta(value?: number | null) {
   return value.toFixed(2);
 }
 
+function formatOptionTheta(value?: number | null) {
+  if (value == null) return "—";
+  return value.toFixed(3);
+}
+
 function isTimelineExternalLink(entry: {
   kind: string;
   url?: string | null;
@@ -520,7 +525,7 @@ function OptionSideMetrics({
   className?: string;
 }) {
   return (
-    <div className={cn("grid grid-cols-5 gap-2 text-[11px]", className)}>
+    <div className={cn("grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4 lg:grid-cols-7", className)}>
       <div>
         <p className="text-muted">Bid</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
@@ -534,9 +539,21 @@ function OptionSideMetrics({
         </p>
       </div>
       <div>
+        <p className="text-muted">Last</p>
+        <p className="mt-0.5 tabular-nums font-medium text-foreground">
+          {formatOptionPrice(quote?.lastPrice)}
+        </p>
+      </div>
+      <div>
         <p className="text-muted">Δ</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
           {formatOptionDelta(quote?.delta)}
+        </p>
+      </div>
+      <div>
+        <p className="text-muted">Θ</p>
+        <p className="mt-0.5 tabular-nums font-medium text-foreground">
+          {formatOptionTheta(quote?.theta)}
         </p>
       </div>
       <div>
@@ -582,18 +599,22 @@ function OptionChainPreviewTable({
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[720px] text-left text-xs">
+        <table className="w-full min-w-[1100px] text-left text-xs">
           <thead className="bg-background/60 text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">Strike</th>
               <th className="px-3 py-2 font-medium">Call bid</th>
               <th className="px-3 py-2 font-medium">Call ask</th>
+              <th className="px-3 py-2 font-medium">Call last</th>
               <th className="px-3 py-2 font-medium">Call Δ</th>
+              <th className="px-3 py-2 font-medium">Call Θ</th>
               <th className="px-3 py-2 font-medium">Call OI</th>
               <th className="px-3 py-2 font-medium">Call IV</th>
               <th className="px-3 py-2 font-medium">Put bid</th>
               <th className="px-3 py-2 font-medium">Put ask</th>
+              <th className="px-3 py-2 font-medium">Put last</th>
               <th className="px-3 py-2 font-medium">Put Δ</th>
+              <th className="px-3 py-2 font-medium">Put Θ</th>
               <th className="px-3 py-2 font-medium">Put OI</th>
               <th className="px-3 py-2 font-medium">Put IV</th>
             </tr>
@@ -609,7 +630,9 @@ function OptionChainPreviewTable({
                 </td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.bid)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.ask)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.lastPrice)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionDelta(row.call?.delta)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionTheta(row.call?.theta)}</td>
                 <td className="px-3 py-2 tabular-nums">
                   {row.call?.openInterest != null
                     ? row.call.openInterest.toLocaleString()
@@ -618,7 +641,9 @@ function OptionChainPreviewTable({
                 <td className="px-3 py-2 tabular-nums">{formatOptionIv(row.call?.iv)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.bid)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.ask)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.lastPrice)}</td>
                 <td className="px-3 py-2 tabular-nums">{formatOptionDelta(row.put?.delta)}</td>
+                <td className="px-3 py-2 tabular-nums">{formatOptionTheta(row.put?.theta)}</td>
                 <td className="px-3 py-2 tabular-nums">
                   {row.put?.openInterest != null
                     ? row.put.openInterest.toLocaleString()
