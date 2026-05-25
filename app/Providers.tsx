@@ -20,6 +20,11 @@ import {
 } from "@/lib/chatPersistence";
 import { formatQuickActionMessage, getQuickActionApiAction, isFreeFormQuickAction, isStructuredAnalyzeAction } from "@/lib/quickActions";
 import { scrollToAssistantChat } from "@/lib/scrollToChat";
+import { buildStructuredAnalyzeRequest } from "@/lib/structuredAnalysis";
+import {
+  requestPortfolioAnalysis,
+  requestPositionAnalysis,
+} from "@/lib/positionAnalysis";
 import type { SchwabReauthDetail } from "@/lib/schwabReauth";
 import {
   Position,
@@ -703,6 +708,15 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         return;
       if (activeChatKey === "__NONE__") return;
 
+      if (isStructuredAnalyzeAction(actionId)) {
+        if (selectedView === "portfolio") {
+          requestPortfolioAnalysis();
+        } else {
+          requestPositionAnalysis(selectedSymbol ?? undefined);
+        }
+        return;
+      }
+
       const state =
         chatBySymbol[activeChatKey] ?? ensureSymbolChatState(activeChatKey);
       if (state.loading) return;
@@ -773,23 +787,28 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
             streamer.appendChunk,
           );
         } else {
-          await streamAnalysis(
-            {
-              account: account,
-              positions: positionsForSelectedSymbol ?? [],
-              symbol: symbolForApi,
-              action:
-                structuredAnalyze || freeForm
-                  ? "free-form"
-                  : getQuickActionApiAction(actionId),
-              prompt: freeForm ? userMessage.content : null,
-              user_display_message: userMessage.content,
-              model: state.model,
-              session_id: state.sessionId ?? undefined,
-            },
-            accessToken,
-            streamer.appendChunk,
-          );
+          const analysisBody =
+            structuredAnalyze && account
+              ? buildStructuredAnalyzeRequest({
+                  account,
+                  positions: positionsForSelectedSymbol ?? [],
+                  symbol: symbolForApi,
+                  userDisplayMessage: userMessage.content,
+                  model: state.model,
+                })
+              : {
+                  account: account,
+                  positions: positionsForSelectedSymbol ?? [],
+                  symbol: symbolForApi,
+                  action:
+                    freeForm ? "free-form" : getQuickActionApiAction(actionId),
+                  prompt: freeForm ? userMessage.content : null,
+                  user_display_message: userMessage.content,
+                  model: state.model,
+                  session_id: state.sessionId ?? undefined,
+                };
+
+          await streamAnalysis(analysisBody, accessToken, streamer.appendChunk);
         }
 
         if (!streamer.assistantContent.current.trim()) {

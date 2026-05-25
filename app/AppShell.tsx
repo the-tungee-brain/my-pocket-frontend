@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { resolveActiveChatKey } from "@/lib/chatKeys";
 import type { QuickActionMode } from "@/lib/quickActions";
 import { OPEN_CHAT_EVENT } from "@/lib/scrollToChat";
-import { requestPortfolioAnalysis, requestPositionAnalysis } from "@/lib/positionAnalysis";
 import { parseResearchRoute } from "@/lib/symbolRoutes";
 import {
   buildSymbolAlertMap,
@@ -245,16 +244,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const handleQuickAction = async (id: string) => {
     if (activeChatKey === "__NONE__") return;
     if (currentChat?.loading || chatDisabled) return;
-
-    if (id === "position-review" && isPositionTab && researchSymbol) {
-      requestPositionAnalysis(researchSymbol);
-      return;
-    }
-
-    if (id === "portfolio-review" && selectedView === "portfolio") {
-      requestPortfolioAnalysis();
-      return;
-    }
 
     const ctx = resolveChatContext();
 

@@ -80,12 +80,13 @@ function formatOptionPrice(value?: number | null) {
 }
 
 function formatOptionIv(value?: number | null) {
-  if (value == null) return "—";
-  return `${value.toFixed(0)}%`;
+  if (value == null || Math.abs(value) >= 998 || value <= 0) return "—";
+  const pct = value <= 1.5 ? value * 100 : value;
+  return `${pct.toFixed(0)}%`;
 }
 
 function formatOptionDelta(value?: number | null) {
-  if (value == null) return "—";
+  if (value == null || Math.abs(value) >= 998) return "—";
   return value.toFixed(2);
 }
 

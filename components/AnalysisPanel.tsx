@@ -543,11 +543,11 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     [symbol, positions.length],
   );
 
-  const prompt = useMemo(
+  const userDisplayMessage = useMemo(
     () =>
       symbol
-        ? `Review my ${symbol} position — holdings breakdown, open and day P/L, options exposure, assignment risk, and the single best action I should take today. Be concise and actionable.`
-        : `Review my portfolio — concentration, top risks, options exposure, notable movers, and the single best action I should take today. Be concise and actionable.`,
+        ? `Analyze my ${symbol} position.`
+        : "Analyze my portfolio.",
     [symbol],
   );
 
@@ -558,7 +558,8 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       account,
       accessToken: sessionAccessToken || null,
       enabled: requested,
-      prompt,
+      structuredAnalyze: true,
+      userDisplayMessage,
     },
     "gpt-5.4",
   );

@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { streamAnalysis } from "@/lib/apiClient";
+import {
+  buildStructuredAnalyzeRequest,
+  structuredAnalyzeDisplayMessage,
+} from "@/lib/structuredAnalysis";
 import type { Position, SchwabAccounts } from "@/app/types/schwab";
 
 type InsightState = {
@@ -24,11 +28,11 @@ const inFlight = new Map<string, InFlightEntry>();
 function makeKey(
   label: string,
   positions: Position[],
-  prompt?: string | null,
+  structuredAnalyze?: boolean,
 ): string {
   return JSON.stringify({
     label,
-    prompt: prompt ?? null,
+    structuredAnalyze: !!structuredAnalyze,
     positions: positions.map((p) => ({
       symbol: p.instrument.symbol,
       longQuantity: p.longQuantity,
@@ -44,7 +48,10 @@ export function useInsights(
     account: SchwabAccounts | null;
     accessToken: string | null;
     enabled?: boolean;
+    /** @deprecated Use structuredAnalyze for Analyze button flows. */
     prompt?: string | null;
+    structuredAnalyze?: boolean;
+    userDisplayMessage?: string | null;
   },
   model: string = "gpt-5.4",
 ): InsightState {
@@ -55,6 +62,8 @@ export function useInsights(
     accessToken,
     enabled = false,
     prompt = null,
+    structuredAnalyze = false,
+    userDisplayMessage = null,
   } = opts;
   const [retryCount, setRetryCount] = useState(0);
   const [state, setState] = useState<Omit<InsightState, "refetch">>({
@@ -65,9 +74,9 @@ export function useInsights(
 
   const refetch = useCallback(() => {
     if (!label || !positions?.length) return;
-    cache.delete(makeKey(label, positions, prompt));
+    cache.delete(makeKey(label, positions, structuredAnalyze));
     setRetryCount((c) => c + 1);
-  }, [label, positions, prompt]);
+  }, [label, positions, structuredAnalyze]);
 
   useEffect(() => {
     if (
@@ -83,7 +92,7 @@ export function useInsights(
       return;
     }
 
-    const key = makeKey(label, positions, prompt);
+    const key = makeKey(label, positions, structuredAnalyze);
 
     const cached = cache.get(key);
     if (cached) {
@@ -146,24 +155,37 @@ export function useInsights(
 
     (async () => {
       try {
-        await streamAnalysis(
-          {
-            account,
-            positions,
+        const displayMessage =
+          userDisplayMessage ??
+          structuredAnalyzeDisplayMessage({
             symbol: label === "PORTFOLIO" ? null : label,
-            action: "free-form",
-            prompt,
-            model,
-          },
-          accessToken,
-          (chunk) => {
-            entry!.buffer += chunk;
+            portfolio: label === "PORTFOLIO",
+          });
 
-            for (const l of entry!.listeners) {
-              l(false);
-            }
-          },
-        );
+        const body = structuredAnalyze
+          ? buildStructuredAnalyzeRequest({
+              account: account!,
+              positions,
+              symbol: label === "PORTFOLIO" ? null : label,
+              userDisplayMessage: displayMessage,
+              model,
+            })
+          : {
+              account,
+              positions,
+              symbol: label === "PORTFOLIO" ? null : label,
+              action: "free-form" as const,
+              prompt,
+              model,
+            };
+
+        await streamAnalysis(body, accessToken, (chunk) => {
+          entry!.buffer += chunk;
+
+          for (const l of entry!.listeners) {
+            l(false);
+          }
+        });
 
         cache.set(key, { content: entry!.buffer });
 
@@ -183,7 +205,18 @@ export function useInsights(
       cancelled = true;
       entry!.listeners.delete(listener);
     };
-  }, [label, positions, account, accessToken, model, prompt, retryCount, enabled]);
+  }, [
+    label,
+    positions,
+    account,
+    accessToken,
+    model,
+    prompt,
+    structuredAnalyze,
+    userDisplayMessage,
+    retryCount,
+    enabled,
+  ]);
 
   return { ...state, refetch };
 }
