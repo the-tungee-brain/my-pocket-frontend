@@ -23,11 +23,11 @@ export function AnalyzePrompt({
   className,
 }: Props) {
   const title = isPortfolio
-    ? "Get an AI read on your portfolio"
+    ? "In-depth diversification review"
     : `Get an AI read on ${symbol}`;
 
   const description = isPortfolio
-    ? "Summarizes concentration, options risk, notable movers, and one recommended next step — without leaving this page."
+    ? "See how your holdings are spread across names, sectors, and cash — where you're concentrated, and how to balance the mix."
     : "Summarizes your holdings, P/L, options risk, and one recommended next step — without leaving this page.";
 
   const buttonClass = cn(

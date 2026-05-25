@@ -663,7 +663,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
 
   const title = isPortfolio
     ? showPortfolioAnalysis
-      ? "Portfolio analysis"
+      ? "Diversification analysis"
       : "Holdings"
     : symbol!;
   const analyzeLabel = isPortfolio ? "Analyze portfolio" : "Analyze position";
@@ -839,7 +839,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
               <p className="text-[11px] text-muted">
                 {isPortfolio
                   ? showPortfolioAnalysis
-                    ? "AI review of concentration, options risk, and next steps"
+                    ? "In-depth review of how your portfolio is diversified"
                     : `${symbolCount} ${symbolCount === 1 ? "symbol" : "symbols"} · ${positions.length} ${positions.length === 1 ? "position" : "positions"}`
                   : `${positions.length} ${positions.length === 1 ? "leg" : "legs"} · holdings & AI review`}
               </p>

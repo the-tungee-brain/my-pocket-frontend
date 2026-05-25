@@ -533,7 +533,7 @@ export function PortfolioBriefSection({
                     className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-strong transition hover:underline disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                    Go deeper with full AI portfolio analysis
+                    Go deeper with diversification analysis
                   </button>
                 </div>
               )}
