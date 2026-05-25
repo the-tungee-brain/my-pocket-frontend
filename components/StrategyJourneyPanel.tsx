@@ -27,7 +27,6 @@ type Props = {
   recommendations: StrategyRecommendations | null;
   onRunAction: (action: StrategyNextAction) => void;
   onMarkLearned?: (stepId: string) => void;
-  onRestartOnboarding?: () => void;
   className?: string;
 };
 
@@ -36,7 +35,6 @@ export function StrategyJourneyPanel({
   recommendations,
   onRunAction,
   onMarkLearned,
-  onRestartOnboarding,
   className,
 }: Props) {
   const router = useRouter();
@@ -75,11 +73,12 @@ export function StrategyJourneyPanel({
               {currentStep ? ` · Next: ${currentStep.title}` : ""}
             </p>
           </div>
-          {onRestartOnboarding && (
-            <Button size="xs" variant="ghost" onClick={onRestartOnboarding}>
-              Change strategy
-            </Button>
-          )}
+          <Link
+            href="/settings"
+            className="text-xs text-muted transition hover:text-accent-strong"
+          >
+            Edit strategy
+          </Link>
         </div>
 
         <div className="mb-4 h-2 overflow-hidden rounded-full bg-muted-bg">

@@ -19,6 +19,10 @@ import type {
   UserInvestmentProfileUpdate,
   UserStrategyJourney,
 } from "@/app/types/strategy";
+import {
+  formValuesToUpdate,
+  type StrategyFormValues,
+} from "@/lib/strategyProfileForm";
 
 type UseStrategyJourneyOptions = {
   enabled?: boolean;
@@ -151,6 +155,39 @@ export function useStrategyJourney(
     setRecommendations(recs);
   }, [accessToken, profile?.primaryStrategy]);
 
+  const saveStrategySettings = useCallback(
+    async (values: StrategyFormValues) => {
+      if (!accessToken || !values.primaryStrategy) return null;
+
+      const update = formValuesToUpdate(values);
+      const strategyChanged =
+        profile?.primaryStrategy != null &&
+        profile.primaryStrategy !== values.primaryStrategy;
+
+      if (strategyChanged || !profile?.primaryStrategy) {
+        await selectStrategy(accessToken, values.primaryStrategy);
+      }
+
+      const next = await updateInvestmentProfile(accessToken, update);
+      setProfile(next);
+
+      const journeyData = await fetchStrategyJourney(
+        accessToken,
+        values.primaryStrategy,
+      );
+      setJourney(journeyData);
+
+      const recs = await fetchStrategyRecommendations(
+        accessToken,
+        values.primaryStrategy,
+      ).catch(() => null);
+      setRecommendations(recs);
+
+      return next;
+    },
+    [accessToken, profile?.primaryStrategy],
+  );
+
   const needsOnboarding = !profile?.onboardingCompletedAt;
 
   return {
@@ -167,5 +204,6 @@ export function useStrategyJourney(
     completeOnboarding,
     markStep,
     refreshRecommendations,
+    saveStrategySettings,
   };
 }

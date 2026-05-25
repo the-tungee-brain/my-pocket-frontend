@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePositionsContext } from "../Providers";
 import { useTabs } from "@/app/contexts/TabContext";
@@ -294,6 +295,10 @@ export default function PortfolioPage() {
           >
             Start onboarding
           </button>
+          {" · "}
+          <Link href="/settings" className="font-medium text-accent-strong hover:underline">
+            Open settings
+          </Link>
         </div>
       )}
 
@@ -305,7 +310,6 @@ export default function PortfolioPage() {
           onMarkLearned={(stepId) =>
             void markStep(stepId, "completed").then(() => refreshRecommendations())
           }
-          onRestartOnboarding={() => setShowStrategySetup(true)}
         />
       )}
 
