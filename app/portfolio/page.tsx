@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePositionsContext } from "../Providers";
 import { useTabs } from "@/app/contexts/TabContext";
 import { usePortfolioSection } from "@/app/contexts/PortfolioSectionContext";
+import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { PortfolioAttentionSection } from "@/components/PortfolioAttentionSection";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
@@ -12,6 +13,8 @@ import { PortfolioChangesSection } from "@/components/PortfolioChangesSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
+import { StrategyJourneyPanel } from "@/components/StrategyJourneyPanel";
+import { StrategyOnboardingWizard } from "@/components/StrategyOnboardingWizard";
 import { PortfolioSectionTabBar } from "@/components/PortfolioSectionTabBar";
 import { NewsHintBanner } from "@/components/NewsHintBanner";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
@@ -19,6 +22,7 @@ import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useMorningBrief } from "@/app/hooks/useMorningBrief";
 import type { AttentionItem, ProactiveAlert } from "@/app/types/intelligence";
+import type { StrategyNextAction } from "@/app/types/strategy";
 import {
   alertToQuickActionId,
   buildLocalPortfolioBrief,
@@ -28,6 +32,11 @@ import {
 } from "@/lib/intelligence";
 import type { TaxAlertItem } from "@/lib/intelligence";
 import { dismissPortfolioAlert } from "@/lib/apiClient";
+import {
+  clearStrategyOnboardingDismissed,
+  dismissStrategyOnboarding,
+  isStrategyOnboardingDismissed,
+} from "@/lib/onboardingStorage";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 
 export default function PortfolioPage() {
@@ -52,6 +61,39 @@ export default function PortfolioPage() {
   } = usePositionsContext();
   const { activeTab } = useTabs();
   const { activeSection, setActiveSection } = usePortfolioSection();
+  const [showStrategySetup, setShowStrategySetup] = useState(false);
+  const [strategyDismissed, setStrategyDismissed] = useState(true);
+
+  useEffect(() => {
+    setStrategyDismissed(isStrategyOnboardingDismissed());
+  }, []);
+
+  const {
+    catalog,
+    profile: strategyProfile,
+    journey,
+    recommendations,
+    needsOnboarding,
+    loading: strategyLoading,
+    chooseStrategy,
+    completeOnboarding,
+    markStep,
+    refreshRecommendations,
+    refetch: refetchStrategy,
+  } = useStrategyJourney(sessionAccessToken ?? undefined);
+
+  const showStrategyWizard =
+    !!sessionAccessToken &&
+    !strategyLoading &&
+    (needsOnboarding || showStrategySetup) &&
+    catalog.length > 0 &&
+    (!strategyDismissed || showStrategySetup);
+
+  const showStrategyJourney =
+    !!sessionAccessToken &&
+    !!strategyProfile?.onboardingCompletedAt &&
+    !!journey &&
+    !showStrategySetup;
 
   const localBrief = buildLocalPortfolioBrief(allPositions, account, proactiveAlerts);
   const seedBrief = accountBrief ?? localBrief;
@@ -146,7 +188,44 @@ export default function PortfolioPage() {
   const handleRefreshAll = useCallback(async () => {
     await refreshPositions(true);
     refetchMorningBrief();
-  }, [refreshPositions, refetchMorningBrief]);
+    await refetchStrategy();
+    await refreshRecommendations();
+  }, [refreshPositions, refetchMorningBrief, refetchStrategy, refreshRecommendations]);
+
+  const handleStrategyAction = useCallback(
+    (action: StrategyNextAction) => {
+      if (action.actionId) {
+        void sendQuickAction({
+          activeChatKey: action.symbol ?? "__PORTFOLIO_CHAT__",
+          selectedView: action.symbol ? "research" : "portfolio",
+          selectedSymbol: action.symbol ?? null,
+          positionsForSelectedSymbol: action.symbol
+            ? (positionMap[action.symbol] ?? [])
+            : allPositions,
+          actionId: action.actionId,
+        });
+      }
+    },
+    [allPositions, positionMap, sendQuickAction],
+  );
+
+  const handleCompleteStrategyOnboarding = useCallback(
+    async (payload: Parameters<typeof completeOnboarding>[0]) => {
+      if (!payload.primaryStrategy) return;
+      clearStrategyOnboardingDismissed();
+      setStrategyDismissed(false);
+      await chooseStrategy(payload.primaryStrategy);
+      await completeOnboarding(payload);
+      setShowStrategySetup(false);
+    },
+    [chooseStrategy, completeOnboarding],
+  );
+
+  const handleDismissStrategyWizard = useCallback(() => {
+    dismissStrategyOnboarding();
+    setStrategyDismissed(true);
+    setShowStrategySetup(false);
+  }, []);
 
   const handleGoDeeper = useCallback(() => {
     void sendQuickAction({
@@ -192,7 +271,45 @@ export default function PortfolioPage() {
 
       {error && !schwabReauth && <ErrorBanner message={error} className="mb-3" />}
 
-      <PortfolioOnboarding />
+      {showStrategyWizard && sessionAccessToken && (
+        <StrategyOnboardingWizard
+          accessToken={sessionAccessToken}
+          catalog={catalog}
+          onComplete={handleCompleteStrategyOnboarding}
+          onClose={handleDismissStrategyWizard}
+        />
+      )}
+
+      {!showStrategyWizard && needsOnboarding && sessionAccessToken && (
+        <div className="mx-auto mb-4 w-full max-w-3xl rounded-xl border border-border bg-background/40 px-4 py-3 text-sm text-muted">
+          <span>Set up your investing strategy for a guided checklist and next steps.</span>{" "}
+          <button
+            type="button"
+            onClick={() => {
+              clearStrategyOnboardingDismissed();
+              setStrategyDismissed(false);
+              setShowStrategySetup(true);
+            }}
+            className="font-medium text-accent-strong hover:underline"
+          >
+            Start onboarding
+          </button>
+        </div>
+      )}
+
+      {showStrategyJourney && journey && (
+        <StrategyJourneyPanel
+          journey={journey}
+          recommendations={recommendations}
+          onRunAction={handleStrategyAction}
+          onMarkLearned={(stepId) =>
+            void markStep(stepId, "completed").then(() => refreshRecommendations())
+          }
+          onRestartOnboarding={() => setShowStrategySetup(true)}
+        />
+      )}
+
+      {!showStrategyWizard && !needsOnboarding && <PortfolioOnboarding />}
 
       {showNewsHint && <NewsHintBanner symbols={symbols} />}
 

@@ -10,6 +10,16 @@ import type {
   SymbolIntelligence,
 } from "@/app/types/intelligence";
 import type {
+  InvestmentStrategy,
+  JourneyStepStatus,
+  SelectStrategyResponse,
+  StrategyCatalogItem,
+  StrategyRecommendations,
+  UserInvestmentProfile,
+  UserInvestmentProfileUpdate,
+  UserStrategyJourney,
+} from "@/app/types/strategy";
+import type {
   ChatSessionMessagesResponse,
   ChatSessionsResponse,
 } from "@/app/types/chat";
@@ -432,6 +442,110 @@ export async function clearChatSessionsByPrefix(
 
   const data = (await res.json()) as { deletedCount: number };
   return data.deletedCount;
+}
+
+export async function fetchStrategyCatalog(
+  accessToken: string,
+): Promise<StrategyCatalogItem[]> {
+  const res = await apiFetch("/strategies", { method: "GET", accessToken });
+  if (!res.ok) {
+    throw new Error(`Failed to load strategies (${res.status})`);
+  }
+  return res.json() as Promise<StrategyCatalogItem[]>;
+}
+
+export async function fetchInvestmentProfile(
+  accessToken: string,
+): Promise<UserInvestmentProfile | null> {
+  const res = await apiFetch("/user/investment-profile", {
+    method: "GET",
+    accessToken,
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new Error(`Failed to load investment profile (${res.status})`);
+  }
+  const data = await res.json();
+  return (data ?? null) as UserInvestmentProfile | null;
+}
+
+export async function updateInvestmentProfile(
+  accessToken: string,
+  payload: UserInvestmentProfileUpdate,
+): Promise<UserInvestmentProfile> {
+  const res = await apiFetch("/user/investment-profile", {
+    method: "PUT",
+    accessToken,
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to update investment profile (${res.status})`);
+  }
+  return res.json() as Promise<UserInvestmentProfile>;
+}
+
+export async function selectStrategy(
+  accessToken: string,
+  strategy: InvestmentStrategy,
+): Promise<SelectStrategyResponse> {
+  const res = await apiFetch(`/strategies/${strategy}/select`, {
+    method: "POST",
+    accessToken,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to select strategy (${res.status})`);
+  }
+  return res.json() as Promise<SelectStrategyResponse>;
+}
+
+export async function fetchStrategyJourney(
+  accessToken: string,
+  strategy: InvestmentStrategy,
+): Promise<UserStrategyJourney | null> {
+  const res = await apiFetch(`/strategies/${strategy}/journey`, {
+    method: "GET",
+    accessToken,
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new Error(`Failed to load strategy journey (${res.status})`);
+  }
+  return res.json() as Promise<UserStrategyJourney | null>;
+}
+
+export async function updateJourneyStep(
+  accessToken: string,
+  strategy: InvestmentStrategy,
+  stepId: string,
+  payload: { status: JourneyStepStatus; metadata?: Record<string, unknown> },
+): Promise<UserStrategyJourney> {
+  const res = await apiFetch(
+    `/strategies/${strategy}/journey/steps/${stepId}`,
+    {
+      method: "PATCH",
+      accessToken,
+      body: JSON.stringify(payload),
+    },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to update journey step (${res.status})`);
+  }
+  return res.json() as Promise<UserStrategyJourney>;
+}
+
+export async function fetchStrategyRecommendations(
+  accessToken: string,
+  strategy: InvestmentStrategy,
+  symbol?: string,
+): Promise<StrategyRecommendations> {
+  const res = await apiFetch(
+    `/strategies/${strategy}/recommendations${buildQuery({ symbol })}`,
+    { method: "GET", accessToken },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to load strategy recommendations (${res.status})`);
+  }
+  return res.json() as Promise<StrategyRecommendations>;
 }
 
 

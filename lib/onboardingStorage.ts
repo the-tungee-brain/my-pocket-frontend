@@ -1,6 +1,22 @@
 const STORAGE_KEY = "powerpocket-onboarding-dismissed";
 const RESEARCH_STORAGE_KEY = "powerpocket-research-onboarding-dismissed";
 const WATCHLIST_HINT_KEY = "powerpocket-watchlist-hint-dismissed";
+const STRATEGY_ONBOARDING_DISMISSED_KEY = "powerpocket-strategy-onboarding-dismissed";
+
+export function isStrategyOnboardingDismissed(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(STRATEGY_ONBOARDING_DISMISSED_KEY) === "1";
+}
+
+export function dismissStrategyOnboarding(): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STRATEGY_ONBOARDING_DISMISSED_KEY, "1");
+}
+
+export function clearStrategyOnboardingDismissed(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(STRATEGY_ONBOARDING_DISMISSED_KEY);
+}
 
 export function isOnboardingDismissed(): boolean {
   if (typeof window === "undefined") return false;
