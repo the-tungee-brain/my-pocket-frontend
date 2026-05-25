@@ -33,7 +33,7 @@ export function structuredAnalyzeDisplayMessage(input: {
   portfolio?: boolean;
 }): string {
   if (input.portfolio || !input.symbol) {
-    return "Analyze my portfolio.";
+    return "Analyze my portfolio for diversification and where to deploy cash.";
   }
   return `Analyze my ${input.symbol.toUpperCase()} position.`;
 }

@@ -586,7 +586,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     () =>
       symbol
         ? `Analyze my ${symbol} position.`
-        : "Analyze my portfolio.",
+        : "Analyze my portfolio for diversification and where to deploy cash.",
     [symbol],
   );
 
