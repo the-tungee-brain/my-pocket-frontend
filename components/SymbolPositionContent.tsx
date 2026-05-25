@@ -21,7 +21,6 @@ import {
 import type { TaxAlertItem } from "@/lib/intelligence";
 import type { ProactiveAlert } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
-import { scrollToChat } from "@/lib/scrollToChat";
 import { BriefcaseBusiness } from "lucide-react";
 
 type Props = {
@@ -38,7 +37,6 @@ export function SymbolPositionContent({ symbol }: Props) {
     portfolioBrief,
     recentActivity,
     sendQuickAction,
-    chatBySymbol,
   } = usePositionsContext();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
@@ -114,19 +112,6 @@ export function SymbolPositionContent({ symbol }: Props) {
     [chatKey, symbolUpper, sendQuickAction, positionsForSelectedSymbol],
   );
 
-  const analyzeLoading = chatBySymbol[chatKey]?.loading ?? false;
-
-  const handleAnalyzePosition = useCallback(() => {
-    void sendQuickAction({
-      activeChatKey: chatKey,
-      selectedView: "research",
-      selectedSymbol: symbolUpper,
-      positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
-      actionId: "position-review",
-    });
-    scrollToChat();
-  }, [chatKey, symbolUpper, sendQuickAction, positionsForSelectedSymbol]);
-
   if (!hasPosition) {
     return (
       <EmptyState
@@ -176,8 +161,6 @@ export function SymbolPositionContent({ symbol }: Props) {
       <AccountPositionList
         positionsForSelectedSymbol={positionsForSelectedSymbol}
         selectedSymbol={symbolUpper}
-        onAnalyzePosition={handleAnalyzePosition}
-        analyzeLoading={analyzeLoading}
       />
 
       {accessToken && (

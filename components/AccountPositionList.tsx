@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleDollarSign, Inbox, LockKeyhole, Sparkles } from "lucide-react";
+import { CircleDollarSign, Inbox, LockKeyhole } from "lucide-react";
 import { Position } from "@/app/types/schwab";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cspReservedCash, positionStrikePrice } from "@/lib/cspReservedCash";
@@ -15,7 +15,6 @@ import {
   positionOpenProfitLoss,
   positionOpenProfitLossPct,
 } from "@/lib/positionMetrics";
-import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 export type PositionMap = Record<string, Position[]>;
@@ -23,8 +22,6 @@ export type PositionMap = Record<string, Position[]>;
 type AccountPositionListProps = {
   positionsForSelectedSymbol: Position[] | null;
   selectedSymbol: string | null;
-  onAnalyzePosition?: () => void;
-  analyzeLoading?: boolean;
 };
 
 function positionKey(p: Position) {
@@ -89,8 +86,6 @@ function ReservedCashNote({ position }: { position: Position }) {
 export function AccountPositionList({
   positionsForSelectedSymbol,
   selectedSymbol,
-  onAnalyzePosition,
-  analyzeLoading = false,
 }: AccountPositionListProps) {
   if (!selectedSymbol) {
     return (
@@ -154,27 +149,13 @@ export function AccountPositionList({
               )}
             </p>
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            {onAnalyzePosition && (
-              <Button
-                size="xs"
-                variant="outline"
-                disabled={analyzeLoading}
-                onClick={onAnalyzePosition}
-                className="gap-1.5"
-              >
-                <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                Analyze position
-              </Button>
-            )}
-            <div className="text-right">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-                Total value
-              </p>
-              <p className="text-lg font-semibold tabular-nums">
-                ${totalValue.toLocaleString()}
-              </p>
-            </div>
+          <div className="text-right">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+              Total value
+            </p>
+            <p className="text-lg font-semibold tabular-nums">
+              ${totalValue.toLocaleString()}
+            </p>
           </div>
         </div>
 
