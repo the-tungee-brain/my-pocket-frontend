@@ -122,6 +122,21 @@ export type StrategyNextAction = {
   metadata?: Record<string, unknown>;
 };
 
+export type StrategyStockPick = {
+  symbol: string;
+  companyName?: string | null;
+  rationale: string;
+  fitScore: number;
+  tags?: string[];
+};
+
+export type StrategyStockSuggestions = {
+  strategy: InvestmentStrategy;
+  picks: StrategyStockPick[];
+  summary: string;
+  generatedAt?: string | null;
+};
+
 export type StrategyRecommendations = {
   strategy: InvestmentStrategy;
   currentStep?: JourneyStep | null;
@@ -129,6 +144,8 @@ export type StrategyRecommendations = {
   readiness: StrategyReadiness;
   symbol?: string | null;
   nextActions: StrategyNextAction[];
+  suggestedStocks?: StrategyStockPick[];
+  stockSuggestionsSummary?: string | null;
 };
 
 export type SelectStrategyResponse = {

@@ -18,6 +18,7 @@ import type {
   StrategyRecommendations,
   UserStrategyJourney,
 } from "@/app/types/strategy";
+import { StrategyStockSuggestionsPanel } from "@/components/StrategyStockSuggestionsPanel";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { symbolHubPath } from "@/lib/symbolRoutes";
@@ -27,6 +28,7 @@ type Props = {
   recommendations: StrategyRecommendations | null;
   onRunAction: (action: StrategyNextAction) => void;
   onMarkLearned?: (stepId: string) => void;
+  onAddSuggestedSymbol?: (symbol: string) => void;
   className?: string;
 };
 
@@ -35,6 +37,7 @@ export function StrategyJourneyPanel({
   recommendations,
   onRunAction,
   onMarkLearned,
+  onAddSuggestedSymbol,
   className,
 }: Props) {
   const router = useRouter();
@@ -42,6 +45,7 @@ export function StrategyJourneyPanel({
 
   const currentStep = recommendations?.currentStep ?? findCurrentStep(journey.steps);
   const nextActions = recommendations?.nextActions ?? [];
+  const suggestedStocks = recommendations?.suggestedStocks ?? [];
 
   const handleAction = useCallback(
     (action: StrategyNextAction) => {
@@ -87,6 +91,17 @@ export function StrategyJourneyPanel({
             style={{ width: `${journey.completionPct}%` }}
           />
         </div>
+
+        {suggestedStocks.length > 0 && onAddSuggestedSymbol && (
+          <div className="mb-4">
+            <StrategyStockSuggestionsPanel
+              picks={suggestedStocks}
+              summary={recommendations?.stockSuggestionsSummary}
+              onAddSymbol={onAddSuggestedSymbol}
+              selectedSymbols={recommendations?.readiness.approvedSymbols ?? []}
+            />
+          </div>
+        )}
 
         {nextActions.length > 0 && (
           <div className="mb-4 rounded-xl border border-border bg-background/50 p-3">

@@ -15,6 +15,7 @@ import type {
   SelectStrategyResponse,
   StrategyCatalogItem,
   StrategyRecommendations,
+  StrategyStockSuggestions,
   UserInvestmentProfile,
   UserInvestmentProfileUpdate,
   UserStrategyJourney,
@@ -546,6 +547,24 @@ export async function fetchStrategyRecommendations(
     throw new Error(`Failed to load strategy recommendations (${res.status})`);
   }
   return res.json() as Promise<StrategyRecommendations>;
+}
+
+export async function fetchStrategyStockSuggestions(
+  accessToken: string,
+  strategy: InvestmentStrategy,
+  limit = 5,
+): Promise<StrategyStockSuggestions> {
+  const res = await apiFetch(
+    `/strategies/${strategy}/stock-suggestions${buildQuery({ limit })}`,
+    { method: "GET", accessToken },
+  );
+  if (res.status === 409) {
+    throw new Error("Stock suggestions are not available after symbols are chosen.");
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to load stock suggestions (${res.status})`);
+  }
+  return res.json() as Promise<StrategyStockSuggestions>;
 }
 
 

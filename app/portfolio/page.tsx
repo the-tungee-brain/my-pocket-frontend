@@ -39,6 +39,7 @@ import {
   isStrategyOnboardingDismissed,
 } from "@/lib/onboardingStorage";
 import { symbolHubPath } from "@/lib/symbolRoutes";
+import { buildAddSymbolUpdate } from "@/lib/strategyStockSuggestions";
 
 export default function PortfolioPage() {
   const router = useRouter();
@@ -80,6 +81,7 @@ export default function PortfolioPage() {
     completeOnboarding,
     markStep,
     refreshRecommendations,
+    saveProfile,
     refetch: refetchStrategy,
   } = useStrategyJourney(sessionAccessToken ?? undefined);
 
@@ -228,6 +230,17 @@ export default function PortfolioPage() {
     setShowStrategySetup(false);
   }, []);
 
+  const handleAddSuggestedSymbol = useCallback(
+    async (symbol: string) => {
+      if (!strategyProfile) return;
+      const update = buildAddSymbolUpdate(strategyProfile, symbol);
+      if (!update) return;
+      await saveProfile(update);
+      await refreshRecommendations();
+    },
+    [refreshRecommendations, saveProfile, strategyProfile],
+  );
+
   const handleGoDeeper = useCallback(() => {
     void sendQuickAction({
       activeChatKey: "__PORTFOLIO_CHAT__",
@@ -276,6 +289,11 @@ export default function PortfolioPage() {
         <StrategyOnboardingWizard
           accessToken={sessionAccessToken}
           catalog={catalog}
+          onSaveDraft={async (payload) => {
+            if (!payload.primaryStrategy) return;
+            await chooseStrategy(payload.primaryStrategy);
+            await saveProfile(payload);
+          }}
           onComplete={handleCompleteStrategyOnboarding}
           onClose={handleDismissStrategyWizard}
         />
@@ -307,6 +325,7 @@ export default function PortfolioPage() {
           journey={journey}
           recommendations={recommendations}
           onRunAction={handleStrategyAction}
+          onAddSuggestedSymbol={(symbol) => void handleAddSuggestedSymbol(symbol)}
           onMarkLearned={(stepId) =>
             void markStep(stepId, "completed").then(() => refreshRecommendations())
           }

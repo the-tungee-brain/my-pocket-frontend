@@ -14,6 +14,7 @@ export default function OnboardingPage() {
     catalog,
     chooseStrategy,
     completeOnboarding,
+    saveProfile,
     loading,
   } = useStrategyJourney(accessToken, { enabled: !!accessToken });
 
@@ -37,6 +38,11 @@ export default function OnboardingPage() {
     <StrategyOnboardingWizard
       accessToken={accessToken}
       catalog={catalog}
+      onSaveDraft={async (payload) => {
+        if (!payload.primaryStrategy) return;
+        await chooseStrategy(payload.primaryStrategy);
+        await saveProfile(payload);
+      }}
       onComplete={async (payload) => {
         if (!payload.primaryStrategy) return;
         await chooseStrategy(payload.primaryStrategy);

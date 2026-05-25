@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,6 +12,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useSymbolSearch } from "@/app/hooks/useSymbolSearch";
+import { useStrategyStockSuggestions } from "@/app/hooks/useStrategyStockSuggestions";
 import type {
   IncomeVsGrowth,
   InvestmentStrategy,
@@ -20,7 +21,9 @@ import type {
   StrategyCatalogItem,
   UserInvestmentProfileUpdate,
 } from "@/app/types/strategy";
+import { StrategyStockSuggestionsPanel } from "@/components/StrategyStockSuggestionsPanel";
 import { Button } from "@/components/ui/Button";
+import { buildPreferencesDraftUpdate } from "@/lib/strategyStockSuggestions";
 import { cn } from "@/lib/utils";
 
 type WizardStep =
@@ -34,6 +37,7 @@ type Props = {
   accessToken: string;
   catalog: StrategyCatalogItem[];
   onComplete: (payload: UserInvestmentProfileUpdate) => Promise<void>;
+  onSaveDraft?: (payload: UserInvestmentProfileUpdate) => Promise<void>;
   onClose?: () => void;
 };
 
@@ -51,6 +55,7 @@ export function StrategyOnboardingWizard({
   accessToken,
   catalog,
   onComplete,
+  onSaveDraft,
   onClose,
 }: Props) {
   const [step, setStep] = useState<WizardStep>("welcome");
@@ -78,6 +83,39 @@ export function StrategyOnboardingWizard({
     () => catalog.find((item) => item.id === selectedStrategy) ?? null,
     [catalog, selectedStrategy],
   );
+
+  const showSymbolSuggestions =
+    step === "configure" &&
+    selectedStrategy !== null &&
+    selectedStrategy !== "etf-core";
+
+  const prepareSuggestionsProfile = useCallback(async () => {
+    if (!onSaveDraft || !selectedStrategy) return;
+    await onSaveDraft(
+      buildPreferencesDraftUpdate(selectedStrategy, {
+        riskTolerance,
+        optionsExperience,
+        incomeVsGrowth,
+      }),
+    );
+  }, [
+    onSaveDraft,
+    selectedStrategy,
+    riskTolerance,
+    optionsExperience,
+    incomeVsGrowth,
+  ]);
+
+  const {
+    suggestions,
+    loading: suggestionsLoading,
+    error: suggestionsError,
+  } = useStrategyStockSuggestions({
+    accessToken,
+    strategy: selectedStrategy,
+    enabled: showSymbolSuggestions && !!onSaveDraft,
+    prepareProfile: prepareSuggestionsProfile,
+  });
 
   const addSymbol = (symbol: string) => {
     const upper = symbol.toUpperCase();
@@ -359,6 +397,14 @@ export function StrategyOnboardingWizard({
                       ? "Add 1–5 dividend names you want to research and hold."
                       : "Add 1–3 symbols you'd be happy to own if assigned on a put."}
                   </p>
+                  <StrategyStockSuggestionsPanel
+                    picks={suggestions?.picks ?? []}
+                    summary={suggestions?.summary}
+                    loading={suggestionsLoading}
+                    error={suggestionsError}
+                    onAddSymbol={addSymbol}
+                    selectedSymbols={symbols}
+                  />
                   <input
                     value={symbolInput}
                     onChange={(event) => setSymbolInput(event.target.value)}

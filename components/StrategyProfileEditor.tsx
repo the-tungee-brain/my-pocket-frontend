@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CircleDollarSign,
   Layers,
@@ -8,6 +8,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useSymbolSearch } from "@/app/hooks/useSymbolSearch";
+import { useStrategyStockSuggestions } from "@/app/hooks/useStrategyStockSuggestions";
 import type {
   IncomeVsGrowth,
   InvestmentStrategy,
@@ -16,7 +17,9 @@ import type {
   StrategyCatalogItem,
   UserInvestmentProfile,
 } from "@/app/types/strategy";
+import { StrategyStockSuggestionsPanel } from "@/components/StrategyStockSuggestionsPanel";
 import { Button } from "@/components/ui/Button";
+import { updateInvestmentProfile } from "@/lib/apiClient";
 import { cn } from "@/lib/utils";
 import {
   DEFAULT_STRATEGY_FORM,
@@ -26,6 +29,7 @@ import {
   profileToFormValues,
   type StrategyFormValues,
 } from "@/lib/strategyProfileForm";
+import { needsStrategyStockSuggestionsFromForm } from "@/lib/strategyStockSuggestions";
 
 type Props = {
   accessToken: string;
@@ -78,6 +82,27 @@ export function StrategyProfileEditor({
     () => catalog.find((item) => item.id === values.primaryStrategy) ?? null,
     [catalog, values.primaryStrategy],
   );
+
+  const showSymbolSuggestions = needsStrategyStockSuggestionsFromForm(values);
+
+  const prepareSuggestionsProfile = useCallback(async () => {
+    if (!values.primaryStrategy) return;
+    await updateInvestmentProfile(
+      accessToken,
+      formValuesToUpdate({ ...values, symbols: [] }),
+    );
+  }, [accessToken, values]);
+
+  const {
+    suggestions,
+    loading: suggestionsLoading,
+    error: suggestionsError,
+  } = useStrategyStockSuggestions({
+    accessToken,
+    strategy: values.primaryStrategy,
+    enabled: showSymbolSuggestions,
+    prepareProfile: prepareSuggestionsProfile,
+  });
 
   const patch = (partial: Partial<StrategyFormValues>) => {
     setValues((prev) => ({ ...prev, ...partial }));
@@ -211,7 +236,16 @@ export function StrategyProfileEditor({
             {values.primaryStrategy === "etf-core" ? (
               <EtfConfig values={values} onChange={patch} />
             ) : (
-              <SymbolConfig
+              <>
+                <StrategyStockSuggestionsPanel
+                  picks={suggestions?.picks ?? []}
+                  summary={suggestions?.summary}
+                  loading={suggestionsLoading}
+                  error={suggestionsError}
+                  onAddSymbol={addSymbol}
+                  selectedSymbols={values.symbols}
+                />
+                <SymbolConfig
                 values={values}
                 symbolInput={symbolInput}
                 onSymbolInputChange={setSymbolInput}
@@ -219,6 +253,7 @@ export function StrategyProfileEditor({
                 onAddSymbol={addSymbol}
                 onRemoveSymbol={removeSymbol}
               />
+              </>
             )}
 
             {isWheelLikeStrategy(values.primaryStrategy) && (
