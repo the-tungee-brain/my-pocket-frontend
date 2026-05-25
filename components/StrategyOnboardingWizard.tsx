@@ -23,7 +23,12 @@ import type {
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
-type WizardStep = "welcome" | "strategy" | "preferences" | "configure" | "review";
+type WizardStep =
+  | "welcome"
+  | "strategy"
+  | "preferences"
+  | "configure"
+  | "review";
 
 type Props = {
   accessToken: string;
@@ -196,7 +201,7 @@ export function StrategyOnboardingWizard({
           {step === "welcome" && (
             <div className="space-y-4">
               <p className="text-sm leading-relaxed text-muted">
-                PowerPocket will guide you step by step — whether you want to run
+                Tomcrest will guide you step by step — whether you want to run
                 the wheel, collect dividends, or build a simple ETF portfolio.
               </p>
               <ul className="space-y-2 text-sm text-foreground">
@@ -239,7 +244,9 @@ export function StrategyOnboardingWizard({
                         {item.title}
                       </p>
                     </div>
-                    <p className="mt-1 text-xs text-accent-strong">{item.subtitle}</p>
+                    <p className="mt-1 text-xs text-accent-strong">
+                      {item.subtitle}
+                    </p>
                     <p className="mt-2 text-xs leading-relaxed text-muted">
                       {item.description}
                     </p>
@@ -252,16 +259,16 @@ export function StrategyOnboardingWizard({
           {step === "preferences" && (
             <div className="space-y-5">
               <FieldGroup label="Risk tolerance">
-                {(["conservative", "moderate", "aggressive"] as RiskTolerance[]).map(
-                  (value) => (
-                    <ChoiceChip
-                      key={value}
-                      selected={riskTolerance === value}
-                      onClick={() => setRiskTolerance(value)}
-                      label={value}
-                    />
-                  ),
-                )}
+                {(
+                  ["conservative", "moderate", "aggressive"] as RiskTolerance[]
+                ).map((value) => (
+                  <ChoiceChip
+                    key={value}
+                    selected={riskTolerance === value}
+                    onClick={() => setRiskTolerance(value)}
+                    label={value}
+                  />
+                ))}
               </FieldGroup>
 
               <FieldGroup label="Income vs growth">
@@ -282,7 +289,12 @@ export function StrategyOnboardingWizard({
                 selectedStrategy === "covered-call") && (
                 <FieldGroup label="Options experience">
                   {(
-                    ["none", "beginner", "intermediate", "advanced"] as OptionsExperience[]
+                    [
+                      "none",
+                      "beginner",
+                      "intermediate",
+                      "advanced",
+                    ] as OptionsExperience[]
                   ).map((value) => (
                     <ChoiceChip
                       key={value}
@@ -301,7 +313,8 @@ export function StrategyOnboardingWizard({
               {selectedStrategy === "etf-core" ? (
                 <>
                   <p className="text-sm text-muted">
-                    Set a simple two-fund core allocation. You can adjust this later.
+                    Set a simple two-fund core allocation. You can adjust this
+                    later.
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block text-xs text-muted">
@@ -397,8 +410,8 @@ export function StrategyOnboardingWizard({
                 <ReviewRow label="Symbols" value={symbols.join(", ") || "—"} />
               )}
               <p className="text-xs text-muted">
-                We'll create a guided checklist and suggest your next step on the
-                portfolio page.
+                We'll create a guided checklist and suggest your next step on
+                the portfolio page.
               </p>
             </div>
           )}
