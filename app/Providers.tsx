@@ -171,6 +171,19 @@ function createStreamingAssistantUpdater(
   return { appendChunk, flushNow, assistantContent };
 }
 
+function chatFailureMessage(
+  selectedView: MainView,
+  hasHoldingsContext: boolean,
+): string {
+  if (hasHoldingsContext) {
+    return "Sorry, something went wrong while analyzing this position.";
+  }
+  if (selectedView === "research") {
+    return "Sorry, something went wrong while researching this stock.";
+  }
+  return "Sorry, something went wrong while analyzing your portfolio.";
+}
+
 export function usePositionsContext() {
   const ctx = useContext(PositionsContext);
   if (!ctx)
@@ -590,6 +603,10 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       try {
         const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);
 
+        if (hasHoldingsContext && !account) {
+          throw new Error("Account data is not loaded yet.");
+        }
+
         if (selectedView === "research" && !hasHoldingsContext) {
           if (!symbolForApi) return;
 
@@ -626,12 +643,14 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
         streamer.flushNow();
         await hydrateChatFromServer(activeChatKey);
-      } catch {
+      } catch (err) {
+        console.error("Chat prompt failed:", err);
         setChatBySymbol((prev) => {
           const prevState = ensureSymbolChatState(
             activeChatKey,
             prev[activeChatKey],
           );
+          const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);
           return {
             ...prev,
             [activeChatKey]: {
@@ -642,10 +661,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
                 {
                   id: `error-${activeChatKey}-${Date.now()}`,
                   role: "assistant",
-                  content:
-                    selectedView === "research"
-                      ? "Sorry, something went wrong while researching this stock."
-                      : "Sorry, something went wrong while analyzing this position.",
+                  content: chatFailureMessage(selectedView, hasHoldingsContext),
                 },
               ],
             },
@@ -739,6 +755,10 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       try {
         const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);
 
+        if (hasHoldingsContext && !account) {
+          throw new Error("Account data is not loaded yet.");
+        }
+
         if (selectedView === "research" && !hasHoldingsContext) {
           if (!symbolForApi) return;
 
@@ -776,12 +796,14 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
         streamer.flushNow();
         await hydrateChatFromServer(activeChatKey);
-      } catch {
+      } catch (err) {
+        console.error("Chat quick action failed:", err);
         setChatBySymbol((prev) => {
           const prevState = ensureSymbolChatState(
             activeChatKey,
             prev[activeChatKey],
           );
+          const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);
           return {
             ...prev,
             [activeChatKey]: {
@@ -792,10 +814,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
                 {
                   id: `error-${activeChatKey}-${actionId}-${Date.now()}`,
                   role: "assistant",
-                  content:
-                    selectedView === "research"
-                      ? "Sorry, something went wrong while researching this stock."
-                      : "Sorry, something went wrong while analyzing this position.",
+                  content: chatFailureMessage(selectedView, hasHoldingsContext),
                 },
               ],
             },

@@ -1,22 +1,22 @@
 "use client";
 
-import type { MainView } from "./NavList";
+import type { QuickActionMode } from "@/lib/quickActions";
 import { getQuickActionsForMode } from "@/lib/quickActions";
 
 interface QuickAnalysisBarProps {
-  mode: MainView;
+  actionMode: QuickActionMode;
   symbol: string;
   loading: boolean;
   onRunAction: (actionId: string) => Promise<void> | void;
 }
 
 export function QuickAnalysisBar({
-  mode,
+  actionMode,
   symbol,
   loading,
   onRunAction,
 }: QuickAnalysisBarProps) {
-  const actions = getQuickActionsForMode(mode);
+  const actions = getQuickActionsForMode(actionMode);
 
   return (
     <fieldset className="mb-1 flex flex-wrap gap-2">

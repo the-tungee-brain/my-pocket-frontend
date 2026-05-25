@@ -6,6 +6,7 @@ import type { ChatMessage } from "@/components/ConversationPane";
 import { ModelPicker } from "@/components/ModelPicker";
 import { QuickAnalysisBar } from "@/components/QuickAnalysisBar";
 import type { MainView } from "./NavList";
+import type { QuickActionMode } from "@/lib/quickActions";
 import { cn } from "@/lib/utils";
 import { DEFAULT_CHAT_MODEL, getModelButtonLabel } from "@/lib/chatModels";
 
@@ -21,6 +22,7 @@ type SymbolChatState = {
 
 interface ChatBoxProps {
   mode: MainView;
+  quickActionMode?: QuickActionMode;
   selectedSymbol: string | null;
   currentChat: SymbolChatState | undefined;
   disabled?: boolean;
@@ -36,6 +38,7 @@ interface ChatBoxProps {
 
 export function ChatBox({
   mode,
+  quickActionMode,
   selectedSymbol,
   currentChat,
   disabled = false,
@@ -125,7 +128,7 @@ export function ChatBox({
           </p>
         ) : (
           <QuickAnalysisBar
-            mode={mode}
+            actionMode={quickActionMode ?? mode}
             symbol={mode === "portfolio" ? "PORTFOLIO" : (selectedSymbol ?? "")}
             loading={isBusy}
             onRunAction={(id) => void onSendQuickAction(id)}

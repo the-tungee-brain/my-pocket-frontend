@@ -6,11 +6,14 @@ import {
   Scale,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
   Timer,
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import type { MainView } from "@/components/NavList";
+
+export type QuickActionMode = MainView | "position";
 
 export type QuickAction = {
   id: string;
@@ -75,6 +78,17 @@ export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
   },
 ];
 
+export const POSITION_QUICK_ACTIONS: QuickAction[] = [
+  {
+    id: "position-review",
+    label: "Analyze position",
+    icon: Sparkles,
+    prompt: (target) =>
+      `Review my ${target} position — holdings, P/L, options exposure, and the top action I should take today.`,
+  },
+  ...PORTFOLIO_QUICK_ACTIONS.filter((action) => action.id !== "concentration-check"),
+];
+
 export const RESEARCH_QUICK_ACTIONS: QuickAction[] = [
   {
     id: "bull-bear-case",
@@ -109,13 +123,15 @@ export const RESEARCH_QUICK_ACTIONS: QuickAction[] = [
 /** @deprecated Use PORTFOLIO_QUICK_ACTIONS */
 export const QUICK_ACTIONS = PORTFOLIO_QUICK_ACTIONS;
 
-export function getQuickActionsForMode(mode: MainView): QuickAction[] {
+export function getQuickActionsForMode(mode: QuickActionMode): QuickAction[] {
+  if (mode === "position") return POSITION_QUICK_ACTIONS;
   if (mode === "research") return RESEARCH_QUICK_ACTIONS;
   return PORTFOLIO_QUICK_ACTIONS;
 }
 
 export function findQuickAction(actionId: string): QuickAction | undefined {
   return (
+    POSITION_QUICK_ACTIONS.find((action) => action.id === actionId) ??
     PORTFOLIO_QUICK_ACTIONS.find((action) => action.id === actionId) ??
     RESEARCH_QUICK_ACTIONS.find((action) => action.id === actionId)
   );
@@ -159,7 +175,11 @@ export function restoreQuickActionDisplayMessage(
   const normalized = normalizeActionKey(content);
   if (!normalized) return content;
 
-  for (const action of [...PORTFOLIO_QUICK_ACTIONS, ...RESEARCH_QUICK_ACTIONS]) {
+  for (const action of [
+    ...POSITION_QUICK_ACTIONS,
+    ...PORTFOLIO_QUICK_ACTIONS,
+    ...RESEARCH_QUICK_ACTIONS,
+  ]) {
     const candidates = [
       action.label,
       action.apiAction,

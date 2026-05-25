@@ -16,6 +16,8 @@ import { researchTabLabel } from "@/components/ResearchTabBar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { cn } from "@/lib/utils";
 import { resolveActiveChatKey } from "@/lib/chatKeys";
+import type { QuickActionMode } from "@/lib/quickActions";
+import { OPEN_CHAT_EVENT } from "@/lib/scrollToChat";
 import { parseResearchRoute } from "@/lib/symbolRoutes";
 import {
   buildSymbolAlertMap,
@@ -98,6 +100,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     currentChat?.messages.length,
     activeChatKey,
   ]);
+
+  useEffect(() => {
+    const openChat = () => setMobileChatExpanded(true);
+    window.addEventListener(OPEN_CHAT_EVENT, openChat);
+    return () => window.removeEventListener(OPEN_CHAT_EVENT, openChat);
+  }, []);
 
   const researchPositions =
     researchSymbol && positionMap[researchSymbol]
@@ -293,6 +301,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     selectedView === "portfolio" ||
     (selectedView === "research" && !!routeSymbol);
 
+  const researchTab = pathname.split("/")[3];
+  const isPositionTab =
+    selectedView === "research" &&
+    researchTab === "position" &&
+    !!researchSymbol &&
+    (positionMap[researchSymbol]?.length ?? 0) > 0;
+
+  const quickActionMode: QuickActionMode = isPositionTab
+    ? "position"
+    : selectedView;
+
   const portfolioSection = searchParams.get("section");
   const chatContextLabel =
     selectedView === "portfolio"
@@ -311,6 +330,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const chatBoxProps = {
     mode: selectedView,
+    quickActionMode,
     selectedSymbol:
       selectedView === "research"
         ? researchSymbol ?? null
@@ -329,9 +349,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const mobileChatLabel =
     selectedView === "portfolio"
       ? "Ask about your portfolio"
-      : selectedView === "research"
-        ? `Ask about ${researchSymbol ?? "this symbol"}`
-        : `Ask about ${selectedSymbol ?? "this position"}`;
+      : isPositionTab
+        ? `Analyze ${researchSymbol} position`
+        : selectedView === "research"
+          ? `Ask about ${researchSymbol ?? "this symbol"}`
+          : `Ask about ${selectedSymbol ?? "this position"}`;
 
   return (
     <>
