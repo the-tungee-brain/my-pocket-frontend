@@ -92,7 +92,7 @@ export function StrategyJourneyPanel({
           />
         </div>
 
-        {suggestedStocks.length > 0 && onAddSuggestedSymbol && (
+        {onAddSuggestedSymbol && (
           <div className="mb-4">
             <StrategyStockSuggestionsPanel
               picks={suggestedStocks}

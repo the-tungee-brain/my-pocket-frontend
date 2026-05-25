@@ -6,32 +6,18 @@ import type {
 import type { StrategyFormValues } from "@/lib/strategyProfileForm";
 import { isWheelLikeStrategy } from "@/lib/strategyProfileForm";
 
-const WHEEL_LIKE: InvestmentStrategy[] = ["wheel", "csp-income", "covered-call"];
+const SUPPORTED_STRATEGIES: InvestmentStrategy[] = [
+  "wheel",
+  "csp-income",
+  "covered-call",
+  "dividend",
+  "etf-core",
+];
 
-export function needsStrategyStockSuggestions(
+export function supportsStrategyStockSuggestions(
   strategy: InvestmentStrategy | null,
-  profile: UserInvestmentProfile | null,
-): boolean {
-  if (!strategy) return false;
-
-  if (WHEEL_LIKE.includes(strategy)) {
-    return !(profile?.wheel?.wheelSymbols?.length);
-  }
-  if (strategy === "dividend") {
-    return !(profile?.dividend?.dividendSymbols?.length);
-  }
-  if (strategy === "etf-core") {
-    return !Object.keys(profile?.etfCore?.targetAllocation ?? {}).length;
-  }
-  return false;
-}
-
-export function needsStrategyStockSuggestionsFromForm(
-  values: StrategyFormValues,
-): boolean {
-  if (!values.primaryStrategy) return false;
-  if (values.primaryStrategy === "etf-core") return false;
-  return values.symbols.length === 0;
+): strategy is InvestmentStrategy {
+  return strategy !== null && SUPPORTED_STRATEGIES.includes(strategy);
 }
 
 export function buildPreferencesDraftUpdate(
@@ -41,6 +27,7 @@ export function buildPreferencesDraftUpdate(
     optionsExperience: StrategyFormValues["optionsExperience"];
     incomeVsGrowth: StrategyFormValues["incomeVsGrowth"];
   },
+  symbols: string[] = [],
 ): UserInvestmentProfileUpdate {
   const payload: UserInvestmentProfileUpdate = {
     primaryStrategy: strategy,
@@ -51,7 +38,7 @@ export function buildPreferencesDraftUpdate(
 
   if (isWheelLikeStrategy(strategy)) {
     payload.wheel = {
-      wheelSymbols: [],
+      wheelSymbols: symbols,
       targetDeltaMin: 0.2,
       targetDeltaMax: 0.3,
       preferredDteDays: 7,
@@ -61,9 +48,16 @@ export function buildPreferencesDraftUpdate(
 
   if (strategy === "dividend") {
     payload.dividend = {
-      dividendSymbols: [],
+      dividendSymbols: symbols,
       targetYieldPct: prefs.incomeVsGrowth === "income" ? 3.5 : null,
       maxPayoutRatio: 75,
+    };
+  }
+
+  if (strategy === "etf-core") {
+    payload.etfCore = {
+      targetAllocation: {},
+      rebalanceThresholdPct: 5,
     };
   }
 
@@ -78,7 +72,7 @@ export function buildAddSymbolUpdate(
   const strategy = profile.primaryStrategy;
   if (!strategy) return null;
 
-  if (WHEEL_LIKE.includes(strategy)) {
+  if (isWheelLikeStrategy(strategy)) {
     const existing = profile.wheel?.wheelSymbols ?? [];
     if (existing.map((item) => item.toUpperCase()).includes(upper)) return null;
     return {
@@ -100,6 +94,19 @@ export function buildAddSymbolUpdate(
         dividendSymbols: [...existing, upper],
         targetYieldPct: profile.dividend?.targetYieldPct ?? null,
         maxPayoutRatio: profile.dividend?.maxPayoutRatio ?? 75,
+      },
+    };
+  }
+
+  if (strategy === "etf-core") {
+    const existing = profile.etfCore?.targetAllocation ?? {};
+    if (Object.keys(existing).map((item) => item.toUpperCase()).includes(upper)) {
+      return null;
+    }
+    return {
+      etfCore: {
+        targetAllocation: { ...existing, [upper]: 0 },
+        rebalanceThresholdPct: profile.etfCore?.rebalanceThresholdPct ?? 5,
       },
     };
   }

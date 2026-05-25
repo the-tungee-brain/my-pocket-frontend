@@ -12,6 +12,7 @@ type UseStrategyStockSuggestionsOptions = {
   strategy: InvestmentStrategy | null;
   enabled?: boolean;
   prepareProfile?: () => Promise<void>;
+  refreshKey?: string;
 };
 
 export function useStrategyStockSuggestions({
@@ -19,6 +20,7 @@ export function useStrategyStockSuggestions({
   strategy,
   enabled = true,
   prepareProfile,
+  refreshKey = "",
 }: UseStrategyStockSuggestionsOptions) {
   const [suggestions, setSuggestions] = useState<StrategyStockSuggestions | null>(
     null,
@@ -51,7 +53,7 @@ export function useStrategyStockSuggestions({
     } finally {
       setLoading(false);
     }
-  }, [accessToken, strategy, enabled]);
+  }, [accessToken, strategy, enabled, refreshKey]);
 
   useEffect(() => {
     void load();

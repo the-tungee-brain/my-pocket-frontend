@@ -558,9 +558,6 @@ export async function fetchStrategyStockSuggestions(
     `/strategies/${strategy}/stock-suggestions${buildQuery({ limit })}`,
     { method: "GET", accessToken },
   );
-  if (res.status === 409) {
-    throw new Error("Stock suggestions are not available after symbols are chosen.");
-  }
   if (!res.ok) {
     throw new Error(`Failed to load stock suggestions (${res.status})`);
   }

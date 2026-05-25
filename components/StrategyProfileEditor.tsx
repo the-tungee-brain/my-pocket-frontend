@@ -29,7 +29,7 @@ import {
   profileToFormValues,
   type StrategyFormValues,
 } from "@/lib/strategyProfileForm";
-import { needsStrategyStockSuggestionsFromForm } from "@/lib/strategyStockSuggestions";
+import { supportsStrategyStockSuggestions } from "@/lib/strategyStockSuggestions";
 
 type Props = {
   accessToken: string;
@@ -83,14 +83,13 @@ export function StrategyProfileEditor({
     [catalog, values.primaryStrategy],
   );
 
-  const showSymbolSuggestions = needsStrategyStockSuggestionsFromForm(values);
+  const showSymbolSuggestions = supportsStrategyStockSuggestions(
+    values.primaryStrategy,
+  );
 
   const prepareSuggestionsProfile = useCallback(async () => {
     if (!values.primaryStrategy) return;
-    await updateInvestmentProfile(
-      accessToken,
-      formValuesToUpdate({ ...values, symbols: [] }),
-    );
+    await updateInvestmentProfile(accessToken, formValuesToUpdate(values));
   }, [accessToken, values]);
 
   const {
@@ -102,6 +101,14 @@ export function StrategyProfileEditor({
     strategy: values.primaryStrategy,
     enabled: showSymbolSuggestions,
     prepareProfile: prepareSuggestionsProfile,
+    refreshKey: [
+      values.primaryStrategy,
+      values.symbols.join(","),
+      values.etfPrimary,
+      values.etfBond,
+      values.riskTolerance,
+      values.incomeVsGrowth,
+    ].join("|"),
   });
 
   const patch = (partial: Partial<StrategyFormValues>) => {
@@ -234,7 +241,17 @@ export function StrategyProfileEditor({
             </h3>
 
             {values.primaryStrategy === "etf-core" ? (
-              <EtfConfig values={values} onChange={patch} />
+              <>
+                <StrategyStockSuggestionsPanel
+                  picks={suggestions?.picks ?? []}
+                  summary={suggestions?.summary}
+                  loading={suggestionsLoading}
+                  error={suggestionsError}
+                  onAddSymbol={(symbol) => patch({ etfPrimary: symbol.toUpperCase() })}
+                  selectedSymbols={[values.etfPrimary, values.etfBond].filter(Boolean)}
+                />
+                <EtfConfig values={values} onChange={patch} />
+              </>
             ) : (
               <>
                 <StrategyStockSuggestionsPanel
@@ -246,13 +263,13 @@ export function StrategyProfileEditor({
                   selectedSymbols={values.symbols}
                 />
                 <SymbolConfig
-                values={values}
-                symbolInput={symbolInput}
-                onSymbolInputChange={setSymbolInput}
-                searchResults={searchResults}
-                onAddSymbol={addSymbol}
-                onRemoveSymbol={removeSymbol}
-              />
+                  values={values}
+                  symbolInput={symbolInput}
+                  onSymbolInputChange={setSymbolInput}
+                  searchResults={searchResults}
+                  onAddSymbol={addSymbol}
+                  onRemoveSymbol={removeSymbol}
+                />
               </>
             )}
 

@@ -23,7 +23,7 @@ import type {
 } from "@/app/types/strategy";
 import { StrategyStockSuggestionsPanel } from "@/components/StrategyStockSuggestionsPanel";
 import { Button } from "@/components/ui/Button";
-import { buildPreferencesDraftUpdate } from "@/lib/strategyStockSuggestions";
+import { buildPreferencesDraftUpdate, supportsStrategyStockSuggestions } from "@/lib/strategyStockSuggestions";
 import { cn } from "@/lib/utils";
 
 type WizardStep =
@@ -86,18 +86,20 @@ export function StrategyOnboardingWizard({
 
   const showSymbolSuggestions =
     (step === "configure" || step === "review") &&
-    selectedStrategy !== null &&
-    selectedStrategy !== "etf-core" &&
-    symbols.length === 0;
+    supportsStrategyStockSuggestions(selectedStrategy);
 
   const prepareSuggestionsProfile = useCallback(async () => {
     if (!onSaveDraft || !selectedStrategy) return;
     await onSaveDraft(
-      buildPreferencesDraftUpdate(selectedStrategy, {
-        riskTolerance,
-        optionsExperience,
-        incomeVsGrowth,
-      }),
+      buildPreferencesDraftUpdate(
+        selectedStrategy,
+        {
+          riskTolerance,
+          optionsExperience,
+          incomeVsGrowth,
+        },
+        symbols,
+      ),
     );
   }, [
     onSaveDraft,
@@ -105,6 +107,7 @@ export function StrategyOnboardingWizard({
     riskTolerance,
     optionsExperience,
     incomeVsGrowth,
+    symbols,
   ]);
 
   const {
@@ -116,6 +119,14 @@ export function StrategyOnboardingWizard({
     strategy: selectedStrategy,
     enabled: showSymbolSuggestions && !!onSaveDraft,
     prepareProfile: prepareSuggestionsProfile,
+    refreshKey: [
+      selectedStrategy,
+      symbols.join(","),
+      etfPrimary,
+      etfBond,
+      riskTolerance,
+      incomeVsGrowth,
+    ].join("|"),
   });
 
   const topPick = suggestions?.picks?.[0] ?? null;
@@ -364,6 +375,14 @@ export function StrategyOnboardingWizard({
                     Set a simple two-fund core allocation. You can adjust this
                     later.
                   </p>
+                  <StrategyStockSuggestionsPanel
+                    picks={suggestions?.picks ?? []}
+                    summary={suggestions?.summary}
+                    loading={suggestionsLoading}
+                    error={suggestionsError}
+                    onAddSymbol={(symbol) => setEtfPrimary(symbol.toUpperCase())}
+                    selectedSymbols={[etfPrimary, etfBond].filter(Boolean)}
+                  />
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block text-xs text-muted">
                       Stock ETF
@@ -465,58 +484,73 @@ export function StrategyOnboardingWizard({
               ) : (
                 <ReviewRow label="Symbols" value={symbols.join(", ") || "—"} />
               )}
-              {selectedStrategy !== "etf-core" && symbols.length === 0 && (
+              {selectedStrategy !== "etf-core" && (
                 <div className="rounded-xl border border-accent/25 bg-accent-muted/15 p-3">
-                  {suggestionsLoading && (
-                    <p className="text-xs text-muted">
-                      Loading your top symbol suggestion…
-                    </p>
-                  )}
-                  {!suggestionsLoading && topPick && (
+                  {symbols.length === 0 && (
                     <>
-                      <div className="flex items-start gap-2">
-                        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-foreground">
-                            Use our top pick for your strategy?
+                      {suggestionsLoading && (
+                        <p className="text-xs text-muted">
+                          Loading your top symbol suggestion…
+                        </p>
+                      )}
+                      {!suggestionsLoading && topPick && (
+                        <>
+                          <div className="flex items-start gap-2">
+                            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-foreground">
+                                Use our top pick for your strategy?
+                              </p>
+                              <p className="mt-1 text-xs leading-relaxed text-muted">
+                                {topPick.companyName
+                                  ? `${topPick.symbol} · ${topPick.companyName}`
+                                  : topPick.symbol}
+                                {topPick.fitScore > 0
+                                  ? ` · ${Math.round(topPick.fitScore * 100)}% fit`
+                                  : ""}
+                              </p>
+                              <p className="mt-2 text-xs leading-relaxed text-muted">
+                                {topPick.rationale}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button size="sm" onClick={() => addSymbol(topPick.symbol)}>
+                              Use top pick · {topPick.symbol}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setStep("configure")}>
+                              Choose manually
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                      {!suggestionsLoading && !topPick && (
+                        <>
+                          <p className="text-xs text-muted">
+                            Pick at least one symbol before starting your journey.
                           </p>
-                          <p className="mt-1 text-xs leading-relaxed text-muted">
-                            {topPick.companyName
-                              ? `${topPick.symbol} · ${topPick.companyName}`
-                              : topPick.symbol}
-                            {topPick.fitScore > 0
-                              ? ` · ${Math.round(topPick.fitScore * 100)}% fit`
-                              : ""}
-                          </p>
-                          <p className="mt-2 text-xs leading-relaxed text-muted">
-                            {topPick.rationale}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button size="sm" onClick={() => addSymbol(topPick.symbol)}>
-                          Use top pick · {topPick.symbol}
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => setStep("configure")}>
-                          Choose manually
-                        </Button>
-                      </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-3"
+                            onClick={() => setStep("configure")}
+                          >
+                            Choose symbols
+                          </Button>
+                        </>
+                      )}
                     </>
                   )}
-                  {!suggestionsLoading && !topPick && (
-                    <>
-                      <p className="text-xs text-muted">
-                        Pick at least one symbol before starting your journey.
-                      </p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-3"
-                        onClick={() => setStep("configure")}
-                      >
-                        Choose symbols
-                      </Button>
-                    </>
+                  {symbols.length > 0 && (
+                    <StrategyStockSuggestionsPanel
+                      picks={suggestions?.picks ?? []}
+                      summary={suggestions?.summary}
+                      loading={suggestionsLoading}
+                      error={suggestionsError}
+                      onAddSymbol={addSymbol}
+                      selectedSymbols={symbols}
+                      compact
+                    />
                   )}
                 </div>
               )}
