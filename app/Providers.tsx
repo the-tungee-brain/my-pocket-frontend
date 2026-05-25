@@ -18,7 +18,7 @@ import {
   loadPersistedChat,
   persistChatState,
 } from "@/lib/chatPersistence";
-import { formatQuickActionMessage, getQuickActionApiAction, isFreeFormQuickAction } from "@/lib/quickActions";
+import { formatQuickActionMessage, getQuickActionApiAction, isFreeFormQuickAction, isStructuredAnalyzeAction } from "@/lib/quickActions";
 import { scrollToAssistantChat } from "@/lib/scrollToChat";
 import type { SchwabReauthDetail } from "@/lib/schwabReauth";
 import {
@@ -743,6 +743,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
             ? selectedSymbol
             : (selectedSymbol ?? "UNKNOWN");
 
+      const structuredAnalyze = isStructuredAnalyzeAction(actionId);
       const freeForm = isFreeFormQuickAction(actionId);
 
       const streamer = createStreamingAssistantUpdater(
@@ -777,7 +778,10 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
               account: account,
               positions: positionsForSelectedSymbol ?? [],
               symbol: symbolForApi,
-              action: freeForm ? "free-form" : getQuickActionApiAction(actionId),
+              action:
+                structuredAnalyze || freeForm
+                  ? "free-form"
+                  : getQuickActionApiAction(actionId),
               prompt: freeForm ? userMessage.content : null,
               user_display_message: userMessage.content,
               model: state.model,

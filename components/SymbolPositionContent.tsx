@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { usePositionsContext } from "@/app/Providers";
-import { AccountPositionList } from "@/components/AccountPositionList";
+import { AnalysisPanel } from "@/components/AnalysisPanel";
 import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
 import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
 import { TaxWashSaleStrip } from "@/components/TaxWashSaleStrip";
@@ -21,6 +21,7 @@ import {
 import type { TaxAlertItem } from "@/lib/intelligence";
 import type { ProactiveAlert } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
+import { scrollToChat } from "@/lib/scrollToChat";
 import { BriefcaseBusiness } from "lucide-react";
 
 type Props = {
@@ -112,6 +113,10 @@ export function SymbolPositionContent({ symbol }: Props) {
     [chatKey, symbolUpper, sendQuickAction, positionsForSelectedSymbol],
   );
 
+  const handleAskFollowUp = useCallback(() => {
+    scrollToChat();
+  }, []);
+
   if (!hasPosition) {
     return (
       <EmptyState
@@ -158,9 +163,12 @@ export function SymbolPositionContent({ symbol }: Props) {
         </div>
       )}
 
-      <AccountPositionList
-        positionsForSelectedSymbol={positionsForSelectedSymbol}
-        selectedSymbol={symbolUpper}
+      <AnalysisPanel
+        mode="symbol"
+        symbol={symbolUpper}
+        positions={positionsForSelectedSymbol}
+        className="mx-auto max-w-3xl"
+        onAskFollowUp={handleAskFollowUp}
       />
 
       {accessToken && (

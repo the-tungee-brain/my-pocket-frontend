@@ -29,6 +29,13 @@ export type QuickAction = {
 
 export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
   {
+    id: "portfolio-review",
+    label: "Analyze",
+    apiAction: "free-form",
+    message: (target) => `Analyze ${target}.`,
+    icon: Sparkles,
+  },
+  {
     id: "daily-summary",
     label: "Daily summary",
     apiAction: "daily summary",
@@ -81,12 +88,14 @@ export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
 export const POSITION_QUICK_ACTIONS: QuickAction[] = [
   {
     id: "position-review",
-    label: "Analyze position",
+    label: "Analyze",
+    apiAction: "free-form",
+    message: (target) => `Analyze my ${target} position.`,
     icon: Sparkles,
-    prompt: (target) =>
-      `Review my ${target} position — holdings, P/L, options exposure, and the top action I should take today.`,
   },
-  ...PORTFOLIO_QUICK_ACTIONS.filter((action) => action.id !== "concentration-check"),
+  ...PORTFOLIO_QUICK_ACTIONS.filter(
+    (action) => action.id !== "concentration-check" && action.id !== "portfolio-review",
+  ),
 ];
 
 export const RESEARCH_QUICK_ACTIONS: QuickAction[] = [
@@ -161,6 +170,10 @@ export function formatQuickActionMessage(
 
 export function isFreeFormQuickAction(actionId: string): boolean {
   return !!findQuickAction(actionId)?.prompt;
+}
+
+export function isStructuredAnalyzeAction(actionId: string): boolean {
+  return actionId === "position-review" || actionId === "portfolio-review";
 }
 
 function normalizeActionKey(value: string): string {

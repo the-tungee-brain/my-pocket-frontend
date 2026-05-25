@@ -21,9 +21,14 @@ type InFlightEntry = {
 const cache = new Map<string, { content: string }>();
 const inFlight = new Map<string, InFlightEntry>();
 
-function makeKey(label: string, positions: Position[]): string {
+function makeKey(
+  label: string,
+  positions: Position[],
+  prompt?: string | null,
+): string {
   return JSON.stringify({
     label,
+    prompt: prompt ?? null,
     positions: positions.map((p) => ({
       symbol: p.instrument.symbol,
       longQuantity: p.longQuantity,
@@ -39,10 +44,18 @@ export function useInsights(
     account: SchwabAccounts | null;
     accessToken: string | null;
     enabled?: boolean;
+    prompt?: string | null;
   },
   model: string = "gpt-5.4",
 ): InsightState {
-  const { label, positions, account, accessToken, enabled = false } = opts;
+  const {
+    label,
+    positions,
+    account,
+    accessToken,
+    enabled = false,
+    prompt = null,
+  } = opts;
   const [retryCount, setRetryCount] = useState(0);
   const [state, setState] = useState<Omit<InsightState, "refetch">>({
     loading: false,
@@ -52,9 +65,9 @@ export function useInsights(
 
   const refetch = useCallback(() => {
     if (!label || !positions?.length) return;
-    cache.delete(makeKey(label, positions));
+    cache.delete(makeKey(label, positions, prompt));
     setRetryCount((c) => c + 1);
-  }, [label, positions]);
+  }, [label, positions, prompt]);
 
   useEffect(() => {
     if (
@@ -70,7 +83,7 @@ export function useInsights(
       return;
     }
 
-    const key = makeKey(label, positions);
+    const key = makeKey(label, positions, prompt);
 
     const cached = cache.get(key);
     if (cached) {
@@ -139,7 +152,7 @@ export function useInsights(
             positions,
             symbol: label === "PORTFOLIO" ? null : label,
             action: "free-form",
-            prompt: null,
+            prompt,
             model,
           },
           accessToken,
@@ -170,7 +183,7 @@ export function useInsights(
       cancelled = true;
       entry!.listeners.delete(listener);
     };
-  }, [label, positions, account, accessToken, model, retryCount, enabled]);
+  }, [label, positions, account, accessToken, model, prompt, retryCount, enabled]);
 
   return { ...state, refetch };
 }

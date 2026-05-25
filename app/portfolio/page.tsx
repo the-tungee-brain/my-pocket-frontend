@@ -10,7 +10,7 @@ import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { PortfolioAttentionSection, countAttentionItems } from "@/components/PortfolioAttentionSection";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
-import { PortfolioOverview } from "@/components/PortfolioOverview";
+import { AnalysisPanel } from "@/components/AnalysisPanel";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
 import { StrategyJourneyPanel } from "@/components/StrategyJourneyPanel";
 import { StrategyOnboardingWizard } from "@/components/StrategyOnboardingWizard";
@@ -36,6 +36,7 @@ import {
   isStrategyOnboardingDismissed,
 } from "@/lib/onboardingStorage";
 import { scrollToChat } from "@/lib/scrollToChat";
+import { ANALYZE_PORTFOLIO_EVENT, PORTFOLIO_ANALYSIS_SECTION_ID } from "@/lib/positionAnalysis";
 import { buildAddSymbolUpdate } from "@/lib/strategyStockSuggestions";
 
 export default function PortfolioPage() {
@@ -62,10 +63,35 @@ export default function PortfolioPage() {
   const defaultTabApplied = useRef(false);
   const [showStrategySetup, setShowStrategySetup] = useState(false);
   const [strategyDismissed, setStrategyDismissed] = useState(true);
+  const [pendingPortfolioAnalysis, setPendingPortfolioAnalysis] = useState(false);
 
   useEffect(() => {
     setStrategyDismissed(isStrategyOnboardingDismissed());
   }, []);
+
+  useEffect(() => {
+    const openHoldingsForAnalysis = () => {
+      setActiveSection("holdings");
+      setPendingPortfolioAnalysis(true);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          document
+            .getElementById(PORTFOLIO_ANALYSIS_SECTION_ID)
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+    };
+
+    window.addEventListener(ANALYZE_PORTFOLIO_EVENT, openHoldingsForAnalysis);
+    return () =>
+      window.removeEventListener(ANALYZE_PORTFOLIO_EVENT, openHoldingsForAnalysis);
+  }, [setActiveSection]);
+
+  useEffect(() => {
+    if (activeSection !== "holdings" || !pendingPortfolioAnalysis) return;
+    const timer = window.setTimeout(() => setPendingPortfolioAnalysis(false), 0);
+    return () => window.clearTimeout(timer);
+  }, [activeSection, pendingPortfolioAnalysis]);
 
   const {
     catalog,
@@ -385,15 +411,17 @@ export default function PortfolioPage() {
 
       {showContent && activeSection === "holdings" && (
         <>
-          <PortfolioOverview
-            className="mb-4"
-            loading={loading}
-            allPositions={allPositions}
+          <AnalysisPanel
+            mode="portfolio"
+            positions={allPositions}
             positionMap={positionMap}
             liquidationValue={
               account?.securitiesAccount.currentBalances.liquidationValue
             }
             symbolAlertMap={symbolAlertMap}
+            className="mx-auto mb-4 max-w-3xl"
+            autoStart={pendingPortfolioAnalysis}
+            onAskFollowUp={() => scrollToChat()}
           />
 
           <PortfolioRiskSection

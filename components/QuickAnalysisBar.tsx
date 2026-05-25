@@ -1,7 +1,10 @@
 "use client";
 
 import type { QuickActionMode } from "@/lib/quickActions";
-import { getQuickActionsForMode } from "@/lib/quickActions";
+import {
+  getQuickActionsForMode,
+  isStructuredAnalyzeAction,
+} from "@/lib/quickActions";
 
 interface QuickAnalysisBarProps {
   actionMode: QuickActionMode;
@@ -16,7 +19,11 @@ export function QuickAnalysisBar({
   loading,
   onRunAction,
 }: QuickAnalysisBarProps) {
-  const actions = getQuickActionsForMode(actionMode);
+  const actions = getQuickActionsForMode(actionMode).filter(
+    (action) => !isStructuredAnalyzeAction(action.id),
+  );
+
+  if (actions.length === 0) return null;
 
   return (
     <fieldset className="mb-1 flex flex-wrap gap-2">
