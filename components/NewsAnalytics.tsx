@@ -7,6 +7,8 @@ import type {
 } from "@/app/hooks/useCompanyNews";
 import { cn } from "@/lib/utils";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
+import { RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 function sentimentColor(sentiment: Sentiment) {
   switch (sentiment) {
@@ -69,12 +71,14 @@ type Props = {
   analytics: StockNewsView | null;
   isLoading: boolean;
   lastUpdated?: number | null;
+  onRefresh?: () => void;
 };
 
 export default function NewsAnalytics({
   analytics,
   isLoading,
   lastUpdated = null,
+  onRefresh,
 }: Props) {
   const data = analytics;
 
@@ -112,13 +116,31 @@ export default function NewsAnalytics({
                 : "Loading…"}
             </span>
           </div>
-          <span className="text-[11px] text-muted">
-            {isLoading
-              ? updatedLabel
-                ? `${updatedLabel} · Updating…`
-                : "Updating…"
-              : updatedLabel}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted">
+              {isLoading
+                ? updatedLabel
+                  ? `${updatedLabel} · Updating…`
+                  : "Updating…"
+                : updatedLabel}
+            </span>
+            {onRefresh && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2"
+                onClick={onRefresh}
+                disabled={isLoading}
+                aria-label="Refresh news"
+              >
+                <RefreshCw
+                  className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}
+                  aria-hidden
+                />
+              </Button>
+            )}
+          </div>
         </div>
 
         <p className="mb-3 text-sm text-foreground">

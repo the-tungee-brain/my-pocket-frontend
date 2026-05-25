@@ -50,6 +50,7 @@ type UseCompanyNewsResult = {
   error: string | null;
   lastUpdated: number | null;
   refetch: () => void;
+  refresh: () => void;
 };
 
 const newsCache = new Map<string, CachedNews>();
@@ -66,6 +67,29 @@ function cacheNews(key: string, data: StockNewsView): number {
   const fetchedAt = Date.now();
   newsCache.set(key, { data, fetchedAt });
   return fetchedAt;
+}
+
+function buildCompanyNewsUrl(symbol: string, refresh = false): string {
+  const params = new URLSearchParams({ symbol });
+  if (refresh) {
+    params.set("refresh", "true");
+  }
+  return `/get-company-news?${params.toString()}`;
+}
+
+async function fetchCompanyNews(
+  symbol: string,
+  accessToken: string,
+  refresh = false,
+): Promise<StockNewsView> {
+  const res = await apiFetch(buildCompanyNewsUrl(symbol, refresh), {
+    method: "GET",
+    accessToken,
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch news analytics");
+
+  return res.json();
 }
 
 export function useCompanyNews(
@@ -142,17 +166,7 @@ export function useCompanyNews(
 
     (async () => {
       try {
-        const res = await apiFetch(
-          `/get-company-news?symbol=${encodeURIComponent(key)}`,
-          {
-            method: "GET",
-            accessToken,
-          },
-        );
-
-        if (!res.ok) throw new Error("Failed to fetch news analytics");
-
-        const data: StockNewsView = await res.json();
+        const data = await fetchCompanyNews(key, accessToken, false);
         cacheNews(key, data);
 
         for (const l of entry!.listeners) {
@@ -174,28 +188,18 @@ export function useCompanyNews(
     };
   }, [key, accessToken, enabled]);
 
-  const refetch = () => {
-    if (!key || !accessToken) return;
+  const refresh = () => {
+    if (!key || !accessToken || isLoading) return;
 
     newsCache.delete(key);
     inFlightNews.delete(key);
 
-    (async () => {
+    void (async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const res = await apiFetch(
-          `/get-company-news?symbol=${encodeURIComponent(key)}`,
-          {
-            method: "GET",
-            accessToken,
-          },
-        );
-
-        if (!res.ok) throw new Error("Failed to fetch news analytics");
-
-        const data: StockNewsView = await res.json();
+        const data = await fetchCompanyNews(key, accessToken, true);
         const fetchedAt = cacheNews(key, data);
         setAnalytics(data);
         setLastUpdated(fetchedAt);
@@ -207,5 +211,5 @@ export function useCompanyNews(
     })();
   };
 
-  return { analytics, isLoading, error, lastUpdated, refetch };
+  return { analytics, isLoading, error, lastUpdated, refetch: refresh, refresh };
 }

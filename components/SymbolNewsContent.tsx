@@ -17,7 +17,7 @@ export function SymbolNewsContent({ symbol }: Props) {
     isLoading,
     error,
     lastUpdated,
-    refetch,
+    refresh,
   } = useCompanyNews(symbol, accessToken);
 
   return (
@@ -27,7 +27,8 @@ export function SymbolNewsContent({ symbol }: Props) {
       isLoading={isLoading}
       error={error}
       lastUpdated={lastUpdated}
-      onRetry={refetch}
+      onRetry={refresh}
+      onRefresh={refresh}
     />
   );
 }

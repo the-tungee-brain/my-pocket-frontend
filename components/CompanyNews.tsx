@@ -13,6 +13,7 @@ type Props = {
   error: string | null;
   lastUpdated?: number | null;
   onRetry: () => void;
+  onRefresh?: () => void;
   symbol?: string;
 };
 
@@ -22,6 +23,7 @@ export function CompanyNews({
   error,
   lastUpdated = null,
   onRetry,
+  onRefresh,
   symbol,
 }: Props) {
   return (
@@ -42,6 +44,7 @@ export function CompanyNews({
             analytics={analytics}
             isLoading={isLoading}
             lastUpdated={lastUpdated}
+            onRefresh={onRefresh}
           />
         )}
 
