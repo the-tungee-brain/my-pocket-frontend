@@ -20,7 +20,6 @@ import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useMorningBrief } from "@/app/hooks/useMorningBrief";
 import type { AttentionItem, ProactiveAlert } from "@/app/types/intelligence";
-import type { StrategyNextAction } from "@/app/types/strategy";
 import {
   alertToQuickActionId,
   buildLocalPortfolioBrief,
@@ -41,7 +40,6 @@ import {
   PORTFOLIO_ANALYSIS_SECTION_ID,
   requestPortfolioAnalysis,
 } from "@/lib/positionAnalysis";
-import { buildAddSymbolUpdate } from "@/lib/strategyStockSuggestions";
 
 export default function PortfolioPage() {
   const {
@@ -99,13 +97,10 @@ export default function PortfolioPage() {
     catalog,
     profile: strategyProfile,
     journey,
-    recommendations,
     needsOnboarding,
     loading: strategyLoading,
     chooseStrategy,
     completeOnboarding,
-    markStep,
-    refreshRecommendations,
     saveProfile,
   } = useStrategyJourney(sessionAccessToken ?? undefined);
 
@@ -196,22 +191,6 @@ export default function PortfolioPage() {
     [refetchMorningBrief, sessionAccessToken],
   );
 
-  const handleStrategyAction = useCallback(
-    (action: StrategyNextAction) => {
-      if (action.actionId) {
-        void sendQuickAction({
-          activeChatKey: "__PORTFOLIO_CHAT__",
-          selectedView: "portfolio",
-          selectedSymbol: action.symbol ?? null,
-          positionsForSelectedSymbol: allPositions,
-          actionId: action.actionId,
-        });
-        scrollToChat();
-      }
-    },
-    [allPositions, sendQuickAction],
-  );
-
   const handleCompleteStrategyOnboarding = useCallback(
     async (payload: Parameters<typeof completeOnboarding>[0]) => {
       if (!payload.primaryStrategy) return;
@@ -229,17 +208,6 @@ export default function PortfolioPage() {
     setStrategyDismissed(true);
     setShowStrategySetup(false);
   }, []);
-
-  const handleAddSuggestedSymbol = useCallback(
-    async (symbol: string) => {
-      if (!strategyProfile) return;
-      const update = buildAddSymbolUpdate(strategyProfile, symbol);
-      if (!update) return;
-      await saveProfile(update);
-      await refreshRecommendations();
-    },
-    [refreshRecommendations, saveProfile, strategyProfile],
-  );
 
   const handleAnalyzePortfolio = useCallback(() => {
     requestPortfolioAnalysis();
@@ -337,13 +305,7 @@ export default function PortfolioPage() {
       {showStrategyJourney && journey && (
         <StrategyJourneyPanel
           journey={journey}
-          recommendations={recommendations}
-          onRunAction={handleStrategyAction}
-          onAddSuggestedSymbol={(symbol) => void handleAddSuggestedSymbol(symbol)}
-          onMarkLearned={(stepId) =>
-            void markStep(stepId, "completed").then(() => refreshRecommendations())
-          }
-          hideNextActions={todayBadgeCount > 0}
+          catalogItem={catalog.find((item) => item.id === journey.strategy) ?? null}
         />
       )}
 
