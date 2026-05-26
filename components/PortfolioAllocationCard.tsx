@@ -9,17 +9,21 @@ import { formatUsd } from "@/lib/formatCurrency";
 import { cn } from "@/lib/utils";
 
 function statusTone(status: string): string {
-  if (status.startsWith("CRITICAL") || status.startsWith("HIGH")) {
+  if (
+    status.startsWith("Too large") ||
+    status.startsWith("Very large")
+  ) {
     return "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400";
   }
-  if (status.startsWith("ELEVATED") || status.startsWith("ABOVE")) {
+  if (
+    status.startsWith("Large") ||
+    status.startsWith("Above your") ||
+    status.startsWith("Above ETF")
+  ) {
     return "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300";
   }
-  if (status.includes("UNDERWEIGHT")) {
+  if (status.startsWith("Below ETF") || status.startsWith("Small position")) {
     return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
-  }
-  if (status.includes("OVERWEIGHT")) {
-    return "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300";
   }
   return "border-border/80 bg-background/60 text-muted";
 }
@@ -89,8 +93,8 @@ export function PortfolioAllocationIntro() {
         Your money map
       </p>
       <p className="mt-1 text-xs leading-relaxed text-muted">
-        Precomputed from your Schwab cash, CSP reserves, and position weights —
-        how much you can deploy and where concentration risk sits.
+        Where your cash is, how much you can invest, and whether any single
+        stock takes up too much of your portfolio.
       </p>
     </div>
   );
@@ -110,7 +114,7 @@ export function PortfolioAllocationCard({
     <div className={cn("space-y-4", className)}>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <MetricChip
-          label="Deployable cash"
+          label="Cash to invest"
           value={formatUsd(cashMap.deployableCash, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
@@ -118,7 +122,7 @@ export function PortfolioAllocationCard({
           accent="positive"
         />
         <MetricChip
-          label="Total to redeploy"
+          label="Total if you trim + invest"
           value={formatUsd(cashMap.totalToRedeploy, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
@@ -126,11 +130,11 @@ export function PortfolioAllocationCard({
           accent="positive"
         />
         <MetricChip
-          label="Top holding"
+          label="Biggest holding"
           value={`${c.top1Pct.toFixed(1)}%`}
         />
         <MetricChip
-          label="Max single name"
+          label="Max per stock"
           value={`${c.singleNameLimitPct.toFixed(0)}%`}
         />
       </div>
@@ -202,7 +206,7 @@ export function PortfolioAllocationCard({
             <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-3">
               <div className="mb-2 flex items-center gap-2">
                 <Scissors className="h-4 w-4 text-red-600 dark:text-red-400" aria-hidden />
-                <p className="text-sm font-semibold text-foreground">Trim first</p>
+                <p className="text-sm font-semibold text-foreground">Trim oversized positions</p>
               </div>
               <ul className="space-y-2 text-xs">
                 {trimPlan.map((item) => (
@@ -234,7 +238,7 @@ export function PortfolioAllocationCard({
                   className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
                   aria-hidden
                 />
-                <p className="text-sm font-semibold text-foreground">Deploy plan</p>
+                <p className="text-sm font-semibold text-foreground">Where to invest next</p>
               </div>
               <ul className="space-y-2 text-xs">
                 {deployPlan.map((item) => (
