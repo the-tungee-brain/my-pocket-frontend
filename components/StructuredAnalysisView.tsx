@@ -36,9 +36,7 @@ export function StructuredAnalysisView({
   return (
     <div className={cn("space-y-4", className)}>
       <div className="rounded-xl border border-border bg-background/60 px-4 py-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-          Summary
-        </p>
+        <p className="text-[11px] font-medium text-muted">Overview</p>
         <p className="mt-2 text-sm leading-relaxed text-foreground">
           {analysis.summary}
         </p>
@@ -49,8 +47,8 @@ export function StructuredAnalysisView({
           <div className="flex items-start gap-2">
             <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" />
             <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-accent-strong">
-                Recommended next step
+              <p className="text-[11px] font-medium text-accent-strong">
+                What I&apos;d do next
               </p>
               <p className="mt-1 text-sm font-semibold text-foreground">
                 {analysis.recommendedAction.title}
@@ -70,9 +68,7 @@ export function StructuredAnalysisView({
 
       {analysis.sections.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Details
-          </p>
+          <p className="text-[11px] font-medium text-muted">More detail</p>
           {analysis.sections.map((section, index) => {
             const expanded = expandedSections.has(index);
 
@@ -103,7 +99,10 @@ export function StructuredAnalysisView({
                   <div className="border-t border-border/70 px-4 py-3">
                     {section.body && (
                       <div className="text-sm leading-relaxed text-muted">
-                        <MarkdownRenderer content={section.body} />
+                        <MarkdownRenderer
+                          content={section.body}
+                          variant="conversational"
+                        />
                       </div>
                     )}
                     {section.bullets && section.bullets.length > 0 && (

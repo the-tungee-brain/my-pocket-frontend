@@ -1,6 +1,6 @@
 "use client";
 
-import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { ConversationalMarkdown } from "@/components/ui/ConversationalMarkdown";
 
 type StreamingResearchContentProps = {
   markdown: string;
@@ -11,16 +11,13 @@ type StreamingResearchContentProps = {
 export function StreamingResearchContent({
   markdown,
   isStreaming,
-  statusLabel = "Generating…",
+  statusLabel = "Still writing…",
 }: StreamingResearchContentProps) {
   return (
     <div className="space-y-3">
-      <MarkdownRenderer content={markdown} />
-      {isStreaming && (
-        <p className="flex items-center gap-2 text-xs text-muted">
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-          {statusLabel}
-        </p>
+      <ConversationalMarkdown content={markdown} isStreaming={isStreaming} />
+      {isStreaming && markdown.trim().length > 0 && (
+        <p className="text-xs text-muted">{statusLabel}</p>
       )}
     </div>
   );

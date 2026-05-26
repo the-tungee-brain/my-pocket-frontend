@@ -18,7 +18,7 @@ import { StructuredAnalysisView } from "@/components/StructuredAnalysisView";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import { AlertBadge } from "@/components/AlertBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { ConversationalMarkdown } from "@/components/ui/ConversationalMarkdown";
 import { usePositionsContext } from "@/app/Providers";
 import { useInsights } from "@/app/hooks/useInsights";
 import { Position } from "@/app/types/schwab";
@@ -776,7 +776,12 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
                   loading={loading}
                 />
               ) : (
-                content && <MarkdownRenderer content={content} />
+                content && (
+                  <ConversationalMarkdown
+                    content={content}
+                    isStreaming={loading}
+                  />
+                )
               )}
             </div>
           )}

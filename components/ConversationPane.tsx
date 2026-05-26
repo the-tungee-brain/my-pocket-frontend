@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bot, Check, Copy, Trash2, User } from "lucide-react";
-import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { ConversationalMarkdown } from "@/components/ui/ConversationalMarkdown";
 import { ChatFollowUpChips } from "@/components/ChatFollowUpChips";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 import {
@@ -150,6 +150,9 @@ export function ConversationPane({
       >
         {messages.map((m, idx) => {
           const isAssistant = m.role === "assistant";
+          const isLastAssistant =
+            isAssistant &&
+            messages.findLastIndex((mm) => mm.role === "assistant") === idx;
           const isLastUser =
             m.role === "user" &&
             messages.findLastIndex((mm) => mm.role === "user") === idx;
@@ -177,13 +180,22 @@ export function ConversationPane({
               <div
                 aria-label={isAssistant ? "Assistant message" : "Your message"}
                 className={cn(
-                  "min-w-0 max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                  "min-w-0 rounded-2xl px-4 py-3 text-sm leading-relaxed",
                   isAssistant
-                    ? "border border-border bg-surface-elevated text-foreground"
-                    : "bg-secondary text-foreground",
+                    ? "max-w-[min(100%,42rem)] border border-border bg-surface-elevated text-foreground"
+                    : "max-w-[85%] bg-secondary text-foreground",
                 )}
               >
-                <MarkdownRenderer content={m.content} />
+                {isAssistant ? (
+                  <ConversationalMarkdown
+                    content={m.content}
+                    isStreaming={loading && isLastAssistant && !!m.content}
+                  />
+                ) : (
+                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                    {m.content}
+                  </p>
+                )}
                 {isAssistant && m.content && (
                   <div className="mt-2 border-t border-border pt-2">
                     <CopyMessageButton content={m.content} />

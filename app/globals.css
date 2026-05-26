@@ -103,6 +103,27 @@ body {
   margin-block: 0.375rem;
 }
 
+/* Long AI replies — readable measure, friendly rhythm */
+.conversational-analysis {
+  max-width: 42rem;
+}
+
+.conversational-markdown > :first-child {
+  margin-top: 0;
+}
+
+.conversational-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.conversational-markdown :is(ol, ul) {
+  padding-inline-start: 1.25rem;
+}
+
+.conversational-markdown li::marker {
+  color: var(--muted);
+}
+
 .scrollbar-dark {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
