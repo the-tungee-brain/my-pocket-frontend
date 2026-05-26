@@ -308,7 +308,20 @@ export function hasPortfolioBriefContent(
   );
 }
 
-export function hasSymbolIntelligenceContent(
+export function hasSymbolOptionsContent(
+  intelligence: SymbolIntelligence | null,
+): boolean {
+  if (!intelligence) return false;
+  return (
+    (intelligence.optionsScorecard?.coveredCallCandidates?.length ?? 0) > 0 ||
+    (intelligence.optionsScorecard?.cspCandidates?.length ?? 0) > 0 ||
+    (intelligence.optionsScorecard?.assignmentFlags?.length ?? 0) > 0 ||
+    (intelligence.optionChainPreview?.rows?.length ?? 0) > 0 ||
+    (intelligence.rollSuggestions?.length ?? 0) > 0
+  );
+}
+
+export function hasSymbolResearchIntelligenceContent(
   intelligence: SymbolIntelligence | null,
 ): boolean {
   if (!intelligence) return false;
@@ -317,14 +330,19 @@ export function hasSymbolIntelligenceContent(
     (intelligence.peerComparison?.peers?.length ?? 0) > 0 ||
     !!intelligence.peerComparison?.summary ||
     (intelligence.eventTimeline?.length ?? 0) > 0 ||
-    (intelligence.optionsScorecard?.coveredCallCandidates?.length ?? 0) > 0 ||
-    (intelligence.optionsScorecard?.cspCandidates?.length ?? 0) > 0 ||
-    (intelligence.optionsScorecard?.assignmentFlags?.length ?? 0) > 0 ||
-    (intelligence.optionChainPreview?.rows?.length ?? 0) > 0 ||
-    (intelligence.rollSuggestions?.length ?? 0) > 0 ||
     !!intelligence.cachedResearch?.investmentThesis ||
     (intelligence.cachedResearch?.keyStrengths?.length ?? 0) > 0 ||
     (intelligence.cachedResearch?.keyRisks?.length ?? 0) > 0
+  );
+}
+
+export function hasSymbolIntelligenceContent(
+  intelligence: SymbolIntelligence | null,
+): boolean {
+  if (!intelligence) return false;
+  return (
+    hasSymbolResearchIntelligenceContent(intelligence) ||
+    hasSymbolOptionsContent(intelligence)
   );
 }
 

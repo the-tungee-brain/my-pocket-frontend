@@ -27,8 +27,7 @@ export function CompanyNews({
   symbol,
 }: Props) {
   return (
-    <section className="mt-6 flex justify-center">
-      <div className="w-full max-w-3xl">
+    <section className="w-full">
         {isLoading && (
           <ThinkingSpinner message="Fetching and analyzing news" />
         )}
@@ -60,7 +59,6 @@ export function CompanyNews({
             variant="solid"
           />
         )}
-      </div>
     </section>
   );
 }

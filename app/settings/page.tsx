@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { StrategyProfileEditor } from "@/components/StrategyProfileEditor";
 import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
 import type { StrategyFormValues } from "@/lib/strategyProfileForm";
+import { pageFormClass } from "@/lib/pageLayout";
+import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -26,14 +28,14 @@ export default function SettingsPage() {
 
   if (!accessToken) {
     return (
-      <div className="mx-auto max-w-2xl py-8 text-sm text-muted">
+      <div className={cn(pageFormClass, "py-8 text-sm text-muted")}>
         Sign in to manage your strategy settings.
       </div>
     );
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl pb-8">
+    <div className={cn(pageFormClass, "pb-8")}>
       <div className="mb-6">
         <Link
           href="/portfolio"

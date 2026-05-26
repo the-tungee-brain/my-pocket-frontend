@@ -32,7 +32,7 @@ type Step = {
 
 const CORE_STEP_IDS = ["connect", "holdings", "assistant"] as const;
 
-export function PortfolioOnboarding() {
+export function PortfolioOnboarding({ className }: { className?: string }) {
   const { authorized: schwabAuthorized, loading: schwabLoading } =
     useSchwabStatus();
   const { allPositions, chatBySymbol, loading: positionsLoading } =
@@ -128,7 +128,7 @@ export function PortfolioOnboarding() {
   };
 
   return (
-    <section className="mx-auto mb-4 w-full max-w-3xl">
+    <section className={cn("mx-auto mb-4 w-full", className)}>
       <div className="rounded-2xl border border-accent/30 bg-accent-muted/40 p-4 shadow-sm">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>

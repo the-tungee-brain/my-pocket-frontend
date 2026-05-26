@@ -25,7 +25,7 @@ export function PortfolioSectionTabBar({
   return (
     <div
       className={cn(
-        "mx-auto mb-4 flex w-full max-w-3xl rounded-xl border border-border bg-secondary p-1",
+        "mx-auto mb-4 flex w-full rounded-xl border border-border bg-secondary p-1",
         className,
       )}
       role="tablist"

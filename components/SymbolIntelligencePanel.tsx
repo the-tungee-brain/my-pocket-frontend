@@ -15,29 +15,34 @@ import {
   ExternalLink,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, Fragment } from "react";
 import type {
+  EventTimelineEntry,
   IntelligenceSignal,
   OptionChainPreview,
   OptionChainSideQuote,
+  OptionChainTableRow,
   OptionsStrikeCandidate,
   SymbolIntelligence,
 } from "@/app/types/intelligence";
 import {
   buildOptionCandidatePrompt,
   buildRollSuggestionPrompt,
-  hasSymbolIntelligenceContent,
+  hasSymbolOptionsContent,
+  hasSymbolResearchIntelligenceContent,
   signalSeverityClass,
   signalSeverityLabel,
   signalToQuickActionId,
   sortSignalsBySeverity,
 } from "@/lib/intelligence";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 import { findQuickAction } from "@/lib/quickActions";
 import { formatUsd } from "@/lib/formatCurrency";
 import { formatFriendlyDate, formatOptionExpiration } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
+import { ResearchAsideCard } from "@/components/ResearchDetailBlocks";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -50,6 +55,8 @@ type Props = {
   onGoDeeper?: () => void;
   actionContext?: "portfolio" | "research";
   compact?: boolean;
+  hideRecentEvents?: boolean;
+  optionsMode?: "off" | "summary";
   className?: string;
   researchBasePath?: string;
 };
@@ -159,26 +166,118 @@ function IntelligenceSection({
   );
 }
 
+function IntelligenceRecentEventsList({
+  timeline,
+  limit,
+}: {
+  timeline: EventTimelineEntry[];
+  limit: number;
+}) {
+  return (
+    <ul className="space-y-2">
+      {timeline.slice(0, limit).map((entry, index) => {
+        const Icon = timelineIcon(entry.kind);
+        const linkable = isTimelineExternalLink(entry);
+
+        return (
+          <li
+            key={`${entry.kind}-${entry.date}-${index}`}
+            className="flex gap-3 rounded-xl border border-border bg-background/60 px-3 py-2"
+          >
+            <Icon
+              className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong"
+              aria-hidden
+            />
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wide text-muted">
+                {formatFriendlyDate(entry.date, { weekday: true })} ·{" "}
+                {entry.kind.replace(/_/g, " ")}
+              </p>
+              {linkable ? (
+                <a
+                  href={entry.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group inline-flex max-w-full items-start gap-1 text-sm font-medium text-accent-strong hover:underline"
+                >
+                  <span className="min-w-0">{entry.title}</span>
+                  <ExternalLink
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70 transition group-hover:opacity-100"
+                    aria-hidden
+                  />
+                  <span className="sr-only"> (opens in new tab)</span>
+                </a>
+              ) : (
+                <p className="text-sm font-medium text-foreground">
+                  {entry.title}
+                </p>
+              )}
+              {entry.detail && (
+                <p className="mt-0.5 text-xs text-muted">{entry.detail}</p>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+export function IntelligenceRecentEventsPanel({
+  timeline,
+  loading = false,
+  limit = 8,
+  className,
+}: {
+  timeline: EventTimelineEntry[];
+  loading?: boolean;
+  limit?: number;
+  className?: string;
+}) {
+  if (loading && timeline.length === 0) {
+    return (
+      <ResearchAsideCard title="Recent events" className={className}>
+        <div className="space-y-2">
+          {[1, 2, 3].map((row) => (
+            <div key={row} className="h-14 animate-pulse rounded-lg bg-muted-bg" />
+          ))}
+        </div>
+      </ResearchAsideCard>
+    );
+  }
+
+  if (!timeline.length) {
+    return null;
+  }
+
+  return (
+    <ResearchAsideCard title="Recent events" className={className}>
+      <IntelligenceRecentEventsList timeline={timeline} limit={limit} />
+    </ResearchAsideCard>
+  );
+}
+
 export function SymbolIntelligencePanel({
   intelligence,
   loading = false,
   error = null,
   onRefresh,
   onRunSignal,
-  onAnalyzeOption,
   onGoDeeper,
   actionContext = "portfolio",
   compact = false,
+  hideRecentEvents = false,
+  optionsMode = "off",
   className,
   researchBasePath,
 }: Props) {
-  const hasContent = hasSymbolIntelligenceContent(intelligence);
+  const hasResearchContent = hasSymbolResearchIntelligenceContent(intelligence);
+  const hasOptionsContent = hasSymbolOptionsContent(intelligence);
+  const showOptionsSummary = optionsMode === "summary" && hasOptionsContent;
+  const hasContent = hasResearchContent || showOptionsSummary;
   const signals = sortSignalsBySeverity(intelligence?.signals ?? []);
   const peers = intelligence?.peerComparison;
   const timeline = intelligence?.eventTimeline ?? [];
-  const options = intelligence?.optionsScorecard;
-  const optionChain = intelligence?.optionChainPreview;
-  const rollSuggestions = intelligence?.rollSuggestions ?? [];
   const research = intelligence?.cachedResearch;
   const symbol = intelligence?.symbol;
 
@@ -189,7 +288,7 @@ export function SymbolIntelligencePanel({
   return (
     <section
       className={cn(
-        "mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
+        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
         className,
       )}
       aria-label={symbol ? `${symbol} intelligence` : "Symbol intelligence"}
@@ -204,7 +303,9 @@ export function SymbolIntelligencePanel({
               {symbol ? `${symbol} intelligence` : "Symbol intelligence"}
             </h2>
             <p className="text-[11px] text-muted">
-              Signals, peers, timeline, and options scoring
+              {showOptionsSummary
+                ? "Signals, peers, timeline, and options highlights"
+                : "Signals, peers, and timeline"}
             </p>
           </div>
         </div>
@@ -385,58 +486,247 @@ export function SymbolIntelligencePanel({
           </IntelligenceSection>
         )}
 
-        {!!timeline.length && (
+        {!!timeline.length && !hideRecentEvents && (
           <IntelligenceSection
             title="Recent events"
             icon={CalendarDays}
             compact={compact}
           >
-            <ul className="space-y-2">
-              {timeline.slice(0, compact ? 4 : 8).map((entry, index) => {
-                const Icon = timelineIcon(entry.kind);
-                const linkable = isTimelineExternalLink(entry);
-                return (
-                  <li
-                    key={`${entry.kind}-${entry.date}-${index}`}
-                    className="flex gap-3 rounded-xl border border-border bg-background/60 px-3 py-2"
-                  >
-                    <Icon
-                      className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong"
-                      aria-hidden
-                    />
-                    <div className="min-w-0">
-                      <p className="text-[10px] uppercase tracking-wide text-muted">
-                        {formatFriendlyDate(entry.date, { weekday: true })} ·{" "}
-                        {entry.kind.replace(/_/g, " ")}
-                      </p>
-                      {linkable ? (
-                        <a
-                          href={entry.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group inline-flex max-w-full items-start gap-1 text-sm font-medium text-accent-strong hover:underline"
-                        >
-                          <span className="min-w-0">{entry.title}</span>
-                          <ExternalLink
-                            className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70 transition group-hover:opacity-100"
-                            aria-hidden
-                          />
-                          <span className="sr-only"> (opens in new tab)</span>
-                        </a>
-                      ) : (
-                        <p className="text-sm font-medium text-foreground">
-                          {entry.title}
-                        </p>
-                      )}
-                      {entry.detail && (
-                        <p className="mt-0.5 text-xs text-muted">{entry.detail}</p>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            <IntelligenceRecentEventsList
+              timeline={timeline}
+              limit={compact ? 4 : 8}
+            />
           </IntelligenceSection>
+        )}
+
+        {showOptionsSummary && symbol && (
+          <OptionsOverviewSummary
+            symbol={symbol}
+            intelligence={intelligence}
+            compact={compact}
+          />
+        )}
+
+        {researchBasePath && symbol && !compact && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Link
+              href={`${researchBasePath}/${symbol}/earnings`}
+              className="text-xs font-medium text-accent-strong hover:underline"
+            >
+              Earnings research →
+            </Link>
+            <Link
+              href={`${researchBasePath}/${symbol}/financials`}
+              className="text-xs font-medium text-accent-strong hover:underline"
+            >
+              Financials →
+            </Link>
+          </div>
+        )}
+
+        {onGoDeeper && (
+          <div className="border-t border-border/70 pt-3">
+            <button
+              type="button"
+              onClick={onGoDeeper}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-strong transition hover:underline"
+            >
+              <Sparkles className="h-3.5 w-3.5" aria-hidden />
+              {actionContext === "research"
+                ? "Go deeper with AI research chat"
+                : "Go deeper with full symbol analysis"}
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function OptionsOverviewSummary({
+  symbol,
+  intelligence,
+  compact = false,
+}: {
+  symbol: string;
+  intelligence: SymbolIntelligence | null;
+  compact?: boolean;
+}) {
+  const options = intelligence?.optionsScorecard;
+  const rollCount = intelligence?.rollSuggestions?.length ?? 0;
+  const hasChain = (intelligence?.optionChainPreview?.rows?.length ?? 0) > 0;
+  const flags = options?.assignmentFlags ?? [];
+  const highlights = [
+    ...(options?.coveredCallCandidates ?? []).map((candidate) => ({
+      ...candidate,
+      label: "CC" as const,
+    })),
+    ...(options?.cspCandidates ?? []).map((candidate) => ({
+      ...candidate,
+      label: "CSP" as const,
+    })),
+  ]
+    .sort((a, b) => b.strike - a.strike)
+    .slice(0, compact ? 2 : 3);
+
+  return (
+    <IntelligenceSection
+      title="Options highlights"
+      icon={Target}
+      defaultOpen={flags.length > 0}
+      compact={compact}
+    >
+      <div className="space-y-3">
+        {flags.length > 0 && (
+          <ul className="space-y-1">
+            {flags.slice(0, compact ? 1 : 2).map((flag) => (
+              <li
+                key={flag}
+                className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
+              >
+                {flag}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {highlights.length > 0 && (
+          <ul className="space-y-1.5">
+            {highlights.map((candidate) => (
+              <li
+                key={`${candidate.label}-${candidate.side}-${candidate.strike}-${candidate.expiration}`}
+                className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm"
+              >
+                <span className="font-medium text-foreground">
+                  {formatUsd(candidate.strike, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  {candidate.label}
+                </span>
+                <span className="text-xs text-muted">
+                  {formatOptionExpiration(candidate.expiration)} · score{" "}
+                  {candidate.score.toFixed(2)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {(rollCount > 0 || hasChain) && (
+          <p className="text-xs text-muted">
+            {[
+              rollCount > 0
+                ? `${rollCount} roll suggestion${rollCount === 1 ? "" : "s"}`
+                : null,
+              hasChain ? "Live option chain" : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        )}
+
+        <Link
+          href={symbolHubPath(symbol, "position")}
+          className="inline-flex text-xs font-medium text-accent-strong hover:underline"
+        >
+          View option chain on Position →
+        </Link>
+      </div>
+    </IntelligenceSection>
+  );
+}
+
+type SymbolOptionsWorkspaceProps = {
+  intelligence: SymbolIntelligence | null;
+  loading?: boolean;
+  error?: string | null;
+  onRefresh?: () => void;
+  onAnalyzeOption?: (prompt: string) => void;
+  compact?: boolean;
+  className?: string;
+};
+
+export function SymbolOptionsWorkspace({
+  intelligence,
+  loading = false,
+  error = null,
+  onRefresh,
+  onAnalyzeOption,
+  compact = false,
+  className,
+}: SymbolOptionsWorkspaceProps) {
+  const hasContent = hasSymbolOptionsContent(intelligence);
+  const options = intelligence?.optionsScorecard;
+  const optionChain = intelligence?.optionChainPreview;
+  const rollSuggestions = intelligence?.rollSuggestions ?? [];
+  const symbol = intelligence?.symbol;
+
+  if (!loading && !error && !hasContent) {
+    return null;
+  }
+
+  return (
+    <section
+      className={cn(
+        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
+        className,
+      )}
+      aria-label={symbol ? `${symbol} options` : "Symbol options"}
+    >
+      <div className="flex items-start justify-between gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
+        <div className="flex min-w-0 items-start gap-2.5">
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+            <Target className="h-4 w-4" aria-hidden />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-foreground">
+              {symbol ? `${symbol} options` : "Options"}
+            </h2>
+            <p className="text-[11px] text-muted">
+              Chain, rolls, and strike candidates
+            </p>
+          </div>
+        </div>
+        {onRefresh && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="shrink-0"
+            onClick={onRefresh}
+            disabled={loading}
+            aria-label="Refresh options data"
+          >
+            <RefreshCw
+              className={cn("h-3.5 w-3.5", loading && "animate-spin")}
+              aria-hidden
+            />
+          </Button>
+        )}
+      </div>
+
+      <div className="space-y-4 px-4 py-4">
+        {loading && !hasContent && (
+          <div className="space-y-2">
+            <div className="h-4 w-48 animate-pulse rounded bg-muted-bg" />
+            <div className="h-32 animate-pulse rounded-xl bg-muted-bg" />
+          </div>
+        )}
+
+        {error && <ErrorBanner message={error} />}
+
+        {intelligence?.reauthRequired && (
+          <SchwabConnectionBanner
+            message="Reconnect Schwab to load live option chain and strike scoring."
+            authorizationUrl={intelligence.authorizationUrl}
+          />
+        )}
+
+        {intelligence?.partial && !intelligence.reauthRequired && (
+          <p className="rounded-lg border border-border bg-background/60 px-3 py-2 text-xs text-muted">
+            Some live option data is unavailable right now.
+          </p>
         )}
 
         {!!rollSuggestions.length && symbol && (
@@ -505,12 +795,6 @@ export function SymbolIntelligencePanel({
             compact={compact}
           >
             <div>
-              {options.underlyingPrice != null && (
-                <p className="mb-2 font-mono text-xs text-foreground">
-                  Underlying @ {formatUsd(options.underlyingPrice)}
-                </p>
-              )}
-
               {(options.assignmentFlags?.length ?? 0) > 0 && (
                 <ul className="mb-3 space-y-1">
                   {options.assignmentFlags.map((flag) => (
@@ -524,7 +808,9 @@ export function SymbolIntelligencePanel({
                 </ul>
               )}
 
-              {(options.assignmentFlags?.length ?? 0) > 0 && onAnalyzeOption && symbol && (
+              {(options.assignmentFlags?.length ?? 0) > 0 &&
+                onAnalyzeOption &&
+                symbol && (
                 <button
                   type="button"
                   onClick={() =>
@@ -558,38 +844,6 @@ export function SymbolIntelligencePanel({
               )}
             </div>
           </IntelligenceSection>
-        )}
-
-        {researchBasePath && symbol && !compact && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Link
-              href={`${researchBasePath}/${symbol}/earnings`}
-              className="text-xs font-medium text-accent-strong hover:underline"
-            >
-              Earnings research →
-            </Link>
-            <Link
-              href={`${researchBasePath}/${symbol}/financials`}
-              className="text-xs font-medium text-accent-strong hover:underline"
-            >
-              Financials →
-            </Link>
-          </div>
-        )}
-
-        {onGoDeeper && (
-          <div className="border-t border-border/70 pt-3">
-            <button
-              type="button"
-              onClick={onGoDeeper}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-strong transition hover:underline"
-            >
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              {actionContext === "research"
-                ? "Go deeper with AI research chat"
-                : "Go deeper with full symbol analysis"}
-            </button>
-          </div>
         )}
       </div>
     </section>
@@ -657,6 +911,76 @@ function OptionSideMetrics({
   );
 }
 
+function formatUnderlyingPrice(price: number) {
+  return formatUsd(price, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function findAtmStrike(
+  rows: OptionChainTableRow[],
+  underlying: number | null | undefined,
+): number | null {
+  if (underlying == null || rows.length === 0) return null;
+
+  return rows.reduce<number | null>((closest, row) => {
+    if (closest == null) return row.strike;
+    return Math.abs(row.strike - underlying) < Math.abs(closest - underlying)
+      ? row.strike
+      : closest;
+  }, null);
+}
+
+function shouldInsertSpotDividerBeforeStrike<T extends { strike: number }>(
+  item: T,
+  index: number,
+  items: T[],
+  underlying: number,
+) {
+  if (index === 0) return item.strike > underlying;
+  const previous = items[index - 1];
+  return previous.strike < underlying && item.strike >= underlying;
+}
+
+function shouldInsertSpotDividerAfterStrike<T extends { strike: number }>(
+  items: T[],
+  underlying: number,
+) {
+  if (items.length === 0) return false;
+  return items[items.length - 1].strike < underlying;
+}
+
+function OptionSpotPriceDivider({ price }: { price: number }) {
+  return (
+    <div className="flex items-center gap-3 py-1">
+      <div className="h-px flex-1 bg-accent/35" aria-hidden />
+      <span className="shrink-0 rounded-full border border-accent/40 bg-background px-3 py-1 text-xs font-semibold tabular-nums text-accent-strong shadow-sm">
+        {formatUnderlyingPrice(price)}
+      </span>
+      <div className="h-px flex-1 bg-accent/35" aria-hidden />
+    </div>
+  );
+}
+
+function OptionChainSpotDividerRow({
+  price,
+  colSpan,
+}: {
+  price: number;
+  colSpan: number;
+}) {
+  return (
+    <tr className="bg-accent-muted/20">
+      <td colSpan={colSpan} className="px-3 py-2">
+        <OptionSpotPriceDivider price={price} />
+      </td>
+    </tr>
+  );
+}
+
+const OPTION_CHAIN_COLUMN_COUNT = 17;
+
 function OptionChainPreviewTable({
   preview,
   compact = false,
@@ -667,6 +991,8 @@ function OptionChainPreviewTable({
   hideTitle?: boolean;
 }) {
   const rows = preview.rows.slice(0, compact ? 5 : preview.rows.length);
+  const underlying = preview.underlyingPrice;
+  const atmStrike = findAtmStrike(rows, underlying);
 
   return (
     <div>
@@ -684,78 +1010,136 @@ function OptionChainPreviewTable({
               · {preview.strikeCount} up/down strikes
             </span>
           )}
-          {preview.underlyingPrice != null && (
-            <span className="normal-case text-foreground">
-              · {formatUsd(preview.underlyingPrice)}
-            </span>
-          )}
         </div>
       )}
-      <p className="mb-2 text-[11px] text-muted">
-        Bid and ask need a live quote. When they're missing, last is usually
-        yesterday's close and mark is an estimated price.
-      </p>
 
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[1240px] text-left text-xs">
-          <thead className="bg-background/60 text-muted">
-            <tr>
-              <th className="px-3 py-2 font-medium">Strike</th>
-              <th className="px-3 py-2 font-medium">Call bid</th>
-              <th className="px-3 py-2 font-medium">Call ask</th>
-              <th className="px-3 py-2 font-medium">Call mark</th>
-              <th className="px-3 py-2 font-medium">Call last</th>
-              <th className="px-3 py-2 font-medium">Call delta</th>
-              <th className="px-3 py-2 font-medium">Call theta</th>
-              <th className="px-3 py-2 font-medium">Call open interest</th>
-              <th className="px-3 py-2 font-medium">Call impl vol</th>
-              <th className="px-3 py-2 font-medium">Put bid</th>
-              <th className="px-3 py-2 font-medium">Put ask</th>
-              <th className="px-3 py-2 font-medium">Put mark</th>
-              <th className="px-3 py-2 font-medium">Put last</th>
-              <th className="px-3 py-2 font-medium">Put delta</th>
-              <th className="px-3 py-2 font-medium">Put theta</th>
-              <th className="px-3 py-2 font-medium">Put open interest</th>
-              <th className="px-3 py-2 font-medium">Put impl vol</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.strike} className="border-t border-border">
-                <td className="px-3 py-2 font-mono font-medium tabular-nums">
-                  {formatUsd(row.strike, {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 2,
-                  })}
-                </td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.bid)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.ask)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.mark)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.call?.lastPrice)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionDelta(row.call?.delta)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionTheta(row.call?.theta)}</td>
-                <td className="px-3 py-2 tabular-nums">
-                  {row.call?.openInterest != null
-                    ? row.call.openInterest.toLocaleString()
-                    : "—"}
-                </td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionIv(row.call?.iv)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.bid)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.ask)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.mark)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionPrice(row.put?.lastPrice)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionDelta(row.put?.delta)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionTheta(row.put?.theta)}</td>
-                <td className="px-3 py-2 tabular-nums">
-                  {row.put?.openInterest != null
-                    ? row.put.openInterest.toLocaleString()
-                    : "—"}
-                </td>
-                <td className="px-3 py-2 tabular-nums">{formatOptionIv(row.put?.iv)}</td>
+      <div className="overflow-hidden rounded-xl border border-border">
+        <p className="border-b border-border/70 px-3 py-2 text-[11px] text-muted">
+          Bid and ask need a live quote. When they&apos;re missing, last is usually
+          yesterday&apos;s close and mark is an estimated price.
+        </p>
+
+        <div className="max-h-[min(65vh,520px)] overflow-auto">
+          <table className="w-full min-w-[1240px] text-left text-xs">
+            <thead className="sticky top-0 z-10 bg-secondary/95 text-muted shadow-sm backdrop-blur-sm">
+              <tr>
+                <th className="px-3 py-2 font-medium">Strike</th>
+                <th className="px-3 py-2 font-medium">Call bid</th>
+                <th className="px-3 py-2 font-medium">Call ask</th>
+                <th className="px-3 py-2 font-medium">Call mark</th>
+                <th className="px-3 py-2 font-medium">Call last</th>
+                <th className="px-3 py-2 font-medium">Call delta</th>
+                <th className="px-3 py-2 font-medium">Call theta</th>
+                <th className="px-3 py-2 font-medium">Call open interest</th>
+                <th className="px-3 py-2 font-medium">Call impl vol</th>
+                <th className="px-3 py-2 font-medium">Put bid</th>
+                <th className="px-3 py-2 font-medium">Put ask</th>
+                <th className="px-3 py-2 font-medium">Put mark</th>
+                <th className="px-3 py-2 font-medium">Put last</th>
+                <th className="px-3 py-2 font-medium">Put delta</th>
+                <th className="px-3 py-2 font-medium">Put theta</th>
+                <th className="px-3 py-2 font-medium">Put open interest</th>
+                <th className="px-3 py-2 font-medium">Put impl vol</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => (
+                <Fragment key={row.strike}>
+                  {underlying != null &&
+                    shouldInsertSpotDividerBeforeStrike(
+                      row,
+                      index,
+                      rows,
+                      underlying,
+                    ) && (
+                      <OptionChainSpotDividerRow
+                        price={underlying}
+                        colSpan={OPTION_CHAIN_COLUMN_COUNT}
+                      />
+                    )}
+                  <tr
+                    className={cn(
+                      "border-t border-border",
+                      atmStrike === row.strike &&
+                        "bg-accent-muted/25 ring-1 ring-inset ring-accent/20",
+                    )}
+                  >
+                    <td className="px-3 py-2 font-mono font-medium tabular-nums">
+                      {formatUsd(row.strike, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      })}
+                      {atmStrike === row.strike && (
+                        <span className="ml-1.5 text-[10px] font-sans font-semibold uppercase tracking-wide text-accent-strong">
+                          ATM
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionPrice(row.call?.bid)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionPrice(row.call?.ask)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionPrice(row.call?.mark)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionPrice(row.call?.lastPrice)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionDelta(row.call?.delta)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionTheta(row.call?.theta)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {row.call?.openInterest != null
+                        ? row.call.openInterest.toLocaleString()
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionIv(row.call?.iv)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionPrice(row.put?.bid)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionPrice(row.put?.ask)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionPrice(row.put?.mark)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionPrice(row.put?.lastPrice)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionDelta(row.put?.delta)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionTheta(row.put?.theta)}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {row.put?.openInterest != null
+                        ? row.put.openInterest.toLocaleString()
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatOptionIv(row.put?.iv)}
+                    </td>
+                  </tr>
+                </Fragment>
+              ))}
+              {underlying != null &&
+                shouldInsertSpotDividerAfterStrike(rows, underlying) && (
+                  <OptionChainSpotDividerRow
+                    price={underlying}
+                    colSpan={OPTION_CHAIN_COLUMN_COUNT}
+                  />
+                )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -776,11 +1160,13 @@ function OptionsCandidateTable({
   onAnalyzeOption?: (prompt: string) => void;
   className?: string;
 }) {
+  const sortedCandidates = [...candidates].sort((a, b) => b.strike - a.strike);
+
   return (
     <div className={className}>
       <p className="mb-1.5 text-xs font-medium text-foreground">{title}</p>
       <ul className="space-y-2">
-        {candidates.map((candidate) => (
+        {sortedCandidates.map((candidate) => (
           <li
             key={`${candidate.side}-${candidate.strike}-${candidate.expiration}`}
             className="rounded-xl border border-border bg-background/60 px-3 py-2.5"

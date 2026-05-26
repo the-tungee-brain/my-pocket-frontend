@@ -70,7 +70,7 @@ export function StrategyJourneyPanel({
   const StrategyIcon = STRATEGY_ICONS[strategy] ?? Sparkles;
 
   return (
-    <section className={cn("mx-auto mb-4 w-full max-w-3xl", className)}>
+    <section className={cn("mx-auto mb-4 w-full", className)}>
       <div className="overflow-hidden rounded-2xl border border-accent/30 bg-accent-muted/20 shadow-sm">
         <div className="flex items-start justify-between gap-3 px-4 py-3">
           <button

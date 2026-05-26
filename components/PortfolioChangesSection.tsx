@@ -48,7 +48,7 @@ function SectionShell({
   return (
     <section
       className={cn(
-        "mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
+        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
         className,
       )}
       aria-label="Portfolio changes"

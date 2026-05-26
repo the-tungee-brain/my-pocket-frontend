@@ -1,5 +1,4 @@
 import { BriefcaseBusiness } from "lucide-react";
-import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { BusinessSection } from "../BusinessSection";
 
 type PageProps = {
@@ -9,13 +8,5 @@ type PageProps = {
 export default async function BusinessPage({ params }: PageProps) {
   const { symbol } = await params;
 
-  return (
-    <ResearchSectionCard
-      title="How this business makes money"
-      description="Business model, segments, competition, and growth drivers"
-      icon={BriefcaseBusiness}
-    >
-      <BusinessSection symbol={symbol} />
-    </ResearchSectionCard>
-  );
+  return <BusinessSection symbol={symbol} />;
 }

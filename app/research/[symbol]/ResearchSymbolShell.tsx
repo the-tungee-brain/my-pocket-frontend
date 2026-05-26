@@ -9,6 +9,7 @@ import { addRecentSymbol } from "@/lib/recentSymbols";
 import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
 import { usePositionsContext } from "@/app/Providers";
 import { symbolHubPath } from "@/lib/symbolRoutes";
+import { pageShellClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -46,7 +47,7 @@ export function ResearchSymbolShell({ symbol, children }: Props) {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-3xl pb-2">
+    <div className={cn(pageShellClass, "pb-2")}>
       <div
         ref={sentinelRef}
         className="pointer-events-none h-px"

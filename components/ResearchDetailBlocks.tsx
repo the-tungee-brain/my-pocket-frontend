@@ -3,10 +3,11 @@
 import { cn } from "@/lib/utils";
 
 type ResearchBulletListProps = {
-  title: string;
+  title?: string;
   items: string[];
   variant?: "default" | "risk" | "watch";
   emptyMessage?: string;
+  hideTitle?: boolean;
 };
 
 export function ResearchBulletList({
@@ -14,14 +15,17 @@ export function ResearchBulletList({
   items,
   variant = "default",
   emptyMessage,
+  hideTitle = false,
 }: ResearchBulletListProps) {
   if (items.length === 0) {
     if (!emptyMessage) return null;
     return (
       <div>
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-          {title}
-        </h3>
+        {!hideTitle && title && (
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+            {title}
+          </h3>
+        )}
         <p className="text-sm text-muted">{emptyMessage}</p>
       </div>
     );
@@ -43,9 +47,11 @@ export function ResearchBulletList({
 
   return (
     <div>
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-        {title}
-      </h3>
+      {!hideTitle && title && (
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+          {title}
+        </h3>
+      )}
       <ul className="space-y-2">
         {items.map((item) => (
           <li
@@ -71,6 +77,53 @@ type ResearchTextBlockProps = {
   children: React.ReactNode;
   className?: string;
 };
+
+export function ResearchAsideCard({
+  title,
+  children,
+  tone = "default",
+  className,
+}: {
+  title: string;
+  children: React.ReactNode;
+  tone?: "default" | "accent" | "watch";
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl border shadow-sm",
+        tone === "accent"
+          ? "border-accent/25 bg-accent-muted/30"
+          : tone === "watch"
+            ? "border-accent/20 bg-accent-muted/20"
+            : "border-border bg-secondary/60",
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          "border-b px-4 py-2.5",
+          tone === "accent"
+            ? "border-accent/20"
+            : tone === "watch"
+              ? "border-accent/15"
+              : "border-border",
+        )}
+      >
+        <h3
+          className={cn(
+            "text-xs font-semibold uppercase tracking-wide",
+            tone === "default" ? "text-muted" : "text-accent-strong",
+          )}
+        >
+          {title}
+        </h3>
+      </div>
+      <div className="px-4 py-3">{children}</div>
+    </div>
+  );
+}
 
 export function ResearchTextBlock({
   title,

@@ -89,7 +89,7 @@ export function AccountPositionList({
 }: AccountPositionListProps) {
   if (!selectedSymbol) {
     return (
-      <section className="mx-auto w-full max-w-3xl py-4">
+      <section className="mx-auto w-full py-4">
         <EmptyState
           icon={CircleDollarSign}
           title="Pick a symbol"
@@ -103,7 +103,7 @@ export function AccountPositionList({
 
   if (!positionsForSelectedSymbol || positionsForSelectedSymbol.length === 0) {
     return (
-      <section className="mx-auto w-full max-w-3xl py-4">
+      <section className="mx-auto w-full py-4">
         <EmptyState
           icon={Inbox}
           title={`No positions for ${selectedSymbol}`}
@@ -129,7 +129,7 @@ export function AccountPositionList({
 
   return (
     <section className="w-full py-4">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto w-full">
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">

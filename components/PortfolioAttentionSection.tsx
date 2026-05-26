@@ -169,7 +169,7 @@ export function PortfolioAttentionSection({
   if (!hasContent) {
     return (
       <section
-        className={cn("mx-auto w-full max-w-3xl", className)}
+        className={cn("mx-auto w-full", className)}
         aria-label="Needs attention"
       >
         <EmptyState
@@ -205,7 +205,7 @@ export function PortfolioAttentionSection({
   return (
     <section
       className={cn(
-        "mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
+        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
         className,
       )}
       aria-label="Needs attention"

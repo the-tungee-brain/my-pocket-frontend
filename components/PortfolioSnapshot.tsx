@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertTriangle, BriefcaseBusiness } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { AlertTriangle, BriefcaseBusiness, ChevronDown } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import type {
   CashSecuredPutSummary,
@@ -11,7 +11,6 @@ import type {
 } from "@/app/types/schwab";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
 import { sumOpenProfitLoss } from "@/lib/positionMetrics";
-import { PORTFOLIO_ANALYSIS_SECTION_ID } from "@/lib/positionAnalysis";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -22,6 +21,8 @@ type Props = {
   cashSecuredPutSummary?: CashSecuredPutSummary | null;
   portfolioMetrics?: PortfolioMetrics | null;
   children?: ReactNode;
+  /** Collapse cash and buying-power stats until expanded. Defaults open on Holdings. */
+  compactAccountDetails?: boolean;
   className?: string;
 };
 
@@ -61,15 +62,23 @@ export function PortfolioSnapshot({
   cashSecuredPutSummary,
   portfolioMetrics,
   children,
+  compactAccountDetails = false,
   className,
 }: Props) {
   const [headerActionsEl, setHeaderActionsEl] = useState<HTMLDivElement | null>(
     null,
   );
+  const [accountDetailsOpen, setAccountDetailsOpen] = useState(
+    !compactAccountDetails,
+  );
+
+  useEffect(() => {
+    setAccountDetailsOpen(!compactAccountDetails);
+  }, [compactAccountDetails]);
 
   if (loading) {
     return (
-      <section className={cn("mx-auto w-full max-w-3xl", className)}>
+      <section className={cn("mx-auto w-full", className)}>
         <div className="mb-3 space-y-2">
           <div className="h-6 w-36 animate-pulse rounded bg-muted-bg" />
           <div className="h-4 w-48 animate-pulse rounded bg-muted-bg" />
@@ -112,9 +121,8 @@ export function PortfolioSnapshot({
 
   return (
     <section
-      id={PORTFOLIO_ANALYSIS_SECTION_ID}
       className={cn(
-        "mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
+        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
         className,
       )}
       aria-label="Portfolio snapshot"
@@ -189,36 +197,57 @@ export function PortfolioSnapshot({
       </div>
 
       {account && (
-        <div className="grid grid-cols-2 gap-2 border-t border-border/70 px-4 py-3 sm:grid-cols-4">
-          <Stat
-            label="Cash"
-            value={formatUsd(balances?.cashBalance ?? 0)}
-          />
-          <Stat
-            label="Buying power"
-            value={formatUsd(balances?.buyingPower ?? 0)}
-          />
-          {cspReserved > 0 ? (
-            <>
-              <Stat
-                label="CSP reserved"
-                value={formatUsd(cspReserved)}
-                tone="warning"
+        <>
+          {compactAccountDetails && (
+            <button
+              type="button"
+              aria-expanded={accountDetailsOpen}
+              onClick={() => setAccountDetailsOpen((open) => !open)}
+              className="flex w-full items-center justify-between gap-2 border-t border-border/70 px-4 py-2.5 text-left text-[11px] font-medium text-muted transition hover:bg-muted-bg/40 hover:text-foreground"
+            >
+              <span>Account details · cash & buying power</span>
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 shrink-0 transition-transform",
+                  accountDetailsOpen && "rotate-180",
+                )}
+                aria-hidden
               />
-              <Stat
-                label="Cash after CSP"
-                value={cashAfterCsp != null ? formatUsd(cashAfterCsp) : "—"}
-              />
-            </>
-          ) : (
-            <Stat
-              label="Available funds"
-              value={formatUsd(
-                balances?.availableFunds ?? balances?.cashBalance ?? 0,
-              )}
-            />
+            </button>
           )}
-        </div>
+          {(!compactAccountDetails || accountDetailsOpen) && (
+            <div className="grid grid-cols-2 gap-2 border-t border-border/70 px-4 py-3 sm:grid-cols-4">
+              <Stat
+                label="Cash"
+                value={formatUsd(balances?.cashBalance ?? 0)}
+              />
+              <Stat
+                label="Buying power"
+                value={formatUsd(balances?.buyingPower ?? 0)}
+              />
+              {cspReserved > 0 ? (
+                <>
+                  <Stat
+                    label="CSP reserved"
+                    value={formatUsd(cspReserved)}
+                    tone="warning"
+                  />
+                  <Stat
+                    label="Cash after CSP"
+                    value={cashAfterCsp != null ? formatUsd(cashAfterCsp) : "—"}
+                  />
+                </>
+              ) : (
+                <Stat
+                  label="Available funds"
+                  value={formatUsd(
+                    balances?.availableFunds ?? balances?.cashBalance ?? 0,
+                  )}
+                />
+              )}
+            </div>
+          )}
+        </>
       )}
 
       <PortfolioSnapshotHeaderActionsContext.Provider value={headerActionsEl}>

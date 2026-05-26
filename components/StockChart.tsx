@@ -213,7 +213,7 @@ export function StockChart({
         : "ready";
 
   return (
-    <div className={cn("mx-auto mt-4 w-full max-w-3xl", className)}>
+    <div className={cn("mx-auto mt-4 w-full", className)}>
       {!hideHeader && (
         <div className="mb-2 flex items-center justify-between">
           <div>

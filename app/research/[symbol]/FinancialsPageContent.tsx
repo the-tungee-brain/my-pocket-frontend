@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LineChart, ScrollText } from "lucide-react";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { PageSplit } from "@/components/PageShell";
 import type { SecPeriod } from "@/lib/secUtils";
 import { SecPeriodToggle } from "./SecPeriodToggle";
 import { SecRatiosSection } from "./SecRatiosSection";
@@ -25,29 +26,36 @@ export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
         <SecPeriodToggle period={period} onChange={setPeriod} />
       </div>
 
-      <ResearchSectionCard
-        title="Financial trends"
-        description="Revenue, earnings, and cash flow from filed statements"
-        icon={LineChart}
-      >
-        <SecFinancialsTrendSection symbol={symbol} period={period} />
-      </ResearchSectionCard>
+      <PageSplit
+        main={
+          <ResearchSectionCard
+            title="Financial trends"
+            description="Revenue, earnings, and cash flow from filed statements"
+            icon={LineChart}
+          >
+            <SecFinancialsTrendSection symbol={symbol} period={period} />
+          </ResearchSectionCard>
+        }
+        aside={
+          <>
+            <ResearchSectionCard
+              title="Profitability & returns"
+              description="Margins, ROE, free cash flow, and year-over-year growth"
+              icon={LineChart}
+            >
+              <SecRatiosSection symbol={symbol} period={period} />
+            </ResearchSectionCard>
 
-      <ResearchSectionCard
-        title="Profitability & returns"
-        description="Margins, ROE, free cash flow, and year-over-year growth"
-        icon={LineChart}
-      >
-        <SecRatiosSection symbol={symbol} period={period} />
-      </ResearchSectionCard>
-
-      <ResearchSectionCard
-        title="SEC filings"
-        description="Recent 10-K, 10-Q, and other submitted documents"
-        icon={ScrollText}
-      >
-        <SecFilingsSection symbol={symbol} />
-      </ResearchSectionCard>
+            <ResearchSectionCard
+              title="SEC filings"
+              description="Recent 10-K, 10-Q, and other submitted documents"
+              icon={ScrollText}
+            >
+              <SecFilingsSection symbol={symbol} />
+            </ResearchSectionCard>
+          </>
+        }
+      />
     </div>
   );
 }

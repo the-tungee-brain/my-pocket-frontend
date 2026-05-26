@@ -13,6 +13,7 @@ import {
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { PageSplit } from "@/components/PageShell";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import {
   beatLabelText,
@@ -381,59 +382,66 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
 
   const hasHistory = historyWithKeys.length > 0;
 
+  const upcomingCard = data.upcoming ? (
+    <ResearchSectionCard
+      title="Next earnings"
+      description="Upcoming report date and current estimates"
+      icon={CalendarDays}
+    >
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {data.upcoming.fiscalPeriod}
+            </p>
+            <p className="text-xs text-muted">
+              {formatReportDate(data.upcoming.reportDate)} ·{" "}
+              {timingLabel(data.upcoming.timing)}
+            </p>
+          </div>
+          <BeatBadge label="pending" />
+        </div>
+        <MetricsGrid event={data.upcoming} />
+      </div>
+    </ResearchSectionCard>
+  ) : null;
+
+  const historyCard = (
+    <ResearchSectionCard
+      title="Earnings history"
+      description="Quarterly results, surprises, transcripts, and AI summaries"
+      icon={TrendingUp}
+    >
+      {!hasHistory ? (
+        <p className="text-sm text-muted">
+          No earnings history is available for this symbol yet.
+        </p>
+      ) : (
+        <div className="space-y-6">
+          <QuarterPicker
+            events={data.history}
+            selectedKey={selectedKey}
+            onSelect={setSelectedKey}
+          />
+
+          {selectedItem ? (
+            <EarningsDetailPanel
+              key={selectedItem.key}
+              symbol={symbol}
+              previewEvent={selectedItem.event}
+            />
+          ) : null}
+        </div>
+      )}
+    </ResearchSectionCard>
+  );
+
   return (
     <div className="space-y-4">
-      {data.upcoming ? (
-        <ResearchSectionCard
-          title="Next earnings"
-          description="Upcoming report date and current estimates"
-          icon={CalendarDays}
-        >
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-foreground">
-                  {data.upcoming.fiscalPeriod}
-                </p>
-                <p className="text-xs text-muted">
-                  {formatReportDate(data.upcoming.reportDate)} ·{" "}
-                  {timingLabel(data.upcoming.timing)}
-                </p>
-              </div>
-              <BeatBadge label="pending" />
-            </div>
-            <MetricsGrid event={data.upcoming} />
-          </div>
-        </ResearchSectionCard>
-      ) : null}
-
-      <ResearchSectionCard
-        title="Earnings history"
-        description="Quarterly results, surprises, transcripts, and AI summaries"
-        icon={TrendingUp}
-      >
-        {!hasHistory ? (
-          <p className="text-sm text-muted">
-            No earnings history is available for this symbol yet.
-          </p>
-        ) : (
-          <div className="space-y-6">
-            <QuarterPicker
-              events={data.history}
-              selectedKey={selectedKey}
-              onSelect={setSelectedKey}
-            />
-
-            {selectedItem ? (
-              <EarningsDetailPanel
-                key={selectedItem.key}
-                symbol={symbol}
-                previewEvent={selectedItem.event}
-              />
-            ) : null}
-          </div>
-        )}
-      </ResearchSectionCard>
+      <PageSplit
+        main={historyCard}
+        aside={upcomingCard ?? undefined}
+      />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
+import { pageShellClass } from "@/lib/pageLayout";
 
 export type ChatMessage = {
   id: string;
@@ -103,7 +104,7 @@ export function ConversationPane({
 
   if (messages.length === 0 && !loading) {
     return (
-      <div className="mx-auto mt-6 max-w-3xl">
+      <div className={cn("mx-auto mt-6", pageShellClass)}>
         <EmptyState
           icon={Bot}
           title={`Ask anything about ${label === "portfolio" ? "your portfolio" : label}`}
@@ -114,7 +115,7 @@ export function ConversationPane({
   }
 
   return (
-    <div className="mx-auto mt-4 max-w-3xl py-3">
+    <div className={cn("mx-auto mt-4 py-3", pageShellClass)}>
       <div
         className="sr-only"
         aria-live="polite"

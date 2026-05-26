@@ -32,7 +32,7 @@ export function PortfolioRiskSection({
 
   return (
     <section
-      className={cn("mx-auto w-full max-w-3xl space-y-4", className)}
+      className={cn("mx-auto w-full space-y-4", className)}
       aria-label="Options risk"
     >
       {hasCsp && (

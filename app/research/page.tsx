@@ -15,6 +15,7 @@ import { consumeResearchSearchFocus } from "@/lib/researchSearchFocus";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SymbolSearchResult } from "@/components/SymbolSearchResult";
+import { PageShell } from "@/components/PageShell";
 import { ResearchOnboarding } from "@/components/ResearchOnboarding";
 
 export default function ResearchPage() {
@@ -105,7 +106,7 @@ export default function ResearchPage() {
   const showIdleHelper = !query.trim() && !hasQuickAccess;
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pt-8 pb-4">
+    <PageShell className="pt-8 pb-4">
       <div className="mb-5 flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-accent-muted text-accent-strong">
             <TrendingUp className="h-5 w-5" aria-hidden="true" />
@@ -296,6 +297,6 @@ export default function ResearchPage() {
             </div>
           )}
         </div>
-    </div>
+    </PageShell>
   );
 }

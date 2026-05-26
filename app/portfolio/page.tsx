@@ -40,6 +40,9 @@ import {
   PORTFOLIO_ANALYSIS_SECTION_ID,
   requestPortfolioAnalysis,
 } from "@/lib/positionAnalysis";
+import { pageSectionClass } from "@/lib/pageLayout";
+import { PageShell, PageSplit } from "@/components/PageShell";
+import { cn } from "@/lib/utils";
 
 export default function PortfolioPage() {
   const {
@@ -256,7 +259,7 @@ export default function PortfolioPage() {
   ]);
 
   return (
-    <>
+    <PageShell>
       {schwabReauth && (
         <SchwabConnectionBanner
           message={schwabReauth.message}
@@ -281,7 +284,12 @@ export default function PortfolioPage() {
       )}
 
       {!showStrategyWizard && needsOnboarding && sessionAccessToken && (
-        <div className="mx-auto mb-4 w-full max-w-3xl rounded-xl border border-border bg-background/40 px-4 py-3 text-sm text-muted">
+        <div
+          className={cn(
+            pageSectionClass,
+            "mb-4 rounded-xl border border-border bg-background/40 px-4 py-3 text-sm text-muted",
+          )}
+        >
           <span>Set up your investing strategy for a guided checklist and next steps.</span>{" "}
           <button
             type="button"
@@ -303,6 +311,7 @@ export default function PortfolioPage() {
 
       {showStrategyJourney && strategyProfile?.primaryStrategy && (
         <StrategyJourneyPanel
+          className={pageSectionClass}
           strategy={strategyProfile.primaryStrategy}
           catalogItem={
             catalog.find((item) => item.id === strategyProfile.primaryStrategy) ??
@@ -312,105 +321,116 @@ export default function PortfolioPage() {
       )}
 
       {!showStrategyWizard && !needsOnboarding && !showStrategyJourney && (
-        <PortfolioOnboarding />
+        <PortfolioOnboarding className={pageSectionClass} />
+      )}
+
+      {showContent && (
+        <div className="sticky top-14 z-10 -mx-4 mb-4 border-b border-border/60 bg-background/95 px-4 pb-3 pt-1 backdrop-blur-md">
+          <PortfolioSectionTabBar
+            activeSection={activeSection}
+            onChange={setActiveSection}
+            badges={{
+              today: todayBadgeCount,
+              activity: activityBadgeCount,
+            }}
+            className={cn(pageSectionClass, "mb-0")}
+          />
+        </div>
       )}
 
       <PortfolioSnapshot
-        className="mb-4"
+        className={cn(pageSectionClass, "mb-4")}
         loading={loading}
         allPositions={allPositions}
         symbols={symbols}
         account={account}
         cashSecuredPutSummary={cashSecuredPutSummary}
         portfolioMetrics={portfolioMetrics}
-      >
-        {showContent && (
-          <AnalysisPanel
-            embedded
-            mode="portfolio"
-            portfolioView="analysis"
-            positions={allPositions}
-            positionMap={positionMap}
-            liquidationValue={
-              account?.securitiesAccount.currentBalances.liquidationValue
-            }
-            symbolAlertMap={symbolAlertMap}
-            autoStart={pendingPortfolioAnalysis}
-            onLoadingChange={setPortfolioAnalysisLoading}
-            onAskFollowUp={() => scrollToChat()}
-          />
-        )}
-      </PortfolioSnapshot>
+        compactAccountDetails={showContent && activeSection !== "holdings"}
+      />
 
-      {showContent && (
-        <PortfolioSectionTabBar
-          activeSection={activeSection}
-          onChange={setActiveSection}
-          badges={{
-            today: todayBadgeCount,
-            activity: activityBadgeCount,
-          }}
+      {showContent && activeSection === "today" && (
+        <PageSplit
+          main={
+            <AnalysisPanel
+              mode="portfolio"
+              portfolioView="analysis"
+              positions={allPositions}
+              positionMap={positionMap}
+              liquidationValue={
+                account?.securitiesAccount.currentBalances.liquidationValue
+              }
+              symbolAlertMap={symbolAlertMap}
+              autoStart={pendingPortfolioAnalysis}
+              onLoadingChange={setPortfolioAnalysisLoading}
+              onAskFollowUp={() => scrollToChat()}
+              className={pageSectionClass}
+            />
+          }
+          aside={
+            <>
+              <PortfolioAttentionSection
+                className={pageSectionClass}
+                taxItems={taxItems}
+                alerts={mergedAlerts}
+                attentionItems={attentionQueue}
+                suggestedActions={recentActivity?.suggestedActions ?? []}
+                onRunAlert={handleRunAlert}
+                onRunAttentionItem={handleRunAttentionItem}
+                onDismissAttention={handleDismissAttention}
+                onRunTax={handleTaxAlert}
+                onRunActionId={handleSuggestedAction}
+              />
+
+              {showBriefSection && (
+                <PortfolioBriefSection
+                  className={pageSectionClass}
+                  brief={displayBrief}
+                  changes={morningBrief?.changes}
+                  changesLoading={briefLoading && !morningBrief}
+                  fallbackAlerts={proactiveAlerts}
+                  loading={briefLoading && !displayBrief}
+                  error={displayBrief ? null : briefError}
+                  lastUpdated={briefLastUpdated}
+                  onGoDeeper={handleAnalyzePortfolio}
+                  analyzeLoading={portfolioAnalysisLoading}
+                  hideSuggestedActions
+                />
+              )}
+            </>
+          }
         />
       )}
 
-      {showContent && activeSection === "today" && (
-        <>
-          <PortfolioAttentionSection
-            className="mb-4"
-            taxItems={taxItems}
-            alerts={mergedAlerts}
-            attentionItems={attentionQueue}
-            suggestedActions={recentActivity?.suggestedActions ?? []}
-            onRunAlert={handleRunAlert}
-            onRunAttentionItem={handleRunAttentionItem}
-            onDismissAttention={handleDismissAttention}
-            onRunTax={handleTaxAlert}
-            onRunActionId={handleSuggestedAction}
-          />
-
-          {showBriefSection && (
-            <PortfolioBriefSection
-              className="mb-4"
-              brief={displayBrief}
-              changes={morningBrief?.changes}
-              changesLoading={briefLoading && !morningBrief}
-              fallbackAlerts={proactiveAlerts}
-              loading={briefLoading && !displayBrief}
-              error={displayBrief ? null : briefError}
-              lastUpdated={briefLastUpdated}
-              onGoDeeper={handleAnalyzePortfolio}
-              analyzeLoading={portfolioAnalysisLoading}
-              hideSuggestedActions
-            />
-          )}
-        </>
-      )}
-
       {showContent && activeSection === "holdings" && (
-        <>
-          <AnalysisPanel
-            mode="portfolio"
-            portfolioView="holdings"
-            positions={allPositions}
-            positionMap={positionMap}
-            liquidationValue={
-              account?.securitiesAccount.currentBalances.liquidationValue
-            }
-            symbolAlertMap={symbolAlertMap}
-            className="mx-auto mb-4 max-w-3xl"
-          />
-
-          <PortfolioRiskSection
-            className="mb-4"
-            cashSecuredPutSummary={cashSecuredPutSummary}
-            assignmentRiskSummary={assignmentRiskSummary}
-            cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
-          />
-        </>
+        <PageSplit
+          main={
+            <AnalysisPanel
+              mode="portfolio"
+              portfolioView="holdings"
+              positions={allPositions}
+              positionMap={positionMap}
+              liquidationValue={
+                account?.securitiesAccount.currentBalances.liquidationValue
+              }
+              symbolAlertMap={symbolAlertMap}
+              className={cn(pageSectionClass, "mb-0")}
+            />
+          }
+          aside={
+            <PortfolioRiskSection
+              cashSecuredPutSummary={cashSecuredPutSummary}
+              assignmentRiskSummary={assignmentRiskSummary}
+              cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
+              className={cn(pageSectionClass, "mb-0")}
+            />
+          }
+        />
       )}
 
       {showContent && activeSection === "activity" && sessionAccessToken && (
         <RecentActivitySection
+          className={pageSectionClass}
           accessToken={sessionAccessToken}
           summary={recentActivity}
           onRefresh={() => refreshPositions(true)}
@@ -418,6 +438,6 @@ export default function PortfolioPage() {
           hideSuggestedActions
         />
       )}
-    </>
+    </PageShell>
   );
 }

@@ -50,7 +50,7 @@ export function AssignmentRiskSummary({
   return (
     <section
       className={cn(
-        "mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-secondary/40 shadow-sm",
+        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary/40 shadow-sm",
         className,
       )}
       aria-label="Expiring options assignment risk"

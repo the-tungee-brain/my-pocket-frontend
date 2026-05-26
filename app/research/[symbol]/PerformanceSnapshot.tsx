@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   symbol: string;
+  className?: string;
 };
 
-export function PerformanceSnapshot({ symbol }: Props) {
+export function PerformanceSnapshot({ symbol, className }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
   const {
@@ -25,6 +26,7 @@ export function PerformanceSnapshot({ symbol }: Props) {
       title="Recent performance"
       description="Price trends and volatility"
       icon={BarChart3}
+      className={className}
     >
       {isLoading ? (
         <div className="space-y-2">

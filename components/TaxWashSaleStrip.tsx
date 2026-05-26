@@ -17,7 +17,7 @@ export function TaxWashSaleStrip({ items, onRun, className }: Props) {
   return (
     <section
       className={cn(
-        "mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/5 shadow-sm",
+        "mx-auto w-full overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/5 shadow-sm",
         className,
       )}
       aria-label="Tax and wash-sale alerts"

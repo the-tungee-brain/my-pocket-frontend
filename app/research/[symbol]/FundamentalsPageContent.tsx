@@ -4,6 +4,7 @@ import { BarChart3, FileSpreadsheet, Landmark } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useFundamentals } from "@/app/hooks/useFundamentals";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { PageSplit } from "@/components/PageShell";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { KeyMetricsGrid, KeyMetricsGridSkeleton } from "./KeyMetricsGrid";
@@ -33,55 +34,62 @@ export function FundamentalsPageContent({ symbol }: FundamentalsPageContentProps
     <div className="space-y-4">
       {error && <ErrorBanner message={error} />}
 
-      <ResearchSectionCard
-        title="Fundamental overview"
-        description="AI-generated snapshot from SEC filings and market data"
-        icon={FileSpreadsheet}
-      >
-        {isLoading ? (
-          <OverviewSkeleton />
-        ) : fundamentals?.overviewNote ? (
-          <p className="text-sm leading-relaxed text-foreground">
-            {fundamentals.overviewNote}
-          </p>
-        ) : (
-          <EmptyState
-            icon={FileSpreadsheet}
-            title="Overview unavailable"
-            description="An AI overview isn't available for this symbol right now."
-            variant="solid"
-            className="py-4"
-          />
-        )}
-      </ResearchSectionCard>
+      <PageSplit
+        main={
+          <>
+            <ResearchSectionCard
+              title="Fundamental overview"
+              description="AI-generated snapshot from SEC filings and market data"
+              icon={FileSpreadsheet}
+            >
+              {isLoading ? (
+                <OverviewSkeleton />
+              ) : fundamentals?.overviewNote ? (
+                <p className="text-sm leading-relaxed text-foreground">
+                  {fundamentals.overviewNote}
+                </p>
+              ) : (
+                <EmptyState
+                  icon={FileSpreadsheet}
+                  title="Overview unavailable"
+                  description="An AI overview isn't available for this symbol right now."
+                  variant="solid"
+                  className="py-4"
+                />
+              )}
+            </ResearchSectionCard>
 
-      <ResearchSectionCard
-        title="Key metrics"
-        description="Valuation, profitability, and balance sheet highlights"
-        icon={BarChart3}
-      >
-        {isLoading ? (
-          <KeyMetricsGridSkeleton />
-        ) : fundamentals ? (
-          <KeyMetricsGrid metrics={fundamentals.metrics} />
-        ) : (
-          <EmptyState
-            icon={BarChart3}
-            title="Metrics unavailable"
-            description="Fundamental metrics aren't available for this symbol right now."
-            variant="solid"
-            className="py-4"
-          />
-        )}
-      </ResearchSectionCard>
-
-      <ResearchSectionCard
-        title="SEC company profile"
-        description="Official registrant details from EDGAR"
-        icon={Landmark}
-      >
-        <SecCompanyBadge symbol={symbol} />
-      </ResearchSectionCard>
+            <ResearchSectionCard
+              title="Key metrics"
+              description="Valuation, profitability, and balance sheet highlights"
+              icon={BarChart3}
+            >
+              {isLoading ? (
+                <KeyMetricsGridSkeleton />
+              ) : fundamentals ? (
+                <KeyMetricsGrid metrics={fundamentals.metrics} />
+              ) : (
+                <EmptyState
+                  icon={BarChart3}
+                  title="Metrics unavailable"
+                  description="Fundamental metrics aren't available for this symbol right now."
+                  variant="solid"
+                  className="py-4"
+                />
+              )}
+            </ResearchSectionCard>
+          </>
+        }
+        aside={
+          <ResearchSectionCard
+            title="SEC company profile"
+            description="Official registrant details from EDGAR"
+            icon={Landmark}
+          >
+            <SecCompanyBadge symbol={symbol} />
+          </ResearchSectionCard>
+        }
+      />
     </div>
   );
 }
