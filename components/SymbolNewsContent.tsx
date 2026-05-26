@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { CompanyNews } from "@/components/CompanyNews";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
+import { pageSectionClass } from "@/lib/pageLayout";
 
 type Props = {
   symbol: string;
@@ -29,6 +30,7 @@ export function SymbolNewsContent({ symbol }: Props) {
       lastUpdated={lastUpdated}
       onRetry={refresh}
       onRefresh={refresh}
+      className={pageSectionClass}
     />
   );
 }

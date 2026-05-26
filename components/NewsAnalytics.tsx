@@ -1,10 +1,16 @@
 "use client";
 
 import type {
+  EnrichedNewsItem,
   StockNewsView,
   Sentiment,
   OverallSentiment,
 } from "@/app/hooks/useCompanyNews";
+import { PageSplit } from "@/components/PageShell";
+import {
+  ResearchAsideCard,
+  ResearchBulletList,
+} from "@/components/ResearchDetailBlocks";
 import { cn } from "@/lib/utils";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 import { RefreshCw } from "lucide-react";
@@ -67,6 +73,170 @@ function actionabilityTone(score: number | null | undefined) {
   return "text-muted";
 }
 
+function sentimentLabel(sentiment: Sentiment) {
+  switch (sentiment) {
+    case "bullish":
+      return "Bullish";
+    case "bearish":
+      return "Bearish";
+    default:
+      return "Neutral";
+  }
+}
+
+function NewsArticleCard({ item }: { item: EnrichedNewsItem }) {
+  return (
+    <li className="rounded-xl border border-border bg-secondary/60 px-4 py-3 shadow-sm">
+      <div className="mb-1.5 flex flex-wrap items-start gap-2">
+        {item.url ? (
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="min-w-0 flex-1 font-medium text-foreground underline-offset-2 hover:text-accent-strong hover:underline"
+          >
+            {item.headline}
+          </a>
+        ) : (
+          <span className="min-w-0 flex-1 font-medium text-foreground">
+            {item.headline}
+          </span>
+        )}
+        <span
+          className={cn(
+            "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+            sentimentColor(item.sentiment),
+          )}
+        >
+          {sentimentLabel(item.sentiment)}
+          <span className="ml-1 text-[10px] opacity-70">
+            {(item.confidence * 100).toFixed(0)}%
+          </span>
+        </span>
+      </div>
+
+      <p className="text-[13px] leading-relaxed text-muted">{item.summary}</p>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span className="text-[11px] text-muted">
+          {new Date(item.datetime).toLocaleString(undefined, {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}{" "}
+          · {item.source}
+        </span>
+        {item.topics.map((topic) => (
+          <span
+            key={topic}
+            className="inline-flex items-center rounded-full bg-muted-bg px-2 py-px text-[11px] text-muted"
+          >
+            {topic}
+          </span>
+        ))}
+      </div>
+    </li>
+  );
+}
+
+function NewsMetricsAside({ data }: { data: StockNewsView }) {
+  const actionabilityScore = data.actionability_score ?? null;
+  const actionabilityPercent =
+    actionabilityScore == null
+      ? 0
+      : Math.max(0, Math.min(100, (actionabilityScore / 5) * 100));
+
+  return (
+    <ResearchAsideCard title="At a glance">
+      <div className="space-y-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Dominant driver
+          </p>
+          <p className="mt-1 text-sm font-medium text-foreground">
+            {formatMetadataValue(data.dominant_driver)}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Impact horizon
+          </p>
+          <p className="mt-1 text-sm font-medium text-foreground">
+            {formatMetadataValue(data.market_impact_horizon)}
+          </p>
+        </div>
+        <div>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+              Actionability
+            </p>
+            <span
+              className={cn(
+                "text-xs font-semibold",
+                actionabilityTone(actionabilityScore),
+              )}
+            >
+              {actionabilityScore == null ? "N/A" : actionabilityScore}
+            </span>
+          </div>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted-bg">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all",
+                actionabilityTone(actionabilityScore),
+                "bg-current",
+              )}
+              style={{ width: `${actionabilityPercent}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </ResearchAsideCard>
+  );
+}
+
+function NewsAnalysisAside({ data }: { data: StockNewsView }) {
+  const hasInsights = data.insights.length > 0;
+  const hasRisks = data.risks.length > 0;
+  const hasTakeaway = !!data.investorTakeaway;
+  const hasDeepAnalysis = !!data.deepAnalysis;
+
+  return (
+    <>
+      {hasTakeaway && (
+        <ResearchAsideCard title="Investor takeaway" tone="accent">
+          <p className="text-sm leading-relaxed text-foreground">
+            {data.investorTakeaway}
+          </p>
+        </ResearchAsideCard>
+      )}
+
+      <NewsMetricsAside data={data} />
+
+      {hasInsights && (
+        <ResearchAsideCard title="Key insights">
+          <ResearchBulletList items={data.insights} hideTitle />
+        </ResearchAsideCard>
+      )}
+
+      {hasRisks && (
+        <ResearchAsideCard title="Risks">
+          <ResearchBulletList items={data.risks} variant="risk" hideTitle />
+        </ResearchAsideCard>
+      )}
+
+      {hasDeepAnalysis && (
+        <ResearchAsideCard title="Deep analysis">
+          <p className="text-sm leading-relaxed text-foreground">
+            {data.deepAnalysis}
+          </p>
+        </ResearchAsideCard>
+      )}
+    </>
+  );
+}
+
 type Props = {
   analytics: StockNewsView | null;
   isLoading: boolean;
@@ -87,30 +257,34 @@ export default function NewsAnalytics({
   const sentimentClass = data
     ? overallSentimentColor(data.overall_sentiment)
     : "border border-border bg-muted-bg text-foreground";
-  const actionabilityScore = data?.actionability_score ?? null;
-  const actionabilityPercent =
-    actionabilityScore == null
-      ? 0
-      : Math.max(0, Math.min(100, (actionabilityScore / 5) * 100));
 
   const updatedLabel = lastUpdated
     ? formatRelativeUpdatedAt(lastUpdated)
     : null;
 
+  const aside = data ? (
+    <NewsAnalysisAside data={data} />
+  ) : isLoading ? (
+    <>
+      <div className="h-28 animate-pulse rounded-xl bg-muted-bg" />
+      <div className="h-40 animate-pulse rounded-xl bg-muted-bg" />
+    </>
+  ) : null;
+
   return (
-    <div className="mt-4 flex w-full flex-col gap-4">
+    <div className="space-y-6">
       <div
         className={cn(
-          "w-full rounded-xl px-4 py-3 text-sm shadow-sm",
+          "rounded-2xl px-4 py-4 shadow-sm sm:px-5",
           sentimentClass,
         )}
       >
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="inline-flex h-7 items-center rounded-full bg-background/40 px-2 text-xs font-medium uppercase tracking-wide text-muted">
-              News Sentiment
+              News sentiment
             </span>
-            <span className="inline-flex items-center rounded-full bg-background/50 px-2 py-1 text-xs font-semibold text-foreground">
+            <span className="inline-flex items-center rounded-full bg-background/50 px-2.5 py-1 text-xs font-semibold text-foreground">
               {data
                 ? overallSentimentLabel(data.overall_sentiment)
                 : "Loading…"}
@@ -143,209 +317,44 @@ export default function NewsAnalytics({
           </div>
         </div>
 
-        <p className="mb-3 text-sm text-foreground">
+        <p className="mt-3 text-sm leading-relaxed text-foreground">
           {data ? (
             data.summary
           ) : (
             <span className="inline-block h-4 w-3/4 animate-pulse rounded bg-muted-bg" />
           )}
         </p>
+      </div>
 
-        {data?.investorTakeaway && (
-          <div className="mb-3 rounded-lg border border-border bg-background/40 px-3 py-2">
-            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-accent-strong">
-              Investor takeaway
+      <PageSplit
+        main={
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Recent news flow
+              </h2>
+              <span className="text-[11px] text-muted">
+                {data ? `${data.items.length} articles analyzed` : "Loading…"}
+              </span>
             </div>
-            <p className="text-sm text-foreground">{data.investorTakeaway}</p>
-          </div>
-        )}
 
-        {data?.deepAnalysis && (
-          <div className="mb-3 rounded-lg bg-background/30 px-3 py-2">
-            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted">
-              Deep analysis
-            </div>
-            <p className="text-sm leading-relaxed text-foreground">
-              {data.deepAnalysis}
-            </p>
-          </div>
-        )}
+            <ul className="space-y-3">
+              {data?.items.map((item) => (
+                <NewsArticleCard key={item.id} item={item} />
+              ))}
 
-        <div className="mb-3 grid gap-2 border-y border-border py-3 sm:grid-cols-3">
-          <div className="rounded-lg bg-background/30 px-3 py-2">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-              Dominant driver
-            </div>
-            <div className="mt-1 text-xs font-medium text-foreground">
-              {data
-                ? formatMetadataValue(data.dominant_driver)
-                : "Loading..."}
-            </div>
-          </div>
-
-          <div className="rounded-lg bg-background/30 px-3 py-2">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-              Impact horizon
-            </div>
-            <div className="mt-1 text-xs font-medium text-foreground">
-              {data
-                ? formatMetadataValue(data.market_impact_horizon)
-                : "Loading..."}
-            </div>
-          </div>
-
-          <div className="rounded-lg bg-background/30 px-3 py-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                Actionability
-              </div>
-              <div
-                className={cn(
-                  "text-xs font-semibold",
-                  actionabilityTone(actionabilityScore),
-                )}
-              >
-                {actionabilityScore == null ? "N/A" : actionabilityScore}
-              </div>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted-bg">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  actionabilityTone(actionabilityScore),
-                  "bg-current",
-                )}
-                style={{ width: `${actionabilityPercent}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {data
-            ? data.insights.map((insight) => (
-                <div
-                  key={insight}
-                  className="flex items-start gap-2 rounded-lg bg-background/30 px-3 py-2 text-xs text-foreground"
-                >
-                  <span className="mt-0.75 inline-block h-1.5 w-1.5 rounded-full bg-accent-strong" />
-                  <span>{insight}</span>
-                </div>
-              ))
-            : isLoading && (
+              {!data && isLoading && (
                 <>
-                  <div className="h-6 w-40 animate-pulse rounded bg-muted-bg" />
-                  <div className="h-6 w-52 animate-pulse rounded bg-muted-bg" />
+                  <li className="h-28 animate-pulse rounded-xl bg-muted-bg" />
+                  <li className="h-28 animate-pulse rounded-xl bg-muted-bg" />
+                  <li className="h-28 animate-pulse rounded-xl bg-muted-bg" />
                 </>
               )}
-        </div>
-
-        {data && data.risks.length > 0 && (
-          <div className="mt-3 border-t border-border pt-2">
-            <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-danger">
-              Risks
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {data.risks.map((risk) => (
-                <div
-                  key={risk}
-                  className="flex items-start gap-2 rounded-lg bg-danger/10 px-3 py-2 text-xs text-danger"
-                >
-                  <span className="mt-0.75 inline-block h-1.5 w-1.5 rounded-full bg-danger" />
-                  <span>{risk}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="w-full">
-        <div className="flex items-center justify-between border-b border-border py-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-muted">
-            Recent news flow
-          </div>
-          <div className="text-[11px] text-muted">
-            {data ? `${data.items.length} articles analyzed` : "Loading…"}
-          </div>
-        </div>
-
-        <ul className="divide-y divide-border">
-          {data &&
-            data.items.map((item) => (
-              <li
-                key={item.id}
-                className="flex flex-col gap-1 py-3 text-sm text-foreground sm:flex-row sm:items-start sm:justify-between sm:gap-3"
-              >
-                <div className="flex-1">
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    {item.url ? (
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-foreground underline-offset-2 hover:text-accent-strong hover:underline"
-                      >
-                        {item.headline}
-                      </a>
-                    ) : (
-                      <span className="font-medium text-foreground">
-                        {item.headline}
-                      </span>
-                    )}
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-                        sentimentColor(item.sentiment),
-                      )}
-                    >
-                      {item.sentiment === "bullish"
-                        ? "Bullish"
-                        : item.sentiment === "bearish"
-                          ? "Bearish"
-                          : "Neutral"}
-                      <span className="ml-1 text-[10px] opacity-70">
-                        {(item.confidence * 100).toFixed(0)}%
-                      </span>
-                    </span>
-                  </div>
-
-                  <p className="mb-1 text-[13px] text-muted">{item.summary}</p>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] text-muted">
-                      {new Date(item.datetime).toLocaleString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}{" "}
-                      · {item.source}
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {item.topics.map((topic) => (
-                        <span
-                          key={topic}
-                          className="inline-flex items-center rounded-full bg-muted-bg px-2 py-px text-[11px] text-muted"
-                        >
-                          {topic}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </li>
-            ))}
-
-          {!data && isLoading && (
-            <li className="flex flex-col gap-2 px-4 py-3 text-sm text-muted">
-              <div className="h-4 w-3/4 animate-pulse rounded bg-muted-bg" />
-              <div className="h-4 w-1/2 animate-pulse rounded bg-muted-bg" />
-              <div className="h-4 w-2/3 animate-pulse rounded bg-muted-bg" />
-            </li>
-          )}
-        </ul>
-      </div>
+            </ul>
+          </>
+        }
+        aside={aside ?? undefined}
+      />
     </div>
   );
 }

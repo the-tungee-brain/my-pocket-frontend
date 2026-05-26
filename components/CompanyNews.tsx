@@ -6,6 +6,7 @@ import NewsAnalytics from "./NewsAnalytics";
 import { ThinkingSpinner } from "./ui/ThinkingSpinner";
 import { ErrorBanner } from "./ui/ErrorBanner";
 import { EmptyState } from "./ui/EmptyState";
+import { cn } from "@/lib/utils";
 
 type Props = {
   analytics: StockNewsView | null;
@@ -15,6 +16,7 @@ type Props = {
   onRetry: () => void;
   onRefresh?: () => void;
   symbol?: string;
+  className?: string;
 };
 
 export function CompanyNews({
@@ -25,9 +27,10 @@ export function CompanyNews({
   onRetry,
   onRefresh,
   symbol,
+  className,
 }: Props) {
   return (
-    <section className="w-full">
+    <section className={cn("w-full", className)}>
         {isLoading && (
           <ThinkingSpinner message="Fetching and analyzing news" />
         )}
