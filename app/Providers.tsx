@@ -156,6 +156,34 @@ function createStreamingAssistantUpdater(
     });
   };
 
+  const beginAssistantMessage = () => {
+    setChatBySymbol((prev) => {
+      const prevState = ensureSymbolChatState(activeChatKey, prev[activeChatKey]);
+      const alreadyPresent = prevState.messages.some(
+        (message) => message.id === assistantId,
+      );
+      if (alreadyPresent) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [activeChatKey]: {
+          ...prevState,
+          messages: [
+            ...prevState.messages,
+            {
+              id: assistantId,
+              role: "assistant",
+              content: "",
+            },
+          ],
+          loading: true,
+        },
+      };
+    });
+  };
+
   const appendChunk = (chunk: string) => {
     assistantContent.current += chunk;
     if (rafId == null) {
@@ -173,7 +201,7 @@ function createStreamingAssistantUpdater(
     }
   };
 
-  return { appendChunk, flushNow, assistantContent };
+  return { appendChunk, beginAssistantMessage, flushNow, assistantContent };
 }
 
 function chatFailureMessage(
@@ -604,6 +632,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         setChatBySymbol,
         ensureSymbolChatState,
       );
+      streamer.beginAssistantMessage();
 
       try {
         const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);
@@ -766,6 +795,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         ensureSymbolChatState,
         actionId,
       );
+      streamer.beginAssistantMessage();
 
       try {
         const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);

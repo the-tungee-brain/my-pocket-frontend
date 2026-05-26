@@ -8,6 +8,7 @@ import {
   extractQuickTake,
   isLongConversationalContent,
   splitMarkdownSections,
+  stripStreamingStatusPrefix,
   type MarkdownSection,
 } from "@/lib/conversationalAnalysis";
 import { cn } from "@/lib/utils";
@@ -86,7 +87,11 @@ export function ConversationalMarkdown({
   isStreaming = false,
   className,
 }: ConversationalMarkdownProps) {
-  const trimmed = content.trim();
+  const displayContent = useMemo(
+    () => (isStreaming ? content : stripStreamingStatusPrefix(content)),
+    [content, isStreaming],
+  );
+  const trimmed = displayContent.trim();
 
   const layout = useMemo(() => {
     if (!trimmed || isStreaming) {
@@ -130,11 +135,11 @@ export function ConversationalMarkdown({
       preamble: body,
       sections: [],
     };
-  }, [trimmed, isStreaming]);
+  }, [trimmed, isStreaming, displayContent]);
 
   if (!trimmed && isStreaming) {
     return (
-      <p className="flex items-center gap-2 text-sm text-muted">
+      <p className="flex items-center gap-2 text-[15px] text-muted">
         <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
         Thinking it through…
       </p>
@@ -144,7 +149,7 @@ export function ConversationalMarkdown({
   if (layout.mode === "stream" || layout.mode === "compact") {
     return (
       <div className={cn("conversational-analysis", className)}>
-        <MarkdownRenderer content={content} variant="conversational" />
+        <MarkdownRenderer content={displayContent} variant="conversational" />
         {isStreaming && (
           <span
             className="ml-0.5 inline-block h-[1.1em] w-0.5 animate-pulse rounded-full bg-accent align-[-0.15em]"

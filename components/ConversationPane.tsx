@@ -219,7 +219,7 @@ export function ConversationPane({
           );
         })}
 
-        {loading && (
+        {loading && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex gap-3" aria-busy="true" aria-label="Assistant is responding">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
               <Bot className="h-3.5 w-3.5" aria-hidden="true" />

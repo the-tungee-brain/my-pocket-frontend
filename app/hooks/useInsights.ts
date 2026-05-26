@@ -250,6 +250,14 @@ export function useInsights(
 
     entry.listeners.add(listener);
 
+    let notifyRafId: number | null = null;
+    const notifyListeners = () => {
+      notifyRafId = null;
+      for (const activeListener of entry!.listeners) {
+        activeListener(false);
+      }
+    };
+
     (async () => {
       try {
         const displayMessage =
@@ -278,11 +286,15 @@ export function useInsights(
 
         await streamAnalysis(body, accessToken, (chunk) => {
           entry!.buffer += chunk;
-
-          for (const activeListener of entry!.listeners) {
-            activeListener(false);
+          if (notifyRafId == null) {
+            notifyRafId = requestAnimationFrame(notifyListeners);
           }
         });
+
+        if (notifyRafId != null) {
+          cancelAnimationFrame(notifyRafId);
+          notifyRafId = null;
+        }
 
         if (!entry!.buffer.trim()) {
           throw new Error("Empty analysis response");

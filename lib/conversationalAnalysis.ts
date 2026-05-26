@@ -139,3 +139,13 @@ export function bodyWithoutQuickTakeDuplicate(
 }
 
 export const MONEY_HIGHLIGHT_PATTERN = /\$[\d,]+(?:\.\d+)?/g;
+
+/** Strip leading status lines the API sends before the model answer. */
+export function stripStreamingStatusPrefix(content: string): string {
+  const trimmed = content.trimStart();
+  const match = trimmed.match(
+    /^(?:Pulling together your holdings|Reviewing your portfolio|Looking up company data)[^\n]*\n\n/i,
+  );
+  if (!match) return content;
+  return trimmed.slice(match[0].length);
+}
