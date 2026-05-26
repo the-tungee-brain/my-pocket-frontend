@@ -820,7 +820,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
                 )
               )}
               {showComparePaths && (
-                <div className="mt-4 space-y-3 border-t border-border/70 pt-4">
+                <div className="mt-4 space-y-4 border-t border-border/70 pt-4">
                   <ComparePathsIntro />
                   {precomputed?.heldOptionOutcomes?.map((outcome, index) => (
                     <ComparePathsCard

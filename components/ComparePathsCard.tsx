@@ -144,7 +144,6 @@ function RollNetCashSummary({ picture }: { picture: RollCashPicture }) {
   const openCollect = picture.openCollectPerContract ?? null;
   const rollNet = picture.rollNetPerContract ?? null;
   const netCashAfterRoll = picture.netCashAfterRollPerContract ?? null;
-  const lossOnOldPut = picture.lossOnClosedPutPerContract ?? null;
 
   const showFullPicture =
     entryPremium != null && closeCost != null && openCollect != null;
@@ -175,16 +174,6 @@ function RollNetCashSummary({ picture }: { picture: RollCashPicture }) {
               emphasize
             />
           )}
-          {lossOnOldPut != null && lossOnOldPut < 0 && (
-            <p className="pt-0.5 text-[11px] leading-relaxed text-muted">
-              First put closed at a{" "}
-              {formatUsd(Math.abs(lossOnOldPut), {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}{" "}
-              loss (original premium minus cost to close).
-            </p>
-          )}
         </div>
       ) : rollNet != null ? (
         <div className="space-y-1 text-xs">
@@ -200,10 +189,6 @@ function RollNetCashSummary({ picture }: { picture: RollCashPicture }) {
           )}
         </div>
       ) : null}
-
-      {picture.summary && (
-        <p className="text-[11px] leading-relaxed text-muted">{picture.summary}</p>
-      )}
     </div>
   );
 }
@@ -224,7 +209,7 @@ function PathShell({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-xl border px-3 py-3",
+        "flex min-w-0 flex-col rounded-xl border px-3.5 py-3.5",
         accent,
         recommended && "ring-2 ring-accent/50 shadow-sm",
       )}
@@ -482,18 +467,39 @@ function ClosePathView({
           </div>
         )}
         {close.openPnl != null && (
-          <div className="rounded-lg border border-border/80 bg-background/40 px-2.5 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
+          <div
+            className={cn(
+              "rounded-lg border px-2.5 py-2",
+              close.openPnl > 0
+                ? "border-emerald-500/30 bg-emerald-500/5"
+                : close.openPnl < 0
+                  ? "border-red-500/30 bg-red-500/5"
+                  : "border-border/80 bg-background/40",
+            )}
+          >
+            <p
+              className={cn(
+                "text-[10px] font-medium uppercase tracking-wide",
+                close.openPnl > 0
+                  ? "text-emerald-700 dark:text-emerald-400"
+                  : close.openPnl < 0
+                    ? "text-red-700 dark:text-red-400"
+                    : "text-muted",
+              )}
+            >
               Locks in P/L
             </p>
             <p
               className={cn(
                 "mt-1 text-lg font-semibold",
-                close.openPnl >= 0
+                close.openPnl > 0
                   ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-red-600 dark:text-red-400",
+                  : close.openPnl < 0
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-foreground",
               )}
             >
+              {close.openPnl > 0 ? "+" : ""}
               {formatUsd(close.openPnl, {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
@@ -775,11 +781,11 @@ export function ComparePathsCard({
   return (
     <div
       className={cn(
-        "grid gap-2",
+        "grid min-w-0 gap-4",
         orderedPaths.length >= 3
-          ? "sm:grid-cols-3"
+          ? "grid-cols-1 lg:grid-cols-3"
           : orderedPaths.length === 2
-            ? "sm:grid-cols-2"
+            ? "grid-cols-1 md:grid-cols-2"
             : "grid-cols-1",
         className,
       )}
