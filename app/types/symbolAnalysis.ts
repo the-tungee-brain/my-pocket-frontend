@@ -50,6 +50,19 @@ export type ComparePathOption = {
   lines: string[];
 };
 
+export type OptionRollSuggestion = {
+  side: "call" | "put";
+  currentStrike: number;
+  currentExpiration: string;
+  suggestedStrike: number;
+  suggestedExpiration: string;
+  currentDelta?: number | null;
+  suggestedDelta?: number | null;
+  estimatedCredit?: number | null;
+  rationale: string;
+  action?: "roll" | "close" | "hold";
+};
+
 export type HeldOptionOutcomes = {
   drivers: HeldOptionDecisionDrivers;
   currentLeg: OptionLegOutcome;
@@ -63,7 +76,7 @@ export type SymbolAnalysisPrecomputed = {
   symbol: string;
   underlyingPrice?: number | null;
   optionsScorecard?: unknown | null;
-  rollSuggestions?: unknown[];
+  rollSuggestions?: OptionRollSuggestion[];
   heldOptionOutcomes: HeldOptionOutcomes[];
 };
 

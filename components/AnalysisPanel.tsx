@@ -15,7 +15,8 @@ import type { PositionMap } from "@/components/AccountPositionList";
 import { formatInsightsAnalyzedAt } from "@/lib/insightsCache";
 import { AnalyzePrompt } from "@/components/AnalyzePrompt";
 import { StructuredAnalysisView } from "@/components/StructuredAnalysisView";
-import { ComparePathsCard } from "@/components/ComparePathsCard";
+import { ComparePathsCard, ComparePathsIntro } from "@/components/ComparePathsCard";
+import { inferRecommendedComparePath } from "@/lib/inferRecommendedComparePath";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import { AlertBadge } from "@/components/AlertBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -48,6 +49,10 @@ import {
 import { scrollToChat } from "@/lib/scrollToChat";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
+import {
+  hasComparePaths,
+  stripOutcomeComparisonSection,
+} from "@/lib/structuredAnalysis";
 
 type PortfolioProps = {
   mode: "portfolio";
@@ -615,6 +620,19 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     "gpt-5.4",
   );
 
+  const showComparePaths = !isPortfolio && hasComparePaths(precomputed);
+
+  const displayAnalysis = useMemo(() => {
+    if (!structuredAnalysis) return null;
+    if (!showComparePaths) return structuredAnalysis;
+    return stripOutcomeComparisonSection(structuredAnalysis);
+  }, [structuredAnalysis, showComparePaths]);
+
+  const recommendedComparePath = useMemo(
+    () => inferRecommendedComparePath(displayAnalysis?.recommendedAction?.title),
+    [displayAnalysis?.recommendedAction?.title],
+  );
+
   useEffect(() => {
     if (hasCachedInsights && !requested) {
       setRequested(true);
@@ -788,9 +806,9 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
               <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted">
                 AI analysis
               </p>
-              {structuredAnalysis ? (
+              {displayAnalysis ? (
                 <StructuredAnalysisView
-                  analysis={structuredAnalysis}
+                  analysis={displayAnalysis}
                   loading={loading}
                 />
               ) : (
@@ -801,14 +819,20 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
                   />
                 )
               )}
-              {!isPortfolio &&
-                precomputed?.heldOptionOutcomes?.map((outcome, index) => (
-                  <ComparePathsCard
-                    key={`${outcome.currentLeg.strike}-${outcome.currentLeg.expiration}-${index}`}
-                    outcome={outcome}
-                    className="mt-4"
-                  />
-                ))}
+              {showComparePaths && (
+                <div className="mt-4 space-y-3 border-t border-border/70 pt-4">
+                  <ComparePathsIntro />
+                  {precomputed?.heldOptionOutcomes?.map((outcome, index) => (
+                    <ComparePathsCard
+                      key={`${outcome.currentLeg.strike}-${outcome.currentLeg.expiration}-${index}`}
+                      symbol={symbol ?? precomputed.symbol}
+                      outcome={outcome}
+                      recommendedPath={recommendedComparePath}
+                      rollSuggestions={precomputed.rollSuggestions}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
