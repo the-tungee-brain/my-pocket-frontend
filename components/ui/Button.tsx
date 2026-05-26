@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { iconButtonTransitionClass } from "@/components/ui/IconButton";
 import { forwardRef, ButtonHTMLAttributes } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -37,7 +38,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             "border border-border bg-background hover:bg-muted-bg hover:text-foreground",
           variant === "ghost" && "hover:bg-accent hover:text-accent-foreground",
           variant === "icon" &&
-            "border-0 bg-transparent text-muted transition-opacity hover:enabled:opacity-70 active:enabled:opacity-50",
+            cn(
+              "border-0 bg-transparent text-muted",
+              iconButtonTransitionClass,
+              "hover:enabled:bg-muted-bg hover:enabled:text-foreground active:enabled:bg-muted-bg/80",
+            ),
           variant === "destructive" &&
             "bg-destructive text-destructive-foreground hover:bg-destructive/90",
 

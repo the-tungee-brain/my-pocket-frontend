@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { WatchlistButton } from "@/components/WatchlistButton";
 import { WatchlistHint } from "@/components/WatchlistHint";
+import { iconButtonClass } from "@/components/ui/IconButton";
 import { usePositionsContext } from "@/app/Providers";
 import { resolveResearchLogoUrl } from "@/lib/logoUrl";
 import { symbolHubPath } from "@/lib/symbolRoutes";
@@ -102,7 +103,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
         <div className="flex min-w-0 items-center gap-2">
           <Link
             href="/research"
-            className="inline-flex shrink-0 items-center text-muted transition-opacity hover:opacity-70 md:hidden"
+            className={cn(iconButtonClass, "h-7 w-7 md:hidden")}
             aria-label="Back to search"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />

@@ -32,7 +32,7 @@ export function WatchlistButton({
         !iconOnly &&
           watching &&
           "bg-accent-muted text-accent-strong hover:bg-accent-muted/80",
-        iconOnly && watching && "text-accent-strong",
+        iconOnly && watching && "text-accent-strong hover:enabled:text-accent-strong",
         className,
       )}
       aria-pressed={watching}

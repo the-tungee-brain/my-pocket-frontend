@@ -70,7 +70,7 @@ export function SymbolSearchResult({
           className={cn(
             iconButtonClass,
             "mr-2 h-8 w-8",
-            watching && "text-accent-strong",
+            watching && "text-accent-strong hover:enabled:text-accent-strong",
           )}
           onClick={(event) => handleToggle(event)}
         >

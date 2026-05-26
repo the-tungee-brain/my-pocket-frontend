@@ -774,7 +774,7 @@ export function StockChart({
               className={cn(
                 iconButtonClass,
                 "h-8 w-8 text-base",
-                isFullscreen && "text-foreground opacity-100",
+                isFullscreen && "bg-muted-bg text-foreground",
               )}
             >
               <span aria-hidden="true">⛶</span>
