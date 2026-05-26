@@ -477,16 +477,7 @@ function ClosePathView({
                   : "border-border/80 bg-background/40",
             )}
           >
-            <p
-              className={cn(
-                "text-[10px] font-medium uppercase tracking-wide",
-                close.openPnl > 0
-                  ? "text-emerald-700 dark:text-emerald-400"
-                  : close.openPnl < 0
-                    ? "text-red-700 dark:text-red-400"
-                    : "text-muted",
-              )}
-            >
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
               Locks in P/L
             </p>
             <p
