@@ -19,9 +19,10 @@ import {
   Sparkles,
   Target,
   TrendingUp,
-  Wallet,
   Zap,
 } from "lucide-react";
+import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
+import { TomcrestMark } from "@/components/brand/TomcrestMark";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
@@ -142,12 +143,7 @@ function LandingHeader({
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-            <Wallet className="h-4 w-4" aria-hidden="true" />
-          </div>
-          <span className="text-sm font-semibold tracking-tight">Tomcrest</span>
-        </div>
+        <TomcrestLogo size="sm" />
 
         <SignInWithGoogleButton
           onClick={onSignIn}
@@ -554,8 +550,10 @@ function LandingFooter() {
   return (
     <footer className="border-t border-border py-8">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
-        <div className="flex items-center gap-2 text-sm text-muted">
-          <Wallet className="h-4 w-4 text-accent-strong/70" aria-hidden="true" />
+        <div className="flex items-center gap-2.5 text-sm text-muted">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent-muted text-accent-strong">
+            <TomcrestMark className="h-3.5 w-3.5" />
+          </div>
           <span>Tomcrest — AI portfolio intelligence</span>
         </div>
         <p className="text-xs text-muted">
@@ -837,16 +835,8 @@ function AppPreview() {
     <div className="overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-2xl shadow-black/25">
       <div className="flex">
         <div className="hidden w-44 shrink-0 border-r border-border bg-secondary p-3 sm:block">
-          <div className="mb-3 flex items-center gap-2 rounded-xl border border-border bg-background/60 px-2.5 py-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-              <Wallet className="h-3.5 w-3.5" aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <div className="truncate text-[11px] font-semibold">Tomcrest</div>
-              <div className="truncate text-[9px] text-muted">
-                Portfolio workspace
-              </div>
-            </div>
+          <div className="mb-3 rounded-xl border border-border bg-background/60 px-2.5 py-2">
+            <TomcrestLogo size="sm" showSubtitle />
           </div>
 
           <div className="space-y-1">

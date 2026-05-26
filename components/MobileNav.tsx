@@ -2,8 +2,9 @@
 
 import { Dispatch, SetStateAction, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Wallet } from "lucide-react";
+import { X } from "lucide-react";
 import { NavList, MainView } from "@/components/NavList";
+import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
 
 import type { SymbolAlertSummary } from "@/lib/intelligence";
 
@@ -128,21 +129,8 @@ export function MobileNav({
             className="relative z-50 flex h-full w-72 flex-col border-r border-border bg-secondary shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-                  <Wallet className="h-4 w-4" aria-hidden="true" />
-                </div>
-                <div>
-                  <div
-                    id="mobile-nav-title"
-                    className="text-sm font-semibold tracking-tight"
-                  >
-                    Tomcrest
-                  </div>
-                  <div className="text-[10px] text-muted">
-                    Portfolio workspace
-                  </div>
-                </div>
+              <div id="mobile-nav-title">
+                <TomcrestLogo size="sm" showSubtitle />
               </div>
               <button
                 ref={closeButtonRef}
