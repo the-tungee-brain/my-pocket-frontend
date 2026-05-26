@@ -692,8 +692,8 @@ function OptionChainPreviewTable({
         </div>
       )}
       <p className="mb-2 text-[11px] text-muted">
-        Bid/ask require live OPR quotes. When Schwab returns null bid/ask, last uses
-        prior close and mark uses the model price.
+        Bid and ask need a live quote. When they're missing, last is usually
+        yesterday's close and mark is an estimated price.
       </p>
 
       <div className="overflow-x-auto rounded-xl border border-border">

@@ -9,7 +9,8 @@ import {
   writeInsightsCache,
   type InsightsCacheEntry,
 } from "@/lib/insightsCache";
-import { parseStructuredAnalysis } from "@/lib/parseStructuredAnalysis";
+import { parseStructuredAnalyzeResponse } from "@/lib/parseStructuredAnalysis";
+import type { SymbolAnalysisPrecomputed } from "@/app/types/symbolAnalysis";
 import {
   buildStructuredAnalyzeRequest,
   structuredAnalyzeDisplayMessage,
@@ -22,6 +23,7 @@ type InsightState = {
   error: string | null;
   content: string | null;
   structuredAnalysis: StructuredAnalysis | null;
+  precomputed: SymbolAnalysisPrecomputed | null;
   analyzedAt: number | null;
   hasCachedInsights: boolean;
   refetch: () => void;
@@ -82,7 +84,9 @@ export function useInsights(
 
   const bypassCacheRef = useRef(false);
   const [fetchGeneration, setFetchGeneration] = useState(0);
-  const [state, setState] = useState<Omit<InsightState, "refetch" | "structuredAnalysis">>({
+  const [state, setState] = useState<
+    Omit<InsightState, "refetch" | "structuredAnalysis" | "precomputed">
+  >({
     loading: false,
     error: null,
     content: null,
@@ -90,11 +94,16 @@ export function useInsights(
     hasCachedInsights: false,
   });
 
-  const structuredAnalysis = useMemo(
+  const parsedResponse = useMemo(
     () =>
-      structuredAnalyze ? parseStructuredAnalysis(state.content) : null,
+      structuredAnalyze
+        ? parseStructuredAnalyzeResponse(state.content)
+        : { analysis: null, precomputed: null },
     [structuredAnalyze, state.content],
   );
+
+  const structuredAnalysis = parsedResponse.analysis;
+  const precomputed = parsedResponse.precomputed;
 
   const startFresh = useCallback(() => {
     if (!cacheKey) return;
@@ -341,5 +350,5 @@ export function useInsights(
     cacheKey,
   ]);
 
-  return { ...state, structuredAnalysis, refetch, startFresh };
+  return { ...state, structuredAnalysis, precomputed, refetch };
 }

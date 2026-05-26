@@ -3,6 +3,8 @@ import type {
   StructuredAnalysisAction,
   StructuredAnalysisSection,
 } from "@/app/types/analysis";
+import type { SymbolAnalysisPrecomputed } from "@/app/types/symbolAnalysis";
+import { stripStreamingStatusPrefix } from "@/lib/conversationalAnalysis";
 
 function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -90,6 +92,66 @@ function extractJsonCandidate(raw: string): string | null {
   return trimmed.slice(start, end + 1);
 }
 
+function isSymbolAnalysisV1Envelope(
+  value: unknown,
+): value is { analysis: unknown; precomputed?: SymbolAnalysisPrecomputed | null } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "analysis" in value &&
+    typeof (value as { analysis?: { summary?: unknown } }).analysis?.summary ===
+      "string"
+  );
+}
+
+export type StructuredAnalyzeResponse = {
+  analysis: StructuredAnalysis | null;
+  precomputed: SymbolAnalysisPrecomputed | null;
+};
+
+function parseJsonResponse(raw: string): StructuredAnalyzeResponse {
+  const candidate = extractJsonCandidate(raw);
+  if (!candidate) {
+    return { analysis: null, precomputed: null };
+  }
+
+  try {
+    const parsed = JSON.parse(candidate);
+    if (isSymbolAnalysisV1Envelope(parsed)) {
+      return {
+        analysis: normalizeStructuredAnalysis(parsed.analysis),
+        precomputed: parsed.precomputed ?? null,
+      };
+    }
+
+    return {
+      analysis: normalizeStructuredAnalysis(parsed),
+      precomputed: null,
+    };
+  } catch {
+    return { analysis: null, precomputed: null };
+  }
+}
+
+export function parseStructuredAnalyzeResponse(
+  raw: string | null | undefined,
+): StructuredAnalyzeResponse {
+  if (!raw?.trim()) {
+    return { analysis: null, precomputed: null };
+  }
+
+  const stripped = stripStreamingStatusPrefix(raw);
+  const fromJson = parseJsonResponse(stripped);
+  if (fromJson.analysis) {
+    return fromJson;
+  }
+
+  return {
+    analysis: markdownToStructured(stripped),
+    precomputed: null,
+  };
+}
+
 export function parseStructuredAnalysisJson(
   raw: string,
 ): StructuredAnalysis | null {
@@ -151,7 +213,5 @@ function markdownToStructured(raw: string): StructuredAnalysis | null {
 export function parseStructuredAnalysis(
   raw: string | null | undefined,
 ): StructuredAnalysis | null {
-  if (!raw?.trim()) return null;
-
-  return parseStructuredAnalysisJson(raw) ?? markdownToStructured(raw);
+  return parseStructuredAnalyzeResponse(raw).analysis;
 }

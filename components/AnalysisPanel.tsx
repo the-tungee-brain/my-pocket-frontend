@@ -15,6 +15,7 @@ import type { PositionMap } from "@/components/AccountPositionList";
 import { formatInsightsAnalyzedAt } from "@/lib/insightsCache";
 import { AnalyzePrompt } from "@/components/AnalyzePrompt";
 import { StructuredAnalysisView } from "@/components/StructuredAnalysisView";
+import { ComparePathsCard } from "@/components/ComparePathsCard";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import { AlertBadge } from "@/components/AlertBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -597,10 +598,10 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     error,
     content,
     structuredAnalysis,
+    precomputed,
     analyzedAt,
     hasCachedInsights,
     refetch,
-    startFresh,
   } = useInsights(
     {
       label,
@@ -637,7 +638,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   useEffect(() => {
     const beginAnalyze = () => {
       setPendingAnalyze(true);
-      startFresh();
+      refetch();
       setRequested(true);
     };
 
@@ -659,7 +660,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       window.removeEventListener(ANALYZE_POSITION_EVENT, handlePositionAnalyze);
       window.removeEventListener(ANALYZE_PORTFOLIO_EVENT, handlePortfolioAnalyze);
     };
-  }, [isPortfolio, loading, pendingAnalyze, startFresh, symbol]);
+  }, [isPortfolio, loading, pendingAnalyze, refetch, symbol]);
 
   const symbolSummaries = useMemo(() => {
     if (!isPortfolio || !positionMap) return [];
@@ -717,7 +718,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const handleStart = () => {
     if (isAnalyzing) return;
     setPendingAnalyze(true);
-    startFresh();
+    refetch();
     setRequested(true);
     if (isPortfolio) {
       document
@@ -800,6 +801,14 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
                   />
                 )
               )}
+              {!isPortfolio &&
+                precomputed?.heldOptionOutcomes?.map((outcome, index) => (
+                  <ComparePathsCard
+                    key={`${outcome.currentLeg.strike}-${outcome.currentLeg.expiration}-${index}`}
+                    outcome={outcome}
+                    className="mt-4"
+                  />
+                ))}
             </div>
           )}
 
