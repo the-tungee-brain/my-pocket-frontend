@@ -96,17 +96,25 @@ export function useInsights(
     [structuredAnalyze, state.content],
   );
 
-  const refetch = useCallback(() => {
+  const startFresh = useCallback(() => {
     if (!cacheKey) return;
     memoryCache.delete(cacheKey);
     clearInsightsCache(cacheKey);
     bypassCacheRef.current = true;
     setState((previous) => ({
       ...previous,
+      loading: true,
       error: null,
+      content: null,
+      analyzedAt: null,
+      hasCachedInsights: false,
     }));
     setFetchGeneration((generation) => generation + 1);
   }, [cacheKey]);
+
+  const refetch = useCallback(() => {
+    startFresh();
+  }, [startFresh]);
 
   useEffect(() => {
     if (!cacheKey || !label) {
@@ -128,6 +136,7 @@ export function useInsights(
         analyzedAt: cached.fetchedAt,
         hasCachedInsights: true,
         error: null,
+        loading: false,
       }));
       return;
     }
@@ -156,12 +165,13 @@ export function useInsights(
       return;
     }
 
+    setState((previous) => ({
+      ...previous,
+      loading: true,
+      error: null,
+    }));
+
     if (!account || !accessToken) {
-      setState((previous) => ({
-        ...previous,
-        loading: true,
-        error: null,
-      }));
       return;
     }
 
@@ -331,5 +341,5 @@ export function useInsights(
     cacheKey,
   ]);
 
-  return { ...state, structuredAnalysis, refetch };
+  return { ...state, structuredAnalysis, refetch, startFresh };
 }

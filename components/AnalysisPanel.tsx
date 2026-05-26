@@ -571,6 +571,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const { account, sessionAccessToken } = usePositionsContext();
   const portfolioHeaderActionsEl = useContext(PortfolioSnapshotHeaderActionsContext);
   const [requested, setRequested] = useState(autoStart);
+  const [pendingAnalyze, setPendingAnalyze] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("weight");
   const [alertsOnly, setAlertsOnly] = useState(false);
 
@@ -591,8 +592,16 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     [symbol],
   );
 
-  const { loading, error, content, structuredAnalysis, analyzedAt, hasCachedInsights, refetch } =
-    useInsights(
+  const {
+    loading,
+    error,
+    content,
+    structuredAnalysis,
+    analyzedAt,
+    hasCachedInsights,
+    refetch,
+    startFresh,
+  } = useInsights(
     {
       label,
       positions,
@@ -620,16 +629,28 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   }, [loading, onLoadingChange]);
 
   useEffect(() => {
-    const handlePositionAnalyze = (event: Event) => {
-      if (isPortfolio || loading) return;
-      const detail = (event as CustomEvent<{ symbol?: string }>).detail;
-      if (symbol && detail?.symbol && detail.symbol !== symbol) return;
+    if (!loading) {
+      setPendingAnalyze(false);
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    const beginAnalyze = () => {
+      setPendingAnalyze(true);
+      startFresh();
       setRequested(true);
     };
 
+    const handlePositionAnalyze = (event: Event) => {
+      if (isPortfolio || loading || pendingAnalyze) return;
+      const detail = (event as CustomEvent<{ symbol?: string }>).detail;
+      if (symbol && detail?.symbol && detail.symbol !== symbol) return;
+      beginAnalyze();
+    };
+
     const handlePortfolioAnalyze = () => {
-      if (!isPortfolio) return;
-      setRequested(true);
+      if (!isPortfolio || loading || pendingAnalyze) return;
+      beginAnalyze();
     };
 
     window.addEventListener(ANALYZE_POSITION_EVENT, handlePositionAnalyze);
@@ -638,7 +659,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       window.removeEventListener(ANALYZE_POSITION_EVENT, handlePositionAnalyze);
       window.removeEventListener(ANALYZE_PORTFOLIO_EVENT, handlePortfolioAnalyze);
     };
-  }, [isPortfolio, loading, symbol]);
+  }, [isPortfolio, loading, pendingAnalyze, startFresh, symbol]);
 
   const symbolSummaries = useMemo(() => {
     if (!isPortfolio || !positionMap) return [];
@@ -668,22 +689,15 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       : "Holdings"
     : symbol!;
   const analyzeLabel = isPortfolio ? "Analyze portfolio" : "Analyze position";
-  const hasContent = !!content;
-  const hasDisplayableAnalysis = !!structuredAnalysis || (!loading && !!content);
-  const isInitialLoading =
-    showPortfolioAnalysis &&
-    requested &&
-    loading &&
-    !structuredAnalysis;
+  const hasContent = !!content?.trim();
+  const isAnalyzing = loading || pendingAnalyze;
+  const analysisReady =
+    !isAnalyzing && (!!structuredAnalysis || hasContent);
   const showAnalyzePrompt =
-    showPortfolioAnalysis &&
-    !hasCachedInsights &&
-    !hasDisplayableAnalysis &&
-    !error &&
-    (!requested || isInitialLoading);
+    showPortfolioAnalysis && !error && (isAnalyzing || !analysisReady);
+  const analyzeButtonLoading = isAnalyzing;
   const showAnalysisOutput =
-    showPortfolioAnalysis &&
-    (hasDisplayableAnalysis || error || (hasCachedInsights && hasContent));
+    showPortfolioAnalysis && (error || analysisReady);
 
   const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
   const openPL = sumOpenProfitLoss(positions);
@@ -701,7 +715,9 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const symbolCount = isPortfolio ? Object.keys(positionMap ?? {}).length : 0;
 
   const handleStart = () => {
-    if (loading) return;
+    if (isAnalyzing) return;
+    setPendingAnalyze(true);
+    startFresh();
     setRequested(true);
     if (isPortfolio) {
       document
@@ -715,6 +731,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       handleStart();
       return;
     }
+    setPendingAnalyze(true);
     refetch();
   };
 
@@ -728,8 +745,8 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
 
   const showReanalyze =
     showPortfolioAnalysis &&
-    !isInitialLoading &&
-    (hasCachedInsights || hasDisplayableAnalysis || error || (requested && loading));
+    !loading &&
+    (hasCachedInsights || analysisReady || error || requested);
 
   const headerReanalyzeButton =
     embedded &&
@@ -749,7 +766,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
           isPortfolio={isPortfolio}
           symbol={symbol}
           label={analyzeLabel}
-          loading={loading}
+          loading={analyzeButtonLoading}
           onClick={handleStart}
         />
       )}
@@ -760,7 +777,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
             <ErrorBanner message={error} onRetry={refetch} className="mb-3" />
           )}
 
-          {hasDisplayableAnalysis && (
+          {analysisReady && (
             <div
               className={cn(
                 "text-sm leading-relaxed text-foreground",
@@ -786,7 +803,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
             </div>
           )}
 
-          {requested && !loading && !error && !hasDisplayableAnalysis && (
+          {requested && !isAnalyzing && !error && !analysisReady && (
             <div className="space-y-3 py-4 text-center">
               <p className="text-sm text-muted">Analysis unavailable right now.</p>
               <button
@@ -799,7 +816,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
             </div>
           )}
 
-          {hasDisplayableAnalysis && !loading && (
+          {analysisReady && (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3">
               <p className="text-[11px] text-muted">
                 {analyzedAt

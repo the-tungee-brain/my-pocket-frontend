@@ -62,15 +62,25 @@ export function AnalyzePrompt({
             onClick();
           }}
           className={buttonClass}
+          aria-busy={loading}
         >
-          <Sparkles
-            className={cn(
-              "h-3 w-3",
-              loading && "animate-pulse motion-reduce:animate-none",
-            )}
-            aria-hidden
-          />
-          {loading ? "Analyzing…" : label}
+          {loading ? (
+            <>
+              <span
+                className="relative flex h-3.5 w-3.5 items-center justify-center"
+                aria-hidden
+              >
+                <span className="absolute h-3.5 w-3.5 animate-ping rounded-full bg-accent/25 motion-reduce:animate-none motion-reduce:opacity-40" />
+                <span className="relative h-1.5 w-1.5 rounded-full bg-accent-strong" />
+              </span>
+              Analyzing…
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-3 w-3" aria-hidden />
+              {label}
+            </>
+          )}
         </button>
       </div>
     </div>
