@@ -819,7 +819,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
               )}
             >
               <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted">
-                AI analysis
+                {showPortfolioAllocation ? "What to do next" : "AI analysis"}
               </p>
               {showPortfolioAllocation && portfolioPrecomputed && (
                 <div className="mb-4 space-y-3">
@@ -831,6 +831,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
                 <StructuredAnalysisView
                   analysis={displayAnalysis}
                   loading={loading}
+                  hideDetailLabel={showPortfolioAllocation}
                 />
               ) : (
                 content && (

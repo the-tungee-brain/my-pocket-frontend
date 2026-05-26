@@ -10,12 +10,15 @@ type Props = {
   analysis: StructuredAnalysis;
   loading?: boolean;
   className?: string;
+  /** When true, sections are supplementary (e.g. money map card is shown above). */
+  hideDetailLabel?: boolean;
 };
 
 export function StructuredAnalysisView({
   analysis,
   loading = false,
   className,
+  hideDetailLabel = false,
 }: Props) {
   const [expandedSections, setExpandedSections] = useState<Set<number>>(
     () => new Set(analysis.sections.length > 0 ? [0] : []),
@@ -68,7 +71,9 @@ export function StructuredAnalysisView({
 
       {analysis.sections.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[11px] font-medium text-muted">More detail</p>
+          {!hideDetailLabel && (
+            <p className="text-[11px] font-medium text-muted">More detail</p>
+          )}
           {analysis.sections.map((section, index) => {
             const expanded = expandedSections.has(index);
 

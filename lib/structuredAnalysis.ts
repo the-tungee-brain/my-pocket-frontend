@@ -64,10 +64,27 @@ export const STRUCTURED_ANALYSIS_INSTRUCTIONS = `Return ONLY valid JSON matching
     }
   ]
 }
-Use 2-5 sections max. Lead with diversification for portfolio analysis. Keep bullets concise.
+Use 1-3 sections max for portfolio analysis. Do NOT include Portfolio cash map, Gaps vs targets,
+Where to put money smarter, Diversification diagnosis, Portfolio snapshot, Holdings review, Trim plan,
+or Deploy plan — the UI money map card already shows cash, holdings, and trim/deploy amounts.
+Use sections for interpretation only: "Action plan (ranked)" and optionally "Risk if you do nothing".
 When the response includes precomputed option comparePaths in the API envelope, do NOT add an
 "Outcome comparison" section — the UI renders compare paths separately. Put why roll/close/hold
 wins in recommendedAction.reason instead.`;
+
+const PORTFOLIO_PRECOMPUTED_SECTION_TITLES = [
+  /^portfolio cash map$/i,
+  /^gaps vs targets$/i,
+  /^where to put money smarter$/i,
+  /^diversification diagnosis$/i,
+  /^portfolio snapshot$/i,
+  /^holdings review$/i,
+  /^holding-by-holding/i,
+  /^cash map$/i,
+  /^trim plan$/i,
+  /^deploy plan$/i,
+  /^concentration check$/i,
+];
 
 export function hasPortfolioAllocation(
   portfolioPrecomputed: PortfolioAnalysisPrecomputed | null | undefined,
@@ -81,10 +98,9 @@ export function stripPortfolioAllocationSections(
   return {
     ...analysis,
     sections: analysis.sections.filter((section) => {
-      const title = section.title.trim().toLowerCase();
-      return (
-        title !== "portfolio cash map" &&
-        !/^gaps vs targets$/i.test(title)
+      const title = section.title.trim();
+      return !PORTFOLIO_PRECOMPUTED_SECTION_TITLES.some((pattern) =>
+        pattern.test(title),
       );
     }),
   };
