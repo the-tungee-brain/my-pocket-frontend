@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { AssetType } from "@/app/types/research";
+import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import {
   fetchAssetType,
   getCachedAssetType,
@@ -16,26 +17,32 @@ export function useResearchAssetType(
   symbol: string | null,
   { accessToken }: UseResearchAssetTypeOptions = {},
 ) {
+  const symbolUpper = symbol?.trim().toUpperCase() ?? null;
+
   const [assetType, setAssetType] = useState<AssetType | null>(() => {
-    if (!symbol) return null;
-    const cached = getCachedAssetType(symbol);
-    return cached === undefined ? null : cached;
+    if (!symbolUpper) return null;
+    return getCachedAssetType(symbolUpper) ?? null;
   });
   const [isLoading, setIsLoading] = useState<boolean>(() => {
-    if (!symbol) return false;
-    return getCachedAssetType(symbol) === undefined;
+    if (!symbolUpper) return false;
+    return getCachedAssetType(symbolUpper) === undefined;
+  });
+
+  const { holdings: etfHoldings } = useEtfHoldings(symbolUpper, {
+    accessToken,
+    limit: 1,
+    enabled: Boolean(symbolUpper && accessToken && !isEtfAssetType(assetType)),
   });
 
   useEffect(() => {
-    const key = symbol?.trim().toUpperCase();
-    if (!key) {
+    if (!symbolUpper) {
       setAssetType(null);
       setIsLoading(false);
       return;
     }
 
-    const cached = getCachedAssetType(key);
-    if (cached !== undefined) {
+    const cached = getCachedAssetType(symbolUpper);
+    if (cached) {
       setAssetType(cached);
       setIsLoading(false);
       return;
@@ -43,7 +50,7 @@ export function useResearchAssetType(
 
     if (!accessToken) {
       setAssetType(null);
-      setIsLoading(false);
+      setIsLoading(true);
       return;
     }
 
@@ -51,7 +58,7 @@ export function useResearchAssetType(
 
     async function load() {
       setIsLoading(true);
-      const resolved = await fetchAssetType(key!, accessToken!);
+      const resolved = await fetchAssetType(symbolUpper!, accessToken!);
       if (cancelled) return;
       setAssetType(resolved);
       setIsLoading(false);
@@ -62,11 +69,16 @@ export function useResearchAssetType(
     return () => {
       cancelled = true;
     };
-  }, [symbol, accessToken]);
+  }, [symbolUpper, accessToken]);
+
+  const isEtf =
+    isEtfAssetType(assetType) ||
+    etfHoldings != null ||
+    (assetType == null && isEtfAssetType(getCachedAssetType(symbolUpper ?? "")));
 
   return {
-    assetType,
+    assetType: isEtf && assetType !== "ETF" ? "ETF" : assetType,
     isLoading,
-    isEtf: isEtfAssetType(assetType),
+    isEtf,
   };
 }

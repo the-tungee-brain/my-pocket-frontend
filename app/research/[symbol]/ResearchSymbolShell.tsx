@@ -25,7 +25,7 @@ type Props = {
 function ResearchSymbolShellInner({ symbol, children }: Props) {
   const pathname = usePathname();
   const { positionMap } = usePositionsContext();
-  const { assetType } = useResearchAssetTypeContext();
+  const { assetType, isEtf } = useResearchAssetTypeContext();
   const [collapsed, setCollapsed] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const symbolUpper = symbol.toUpperCase();
@@ -75,14 +75,14 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
                 : []),
               { label: "Research", href: "/research" },
               { label: symbolUpper, href: symbolHubPath(symbolUpper, "overview") },
-              { label: researchTabLabel(activeTab, assetType) },
+              { label: researchTabLabel(activeTab, assetType, isEtf) },
             ]}
           />
         )}
 
         <div className={cn("space-y-3", collapsed && "space-y-2")}>
           <CompanySnapshot symbol={symbol} compact={collapsed} />
-          <ResearchTabBar symbol={symbol} assetType={assetType} />
+          <ResearchTabBar symbol={symbol} assetType={assetType} isEtf={isEtf} />
         </div>
       </div>
 

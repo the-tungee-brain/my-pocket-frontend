@@ -5,15 +5,12 @@ import { Layers, PieChart } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
-import { PageSplit } from "@/components/PageShell";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { symbolHubPath } from "@/lib/symbolRoutes";
-import { cn } from "@/lib/utils";
 import {
+  EtfCompositionColumns,
   EtfFundStats,
-  EtfHoldingsTable,
-  EtfSectorBreakdown,
 } from "./EtfHoldingsSections";
 
 type Props = {
@@ -23,7 +20,7 @@ type Props = {
 
 function LoadingBlock() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
           <div
@@ -32,7 +29,14 @@ function LoadingBlock() {
           />
         ))}
       </div>
-      <div className="h-48 animate-pulse rounded-xl bg-muted-bg" />
+      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div key={index} className="space-y-2">
+            <div className="h-3 w-28 animate-pulse rounded bg-muted-bg" />
+            <div className="h-52 animate-pulse rounded-xl bg-muted-bg" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -63,6 +67,14 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
             title="Fund stats"
             description="Size, cost, and income profile"
             icon={Layers}
+          >
+            <EtfFundStats holdings={holdings} />
+          </ResearchSectionCard>
+
+          <ResearchSectionCard
+            title="Composition"
+            description="Sector allocation and largest positions"
+            icon={PieChart}
             action={
               holdings.dataAsOf ? (
                 <span className="text-[10px] text-muted">
@@ -71,32 +83,21 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
               ) : null
             }
           >
-            <EtfFundStats holdings={holdings} />
+            <EtfCompositionColumns
+              sectorBreakdown={holdings.sector_breakdown}
+              holdings={holdings.holdings}
+              totalHoldings={holdings.total_holdings}
+              sectorLimit={20}
+              holdingsLimit={limit}
+              showHoldingsFooter={false}
+            />
+            {holdings.holdings.length < holdings.total_holdings ? (
+              <p className="mt-4 border-t border-border pt-3 text-xs text-muted">
+                Showing {Math.min(holdings.holdings.length, limit)} of{" "}
+                {holdings.total_holdings.toLocaleString()} holdings.
+              </p>
+            ) : null}
           </ResearchSectionCard>
-
-          <PageSplit
-            main={
-              <ResearchSectionCard
-                title="Top holdings"
-                description="Largest positions inside the fund"
-                icon={Layers}
-              >
-                <EtfHoldingsTable
-                  holdings={holdings.holdings}
-                  totalHoldings={holdings.total_holdings}
-                />
-              </ResearchSectionCard>
-            }
-            aside={
-              <ResearchSectionCard
-                title="Sector breakdown"
-                description="How the ETF is allocated across sectors"
-                icon={PieChart}
-              >
-                <EtfSectorBreakdown breakdown={holdings.sector_breakdown} />
-              </ResearchSectionCard>
-            }
-          />
         </>
       ) : (
         <EmptyState
@@ -166,28 +167,13 @@ export function EtfHoldingsOverviewPreview({
     >
       <div className="space-y-4">
         <EtfFundStats holdings={holdings} />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div>
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-              Sector breakdown
-            </p>
-            <EtfSectorBreakdown
-              breakdown={holdings.sector_breakdown}
-              limit={5}
-            />
-          </div>
-          <div>
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-              Top holdings
-            </p>
-            <EtfHoldingsTable
-              holdings={holdings.holdings}
-              totalHoldings={holdings.total_holdings}
-              limit={5}
-              compact
-            />
-          </div>
-        </div>
+        <EtfCompositionColumns
+          sectorBreakdown={holdings.sector_breakdown}
+          holdings={holdings.holdings}
+          totalHoldings={holdings.total_holdings}
+          sectorLimit={5}
+          holdingsLimit={5}
+        />
       </div>
     </ResearchSectionCard>
   );

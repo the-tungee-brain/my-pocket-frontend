@@ -75,8 +75,11 @@ const allTabs: Tab[] = [
   },
 ];
 
-function tabsForAssetType(assetType: AssetType | null | undefined): Tab[] {
-  const resolved = assetType ?? "STOCK";
+function tabsForAssetType(
+  assetType: AssetType | null | undefined,
+  isEtf = false,
+): Tab[] {
+  const resolved: AssetType = isEtf ? "ETF" : assetType ?? "STOCK";
   const matched = allTabs.filter((tab) => {
     if (tab.assetTypes === "all") return true;
     return tab.assetTypes?.includes(resolved);
@@ -93,12 +96,14 @@ function tabsForAssetType(assetType: AssetType | null | undefined): Tab[] {
 type ResearchTabBarProps = {
   symbol: string;
   assetType?: AssetType | null;
+  isEtf?: boolean;
   className?: string;
 };
 
 export function ResearchTabBar({
   symbol,
   assetType,
+  isEtf = false,
   className,
 }: ResearchTabBarProps) {
   const pathname = usePathname();
@@ -107,7 +112,7 @@ export function ResearchTabBar({
   const encoded = encodeURIComponent(symbol.toUpperCase());
   const activeTab =
     (pathname.split("/")[3] as ResearchTabId | undefined) ?? "overview";
-  const tabs = tabsForAssetType(assetType);
+  const tabs = tabsForAssetType(assetType, isEtf);
 
   useEffect(() => {
     const nav = navRef.current;
@@ -128,7 +133,7 @@ export function ResearchTabBar({
       nav.removeEventListener("scroll", updateFade);
       observer.disconnect();
     };
-  }, [symbol, assetType]);
+  }, [symbol, assetType, isEtf]);
 
   return (
     <div className={cn("relative", className)}>
@@ -177,8 +182,9 @@ export function ResearchTabBar({
 export function researchTabLabel(
   tab: string | undefined,
   assetType?: AssetType | null,
+  isEtf = false,
 ): string {
-  const tabs = tabsForAssetType(assetType);
+  const tabs = tabsForAssetType(assetType, isEtf);
   const found = tabs.find((entry) => entry.id === tab);
   return found?.label ?? "Overview";
 }

@@ -4,12 +4,64 @@ import Link from "next/link";
 import type { EtfHoldingsContext } from "@/app/types/research";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 
-type Props = {
+const BAR_CLASS = "bg-accent-strong/80";
+const LABEL_CLASS = "min-w-0 truncate text-xs font-normal text-foreground";
+const WEIGHT_CLASS = "shrink-0 text-xs font-normal tabular-nums text-muted";
+
+type WeightBarItem = {
+  key: string;
+  label: string;
+  href?: string;
+  weight: number;
+};
+
+function EtfWeightBarLabel({ label, href }: { label: string; href?: string }) {
+  if (href) {
+    return (
+      <Link href={href} className={`${LABEL_CLASS} hover:underline`}>
+        {label}
+      </Link>
+    );
+  }
+
+  return <span className={LABEL_CLASS}>{label}</span>;
+}
+
+function EtfWeightBarList({ items }: { items: WeightBarItem[] }) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  const maxWeight = items[0]?.weight ?? 1;
+
+  return (
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div key={item.key} className="space-y-1">
+          <div className="flex items-center justify-between gap-3">
+            <EtfWeightBarLabel label={item.label} href={item.href} />
+            <span className={WEIGHT_CLASS}>{item.weight.toFixed(2)}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-muted-bg">
+            <div
+              className={`h-full rounded-full ${BAR_CLASS}`}
+              style={{
+                width: `${Math.max((item.weight / maxWeight) * 100, 4)}%`,
+              }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+type SectorProps = {
   breakdown: Record<string, number>;
   limit?: number;
 };
 
-export function EtfSectorBreakdown({ breakdown, limit = 8 }: Props) {
+export function EtfSectorBreakdown({ breakdown, limit = 8 }: SectorProps) {
   const sectors = Object.entries(breakdown)
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit);
@@ -20,44 +72,29 @@ export function EtfSectorBreakdown({ breakdown, limit = 8 }: Props) {
     );
   }
 
-  const maxWeight = sectors[0]?.[1] ?? 1;
+  const items: WeightBarItem[] = sectors.map(([sector, weight]) => ({
+    key: sector,
+    label: sector,
+    weight,
+  }));
 
-  return (
-    <div className="space-y-2">
-      {sectors.map(([sector, weight]) => (
-        <div key={sector} className="space-y-1">
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <span className="truncate text-foreground">{sector}</span>
-            <span className="shrink-0 tabular-nums text-muted">
-              {weight.toFixed(2)}%
-            </span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted-bg">
-            <div
-              className="h-full rounded-full bg-accent-strong/80"
-              style={{ width: `${Math.max((weight / maxWeight) * 100, 4)}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  return <EtfWeightBarList items={items} />;
 }
 
-type TableProps = {
+type HoldingsProps = {
   holdings: EtfHoldingsContext["holdings"];
   totalHoldings?: number;
   limit?: number;
-  compact?: boolean;
+  showFooter?: boolean;
 };
 
-export function EtfHoldingsTable({
+export function EtfTopHoldings({
   holdings,
   totalHoldings,
-  limit,
-  compact = false,
-}: TableProps) {
-  const rows = limit ? holdings.slice(0, limit) : holdings;
+  limit = 8,
+  showFooter = true,
+}: HoldingsProps) {
+  const rows = holdings.slice(0, limit);
 
   if (rows.length === 0) {
     return (
@@ -65,57 +102,71 @@ export function EtfHoldingsTable({
     );
   }
 
+  const items: WeightBarItem[] = rows.map((holding) => ({
+    key: `${holding.ticker ?? holding.name}-${holding.weight_pct}`,
+    label: holding.ticker ?? holding.name,
+    href: holding.ticker
+      ? symbolHubPath(holding.ticker, "overview")
+      : undefined,
+    weight: holding.weight_pct,
+  }));
+
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-border bg-background/70 text-[11px] uppercase tracking-wide text-muted">
-            <tr>
-              <th className="px-3 py-2 font-medium">Ticker</th>
-              <th className="px-3 py-2 font-medium">Name</th>
-              <th className="px-3 py-2 font-medium">Weight</th>
-              {!compact ? (
-                <th className="px-3 py-2 font-medium">Sector</th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {rows.map((holding) => (
-              <tr key={`${holding.ticker ?? holding.name}-${holding.weight_pct}`}>
-                <td className="px-3 py-2 font-mono text-xs font-semibold">
-                  {holding.ticker ? (
-                    <Link
-                      href={symbolHubPath(holding.ticker, "overview")}
-                      className="text-accent-strong hover:underline"
-                    >
-                      {holding.ticker}
-                    </Link>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td className="max-w-[12rem] truncate px-3 py-2 text-foreground">
-                  {holding.name}
-                </td>
-                <td className="px-3 py-2 tabular-nums text-foreground">
-                  {holding.weight_pct.toFixed(2)}%
-                </td>
-                {!compact ? (
-                  <td className="px-3 py-2 text-muted">
-                    {holding.sector ?? "—"}
-                  </td>
-                ) : null}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {totalHoldings != null && rows.length < totalHoldings ? (
+      <EtfWeightBarList items={items} />
+      {showFooter && totalHoldings != null && rows.length < totalHoldings ? (
         <p className="text-xs text-muted">
           Showing {rows.length} of {totalHoldings.toLocaleString()} holdings.
         </p>
       ) : null}
+    </div>
+  );
+}
+
+type CompositionColumnsProps = {
+  sectorBreakdown: Record<string, number>;
+  holdings: EtfHoldingsContext["holdings"];
+  totalHoldings?: number;
+  sectorLimit?: number;
+  holdingsLimit?: number;
+  showHoldingsFooter?: boolean;
+};
+
+export function EtfCompositionSectionLabel({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+      {children}
+    </p>
+  );
+}
+
+export function EtfCompositionColumns({
+  sectorBreakdown,
+  holdings,
+  totalHoldings,
+  sectorLimit = 8,
+  holdingsLimit = 8,
+  showHoldingsFooter = true,
+}: CompositionColumnsProps) {
+  return (
+    <div className="grid items-start gap-4 lg:grid-cols-2 lg:gap-6">
+      <div className="min-w-0">
+        <EtfCompositionSectionLabel>Sector breakdown</EtfCompositionSectionLabel>
+        <EtfSectorBreakdown breakdown={sectorBreakdown} limit={sectorLimit} />
+      </div>
+      <div className="min-w-0">
+        <EtfCompositionSectionLabel>Top holdings</EtfCompositionSectionLabel>
+        <EtfTopHoldings
+          holdings={holdings}
+          totalHoldings={totalHoldings}
+          limit={holdingsLimit}
+          showFooter={showHoldingsFooter}
+        />
+      </div>
     </div>
   );
 }
