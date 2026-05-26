@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 import {
   bodyWithoutQuickTakeDuplicate,
   extractQuickTake,
@@ -137,12 +138,26 @@ export function ConversationalMarkdown({
     };
   }, [trimmed, isStreaming, displayContent]);
 
-  if (!trimmed && isStreaming) {
+  if (isStreaming && !trimmed) {
     return (
-      <p className="flex items-center gap-2 text-[15px] text-muted">
-        <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-        Thinking it through…
-      </p>
+      <ThinkingSpinner
+        message="Thinking it through"
+        className={cn("border-0 bg-transparent px-0 py-1", className)}
+      />
+    );
+  }
+
+  if (isStreaming) {
+    return (
+      <div className={cn("conversational-analysis", className)}>
+        <p className="whitespace-pre-wrap text-[15px] leading-[1.65] text-foreground">
+          {displayContent}
+          <span
+            className="ml-0.5 inline-block h-[1em] w-0.5 animate-pulse rounded-full bg-accent-strong align-[-0.12em]"
+            aria-hidden
+          />
+        </p>
+      </div>
     );
   }
 
@@ -150,12 +165,6 @@ export function ConversationalMarkdown({
     return (
       <div className={cn("conversational-analysis", className)}>
         <MarkdownRenderer content={displayContent} variant="conversational" />
-        {isStreaming && (
-          <span
-            className="ml-0.5 inline-block h-[1.1em] w-0.5 animate-pulse rounded-full bg-accent align-[-0.15em]"
-            aria-hidden
-          />
-        )}
       </div>
     );
   }

@@ -189,14 +189,14 @@ export function ConversationPane({
                 {isAssistant ? (
                   <ConversationalMarkdown
                     content={m.content}
-                    isStreaming={loading && isLastAssistant && !!m.content}
+                    isStreaming={loading && isLastAssistant}
                   />
                 ) : (
                   <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
                     {m.content}
                   </p>
                 )}
-                {isAssistant && m.content && (
+                {isAssistant && m.content && !loading && (
                   <div className="mt-2 border-t border-border pt-2">
                     <CopyMessageButton content={m.content} />
                   </div>

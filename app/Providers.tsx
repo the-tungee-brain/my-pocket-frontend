@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { apiFetch, fetchAccountPositions, streamAnalysis, streamResearchChat } from "@/lib/apiClient";
 import type { PositionMap } from "@/components/AccountPositionList";
@@ -124,10 +125,8 @@ function createStreamingAssistantUpdater(
 ) {
   const assistantContent = { current: "" };
   const assistantId = `assistant-${activeChatKey}${idSuffix ? `-${idSuffix}` : ""}-${Date.now()}`;
-  let rafId: number | null = null;
 
   const flush = () => {
-    rafId = null;
     const content = assistantContent.current;
 
     setChatBySymbol((prev) => {
@@ -157,48 +156,43 @@ function createStreamingAssistantUpdater(
   };
 
   const beginAssistantMessage = () => {
-    setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(activeChatKey, prev[activeChatKey]);
-      const alreadyPresent = prevState.messages.some(
-        (message) => message.id === assistantId,
-      );
-      if (alreadyPresent) {
-        return prev;
-      }
+    flushSync(() => {
+      setChatBySymbol((prev) => {
+        const prevState = ensureSymbolChatState(activeChatKey, prev[activeChatKey]);
+        const alreadyPresent = prevState.messages.some(
+          (message) => message.id === assistantId,
+        );
+        if (alreadyPresent) {
+          return prev;
+        }
 
-      return {
-        ...prev,
-        [activeChatKey]: {
-          ...prevState,
-          messages: [
-            ...prevState.messages,
-            {
-              id: assistantId,
-              role: "assistant",
-              content: "",
-            },
-          ],
-          loading: true,
-        },
-      };
+        return {
+          ...prev,
+          [activeChatKey]: {
+            ...prevState,
+            messages: [
+              ...prevState.messages,
+              {
+                id: assistantId,
+                role: "assistant",
+                content: "",
+              },
+            ],
+            loading: true,
+          },
+        };
+      });
     });
   };
 
   const appendChunk = (chunk: string) => {
+    if (!chunk) return;
     assistantContent.current += chunk;
-    if (rafId == null) {
-      rafId = requestAnimationFrame(flush);
-    }
+    flush();
   };
 
   const flushNow = () => {
-    if (rafId != null) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
-    }
-    if (assistantContent.current) {
-      flush();
-    }
+    flush();
   };
 
   return { appendChunk, beginAssistantMessage, flushNow, assistantContent };
