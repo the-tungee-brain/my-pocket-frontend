@@ -13,12 +13,23 @@ export type OptionLegOutcome = {
   cashDirection?: "pay" | "collect" | null;
 };
 
+export type RollCashPicture = {
+  entryPremiumPerContract?: number | null;
+  closeCostPerContract?: number | null;
+  openCollectPerContract?: number | null;
+  rollNetPerContract?: number | null;
+  netCashAfterRollPerContract?: number | null;
+  lossOnClosedPutPerContract?: number | null;
+  summary?: string | null;
+};
+
 export type RollPathOutcome = {
   closeLeg: OptionLegOutcome;
   openLeg: OptionLegOutcome;
   netCreditPerShare?: number | null;
   netCreditPerContract?: number | null;
   isNetCredit: boolean;
+  cashPicture?: RollCashPicture | null;
 };
 
 export type ClosePathOutcome = {
@@ -67,6 +78,7 @@ export type HeldOptionOutcomes = {
   drivers: HeldOptionDecisionDrivers;
   currentLeg: OptionLegOutcome;
   roll?: RollPathOutcome | null;
+  rollCashPicture?: RollCashPicture | null;
   close: ClosePathOutcome;
   hold: HoldPathOutcome;
   comparePaths: ComparePathOption[];

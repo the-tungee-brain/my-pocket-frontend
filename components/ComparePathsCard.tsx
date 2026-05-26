@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import {
-  ArrowRight,
+  ArrowDown,
   ArrowRightLeft,
   CircleDollarSign,
   Sparkles,
@@ -13,6 +13,7 @@ import type {
   ComparePathOption,
   HeldOptionOutcomes,
   OptionRollSuggestion,
+  RollCashPicture,
   RollPathOutcome,
 } from "@/app/types/symbolAnalysis";
 import { formatUsd } from "@/lib/formatCurrency";
@@ -83,6 +84,127 @@ function MetricChip({ label, value }: { label: string; value: string }) {
       <span className="font-medium text-foreground/80">{label}</span>
       <span>{value}</span>
     </span>
+  );
+}
+
+function formatSignedMoney(amount: number) {
+  const sign = amount >= 0 ? "+" : "−";
+  return `${sign}${formatUsd(Math.abs(amount), {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
+}
+
+function CashLedgerLine({
+  label,
+  amount,
+  emphasize = false,
+}: {
+  label: string;
+  amount: number;
+  emphasize?: boolean;
+}) {
+  const positive = amount >= 0;
+  return (
+    <div
+      className={cn(
+        "flex items-baseline justify-between gap-3",
+        emphasize && "border-t border-border/70 pt-2",
+      )}
+    >
+      <span
+        className={cn(
+          "leading-snug",
+          emphasize ? "font-medium text-foreground" : "text-muted",
+        )}
+      >
+        {label}
+      </span>
+      <span
+        className={cn(
+          "shrink-0 tabular-nums font-semibold",
+          emphasize
+            ? positive
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-red-600 dark:text-red-400"
+            : positive
+              ? "text-emerald-600/90 dark:text-emerald-400/90"
+              : "text-foreground",
+        )}
+      >
+        {formatSignedMoney(amount)}
+      </span>
+    </div>
+  );
+}
+
+function RollNetCashSummary({ picture }: { picture: RollCashPicture }) {
+  const entryPremium = picture.entryPremiumPerContract ?? null;
+  const closeCost = picture.closeCostPerContract ?? null;
+  const openCollect = picture.openCollectPerContract ?? null;
+  const rollNet = picture.rollNetPerContract ?? null;
+  const netCashAfterRoll = picture.netCashAfterRollPerContract ?? null;
+  const lossOnOldPut = picture.lossOnClosedPutPerContract ?? null;
+
+  const showFullPicture =
+    entryPremium != null && closeCost != null && openCollect != null;
+
+  if (!showFullPicture && rollNet == null) return null;
+
+  return (
+    <div className="space-y-2 rounded-lg border border-border/80 bg-background/40 px-2.5 py-2.5">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
+        Your cash picture
+      </p>
+
+      {showFullPicture ? (
+        <div className="space-y-1.5 text-xs">
+          <CashLedgerLine
+            label="Original premium collected"
+            amount={entryPremium}
+          />
+          <CashLedgerLine label="Pay to close (step 1)" amount={-closeCost} />
+          <CashLedgerLine
+            label="Collect on new put (step 2)"
+            amount={openCollect}
+          />
+          {netCashAfterRoll != null && (
+            <CashLedgerLine
+              label="Net cash after roll"
+              amount={netCashAfterRoll}
+              emphasize
+            />
+          )}
+          {lossOnOldPut != null && lossOnOldPut < 0 && (
+            <p className="pt-0.5 text-[11px] leading-relaxed text-muted">
+              First put closed at a{" "}
+              {formatUsd(Math.abs(lossOnOldPut), {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}{" "}
+              loss (original premium minus cost to close).
+            </p>
+          )}
+        </div>
+      ) : rollNet != null ? (
+        <div className="space-y-1 text-xs">
+          <CashLedgerLine
+            label={`Roll ${rollNet >= 0 ? "credit" : "debit"} today`}
+            amount={rollNet}
+            emphasize
+          />
+          {entryPremium == null && (
+            <p className="text-[11px] leading-relaxed text-muted">
+              Original premium not available — totals may be incomplete.
+            </p>
+          )}
+        </div>
+      ) : null}
+
+      {picture.summary && (
+        <p className="text-[11px] leading-relaxed text-muted">{picture.summary}</p>
+      )}
+    </div>
   );
 }
 
@@ -386,16 +508,16 @@ function ClosePathView({
 
 function RollSuggestionView({
   suggestion,
+  cashPicture,
+  currentLeg,
   recommended,
 }: {
   suggestion: OptionRollSuggestion;
+  cashPicture?: RollCashPicture | null;
+  currentLeg: HeldOptionOutcomes["currentLeg"];
   recommended: boolean;
 }) {
-  const netPerContract =
-    suggestion.estimatedCredit != null
-      ? Math.round(suggestion.estimatedCredit * 100)
-      : null;
-  const netPositive = suggestion.estimatedCredit == null || suggestion.estimatedCredit >= 0;
+  const closeCost = currentLeg.cashPerContract ?? null;
 
   return (
     <PathShell
@@ -405,7 +527,9 @@ function RollSuggestionView({
       recommended={recommended}
     >
       <p className="mb-2 text-[11px] leading-relaxed text-muted">
-        Close the current leg and sell a new one — stay in the wheel with different strike or date.
+        Close the current leg and sell a new one. The steps show the trade; the
+        cash picture below adds your original premium so you see the full
+        dollars in and out.
       </p>
       <div className="space-y-2 text-xs">
         <div className="rounded-lg border border-border/70 bg-background/50 px-2.5 py-2">
@@ -416,9 +540,18 @@ function RollSuggestionView({
             {formatUsd(suggestion.currentStrike, { maximumFractionDigits: 2 })}{" "}
             {suggestion.side}
           </p>
+          {closeCost != null && (
+            <p className="text-muted">
+              Pay{" "}
+              {formatUsd(closeCost, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}
+            </p>
+          )}
         </div>
         <div className="flex justify-center text-muted" aria-hidden>
-          <ArrowRight className="h-4 w-4" />
+          <ArrowDown className="h-4 w-4" />
         </div>
         <div className="rounded-lg border border-border/70 bg-background/50 px-2.5 py-2">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
@@ -428,31 +561,20 @@ function RollSuggestionView({
             {formatUsd(suggestion.suggestedStrike, { maximumFractionDigits: 2 })}{" "}
             {suggestion.side}
           </p>
+          {cashPicture?.openCollectPerContract != null && (
+            <p className="text-muted">
+              Collect{" "}
+              {formatUsd(cashPicture.openCollectPerContract, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}
+            </p>
+          )}
           {suggestion.suggestedDelta != null && (
             <p className="text-muted">Delta {suggestion.suggestedDelta.toFixed(2)}</p>
           )}
         </div>
-        {netPerContract != null && (
-          <div
-            className={cn(
-              "rounded-lg border px-2.5 py-2 text-center",
-              netPositive
-                ? "border-emerald-500/30 bg-emerald-500/5"
-                : "border-amber-500/30 bg-amber-500/5",
-            )}
-          >
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
-              Net {netPositive ? "credit" : "debit"}
-            </p>
-            <p className="mt-0.5 text-base font-semibold text-foreground">
-              {formatUsd(Math.abs(netPerContract), {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
-              <span className="text-xs font-normal text-muted"> / contract</span>
-            </p>
-          </div>
-        )}
+        {cashPicture && <RollNetCashSummary picture={cashPicture} />}
       </div>
     </PathShell>
   );
@@ -460,13 +582,14 @@ function RollSuggestionView({
 
 function RollPathView({
   roll,
+  cashPicture,
   recommended,
 }: {
   roll: RollPathOutcome;
+  cashPicture?: RollCashPicture | null;
   recommended: boolean;
 }) {
-  const net = roll.netCreditPerContract;
-  const netPositive = roll.isNetCredit;
+  const picture = cashPicture ?? roll.cashPicture ?? null;
 
   return (
     <PathShell
@@ -476,7 +599,9 @@ function RollPathView({
       recommended={recommended}
     >
       <p className="mb-2 text-[11px] leading-relaxed text-muted">
-        Close the current leg and sell a new one — stay in the wheel with different strike or date.
+        Close the current leg and sell a new one. The steps show the trade; the
+        cash picture below adds your original premium so you see the full
+        dollars in and out.
       </p>
       <div className="space-y-2 text-xs">
         <div className="rounded-lg border border-border/70 bg-background/50 px-2.5 py-2">
@@ -499,7 +624,7 @@ function RollPathView({
         </div>
 
         <div className="flex justify-center text-muted" aria-hidden>
-          <ArrowRight className="h-4 w-4" />
+          <ArrowDown className="h-4 w-4" />
         </div>
 
         <div className="rounded-lg border border-border/70 bg-background/50 px-2.5 py-2">
@@ -524,27 +649,7 @@ function RollPathView({
           )}
         </div>
 
-        {net != null && (
-          <div
-            className={cn(
-              "rounded-lg border px-2.5 py-2 text-center",
-              netPositive
-                ? "border-emerald-500/30 bg-emerald-500/5"
-                : "border-amber-500/30 bg-amber-500/5",
-            )}
-          >
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
-              Net {netPositive ? "credit" : "debit"}
-            </p>
-            <p className="mt-0.5 text-base font-semibold text-foreground">
-              {formatUsd(Math.abs(net), {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
-              <span className="text-xs font-normal text-muted"> / contract</span>
-            </p>
-          </div>
-        )}
+        {picture && <RollNetCashSummary picture={picture} />}
       </div>
     </PathShell>
   );
@@ -612,12 +717,24 @@ function PathCard({
     return <ClosePathView outcome={outcome} recommended={recommended} />;
   }
   if (path.path === "roll") {
+    const cashPicture = outcome.rollCashPicture ?? outcome.roll?.cashPicture ?? null;
     if (roll) {
-      return <RollPathView roll={roll} recommended={recommended} />;
+      return (
+        <RollPathView
+          roll={roll}
+          cashPicture={cashPicture}
+          recommended={recommended}
+        />
+      );
     }
     if (rollSuggestion) {
       return (
-        <RollSuggestionView suggestion={rollSuggestion} recommended={recommended} />
+        <RollSuggestionView
+          suggestion={rollSuggestion}
+          cashPicture={cashPicture}
+          currentLeg={outcome.currentLeg}
+          recommended={recommended}
+        />
       );
     }
   }
