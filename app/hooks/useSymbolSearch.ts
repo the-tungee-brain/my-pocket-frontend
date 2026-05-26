@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
 import { normalizeSymbolSearchResults } from "@/lib/symbolSearchResults";
+import type { AssetType } from "@/app/types/research";
 
 export type TickerSymbolItem = {
   symbol: string;
   title?: string | null;
+  assetType?: AssetType | null;
 };
 
 type UseSymbolSearchOptions = {

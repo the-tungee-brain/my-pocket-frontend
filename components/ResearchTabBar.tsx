@@ -7,17 +7,20 @@ import {
   BriefcaseBusiness,
   FileSpreadsheet,
   LayoutDashboard,
+  Layers,
   LineChart,
   Newspaper,
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { AssetType } from "@/app/types/research";
 
 export type ResearchTabId =
   | "overview"
   | "position"
   | "news"
+  | "holdings"
   | "business"
   | "earnings"
   | "fundamentals"
@@ -27,30 +30,84 @@ type Tab = {
   id: ResearchTabId;
   label: string;
   icon: LucideIcon;
+  assetTypes?: AssetType[] | "all";
 };
 
-const tabs: Tab[] = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "position", label: "Position", icon: BriefcaseBusiness },
-  { id: "news", label: "News", icon: Newspaper },
-  { id: "business", label: "Business", icon: BriefcaseBusiness },
-  { id: "earnings", label: "Earnings", icon: TrendingUp },
-  { id: "fundamentals", label: "Fundamentals", icon: FileSpreadsheet },
-  { id: "financials", label: "Financials", icon: LineChart },
+const allTabs: Tab[] = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard, assetTypes: "all" },
+  { id: "position", label: "Position", icon: BriefcaseBusiness, assetTypes: "all" },
+  { id: "news", label: "News", icon: Newspaper, assetTypes: "all" },
+  {
+    id: "holdings",
+    label: "Holdings",
+    icon: Layers,
+    assetTypes: ["ETF"],
+  },
+  {
+    id: "business",
+    label: "Business",
+    icon: BriefcaseBusiness,
+    assetTypes: ["STOCK", "ADR"],
+  },
+  {
+    id: "earnings",
+    label: "Earnings",
+    icon: TrendingUp,
+    assetTypes: ["STOCK", "ADR"],
+  },
+  {
+    id: "fundamentals",
+    label: "Fundamentals",
+    icon: FileSpreadsheet,
+    assetTypes: ["STOCK", "ADR"],
+  },
+  {
+    id: "fundamentals",
+    label: "Fund metrics",
+    icon: FileSpreadsheet,
+    assetTypes: ["ETF"],
+  },
+  {
+    id: "financials",
+    label: "Financials",
+    icon: LineChart,
+    assetTypes: ["STOCK", "ADR"],
+  },
 ];
+
+function tabsForAssetType(assetType: AssetType | null | undefined): Tab[] {
+  const resolved = assetType ?? "STOCK";
+  const matched = allTabs.filter((tab) => {
+    if (tab.assetTypes === "all") return true;
+    return tab.assetTypes?.includes(resolved);
+  });
+
+  const seen = new Set<ResearchTabId>();
+  return matched.filter((tab) => {
+    if (seen.has(tab.id)) return false;
+    seen.add(tab.id);
+    return true;
+  });
+}
 
 type ResearchTabBarProps = {
   symbol: string;
+  assetType?: AssetType | null;
   className?: string;
 };
 
-export function ResearchTabBar({ symbol, className }: ResearchTabBarProps) {
+export function ResearchTabBar({
+  symbol,
+  assetType,
+  className,
+}: ResearchTabBarProps) {
   const pathname = usePathname();
   const navRef = useRef<HTMLElement>(null);
   const [showRightFade, setShowRightFade] = useState(false);
   const encoded = encodeURIComponent(symbol.toUpperCase());
   const activeTab =
     (pathname.split("/")[3] as ResearchTabId | undefined) ?? "overview";
+  const tabs = tabsForAssetType(assetType);
 
   useEffect(() => {
     const nav = navRef.current;
@@ -71,7 +128,7 @@ export function ResearchTabBar({ symbol, className }: ResearchTabBarProps) {
       nav.removeEventListener("scroll", updateFade);
       observer.disconnect();
     };
-  }, [symbol]);
+  }, [symbol, assetType]);
 
   return (
     <div className={cn("relative", className)}>
@@ -117,7 +174,11 @@ export function ResearchTabBar({ symbol, className }: ResearchTabBarProps) {
   );
 }
 
-export function researchTabLabel(tab: string | undefined): string {
-  const found = tabs.find((t) => t.id === tab);
+export function researchTabLabel(
+  tab: string | undefined,
+  assetType?: AssetType | null,
+): string {
+  const tabs = tabsForAssetType(assetType);
+  const found = tabs.find((entry) => entry.id === tab);
   return found?.label ?? "Overview";
 }

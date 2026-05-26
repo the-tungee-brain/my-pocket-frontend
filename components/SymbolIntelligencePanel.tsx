@@ -60,6 +60,7 @@ type Props = {
   optionsMode?: "off" | "summary";
   className?: string;
   researchBasePath?: string;
+  isEtf?: boolean;
 };
 
 function timelineIcon(kind: string) {
@@ -271,6 +272,7 @@ export function SymbolIntelligencePanel({
   optionsMode = "off",
   className,
   researchBasePath,
+  isEtf = false,
 }: Props) {
   const hasResearchContent = hasSymbolResearchIntelligenceContent(intelligence);
   const hasOptionsContent = hasSymbolOptionsContent(intelligence);
@@ -510,18 +512,37 @@ export function SymbolIntelligencePanel({
 
         {researchBasePath && symbol && !compact && (
           <div className="flex flex-wrap gap-2 pt-1">
-            <Link
-              href={`${researchBasePath}/${symbol}/earnings`}
-              className="text-xs font-medium text-accent-strong hover:underline"
-            >
-              Earnings research →
-            </Link>
-            <Link
-              href={`${researchBasePath}/${symbol}/financials`}
-              className="text-xs font-medium text-accent-strong hover:underline"
-            >
-              Financials →
-            </Link>
+            {isEtf ? (
+              <>
+                <Link
+                  href={`${researchBasePath}/${symbol}/holdings`}
+                  className="text-xs font-medium text-accent-strong hover:underline"
+                >
+                  ETF holdings →
+                </Link>
+                <Link
+                  href={`${researchBasePath}/${symbol}/fundamentals`}
+                  className="text-xs font-medium text-accent-strong hover:underline"
+                >
+                  Fund metrics →
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href={`${researchBasePath}/${symbol}/earnings`}
+                  className="text-xs font-medium text-accent-strong hover:underline"
+                >
+                  Earnings research →
+                </Link>
+                <Link
+                  href={`${researchBasePath}/${symbol}/financials`}
+                  className="text-xs font-medium text-accent-strong hover:underline"
+                >
+                  Financials →
+                </Link>
+              </>
+            )}
           </div>
         )}
 

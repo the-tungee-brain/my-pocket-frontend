@@ -17,6 +17,8 @@ import { WatchlistHint } from "@/components/WatchlistHint";
 import { usePositionsContext } from "@/app/Providers";
 import { resolveResearchLogoUrl } from "@/lib/logoUrl";
 import { symbolHubPath } from "@/lib/symbolRoutes";
+import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
+import { AssetTypeBadge } from "@/components/AssetTypeBadge";
 
 type Props = { symbol: string; compact?: boolean };
 
@@ -40,6 +42,8 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
   const { snapshot, isLoading, error } = useResearchSnapshot(upperSymbol, {
     accessToken,
   });
+  const { assetType, isEtf } = useResearchAssetTypeContext();
+  const researchLabel = isEtf ? "ETF research" : "Stock research";
 
   if (isLoading) {
     if (compact) {
@@ -112,6 +116,9 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
                 · {snapshot.name}
               </span>
             </p>
+            {assetType ? (
+              <AssetTypeBadge assetType={assetType} className="mt-1" />
+            ) : null}
           </div>
           {userPositions?.length ? (
             <Link
@@ -155,7 +162,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
     <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
       <div className="space-y-2">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-          Stock research
+          {researchLabel}
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-border bg-white">
@@ -174,6 +181,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {snapshot.symbol} · {snapshot.name}
           </h1>
+          {assetType ? <AssetTypeBadge assetType={assetType} /> : null}
           {snapshot.weburl && (
             <a
               href={snapshot.weburl}
@@ -209,6 +217,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
         <WatchlistHint symbol={upperSymbol} />
         <p className="text-sm text-muted">
           {snapshot.sector} · {snapshot.country}
+          {isEtf ? " · Exchange-traded fund" : null}
         </p>
       </div>
 

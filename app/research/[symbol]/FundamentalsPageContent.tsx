@@ -9,6 +9,7 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { KeyMetricsGrid, KeyMetricsGridSkeleton } from "./KeyMetricsGrid";
 import { SecCompanyBadge } from "./SecCompanyBadge";
+import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 
 type FundamentalsPageContentProps = {
   symbol: string;
@@ -26,6 +27,7 @@ function OverviewSkeleton() {
 
 export function FundamentalsPageContent({ symbol }: FundamentalsPageContentProps) {
   const { data: session } = useSession();
+  const { isEtf } = useResearchAssetTypeContext();
   const { fundamentals, isLoading, error } = useFundamentals(symbol, {
     accessToken: session?.accessToken,
   });
@@ -38,8 +40,12 @@ export function FundamentalsPageContent({ symbol }: FundamentalsPageContentProps
         main={
           <>
             <ResearchSectionCard
-              title="Fundamental overview"
-              description="AI-generated snapshot from SEC filings and market data"
+              title={isEtf ? "Fund overview" : "Fundamental overview"}
+              description={
+                isEtf
+                  ? "AI-generated snapshot focused on cost, yield, and composition"
+                  : "AI-generated snapshot from SEC filings and market data"
+              }
               icon={FileSpreadsheet}
             >
               {isLoading ? (
@@ -60,8 +66,12 @@ export function FundamentalsPageContent({ symbol }: FundamentalsPageContentProps
             </ResearchSectionCard>
 
             <ResearchSectionCard
-              title="Key metrics"
-              description="Valuation, profitability, and balance sheet highlights"
+              title={isEtf ? "Fund metrics" : "Key metrics"}
+              description={
+                isEtf
+                  ? "Expense ratio, dividend yield, and other ETF-specific metrics"
+                  : "Valuation, profitability, and balance sheet highlights"
+              }
               icon={BarChart3}
             >
               {isLoading ? (
@@ -81,13 +91,15 @@ export function FundamentalsPageContent({ symbol }: FundamentalsPageContentProps
           </>
         }
         aside={
-          <ResearchSectionCard
-            title="SEC company profile"
-            description="Official registrant details from EDGAR"
-            icon={Landmark}
-          >
-            <SecCompanyBadge symbol={symbol} />
-          </ResearchSectionCard>
+          isEtf ? null : (
+            <ResearchSectionCard
+              title="SEC company profile"
+              description="Official registrant details from EDGAR"
+              icon={Landmark}
+            >
+              <SecCompanyBadge symbol={symbol} />
+            </ResearchSectionCard>
+          )
         }
       />
     </div>

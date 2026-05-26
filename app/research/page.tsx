@@ -12,6 +12,7 @@ import { useWatchlist } from "../hooks/useWatchlist";
 import { useResearchSearchShortcut } from "../hooks/useResearchSearchShortcut";
 import { usePositionsContext } from "../Providers";
 import { consumeResearchSearchFocus } from "@/lib/researchSearchFocus";
+import { rememberAssetType } from "@/lib/researchAssetType";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SymbolSearchResult } from "@/components/SymbolSearchResult";
@@ -63,6 +64,7 @@ export default function ResearchPage() {
   };
 
   const handleSymbolClick = (item: TickerSymbolItem) => {
+    rememberAssetType(item.symbol, item.assetType);
     openSymbol(item.symbol);
   };
 
@@ -96,7 +98,7 @@ export default function ResearchPage() {
     }
   };
 
-  const examples = ["NVDA", "AAPL", "MSFT", "TSLA"];
+  const examples = ["NVDA", "SPY", "AAPL", "SCHD"];
   const watchlistSet = new Set(watchlist);
   const recentWithoutWatchlist = recentSymbols.filter(
     (symbol) => !watchlistSet.has(symbol),
@@ -116,7 +118,7 @@ export default function ResearchPage() {
               Research
             </h1>
             <p className="mt-1 text-sm text-muted">
-              Search a ticker to open its company, performance, and news view.
+              Search a ticker to open its research hub — stocks, ETFs, and more.
               <span className="hidden sm:inline"> Press </span>
               <kbd className="mx-1 hidden rounded border border-border bg-muted-bg px-1.5 py-0.5 font-mono text-[10px] text-muted sm:inline">
                 /
@@ -158,8 +160,8 @@ export default function ResearchPage() {
             <div className="mt-3">
               <EmptyState
                 icon={Search}
-                title="Find a company to research"
-                description="Search by ticker above, or open a holding from your portfolio to dig into fundamentals and news."
+                title="Find a symbol to research"
+                description="Search by ticker above, or open a holding from your portfolio to dig into fundamentals, holdings, and news."
                 variant="solid"
                 className="py-6"
                 action={

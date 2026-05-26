@@ -3,6 +3,7 @@
 import { ArrowRight, Star } from "lucide-react";
 import { useWatchlistToggle } from "@/app/hooks/useWatchlistToggle";
 import type { TickerSymbolItem } from "@/app/hooks/useSymbolSearch";
+import { AssetTypeBadge } from "@/components/AssetTypeBadge";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -43,9 +44,14 @@ export function SymbolSearchResult({
           onClick={() => onSelect(item)}
         >
           <div className="min-w-0">
-            <span className="font-mono font-semibold text-foreground">
-              {item.symbol}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-semibold text-foreground">
+                {item.symbol}
+              </span>
+              {item.assetType ? (
+                <AssetTypeBadge assetType={item.assetType} />
+              ) : null}
+            </div>
             {item.title && (
               <p className="truncate text-xs text-muted">{item.title}</p>
             )}

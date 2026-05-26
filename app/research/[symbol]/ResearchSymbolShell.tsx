@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { CompanySnapshot } from "./CompanySnapshot";
 import { ResearchTabBar, researchTabLabel } from "@/components/ResearchTabBar";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -11,15 +12,20 @@ import { usePositionsContext } from "@/app/Providers";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { pageShellClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
+import {
+  ResearchAssetTypeProvider,
+  useResearchAssetTypeContext,
+} from "./ResearchAssetTypeContext";
 
 type Props = {
   symbol: string;
   children: React.ReactNode;
 };
 
-export function ResearchSymbolShell({ symbol, children }: Props) {
+function ResearchSymbolShellInner({ symbol, children }: Props) {
   const pathname = usePathname();
   const { positionMap } = usePositionsContext();
+  const { assetType } = useResearchAssetTypeContext();
   const [collapsed, setCollapsed] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const symbolUpper = symbol.toUpperCase();
@@ -69,18 +75,31 @@ export function ResearchSymbolShell({ symbol, children }: Props) {
                 : []),
               { label: "Research", href: "/research" },
               { label: symbolUpper, href: symbolHubPath(symbolUpper, "overview") },
-              { label: researchTabLabel(activeTab) },
+              { label: researchTabLabel(activeTab, assetType) },
             ]}
           />
         )}
 
         <div className={cn("space-y-3", collapsed && "space-y-2")}>
           <CompanySnapshot symbol={symbol} compact={collapsed} />
-          <ResearchTabBar symbol={symbol} />
+          <ResearchTabBar symbol={symbol} assetType={assetType} />
         </div>
       </div>
 
       <div className="mt-6 space-y-4">{children}</div>
     </div>
+  );
+}
+
+export function ResearchSymbolShell({ symbol, children }: Props) {
+  const { data: session } = useSession();
+
+  return (
+    <ResearchAssetTypeProvider
+      symbol={symbol}
+      accessToken={session?.accessToken}
+    >
+      <ResearchSymbolShellInner symbol={symbol}>{children}</ResearchSymbolShellInner>
+    </ResearchAssetTypeProvider>
   );
 }

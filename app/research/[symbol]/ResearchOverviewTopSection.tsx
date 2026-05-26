@@ -14,6 +14,7 @@ import { symbolChatKey } from "@/lib/chatKeys";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
 import { ResearchStockChart } from "./ResearchStockChart";
+import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 
 type Props = {
   symbol: string;
@@ -25,6 +26,8 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
   const { positionMap, sendQuickAction } = usePositionsContext();
   const symbolUpper = symbol.toUpperCase();
   const chatKey = symbolChatKey(symbolUpper) ?? symbolUpper;
+
+  const { isEtf } = useResearchAssetTypeContext();
 
   const { intelligence, loading, error, refetch } = useSymbolIntelligence(
     symbol,
@@ -68,6 +71,7 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             onGoDeeper={handleGoDeeper}
             actionContext="research"
             researchBasePath="/research"
+            isEtf={isEtf}
             hideRecentEvents
             optionsMode="summary"
             className={pageSectionClass}

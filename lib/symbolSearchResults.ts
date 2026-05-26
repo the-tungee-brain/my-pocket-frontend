@@ -1,4 +1,5 @@
 import type { TickerSymbolItem } from "@/app/hooks/useSymbolSearch";
+import type { AssetType } from "@/app/types/research";
 
 function readSymbol(value: unknown): string | null {
   if (typeof value === "string" && value.trim()) {
@@ -30,6 +31,27 @@ function readTitle(value: unknown): string | null {
   return null;
 }
 
+function readAssetType(value: unknown): AssetType | null {
+  if (typeof value !== "object" || value === null) return null;
+  const record = value as Record<string, unknown>;
+  const candidate = record.assetType ?? record.asset_type;
+  if (typeof candidate !== "string") return null;
+  const normalized = candidate.trim().toUpperCase();
+  const allowed: AssetType[] = [
+    "STOCK",
+    "ETF",
+    "MUTUAL_FUND",
+    "INDEX",
+    "CRYPTO",
+    "ADR",
+    "BOND",
+    "OPTION",
+  ];
+  return allowed.includes(normalized as AssetType)
+    ? (normalized as AssetType)
+    : null;
+}
+
 export function normalizeSymbolSearchResults(data: unknown): TickerSymbolItem[] {
   const rawItems = Array.isArray(data)
     ? data
@@ -52,6 +74,7 @@ export function normalizeSymbolSearchResults(data: unknown): TickerSymbolItem[] 
     normalized.push({
       symbol,
       title: readTitle(item),
+      assetType: readAssetType(item),
     });
   }
 
