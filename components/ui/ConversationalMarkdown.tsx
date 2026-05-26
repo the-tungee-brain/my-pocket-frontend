@@ -1,12 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 import {
-  bodyWithoutQuickTakeDuplicate,
-  extractQuickTake,
   isLongConversationalContent,
   splitMarkdownSections,
   stripStreamingStatusPrefix,
@@ -94,49 +92,14 @@ export function ConversationalMarkdown({
   );
   const trimmed = displayContent.trim();
 
-  const layout = useMemo(() => {
-    if (!trimmed || isStreaming) {
-      return {
-        mode: "stream" as const,
-        quickTake: null,
-        preamble: trimmed,
-        sections: [] as MarkdownSection[],
-      };
+  const sectionedLayout = useMemo(() => {
+    if (!trimmed || isStreaming || !isLongConversationalContent(trimmed)) {
+      return null;
     }
-
-    const long = isLongConversationalContent(trimmed);
-    const quickTake = long ? extractQuickTake(trimmed) : null;
     const { preamble, sections } = splitMarkdownSections(trimmed);
-    const body = bodyWithoutQuickTakeDuplicate(
-      sections.length > 0 ? preamble : trimmed,
-      quickTake,
-    );
-
-    if (!long) {
-      return {
-        mode: "compact" as const,
-        quickTake: null,
-        preamble: trimmed,
-        sections: [],
-      };
-    }
-
-    if (sections.length >= 2) {
-      return {
-        mode: "sectioned" as const,
-        quickTake,
-        preamble: bodyWithoutQuickTakeDuplicate(preamble, quickTake),
-        sections,
-      };
-    }
-
-    return {
-      mode: "long-prose" as const,
-      quickTake,
-      preamble: body,
-      sections: [],
-    };
-  }, [trimmed, isStreaming, displayContent]);
+    if (sections.length < 2) return null;
+    return { preamble, sections };
+  }, [trimmed, isStreaming]);
 
   if (isStreaming && !trimmed) {
     return (
@@ -161,45 +124,23 @@ export function ConversationalMarkdown({
     );
   }
 
-  if (layout.mode === "stream" || layout.mode === "compact") {
+  if (sectionedLayout) {
     return (
-      <div className={cn("conversational-analysis", className)}>
-        <MarkdownRenderer content={displayContent} variant="conversational" />
+      <div className={cn("conversational-analysis space-y-4", className)}>
+        {sectionedLayout.preamble && (
+          <MarkdownRenderer
+            content={sectionedLayout.preamble}
+            variant="conversational"
+          />
+        )}
+        <SectionAccordion sections={sectionedLayout.sections} />
       </div>
     );
   }
 
   return (
-    <div className={cn("conversational-analysis space-y-4", className)}>
-      {layout.quickTake && (
-        <div className="rounded-xl border border-accent/25 bg-accent-muted/15 px-4 py-3">
-          <div className="flex items-start gap-2">
-            <Sparkles
-              className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong"
-              aria-hidden
-            />
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium text-accent-strong">
-                Quick take
-              </p>
-              <p className="mt-1.5 text-[15px] leading-relaxed text-foreground">
-                {layout.quickTake}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {layout.preamble && (
-        <MarkdownRenderer
-          content={layout.preamble}
-          variant="conversational"
-        />
-      )}
-
-      {layout.mode === "sectioned" && layout.sections.length > 0 && (
-        <SectionAccordion sections={layout.sections} />
-      )}
+    <div className={cn("conversational-analysis", className)}>
+      <MarkdownRenderer content={displayContent} variant="conversational" />
     </div>
   );
 }
