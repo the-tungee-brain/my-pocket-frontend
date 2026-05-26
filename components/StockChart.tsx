@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createChart,
   CandlestickSeries,
   HistogramSeries,
+  LineSeries,
 } from "lightweight-charts";
+import { ChevronDown, LineChart, CandlestickChart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatUsd } from "@/lib/formatCurrency";
 import { Button } from "@/components/ui/Button";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 
@@ -19,6 +22,8 @@ type StockData = {
   volume: number;
 };
 
+type ChartMode = "line" | "candle";
+
 type Props = {
   data: StockData[];
   symbol: string;
@@ -29,7 +34,6 @@ type Props = {
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
-  hideHeader?: boolean;
   className?: string;
 };
 
@@ -46,11 +50,170 @@ const PRESETS = [
 
 export type PresetKey = (typeof PRESETS)[number]["label"];
 
+const CHART_HEIGHT = 500;
+
 function getCssVar(name: string, fallback: string) {
   if (typeof window === "undefined") return fallback;
   return (
     getComputedStyle(document.documentElement).getPropertyValue(name).trim() ||
     fallback
+  );
+}
+
+function toChartTime(date: string) {
+  return Math.floor(new Date(date).getTime() / 1000);
+}
+
+function formatVolume(value: number) {
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+  return value.toLocaleString();
+}
+
+function formatChartPrice(value: number) {
+  return formatUsd(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatPeriodReturn(pct: number) {
+  const prefix = pct >= 0 ? "+" : "";
+  return `${prefix}${pct.toFixed(2)}%`;
+}
+
+function computePeriodReturn(data: StockData[]) {
+  if (data.length < 2) return null;
+  const first = data[0].close;
+  const last = data[data.length - 1].close;
+  if (first === 0) return null;
+  return ((last - first) / first) * 100;
+}
+
+function formatIntervalLabel(interval: string) {
+  const labels: Record<string, string> = {
+    "1m": "1 minute",
+    "2m": "2 minutes",
+    "5m": "5 minutes",
+    "15m": "15 minutes",
+    "30m": "30 minutes",
+    "60m": "1 hour",
+    "90m": "90 minutes",
+    "1h": "1 hour",
+    "1d": "Daily",
+    "5d": "5 days",
+    "1wk": "Weekly",
+    "1mo": "Monthly",
+    "3mo": "Quarterly",
+  };
+
+  return labels[interval] ?? interval.toUpperCase();
+}
+
+function formatChartDateRange(start: string, end: string) {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const startLabel = startDate.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  const endLabel = endDate.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(startDate.getFullYear() !== endDate.getFullYear() ? { year: "numeric" } : {}),
+  });
+
+  return `${startLabel} – ${endLabel}`;
+}
+
+function computeChartFooterStats(data: StockData[], interval: string) {
+  if (data.length === 0) return null;
+
+  let periodHigh = data[0].high;
+  let periodLow = data[0].low;
+
+  for (const bar of data) {
+    if (bar.high > periodHigh) periodHigh = bar.high;
+    if (bar.low < periodLow) periodLow = bar.low;
+  }
+
+  return {
+    dateRange: formatChartDateRange(data[0].date, data[data.length - 1].date),
+    intervalLabel: formatIntervalLabel(interval),
+    periodHigh,
+    periodLow,
+  };
+}
+
+function crosshairTimeToUnix(time: unknown): number | null {
+  if (typeof time === "number") return time;
+  if (typeof time === "string") return Math.floor(new Date(time).getTime() / 1000);
+
+  if (time && typeof time === "object" && "year" in time) {
+    const businessDay = time as { year: number; month: number; day: number };
+    return Date.UTC(businessDay.year, businessDay.month - 1, businessDay.day) / 1000;
+  }
+
+  return null;
+}
+
+function ChartLegend({
+  point,
+  hovering,
+}: {
+  point: StockData;
+  hovering: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute left-3 top-3 z-10 max-w-[calc(100%-1.5rem)] rounded-lg border border-border/80 bg-background/95 px-3 py-2 shadow-sm backdrop-blur-sm",
+        !hovering && "opacity-80",
+      )}
+    >
+      <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
+        {new Date(point.date).toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </p>
+      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] tabular-nums">
+        <span>
+          <span className="text-muted">O </span>
+          <span className="font-medium text-foreground">
+            {formatChartPrice(point.open)}
+          </span>
+        </span>
+        <span>
+          <span className="text-muted">H </span>
+          <span className="font-medium text-foreground">
+            {formatChartPrice(point.high)}
+          </span>
+        </span>
+        <span>
+          <span className="text-muted">L </span>
+          <span className="font-medium text-foreground">
+            {formatChartPrice(point.low)}
+          </span>
+        </span>
+        <span>
+          <span className="text-muted">C </span>
+          <span className="font-medium text-foreground">
+            {formatChartPrice(point.close)}
+          </span>
+        </span>
+        <span>
+          <span className="text-muted">Vol </span>
+          <span className="font-medium text-foreground">
+            {formatVolume(point.volume)}
+          </span>
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -64,24 +227,85 @@ export function StockChart({
   loading = false,
   error = null,
   onRetry,
-  hideHeader = false,
   className,
 }: Props) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const chartWrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
 
   const [selectedPeriod, setSelectedPeriod] = useState<string>(period);
   const [selectedInterval, setSelectedInterval] = useState<string>(interval);
+  const [chartMode, setChartMode] = useState<ChartMode>("line");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [hoveredPoint, setHoveredPoint] = useState<StockData | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenSupported, setFullscreenSupported] = useState(false);
 
   const currentPreset =
     PRESETS.find(
       (p) => p.period === selectedPeriod && p.interval === selectedInterval,
     )?.label ?? null;
 
+  const dataByTime = useMemo(() => {
+    const map = new Map<number, StockData>();
+    for (const point of data) {
+      map.set(toChartTime(point.date), point);
+    }
+    return map;
+  }, [data]);
+
+  const latestPoint = data.length > 0 ? data[data.length - 1] : null;
+  const legendPoint = hoveredPoint ?? latestPoint;
+  const periodReturn = useMemo(() => computePeriodReturn(data), [data]);
+  const footerStats = useMemo(
+    () => computeChartFooterStats(data, selectedInterval),
+    [data, selectedInterval],
+  );
+
+  useEffect(() => {
+    setFullscreenSupported(
+      typeof document !== "undefined" &&
+        typeof document.documentElement.requestFullscreen === "function",
+    );
+  }, []);
+
+  useEffect(() => {
+    const syncFullscreen = () => {
+      setIsFullscreen(document.fullscreenElement === sectionRef.current);
+    };
+
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
+
+  useEffect(() => {
+    if (!chartRef.current || !containerRef.current) return;
+
+    const resizeChart = () => {
+      if (!chartRef.current || !containerRef.current) return;
+      const { clientWidth, clientHeight } = containerRef.current;
+      if (clientWidth <= 0 || clientHeight <= 0) return;
+
+      chartRef.current.applyOptions({
+        width: clientWidth,
+        height: clientHeight,
+      });
+      chartRef.current.timeScale().fitContent();
+    };
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(resizeChart);
+    });
+    const timeout = window.setTimeout(resizeChart, 100);
+
+    return () => window.clearTimeout(timeout);
+  }, [isFullscreen]);
+
   useEffect(() => {
     if (!containerRef.current) return;
 
-    if (!data || data.length === 0) {
+    if (!data.length) {
       if (chartRef.current) {
         chartRef.current.remove();
         chartRef.current = null;
@@ -97,43 +321,65 @@ export function StockChart({
     const background = getCssVar("--color-secondary", "#ffffff");
     const foreground = getCssVar("--color-foreground", "#171717");
     const border = getCssVar("--color-border", "#e5e5e5");
-
-    const gridColor = border;
-    const width = containerRef.current.clientWidth;
+    const accent = getCssVar("--color-accent-strong", "#2563eb");
+    const upColor = "#22c55e";
+    const downColor = "#ef4444";
+    const { clientWidth, clientHeight } = containerRef.current;
 
     const chart = createChart(containerRef.current, {
-      width,
-      height: 400,
+      width: Math.max(clientWidth, 1),
+      height: Math.max(clientHeight, CHART_HEIGHT),
       layout: {
         background: { color: background },
         textColor: foreground,
       },
       grid: {
-        vertLines: { color: gridColor },
-        horzLines: { color: gridColor },
+        vertLines: { color: border },
+        horzLines: { color: border },
+      },
+      crosshair: {
+        vertLine: { labelBackgroundColor: accent },
+        horzLine: { labelBackgroundColor: accent },
       },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
-        borderColor: gridColor,
+        borderColor: border,
       },
       rightPriceScale: {
-        borderColor: gridColor,
+        borderColor: border,
       },
     });
 
     chartRef.current = chart;
 
-    const upColor = "#22c55e";
-    const downColor = "#ef4444";
+    const candles = data.map((d) => ({
+      time: toChartTime(d.date) as never,
+      open: d.open,
+      high: d.high,
+      low: d.low,
+      close: d.close,
+    }));
 
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor,
-      downColor,
-      borderVisible: false,
-      wickUpColor: upColor,
-      wickDownColor: downColor,
-    });
+    if (chartMode === "line") {
+      const lineSeries = chart.addSeries(LineSeries, {
+        color: accent,
+        lineWidth: 2,
+        crosshairMarkerRadius: 4,
+      });
+      lineSeries.setData(
+        candles.map((bar) => ({ time: bar.time, value: bar.close })),
+      );
+    } else {
+      const candleSeries = chart.addSeries(CandlestickSeries, {
+        upColor,
+        downColor,
+        borderVisible: false,
+        wickUpColor: upColor,
+        wickDownColor: downColor,
+      });
+      candleSeries.setData(candles);
+    }
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
       color: upColor,
@@ -148,14 +394,6 @@ export function StockChart({
       },
     });
 
-    const candles = data.map((d) => ({
-      time: (new Date(d.date).getTime() / 1000) as any,
-      open: d.open,
-      high: d.high,
-      low: d.low,
-      close: d.close,
-    }));
-
     const volumes = data.map((d, i) => ({
       time: candles[i].time,
       value: d.volume,
@@ -163,26 +401,51 @@ export function StockChart({
         d.close >= d.open ? hexToRgba(upColor, 0.4) : hexToRgba(downColor, 0.4),
     }));
 
-    candleSeries.setData(candles);
     volumeSeries.setData(volumes);
-
     chart.timeScale().fitContent();
 
-    const handleResize = () => {
-      if (!containerRef.current || !chartRef.current) return;
-      const newWidth = containerRef.current.clientWidth;
-      chartRef.current.applyOptions({ width: newWidth });
+    const handleCrosshairMove = (param: {
+      time?: unknown;
+      point?: { x: number; y: number };
+    }) => {
+      if (!param.time || !param.point) {
+        setHoveredPoint(null);
+        return;
+      }
+
+      const time = crosshairTimeToUnix(param.time);
+      if (time == null) {
+        setHoveredPoint(null);
+        return;
+      }
+
+      setHoveredPoint(dataByTime.get(time) ?? null);
     };
 
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      if (chartRef.current) {
-        chartRef.current.remove();
-        chartRef.current = null;
-      }
+    chart.subscribeCrosshairMove(handleCrosshairMove);
+
+    const resizeChart = () => {
+      if (!containerRef.current || !chartRef.current) return;
+      const { clientWidth: width, clientHeight: height } = containerRef.current;
+      if (width <= 0 || height <= 0) return;
+      chartRef.current.applyOptions({ width, height });
     };
-  }, [data]);
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(resizeChart)
+        : null;
+    resizeObserver?.observe(containerRef.current);
+    window.addEventListener("resize", resizeChart);
+
+    return () => {
+      window.removeEventListener("resize", resizeChart);
+      resizeObserver?.disconnect();
+      chart.unsubscribeCrosshairMove(handleCrosshairMove);
+      chart.remove();
+      chartRef.current = null;
+    };
+  }, [chartMode, data, dataByTime]);
 
   useEffect(() => {
     setSelectedPeriod(period);
@@ -191,6 +454,10 @@ export function StockChart({
   useEffect(() => {
     setSelectedInterval(interval);
   }, [interval]);
+
+  useEffect(() => {
+    setHoveredPoint(null);
+  }, [data, chartMode, selectedPeriod, selectedInterval]);
 
   const handlePresetClick = (preset: (typeof PRESETS)[number]) => {
     setSelectedPeriod(preset.period);
@@ -203,7 +470,21 @@ export function StockChart({
     handlePresetClick(PRESETS[3]);
   };
 
-  const hasData = !!data?.length;
+  const toggleFullscreen = async () => {
+    if (!sectionRef.current) return;
+
+    try {
+      if (document.fullscreenElement === sectionRef.current) {
+        await document.exitFullscreen();
+      } else {
+        await sectionRef.current.requestFullscreen();
+      }
+    } catch {
+      // Browser blocked fullscreen or API unavailable.
+    }
+  };
+
+  const hasData = data.length > 0;
   const chartState = error
     ? "error"
     : loading && !hasData
@@ -212,233 +493,294 @@ export function StockChart({
         ? "empty"
         : "ready";
 
+  const rangeLabel = currentPreset ?? `${selectedPeriod.toUpperCase()}`;
+
   return (
-    <div className={cn("mx-auto mt-4 w-full", className)}>
-      {!hideHeader && (
-        <div className="mb-2 flex items-center justify-between">
-          <div>
-            <h2
-              id={`stock-chart-title-${symbol}`}
-              className="text-lg font-semibold tracking-tight"
-              style={{ color: "var(--color-foreground)" }}
-            >
-              {symbol}
-            </h2>
-            <p
-              className="text-xs opacity-70"
-              style={{ color: "var(--color-foreground)" }}
-            >
-              {selectedPeriod.toUpperCase()} • {selectedInterval.toUpperCase()}
-            </p>
-          </div>
-
-          {currentPreset && (
-            <span
-              className="rounded-full px-2 py-1 text-[10px] font-medium"
-              style={{
-                backgroundColor: "var(--color-secondary)",
-                color: "var(--color-foreground)",
-                border: "1px solid var(--color-border)",
-              }}
-            >
-              {currentPreset} preset
-            </span>
-          )}
-        </div>
+    <section
+      ref={sectionRef}
+      aria-label={`${symbol} price chart`}
+      className={cn(
+        "w-full overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-sm",
+        isFullscreen &&
+          "flex h-dvh max-h-dvh flex-col rounded-none border-0 bg-background shadow-none",
+        className,
       )}
-
-      <section
-        aria-labelledby={
-          hideHeader ? undefined : `stock-chart-title-${symbol}`
-        }
-        aria-label={hideHeader ? `${symbol} price chart` : undefined}
-        className={cn(
-          "relative rounded-2xl border shadow-sm",
-          hideHeader && "border-0 bg-transparent shadow-none",
-        )}
-        style={
-          hideHeader
-            ? undefined
-            : {
-                borderColor: "var(--color-border)",
-                backgroundColor: "var(--color-secondary)",
-              }
-        }
-      >
-        <div
-          ref={containerRef}
-          role="img"
-          aria-label={`${symbol} candlestick chart, ${selectedPeriod} period, ${selectedInterval} interval`}
-          className="w-full overflow-hidden rounded-2xl border-b"
-          style={{ borderColor: "var(--color-border)", minHeight: 400 }}
-        />
-
-        {chartState !== "ready" && (
-          <div
-            className={cn(
-              "absolute inset-0 flex items-center justify-center rounded-2xl",
-              chartState === "loading" && "bg-secondary/80 backdrop-blur-sm",
-              chartState === "error" && "bg-secondary/90",
-              chartState === "empty" && "bg-secondary/60",
-            )}
-          >
-            {chartState === "loading" && (
-              <ThinkingSpinner message={`Loading ${symbol} chart`} />
-            )}
-
-            {chartState === "error" && (
-              <div className="max-w-xs space-y-3 px-4 text-center">
-                <p className="text-sm text-danger">{error}</p>
-                {onRetry && (
-                  <Button size="xs" variant="outline" onClick={onRetry}>
-                    Try again
-                  </Button>
+    >
+      <div className="shrink-0 space-y-3 border-b border-border px-4 py-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+            {periodReturn != null && (
+              <span
+                className={cn(
+                  "text-lg font-semibold tabular-nums",
+                  periodReturn >= 0 ? "text-success" : "text-danger",
                 )}
-              </div>
+              >
+                {formatPeriodReturn(periodReturn)}
+              </span>
             )}
-
-            {chartState === "empty" && (
-              <p className="px-4 text-center text-sm text-muted">
-                No price data for this time range.
-              </p>
-            )}
-          </div>
-        )}
-
-        {chartState === "ready" && loading && (
-          <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-secondary/90 px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-border">
-            Updating…
-          </div>
-        )}
-
-        <div className="flex flex-col gap-2 px-4 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span
-              id={`stock-chart-range-label-${symbol}`}
-              className="text-[11px] uppercase tracking-wide opacity-70"
-              style={{ color: "var(--color-foreground)" }}
-            >
-              Time range
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
+              {rangeLabel} return
             </span>
-
-            <div
-              className="flex flex-wrap gap-1"
-              role="group"
-              aria-labelledby={`stock-chart-range-label-${symbol}`}
-            >
-              {PRESETS.map((p) => {
-                const active = p.label === currentPreset;
-                return (
-                  <button
-                    key={p.label}
-                    type="button"
-                    aria-pressed={active}
-                    aria-label={`${p.label} time range`}
-                    onClick={() => handlePresetClick(p)}
-                    className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
-                    style={{
-                      backgroundColor: active
-                        ? "var(--color-foreground)"
-                        : "transparent",
-                      color: active
-                        ? "var(--color-background)"
-                        : "var(--color-foreground)",
-                      border: `1px solid var(--color-border)`,
-                    }}
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
-          <div
-            className="h-px w-full"
-            style={{ backgroundColor: "var(--color-border)" }}
-          />
-
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            <label className="flex items-center gap-2">
-              <span className="opacity-80">Period</span>
-              <select
-                value={selectedPeriod}
-                aria-label={`${symbol} chart period`}
-                onChange={(e) => {
-                  const newPeriod = e.target.value;
-                  setSelectedPeriod(newPeriod);
-                  onPeriodChange?.(newPeriod);
-                }}
-                className="rounded-md border px-2 py-1 text-xs"
-                style={{
-                  backgroundColor: "var(--color-background)",
-                  color: "var(--color-foreground)",
-                  borderColor: "var(--color-border)",
-                }}
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              className="flex rounded-lg border border-border bg-background/60 p-0.5"
+              role="group"
+              aria-label="Chart style"
+            >
+              <button
+                type="button"
+                aria-pressed={chartMode === "line"}
+                onClick={() => setChartMode("line")}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                  chartMode === "line"
+                    ? "bg-foreground text-background"
+                    : "text-muted hover:text-foreground",
+                )}
               >
-                <option value="1d">1 day</option>
-                <option value="5d">5 days</option>
-                <option value="1mo">1 month</option>
-                <option value="3mo">3 months</option>
-                <option value="6mo">6 months</option>
-                <option value="1y">1 year</option>
-                <option value="2y">2 years</option>
-                <option value="5y">5 years</option>
-                <option value="10y">10 years</option>
-                <option value="ytd">Year to date</option>
-                <option value="max">Max</option>
-              </select>
-            </label>
-
-            <label className="flex items-center gap-2">
-              <span className="opacity-80">Interval</span>
-              <select
-                value={selectedInterval}
-                aria-label={`${symbol} chart interval`}
-                onChange={(e) => {
-                  const newInterval = e.target.value;
-                  setSelectedInterval(newInterval);
-                  onIntervalChange?.(newInterval);
-                }}
-                className="rounded-md border px-2 py-1 text-xs"
-                style={{
-                  backgroundColor: "var(--color-background)",
-                  color: "var(--color-foreground)",
-                  borderColor: "var(--color-border)",
-                }}
+                <LineChart className="h-3.5 w-3.5" aria-hidden />
+                Line
+              </button>
+              <button
+                type="button"
+                aria-pressed={chartMode === "candle"}
+                onClick={() => setChartMode("candle")}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                  chartMode === "candle"
+                    ? "bg-foreground text-background"
+                    : "text-muted hover:text-foreground",
+                )}
               >
-                <option value="1m">1 minute</option>
-                <option value="2m">2 minutes</option>
-                <option value="5m">5 minutes</option>
-                <option value="15m">15 minutes</option>
-                <option value="30m">30 minutes</option>
-                <option value="60m">1 hour</option>
-                <option value="90m">90 minutes</option>
-                <option value="1h">1 hour</option>
-                <option value="1d">1 day</option>
-                <option value="5d">5 days</option>
-                <option value="1wk">1 week</option>
-                <option value="1mo">1 month</option>
-                <option value="3mo">3 months</option>
-              </select>
-            </label>
+                <CandlestickChart className="h-3.5 w-3.5" aria-hidden />
+                Candles
+              </button>
+            </div>
 
             <button
               type="button"
-              onClick={handleReset}
-              className="ml-auto rounded-md border px-2 py-1 text-xs font-medium transition-colors"
-              style={{
-                backgroundColor: "transparent",
-                color: "var(--color-foreground)",
-                borderColor: "var(--color-border)",
-              }}
+              aria-expanded={advancedOpen}
+              onClick={() => setAdvancedOpen((open) => !open)}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition",
+                advancedOpen
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background/60 text-muted hover:text-foreground",
+              )}
             >
-              Reset to 3M
+              Advanced
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 transition",
+                  advancedOpen && "rotate-180",
+                )}
+                aria-hidden
+              />
             </button>
           </div>
         </div>
-      </section>
-    </div>
+
+        <div
+          className="flex flex-wrap gap-1"
+          role="group"
+          aria-label={`${symbol} chart time range`}
+        >
+          {PRESETS.map((preset) => {
+            const active = preset.label === currentPreset;
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                aria-pressed={active}
+                aria-label={`${preset.label} time range`}
+                onClick={() => handlePresetClick(preset)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  active
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border text-foreground hover:bg-background/60",
+                )}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {advancedOpen && (
+        <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border bg-background/40 px-4 py-3 text-xs">
+          <label className="flex items-center gap-2">
+            <span className="text-muted">Period</span>
+            <select
+              value={selectedPeriod}
+              aria-label={`${symbol} chart period`}
+              onChange={(e) => {
+                const newPeriod = e.target.value;
+                setSelectedPeriod(newPeriod);
+                onPeriodChange?.(newPeriod);
+              }}
+              className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground"
+            >
+              <option value="1d">1 day</option>
+              <option value="5d">5 days</option>
+              <option value="1mo">1 month</option>
+              <option value="3mo">3 months</option>
+              <option value="6mo">6 months</option>
+              <option value="1y">1 year</option>
+              <option value="2y">2 years</option>
+              <option value="5y">5 years</option>
+              <option value="10y">10 years</option>
+              <option value="ytd">Year to date</option>
+              <option value="max">Max</option>
+            </select>
+          </label>
+
+          <label className="flex items-center gap-2">
+            <span className="text-muted">Interval</span>
+            <select
+              value={selectedInterval}
+              aria-label={`${symbol} chart interval`}
+              onChange={(e) => {
+                const newInterval = e.target.value;
+                setSelectedInterval(newInterval);
+                onIntervalChange?.(newInterval);
+              }}
+              className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground"
+            >
+              <option value="1m">1 minute</option>
+              <option value="2m">2 minutes</option>
+              <option value="5m">5 minutes</option>
+              <option value="15m">15 minutes</option>
+              <option value="30m">30 minutes</option>
+              <option value="60m">1 hour</option>
+              <option value="90m">90 minutes</option>
+              <option value="1h">1 hour</option>
+              <option value="1d">1 day</option>
+              <option value="5d">5 days</option>
+              <option value="1wk">1 week</option>
+              <option value="1mo">1 month</option>
+              <option value="3mo">3 months</option>
+            </select>
+          </label>
+
+          <button
+            type="button"
+            onClick={handleReset}
+            className="ml-auto rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground transition hover:bg-background/60"
+          >
+            Reset to 3M
+          </button>
+        </div>
+      )}
+
+      <div
+        ref={chartWrapperRef}
+        className={cn("flex flex-col", isFullscreen && "min-h-0 flex-1")}
+      >
+        <div
+          className={cn(
+            "relative w-full",
+            isFullscreen ? "min-h-0 flex-1" : "h-[500px]",
+          )}
+        >
+          {legendPoint && chartState === "ready" && (
+            <ChartLegend point={legendPoint} hovering={hoveredPoint != null} />
+          )}
+
+          <div
+            ref={containerRef}
+            role="img"
+            aria-label={`${symbol} ${chartMode} chart, ${selectedPeriod} period, ${selectedInterval} interval`}
+            className="h-full w-full"
+          />
+
+          {chartState !== "ready" && (
+            <div
+              className={cn(
+                "absolute inset-0 flex items-center justify-center",
+                chartState === "loading" && "bg-secondary/80 backdrop-blur-sm",
+                chartState === "error" && "bg-secondary/90",
+                chartState === "empty" && "bg-secondary/60",
+              )}
+            >
+              {chartState === "loading" && (
+                <ThinkingSpinner message={`Loading ${symbol} chart`} />
+              )}
+
+              {chartState === "error" && (
+                <div className="max-w-xs space-y-3 px-4 text-center">
+                  <p className="text-sm text-danger">{error}</p>
+                  {onRetry && (
+                    <Button size="xs" variant="outline" onClick={onRetry}>
+                      Try again
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {chartState === "empty" && (
+                <p className="px-4 text-center text-sm text-muted">
+                  No price data for this time range.
+                </p>
+              )}
+            </div>
+          )}
+
+          {chartState === "ready" && loading && (
+            <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-background/95 px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-border">
+              Updating…
+            </div>
+          )}
+        </div>
+
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-background/40 px-3 py-1.5">
+          <div className="min-w-0 text-[11px] leading-relaxed text-muted">
+            {footerStats ? (
+              <p className="truncate">
+                <span>{footerStats.dateRange}</span>
+                <span aria-hidden="true"> · </span>
+                <span>{footerStats.intervalLabel}</span>
+                <span className="hidden tabular-nums sm:inline">
+                  <span aria-hidden="true"> · </span>
+                  H {formatChartPrice(footerStats.periodHigh)}
+                  <span aria-hidden="true"> · </span>
+                  L {formatChartPrice(footerStats.periodLow)}
+                </span>
+              </p>
+            ) : chartState === "loading" ? (
+              <p>Loading chart data…</p>
+            ) : null}
+            {isFullscreen && (
+              <p className="mt-0.5 text-[10px] text-muted">Press Esc to exit</p>
+            )}
+          </div>
+
+          {fullscreenSupported && (
+            <button
+              type="button"
+              onClick={() => void toggleFullscreen()}
+              aria-pressed={isFullscreen}
+              aria-label={
+                isFullscreen
+                  ? `Exit full screen chart for ${symbol}`
+                  : `View ${symbol} chart full screen`
+              }
+              title={isFullscreen ? "Exit full screen (Esc)" : "Full screen"}
+              className={cn(
+                "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-transparent text-base text-muted transition hover:bg-secondary/60 hover:text-foreground",
+                isFullscreen && "text-foreground",
+              )}
+            >
+              <span aria-hidden="true">⛶</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 

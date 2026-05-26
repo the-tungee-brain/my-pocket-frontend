@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { CandlestickChart } from "lucide-react";
 import { StockChart } from "@/components/StockChart";
-import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { useStockData } from "@/app/hooks/useStockData";
+import { pageSectionClass } from "@/lib/pageLayout";
 
 type Props = {
   symbol: string;
@@ -32,26 +31,17 @@ export function ResearchStockChart({ symbol }: Props) {
   });
 
   return (
-    <ResearchSectionCard
-      title="Price chart"
-      description={`${period.toUpperCase()} · ${interval.toUpperCase()}`}
-      icon={CandlestickChart}
-    >
-      <div className="-mx-4 -mb-4">
-        <StockChart
-          data={stockData?.data ?? []}
-          loading={loading}
-          error={error?.message ?? null}
-          onRetry={error ? refetch : undefined}
-          symbol={stockData?.symbol ?? symbol.toUpperCase()}
-          period={period}
-          interval={interval}
-          onPeriodChange={setPeriod}
-          onIntervalChange={setInterval}
-          hideHeader
-          className="mt-0 max-w-none"
-        />
-      </div>
-    </ResearchSectionCard>
+    <StockChart
+      data={stockData?.data ?? []}
+      loading={loading}
+      error={error?.message ?? null}
+      onRetry={error ? refetch : undefined}
+      symbol={stockData?.symbol ?? symbol.toUpperCase()}
+      period={period}
+      interval={interval}
+      onPeriodChange={setPeriod}
+      onIntervalChange={setInterval}
+      className={pageSectionClass}
+    />
   );
 }
