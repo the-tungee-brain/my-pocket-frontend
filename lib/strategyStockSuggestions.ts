@@ -4,7 +4,7 @@ import type {
   UserInvestmentProfileUpdate,
 } from "@/app/types/strategy";
 import type { StrategyFormValues } from "@/lib/strategyProfileForm";
-import { isWheelLikeStrategy } from "@/lib/strategyProfileForm";
+import { isWheelLikeStrategy, deltaBandForRisk } from "@/lib/strategyProfileForm";
 
 const SUPPORTED_STRATEGIES: InvestmentStrategy[] = [
   "wheel",
@@ -37,10 +37,11 @@ export function buildPreferencesDraftUpdate(
   };
 
   if (isWheelLikeStrategy(strategy)) {
+    const deltaBand = deltaBandForRisk(prefs.riskTolerance);
     payload.wheel = {
       wheelSymbols: symbols,
-      targetDeltaMin: 0.2,
-      targetDeltaMax: 0.3,
+      targetDeltaMin: deltaBand.targetDeltaMin,
+      targetDeltaMax: deltaBand.targetDeltaMax,
       preferredDteDays: 7,
       maxSingleNamePct: 15,
     };
@@ -78,8 +79,12 @@ export function buildAddSymbolUpdate(
     return {
       wheel: {
         wheelSymbols: [...existing, upper],
-        targetDeltaMin: profile.wheel?.targetDeltaMin ?? 0.2,
-        targetDeltaMax: profile.wheel?.targetDeltaMax ?? 0.3,
+        targetDeltaMin:
+          profile.wheel?.targetDeltaMin ??
+          deltaBandForRisk(profile.riskTolerance).targetDeltaMin,
+        targetDeltaMax:
+          profile.wheel?.targetDeltaMax ??
+          deltaBandForRisk(profile.riskTolerance).targetDeltaMax,
         preferredDteDays: profile.wheel?.preferredDteDays ?? 7,
         maxSingleNamePct: profile.wheel?.maxSingleNamePct ?? 15,
       },

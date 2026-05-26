@@ -23,6 +23,7 @@ import { updateInvestmentProfile } from "@/lib/apiClient";
 import { cn } from "@/lib/utils";
 import {
   DEFAULT_STRATEGY_FORM,
+  deltaBandForRisk,
   formValuesToUpdate,
   isStrategyFormValid,
   isWheelLikeStrategy,
@@ -199,11 +200,24 @@ export function StrategyProfileEditor({
                     key={option}
                     label={option}
                     selected={values.riskTolerance === option}
-                    onClick={() => patch({ riskTolerance: option })}
+                    onClick={() =>
+                      patch({
+                        riskTolerance: option,
+                        ...(isWheelLikeStrategy(values.primaryStrategy)
+                          ? deltaBandForRisk(option)
+                          : {}),
+                      })
+                    }
                   />
                 ),
               )}
             </FieldGroup>
+            {isWheelLikeStrategy(values.primaryStrategy) && (
+              <p className="text-xs text-muted-foreground">
+                Target delta band: {values.targetDeltaMin.toFixed(2)}–
+                {values.targetDeltaMax.toFixed(2)} (synced to risk tolerance)
+              </p>
+            )}
             <FieldGroup label="Income vs growth">
               {(["income", "balanced", "growth"] as IncomeVsGrowth[]).map(
                 (option) => (

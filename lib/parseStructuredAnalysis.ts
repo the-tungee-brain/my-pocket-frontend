@@ -4,6 +4,7 @@ import type {
   StructuredAnalysisSection,
 } from "@/app/types/analysis";
 import type { SymbolAnalysisPrecomputed } from "@/app/types/symbolAnalysis";
+import type { PortfolioAnalysisPrecomputed } from "@/app/types/portfolioAnalysis";
 import { stripStreamingStatusPrefix } from "@/lib/conversationalAnalysis";
 
 function asString(value: unknown): string | null {
@@ -92,9 +93,13 @@ function extractJsonCandidate(raw: string): string | null {
   return trimmed.slice(start, end + 1);
 }
 
-function isSymbolAnalysisV1Envelope(
+function isAnalysisV1Envelope(
   value: unknown,
-): value is { analysis: unknown; precomputed?: SymbolAnalysisPrecomputed | null } {
+): value is {
+  analysis: unknown;
+  precomputed?: SymbolAnalysisPrecomputed | null;
+  portfolioPrecomputed?: PortfolioAnalysisPrecomputed | null;
+} {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -107,29 +112,32 @@ function isSymbolAnalysisV1Envelope(
 export type StructuredAnalyzeResponse = {
   analysis: StructuredAnalysis | null;
   precomputed: SymbolAnalysisPrecomputed | null;
+  portfolioPrecomputed: PortfolioAnalysisPrecomputed | null;
 };
 
 function parseJsonResponse(raw: string): StructuredAnalyzeResponse {
   const candidate = extractJsonCandidate(raw);
   if (!candidate) {
-    return { analysis: null, precomputed: null };
+    return { analysis: null, precomputed: null, portfolioPrecomputed: null };
   }
 
   try {
     const parsed = JSON.parse(candidate);
-    if (isSymbolAnalysisV1Envelope(parsed)) {
+    if (isAnalysisV1Envelope(parsed)) {
       return {
         analysis: normalizeStructuredAnalysis(parsed.analysis),
         precomputed: parsed.precomputed ?? null,
+        portfolioPrecomputed: parsed.portfolioPrecomputed ?? null,
       };
     }
 
     return {
       analysis: normalizeStructuredAnalysis(parsed),
       precomputed: null,
+      portfolioPrecomputed: null,
     };
   } catch {
-    return { analysis: null, precomputed: null };
+    return { analysis: null, precomputed: null, portfolioPrecomputed: null };
   }
 }
 
@@ -137,7 +145,7 @@ export function parseStructuredAnalyzeResponse(
   raw: string | null | undefined,
 ): StructuredAnalyzeResponse {
   if (!raw?.trim()) {
-    return { analysis: null, precomputed: null };
+    return { analysis: null, precomputed: null, portfolioPrecomputed: null };
   }
 
   const stripped = stripStreamingStatusPrefix(raw);
@@ -149,6 +157,7 @@ export function parseStructuredAnalyzeResponse(
   return {
     analysis: markdownToStructured(stripped),
     precomputed: null,
+    portfolioPrecomputed: null,
   };
 }
 

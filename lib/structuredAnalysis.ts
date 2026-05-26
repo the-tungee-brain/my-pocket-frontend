@@ -1,6 +1,7 @@
 import type { Position, SchwabAccounts } from "@/app/types/schwab";
 import type { StructuredAnalysis } from "@/app/types/analysis";
 import type { SymbolAnalysisPrecomputed } from "@/app/types/symbolAnalysis";
+import type { PortfolioAnalysisPrecomputed } from "@/app/types/portfolioAnalysis";
 
 export const STRUCTURED_ANALYSIS_SCHEMA = "portfolio_analysis_v1";
 
@@ -67,6 +68,27 @@ Use 2-5 sections max. Lead with diversification for portfolio analysis. Keep bul
 When the response includes precomputed option comparePaths in the API envelope, do NOT add an
 "Outcome comparison" section — the UI renders compare paths separately. Put why roll/close/hold
 wins in recommendedAction.reason instead.`;
+
+export function hasPortfolioAllocation(
+  portfolioPrecomputed: PortfolioAnalysisPrecomputed | null | undefined,
+): boolean {
+  return (portfolioPrecomputed?.holdings?.length ?? 0) > 0;
+}
+
+export function stripPortfolioAllocationSections(
+  analysis: StructuredAnalysis,
+): StructuredAnalysis {
+  return {
+    ...analysis,
+    sections: analysis.sections.filter((section) => {
+      const title = section.title.trim().toLowerCase();
+      return (
+        title !== "portfolio cash map" &&
+        !/^gaps vs targets$/i.test(title)
+      );
+    }),
+  };
+}
 
 export function hasComparePaths(
   precomputed: SymbolAnalysisPrecomputed | null | undefined,

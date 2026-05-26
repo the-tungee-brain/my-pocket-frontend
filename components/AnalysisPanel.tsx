@@ -16,6 +16,10 @@ import { formatInsightsAnalyzedAt } from "@/lib/insightsCache";
 import { AnalyzePrompt } from "@/components/AnalyzePrompt";
 import { StructuredAnalysisView } from "@/components/StructuredAnalysisView";
 import { ComparePathsCard, ComparePathsIntro } from "@/components/ComparePathsCard";
+import {
+  PortfolioAllocationCard,
+  PortfolioAllocationIntro,
+} from "@/components/PortfolioAllocationCard";
 import { inferRecommendedComparePath } from "@/lib/inferRecommendedComparePath";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import { AlertBadge } from "@/components/AlertBadge";
@@ -51,7 +55,9 @@ import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
 import {
   hasComparePaths,
+  hasPortfolioAllocation,
   stripOutcomeComparisonSection,
+  stripPortfolioAllocationSections,
 } from "@/lib/structuredAnalysis";
 
 type PortfolioProps = {
@@ -604,6 +610,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     content,
     structuredAnalysis,
     precomputed,
+    portfolioPrecomputed,
     analyzedAt,
     hasCachedInsights,
     refetch,
@@ -621,12 +628,20 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   );
 
   const showComparePaths = !isPortfolio && hasComparePaths(precomputed);
+  const showPortfolioAllocation =
+    isPortfolio && hasPortfolioAllocation(portfolioPrecomputed);
 
   const displayAnalysis = useMemo(() => {
     if (!structuredAnalysis) return null;
-    if (!showComparePaths) return structuredAnalysis;
-    return stripOutcomeComparisonSection(structuredAnalysis);
-  }, [structuredAnalysis, showComparePaths]);
+    let analysis = structuredAnalysis;
+    if (showComparePaths) {
+      analysis = stripOutcomeComparisonSection(analysis);
+    }
+    if (showPortfolioAllocation) {
+      analysis = stripPortfolioAllocationSections(analysis);
+    }
+    return analysis;
+  }, [structuredAnalysis, showComparePaths, showPortfolioAllocation]);
 
   const recommendedComparePath = useMemo(
     () => inferRecommendedComparePath(displayAnalysis?.recommendedAction?.title),
@@ -806,6 +821,12 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
               <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted">
                 AI analysis
               </p>
+              {showPortfolioAllocation && portfolioPrecomputed && (
+                <div className="mb-4 space-y-3">
+                  <PortfolioAllocationIntro />
+                  <PortfolioAllocationCard precomputed={portfolioPrecomputed} />
+                </div>
+              )}
               {displayAnalysis ? (
                 <StructuredAnalysisView
                   analysis={displayAnalysis}

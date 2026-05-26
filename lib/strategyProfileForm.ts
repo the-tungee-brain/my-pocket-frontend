@@ -43,6 +43,30 @@ export const DEFAULT_STRATEGY_FORM: StrategyFormValues = {
   rebalanceThresholdPct: 5,
 };
 
+export function deltaBandForRisk(
+  riskTolerance: RiskTolerance,
+): Pick<StrategyFormValues, "targetDeltaMin" | "targetDeltaMax"> {
+  switch (riskTolerance) {
+    case "conservative":
+      return { targetDeltaMin: 0.1, targetDeltaMax: 0.15 };
+    case "aggressive":
+      return { targetDeltaMin: 0.35, targetDeltaMax: 0.5 };
+    default:
+      return { targetDeltaMin: 0.2, targetDeltaMax: 0.3 };
+  }
+}
+
+export function deltaBandDescription(riskTolerance: RiskTolerance): string {
+  switch (riskTolerance) {
+    case "conservative":
+      return "0.10–0.15 delta — lower assignment risk, lower premium";
+    case "aggressive":
+      return "0.35+ delta — higher income, higher assignment risk";
+    default:
+      return "0.20–0.30 delta — balanced wheel sweet spot";
+  }
+}
+
 const WHEEL_LIKE: InvestmentStrategy[] = [
   "wheel",
   "csp-income",
@@ -87,9 +111,11 @@ export function profileToFormValues(
     etfBond,
     etfStockPct,
     targetDeltaMin:
-      profile.wheel?.targetDeltaMin ?? DEFAULT_STRATEGY_FORM.targetDeltaMin,
+      profile.wheel?.targetDeltaMin ??
+      deltaBandForRisk(profile.riskTolerance).targetDeltaMin,
     targetDeltaMax:
-      profile.wheel?.targetDeltaMax ?? DEFAULT_STRATEGY_FORM.targetDeltaMax,
+      profile.wheel?.targetDeltaMax ??
+      deltaBandForRisk(profile.riskTolerance).targetDeltaMax,
     preferredDteDays:
       profile.wheel?.preferredDteDays ?? DEFAULT_STRATEGY_FORM.preferredDteDays,
     maxSingleNamePct:

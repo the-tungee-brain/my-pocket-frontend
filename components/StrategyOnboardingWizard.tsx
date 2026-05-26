@@ -24,6 +24,7 @@ import { StrategyStockSuggestionsPanel } from "@/components/StrategyStockSuggest
 import { SymbolSearchField } from "@/components/SymbolSearchField";
 import { Button } from "@/components/ui/Button";
 import { buildPreferencesDraftUpdate, supportsStrategyStockSuggestions } from "@/lib/strategyStockSuggestions";
+import { deltaBandDescription, deltaBandForRisk } from "@/lib/strategyProfileForm";
 import { cn } from "@/lib/utils";
 
 type WizardStep =
@@ -154,10 +155,11 @@ export function StrategyOnboardingWizard({
       selectedStrategy === "csp-income" ||
       selectedStrategy === "covered-call"
     ) {
+      const deltaBand = deltaBandForRisk(riskTolerance);
       payload.wheel = {
         wheelSymbols: symbols,
-        targetDeltaMin: 0.2,
-        targetDeltaMax: 0.3,
+        targetDeltaMin: deltaBand.targetDeltaMin,
+        targetDeltaMax: deltaBand.targetDeltaMax,
         preferredDteDays: 7,
         maxSingleNamePct: 15,
       };
@@ -327,6 +329,13 @@ export function StrategyOnboardingWizard({
                   />
                 ))}
               </FieldGroup>
+              {(selectedStrategy === "wheel" ||
+                selectedStrategy === "csp-income" ||
+                selectedStrategy === "covered-call") && (
+                <p className="text-xs text-muted-foreground">
+                  {deltaBandDescription(riskTolerance)}
+                </p>
+              )}
 
               <FieldGroup label="Income vs growth">
                 {(["income", "balanced", "growth"] as IncomeVsGrowth[]).map(
