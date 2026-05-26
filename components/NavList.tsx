@@ -18,6 +18,7 @@ import { useWatchlist } from "@/app/hooks/useWatchlist";
 import { useToast } from "@/app/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/Button";
+import { IconButton } from "./ui/IconButton";
 import { AlertBadge } from "./AlertBadge";
 import type { SymbolAlertSummary } from "@/lib/intelligence";
 import { symbolHubPath } from "@/lib/symbolRoutes";
@@ -320,17 +321,17 @@ export function NavList({
                   />
                   <span className="font-mono">{sym}</span>
                 </button>
-                <button
-                  type="button"
+                <IconButton
+                  size="sm"
                   aria-label={`Remove ${sym} from watchlist`}
                   onClick={() => {
                     removeFromWatchlist(sym);
                     showToast(`${sym} removed from watchlist`);
                   }}
-                  className="shrink-0 rounded p-1 text-muted transition hover:bg-muted-bg hover:text-danger"
+                  className="hover:enabled:text-danger"
                 >
                   <X className="h-3.5 w-3.5" aria-hidden="true" />
-                </button>
+                </IconButton>
               </div>
             );
           })}

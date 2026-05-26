@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Star, X } from "lucide-react";
 import { useWatchlist } from "@/app/hooks/useWatchlist";
-import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import {
   dismissWatchlistHint,
   isWatchlistHintDismissed,
@@ -41,15 +41,13 @@ export function WatchlistHint({ symbol }: Props) {
         Star <span className="font-mono font-medium text-foreground">{upper}</span>{" "}
         to save it to your sidebar watchlist.
       </p>
-      <Button
-        size="xs"
-        variant="ghost"
+      <IconButton
+        size="sm"
         aria-label="Dismiss watchlist tip"
-        className="shrink-0 text-muted hover:text-foreground"
         onClick={handleDismiss}
       >
         <X className="h-3.5 w-3.5" aria-hidden="true" />
-      </Button>
+      </IconButton>
     </div>
   );
 }

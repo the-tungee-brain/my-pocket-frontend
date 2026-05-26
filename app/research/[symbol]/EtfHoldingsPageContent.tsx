@@ -21,7 +21,7 @@ type Props = {
 function LoadingBlock() {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3">
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={index}
@@ -122,11 +122,13 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
 type PreviewProps = {
   symbol: string;
   className?: string;
+  stacked?: boolean;
 };
 
 export function EtfHoldingsOverviewPreview({
   symbol,
   className,
+  stacked = false,
 }: PreviewProps) {
   const { data: session } = useSession();
   const { holdings, isLoading } = useEtfHoldings(symbol, {
@@ -141,6 +143,7 @@ export function EtfHoldingsOverviewPreview({
         title="Fund composition"
         description="What this ETF owns — sectors and largest positions"
         icon={Layers}
+        titleHref={symbolHubPath(symbol, "holdings")}
         className={className}
       >
         <LoadingBlock />
@@ -155,15 +158,8 @@ export function EtfHoldingsOverviewPreview({
       title="Fund composition"
       description="What this ETF owns — sectors and largest positions"
       icon={Layers}
+      titleHref={symbolHubPath(symbol, "holdings")}
       className={className}
-      action={
-        <Link
-          href={symbolHubPath(symbol, "holdings")}
-          className="text-xs font-medium text-accent-strong hover:underline"
-        >
-          Full composition
-        </Link>
-      }
     >
       <div className="space-y-4">
         <EtfFundStats holdings={holdings} />
@@ -173,6 +169,7 @@ export function EtfHoldingsOverviewPreview({
           totalHoldings={holdings.total_holdings}
           sectorLimit={5}
           holdingsLimit={5}
+          stacked={stacked}
         />
       </div>
     </ResearchSectionCard>

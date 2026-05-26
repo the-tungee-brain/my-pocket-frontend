@@ -40,7 +40,7 @@ import { symbolHubPath } from "@/lib/symbolRoutes";
 import { findQuickAction } from "@/lib/quickActions";
 import { formatUsd } from "@/lib/formatCurrency";
 import { formatFriendlyDate, formatOptionExpiration } from "@/lib/dateUtils";
-import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ResearchAsideCard } from "@/components/ResearchDetailBlocks";
@@ -57,7 +57,6 @@ type Props = {
   actionContext?: "portfolio" | "research";
   compact?: boolean;
   hideRecentEvents?: boolean;
-  optionsMode?: "off" | "summary";
   className?: string;
   researchBasePath?: string;
   isEtf?: boolean;
@@ -269,15 +268,12 @@ export function SymbolIntelligencePanel({
   actionContext = "portfolio",
   compact = false,
   hideRecentEvents = false,
-  optionsMode = "off",
   className,
   researchBasePath,
   isEtf = false,
 }: Props) {
   const hasResearchContent = hasSymbolResearchIntelligenceContent(intelligence);
-  const hasOptionsContent = hasSymbolOptionsContent(intelligence);
-  const showOptionsSummary = optionsMode === "summary" && hasOptionsContent;
-  const hasContent = hasResearchContent || showOptionsSummary;
+  const hasContent = hasResearchContent;
   const signals = sortSignalsBySeverity(intelligence?.signals ?? []);
   const peers = intelligence?.peerComparison;
   const timeline = intelligence?.eventTimeline ?? [];
@@ -306,18 +302,13 @@ export function SymbolIntelligencePanel({
               {symbol ? `${symbol} intelligence` : "Symbol intelligence"}
             </h2>
             <p className="text-[11px] text-muted">
-              {showOptionsSummary
-                ? "Signals, peers, timeline, and options highlights"
-                : "Signals, peers, and timeline"}
+              Signals, peers, and timeline
             </p>
           </div>
         </div>
         {onRefresh && (
-          <Button
-            type="button"
-            variant="ghost"
+          <IconButton
             size="sm"
-            className="shrink-0"
             onClick={onRefresh}
             disabled={loading}
             aria-label="Refresh intelligence"
@@ -326,7 +317,7 @@ export function SymbolIntelligencePanel({
               className={cn("h-3.5 w-3.5", loading && "animate-spin")}
               aria-hidden
             />
-          </Button>
+          </IconButton>
         )}
       </div>
 
@@ -502,14 +493,6 @@ export function SymbolIntelligencePanel({
           </IntelligenceSection>
         )}
 
-        {showOptionsSummary && symbol && (
-          <OptionsOverviewSummary
-            symbol={symbol}
-            intelligence={intelligence}
-            compact={compact}
-          />
-        )}
-
         {researchBasePath && symbol && !compact && (
           <div className="flex flex-wrap gap-2 pt-1">
             {isEtf ? (
@@ -565,100 +548,6 @@ export function SymbolIntelligencePanel({
   );
 }
 
-function OptionsOverviewSummary({
-  symbol,
-  intelligence,
-  compact = false,
-}: {
-  symbol: string;
-  intelligence: SymbolIntelligence | null;
-  compact?: boolean;
-}) {
-  const options = intelligence?.optionsScorecard;
-  const rollCount = intelligence?.rollSuggestions?.length ?? 0;
-  const hasChain = (intelligence?.optionChainPreview?.rows?.length ?? 0) > 0;
-  const flags = options?.assignmentFlags ?? [];
-  const highlights = [
-    ...(options?.coveredCallCandidates ?? []).map((candidate) => ({
-      ...candidate,
-      label: "CC" as const,
-    })),
-    ...(options?.cspCandidates ?? []).map((candidate) => ({
-      ...candidate,
-      label: "CSP" as const,
-    })),
-  ]
-    .sort((a, b) => b.strike - a.strike)
-    .slice(0, compact ? 2 : 3);
-
-  return (
-    <IntelligenceSection
-      title="Options highlights"
-      icon={Target}
-      defaultOpen={flags.length > 0}
-      compact={compact}
-    >
-      <div className="space-y-3">
-        {flags.length > 0 && (
-          <ul className="space-y-1">
-            {flags.slice(0, compact ? 1 : 2).map((flag) => (
-              <li
-                key={flag}
-                className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
-              >
-                {flag}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {highlights.length > 0 && (
-          <ul className="space-y-1.5">
-            {highlights.map((candidate) => (
-              <li
-                key={`${candidate.label}-${candidate.side}-${candidate.strike}-${candidate.expiration}`}
-                className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm"
-              >
-                <span className="font-medium text-foreground">
-                  {formatUsd(candidate.strike, {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 2,
-                  })}{" "}
-                  {candidate.label}
-                </span>
-                <span className="text-xs text-muted">
-                  {formatOptionExpiration(candidate.expiration)} · score{" "}
-                  {candidate.score.toFixed(2)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {(rollCount > 0 || hasChain) && (
-          <p className="text-xs text-muted">
-            {[
-              rollCount > 0
-                ? `${rollCount} roll suggestion${rollCount === 1 ? "" : "s"}`
-                : null,
-              hasChain ? "Live option chain" : null,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
-        )}
-
-        <Link
-          href={symbolHubPath(symbol, "position")}
-          className="inline-flex text-xs font-medium text-accent-strong hover:underline"
-        >
-          View option chain on Position →
-        </Link>
-      </div>
-    </IntelligenceSection>
-  );
-}
-
 type SymbolOptionsWorkspaceProps = {
   intelligence: SymbolIntelligence | null;
   loading?: boolean;
@@ -711,11 +600,8 @@ export function SymbolOptionsWorkspace({
           </div>
         </div>
         {onRefresh && (
-          <Button
-            type="button"
-            variant="ghost"
+          <IconButton
             size="sm"
-            className="shrink-0"
             onClick={onRefresh}
             disabled={loading}
             aria-label="Refresh options data"
@@ -724,7 +610,7 @@ export function SymbolOptionsWorkspace({
               className={cn("h-3.5 w-3.5", loading && "animate-spin")}
               aria-hidden
             />
-          </Button>
+          </IconButton>
         )}
       </div>
 

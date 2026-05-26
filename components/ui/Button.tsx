@@ -5,8 +5,8 @@ import { forwardRef, ButtonHTMLAttributes } from "react";
 import { Loader2 } from "lucide-react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "outline" | "ghost" | "destructive";
-  size?: "xs" | "sm" | "default" | "lg";
+  variant?: "default" | "outline" | "ghost" | "destructive" | "icon";
+  size?: "xs" | "sm" | "default" | "lg" | "icon";
   isLoading?: boolean;
   children: React.ReactNode;
 }
@@ -36,6 +36,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           variant === "outline" &&
             "border border-border bg-background hover:bg-muted-bg hover:text-foreground",
           variant === "ghost" && "hover:bg-accent hover:text-accent-foreground",
+          variant === "icon" &&
+            "border-0 bg-transparent text-muted transition-opacity hover:enabled:opacity-70 active:enabled:opacity-50",
           variant === "destructive" &&
             "bg-destructive text-destructive-foreground hover:bg-destructive/90",
 
@@ -44,6 +46,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           size === "sm" && "h-9 px-3 text-sm rounded-md",
           size === "default" && "h-10 px-4 text-sm rounded-lg",
           size === "lg" && "h-12 px-6 text-base rounded-xl",
+          size === "icon" && "h-8 w-8 p-0 rounded-md",
 
           className,
         )}

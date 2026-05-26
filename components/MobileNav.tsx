@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { NavList, MainView } from "@/components/NavList";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
+import { IconButton } from "@/components/ui/IconButton";
 
 import type { SymbolAlertSummary } from "@/lib/intelligence";
 
@@ -132,15 +133,14 @@ export function MobileNav({
               <div id="mobile-nav-title">
                 <TomcrestLogo size="sm" showSubtitle />
               </div>
-              <button
+              <IconButton
                 ref={closeButtonRef}
-                type="button"
+                size="sm"
                 onClick={() => setMobileNavOpen(false)}
                 aria-label="Close navigation"
-                className="rounded-lg p-1.5 text-muted transition hover:bg-muted-bg hover:text-foreground"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
-              </button>
+              </IconButton>
             </div>
 
             <nav

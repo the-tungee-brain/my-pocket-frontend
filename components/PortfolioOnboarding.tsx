@@ -16,7 +16,7 @@ import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { useRecentSymbols } from "@/app/hooks/useRecentSymbols";
 import { useWatchlist } from "@/app/hooks/useWatchlist";
 import { usePositionsContext } from "@/app/Providers";
-import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import {
   dismissOnboarding,
@@ -142,15 +142,13 @@ export function PortfolioOnboarding({ className }: { className?: string }) {
               {completedCount} of {coreSteps.length} complete
             </p>
           </div>
-          <Button
-            size="xs"
-            variant="ghost"
+          <IconButton
+            size="sm"
             aria-label="Dismiss getting started guide"
-            className="shrink-0 text-muted hover:text-foreground"
             onClick={handleDismiss}
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
-          </Button>
+          </IconButton>
         </div>
 
         <ol className="space-y-3">

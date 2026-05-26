@@ -26,11 +26,13 @@ export function WatchlistButton({
   return (
     <Button
       type="button"
-      size={size}
-      variant={watching ? "default" : "outline"}
+      size={iconOnly ? "icon" : size}
+      variant={iconOnly ? "icon" : watching ? "default" : "outline"}
       className={cn(
-        watching && "bg-accent-muted text-accent-strong hover:bg-accent-muted/80",
-        iconOnly && "px-1.5",
+        !iconOnly &&
+          watching &&
+          "bg-accent-muted text-accent-strong hover:bg-accent-muted/80",
+        iconOnly && watching && "text-accent-strong",
         className,
       )}
       aria-pressed={watching}

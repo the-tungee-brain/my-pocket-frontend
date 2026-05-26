@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 type ResearchSectionCardProps = {
@@ -6,6 +7,7 @@ type ResearchSectionCardProps = {
   description?: string;
   icon?: LucideIcon;
   action?: React.ReactNode;
+  titleHref?: string;
   children: React.ReactNode;
   className?: string;
 };
@@ -15,6 +17,7 @@ export function ResearchSectionCard({
   description,
   icon: Icon,
   action,
+  titleHref,
   children,
   className,
 }: ResearchSectionCardProps) {
@@ -33,7 +36,18 @@ export function ResearchSectionCard({
             </div>
           )}
           <div>
-            <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+            <h2 className="text-sm font-semibold">
+              {titleHref ? (
+                <Link
+                  href={titleHref}
+                  className="text-foreground transition hover:text-accent-strong hover:underline"
+                >
+                  {title}
+                </Link>
+              ) : (
+                <span className="text-foreground">{title}</span>
+              )}
+            </h2>
             {description && (
               <p className="text-[11px] text-muted">{description}</p>
             )}

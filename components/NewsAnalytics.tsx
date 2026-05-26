@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 import { RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 function sentimentColor(sentiment: Sentiment) {
   switch (sentiment) {
@@ -299,11 +299,8 @@ export default function NewsAnalytics({
                 : updatedLabel}
             </span>
             {onRefresh && (
-              <Button
-                type="button"
-                variant="ghost"
+              <IconButton
                 size="sm"
-                className="h-7 px-2"
                 onClick={onRefresh}
                 disabled={isLoading}
                 aria-label="Refresh news"
@@ -312,7 +309,7 @@ export default function NewsAnalytics({
                   className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}
                   aria-hidden
                 />
-              </Button>
+              </IconButton>
             )}
           </div>
         </div>

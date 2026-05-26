@@ -15,6 +15,7 @@ import { findQuickAction } from "@/lib/quickActions";
 import { pickSuggestedActions, suggestedActionToQuickActionId } from "@/lib/recentOrders";
 import { capitalizeFirstLetter, cn } from "@/lib/utils";
 import { AskAIChip } from "@/components/AskAIChip";
+import { IconButton } from "@/components/ui/IconButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 const MAX_VISIBLE = 5;
@@ -298,14 +299,14 @@ export function PortfolioAttentionSection({
                       className="relative rounded-xl border border-border bg-background px-3 py-2"
                     >
                       {item.alertId && onDismissAttention && (
-                        <button
-                          type="button"
+                        <IconButton
+                          size="sm"
                           aria-label="Dismiss alert"
                           onClick={() => onDismissAttention(item.alertId!)}
-                          className="absolute right-2 top-2 rounded-md p-1 text-muted transition hover:bg-muted-bg hover:text-foreground"
+                          className="absolute right-2 top-2"
                         >
                           <X className="h-3.5 w-3.5" />
-                        </button>
+                        </IconButton>
                       )}
                       <div className="inline-flex max-w-full flex-col items-start gap-1 pr-6 text-left">
                         <span className="inline-flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-foreground">

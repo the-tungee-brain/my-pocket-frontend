@@ -9,7 +9,7 @@ import { ConversationPane } from "@/components/ConversationPane";
 import { DesktopNav } from "@/components/DesktopNav";
 import { MobileNav } from "@/components/MobileNav";
 import { HeaderActions } from "@/components/HeaderActions";
-import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { useToast } from "./contexts/ToastContext";
 import { usePositionsContext } from "./Providers";
 import { researchTabLabel } from "@/components/ResearchTabBar";
@@ -390,15 +390,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <section className="flex min-h-screen flex-1 flex-col">
           <div className="sticky top-0 z-30 border-b border-border bg-secondary/80 backdrop-blur-md">
             <div className="flex min-h-14 items-center justify-between gap-3 px-4">
-              <Button
+              <IconButton
                 onClick={() => setMobileNavOpen(true)}
-                size="xs"
-                variant="ghost"
+                size="sm"
                 aria-label="Open navigation"
-                className="text-muted hover:text-foreground md:hidden"
+                className="md:hidden"
               >
                 <Menu className="h-4 w-4" aria-hidden="true" />
-              </Button>
+              </IconButton>
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">

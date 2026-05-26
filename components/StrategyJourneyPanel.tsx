@@ -21,6 +21,7 @@ import {
   isStrategyJourneyCollapsed,
   setStrategyJourneyCollapsed,
 } from "@/lib/onboardingStorage";
+import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -110,11 +111,10 @@ export function StrategyJourneyPanel({
               <Settings2 className="h-3.5 w-3.5" aria-hidden />
               Edit strategy
             </Link>
-            <button
-              type="button"
+            <IconButton
+              size="sm"
               aria-label={expanded ? "Collapse strategy" : "Expand strategy"}
               onClick={toggleExpanded}
-              className="rounded-lg p-1 text-muted transition hover:bg-muted-bg hover:text-foreground"
             >
               <ChevronDown
                 className={cn(
@@ -123,7 +123,7 @@ export function StrategyJourneyPanel({
                 )}
                 aria-hidden
               />
-            </button>
+            </IconButton>
           </div>
         </div>
 

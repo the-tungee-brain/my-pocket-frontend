@@ -7,6 +7,7 @@ import { ModelPicker } from "@/components/ModelPicker";
 import { QuickAnalysisBar } from "@/components/QuickAnalysisBar";
 import type { MainView } from "./NavList";
 import type { QuickActionMode } from "@/lib/quickActions";
+import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import { pageShellClass } from "@/lib/pageLayout";
 import { DEFAULT_CHAT_MODEL, getModelButtonLabel } from "@/lib/chatModels";
@@ -110,14 +111,14 @@ export function ChatBox({
             )}
           </div>
           {onCollapse && (
-            <button
-              type="button"
+            <IconButton
+              size="sm"
               aria-label="Collapse assistant"
               onClick={onCollapse}
-              className="rounded-lg p-1 text-muted transition hover:bg-muted-bg hover:text-foreground md:hidden"
+              className="md:hidden"
             >
               <ChevronDown className="h-4 w-4" aria-hidden="true" />
-            </button>
+            </IconButton>
           )}
         </div>
 

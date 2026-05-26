@@ -4,6 +4,7 @@ import { ArrowRight, Star } from "lucide-react";
 import { useWatchlistToggle } from "@/app/hooks/useWatchlistToggle";
 import type { TickerSymbolItem } from "@/app/hooks/useSymbolSearch";
 import { AssetTypeBadge } from "@/components/AssetTypeBadge";
+import { iconButtonClass } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -67,10 +68,9 @@ export function SymbolSearchResult({
           aria-label={starLabel}
           title={starLabel}
           className={cn(
-            "mr-2 shrink-0 rounded-lg p-2 transition",
-            watching
-              ? "text-accent-strong hover:bg-accent-muted"
-              : "text-muted hover:bg-muted-bg hover:text-foreground",
+            iconButtonClass,
+            "mr-2 h-8 w-8",
+            watching && "text-accent-strong",
           )}
           onClick={(event) => handleToggle(event)}
         >

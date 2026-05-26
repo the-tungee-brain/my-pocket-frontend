@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { EtfHoldingsContext } from "@/app/types/research";
 import { symbolHubPath } from "@/lib/symbolRoutes";
+import { cn } from "@/lib/utils";
 
 const BAR_CLASS = "bg-accent-strong/80";
 const LABEL_CLASS = "min-w-0 truncate text-xs font-normal text-foreground";
@@ -130,6 +131,7 @@ type CompositionColumnsProps = {
   sectorLimit?: number;
   holdingsLimit?: number;
   showHoldingsFooter?: boolean;
+  stacked?: boolean;
 };
 
 export function EtfCompositionSectionLabel({
@@ -151,9 +153,15 @@ export function EtfCompositionColumns({
   sectorLimit = 8,
   holdingsLimit = 8,
   showHoldingsFooter = true,
+  stacked = false,
 }: CompositionColumnsProps) {
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-2 lg:gap-6">
+    <div
+      className={cn(
+        "grid items-start gap-4",
+        stacked ? "grid-cols-1" : "lg:grid-cols-2 lg:gap-6",
+      )}
+    >
       <div className="min-w-0">
         <EtfCompositionSectionLabel>Sector breakdown</EtfCompositionSectionLabel>
         <EtfSectorBreakdown breakdown={sectorBreakdown} limit={sectorLimit} />
@@ -170,6 +178,8 @@ export function EtfCompositionColumns({
     </div>
   );
 }
+
+const FUND_STATS_GRID_CLASS = "grid grid-cols-2 gap-2 sm:gap-3";
 
 export function EtfFundStats({
   holdings,
@@ -191,16 +201,16 @@ export function EtfFundStats({
   ].filter(Boolean) as Array<{ label: string; value: string }>;
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div className={`${FUND_STATS_GRID_CLASS} min-w-0`}>
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="rounded-xl border border-border bg-background/60 px-3 py-2.5"
+          className="min-w-0 rounded-xl border border-border bg-background/60 px-2.5 py-2 sm:px-3 sm:py-2.5"
         >
-          <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
+          <p className="truncate text-[10px] font-medium uppercase tracking-wide text-muted">
             {stat.label}
           </p>
-          <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
+          <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-foreground sm:text-sm">
             {stat.value}
           </p>
         </div>

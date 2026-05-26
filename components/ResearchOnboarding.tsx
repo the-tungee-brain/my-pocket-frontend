@@ -11,7 +11,7 @@ import {
 import { usePositionsContext } from "@/app/Providers";
 import { useWatchlist } from "@/app/hooks/useWatchlist";
 import { useRecentSymbols } from "@/app/hooks/useRecentSymbols";
-import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import {
   dismissResearchOnboarding,
@@ -95,15 +95,13 @@ export function ResearchOnboarding() {
               {completedCount} of {steps.length} complete
             </p>
           </div>
-          <Button
-            size="xs"
-            variant="ghost"
+          <IconButton
+            size="sm"
             aria-label="Dismiss research guide"
-            className="shrink-0 text-muted hover:text-foreground"
             onClick={handleDismiss}
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
-          </Button>
+          </IconButton>
         </div>
 
         <ol className="space-y-3">

@@ -8,6 +8,7 @@ import {
   LineSeries,
 } from "lightweight-charts";
 import { ChevronDown, LineChart, CandlestickChart } from "lucide-react";
+import { iconButtonClass } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import { formatUsd } from "@/lib/formatCurrency";
 import { Button } from "@/components/ui/Button";
@@ -771,8 +772,9 @@ export function StockChart({
               }
               title={isFullscreen ? "Exit full screen (Esc)" : "Full screen"}
               className={cn(
-                "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-transparent text-base text-muted transition hover:bg-secondary/60 hover:text-foreground",
-                isFullscreen && "text-foreground",
+                iconButtonClass,
+                "h-8 w-8 text-base",
+                isFullscreen && "text-foreground opacity-100",
               )}
             >
               <span aria-hidden="true">⛶</span>

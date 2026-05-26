@@ -36,6 +36,7 @@ import {
   PortfolioChangesBody,
 } from "@/components/PortfolioChangesSection";
 import { AskAIChip } from "@/components/AskAIChip";
+import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 
@@ -322,11 +323,10 @@ export function PortfolioBriefSection({
           {onGoDeeper && !expanded && (
             <AskAIChip onClick={onGoDeeper} disabled={analyzeLoading} />
           )}
-          <button
-            type="button"
+          <IconButton
+            size="sm"
             aria-label={expanded ? "Collapse brief" : "Expand brief"}
             onClick={() => setExpanded((open) => !open)}
-            className="rounded-lg p-1 text-muted transition hover:bg-muted-bg hover:text-foreground"
           >
             <ChevronDown
               className={cn(
@@ -335,7 +335,7 @@ export function PortfolioBriefSection({
               )}
               aria-hidden
             />
-          </button>
+          </IconButton>
         </div>
       </div>
 

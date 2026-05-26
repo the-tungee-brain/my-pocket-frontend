@@ -63,12 +63,6 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
       main={
         <>
           <ResearchStockChart symbol={symbol} />
-          {isEtf ? (
-            <EtfHoldingsOverviewPreview
-              symbol={symbol}
-              className={pageSectionClass}
-            />
-          ) : null}
           <SymbolIntelligencePanel
             intelligence={intelligence}
             loading={loading}
@@ -80,14 +74,20 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             researchBasePath="/research"
             isEtf={isEtf}
             hideRecentEvents
-            optionsMode="summary"
             className={pageSectionClass}
           />
         </>
       }
       aside={
         <>
-          <PerformanceSnapshot symbol={symbol} />
+          {isEtf ? (
+            <EtfHoldingsOverviewPreview
+              symbol={symbol}
+              stacked
+              className={pageSectionClass}
+            />
+          ) : null}
+          <PerformanceSnapshot symbol={symbol} className={pageSectionClass} />
           <IntelligenceRecentEventsPanel
             className={pageSectionClass}
             timeline={intelligence?.eventTimeline ?? []}
