@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Layers, PieChart } from "lucide-react";
+import { Layers, PieChart, Scale } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
@@ -11,6 +11,7 @@ import { symbolHubPath } from "@/lib/symbolRoutes";
 import {
   EtfCompositionColumns,
   EtfFundStats,
+  EtfQualityHoldings,
 } from "./EtfHoldingsSections";
 
 type Props = {
@@ -98,6 +99,22 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
               </p>
             ) : null}
           </ResearchSectionCard>
+
+          <ResearchSectionCard
+            title="Holdings quality"
+            description="Strongest and weakest names by Piotroski F-Score and Altman Z"
+            icon={Scale}
+          >
+            <EtfQualityHoldings
+              strongest={holdings.strongestHoldings}
+              weakest={holdings.weakestHoldings}
+              limit={5}
+            />
+            <p className="mt-3 text-[11px] text-muted">
+              Rankings use all scored holdings in the fund, not just the largest
+              positions. Holdings without fundamentals are excluded.
+            </p>
+          </ResearchSectionCard>
         </>
       ) : (
         <EmptyState
@@ -169,6 +186,12 @@ export function EtfHoldingsOverviewPreview({
           totalHoldings={holdings.total_holdings}
           sectorLimit={5}
           holdingsLimit={5}
+          stacked={stacked}
+        />
+        <EtfQualityHoldings
+          strongest={holdings.strongestHoldings}
+          weakest={holdings.weakestHoldings}
+          limit={3}
           stacked={stacked}
         />
       </div>

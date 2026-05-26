@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { EtfHoldingsContext } from "@/app/types/research";
+import type { EtfHoldingItem, EtfHoldingsContext } from "@/app/types/research";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
 
@@ -215,6 +215,131 @@ export function EtfFundStats({
           </p>
         </div>
       ))}
+    </div>
+  );
+}
+
+function formatPiotroski(value: number | null | undefined) {
+  if (value == null) return "—";
+  return `${value}/9`;
+}
+
+function formatAltmanZ(value: number | null | undefined) {
+  if (value == null) return "—";
+  return value.toFixed(1);
+}
+
+function EtfQualityTable({
+  rows,
+  tone,
+}: {
+  rows: EtfHoldingItem[];
+  tone: "strong" | "weak";
+}) {
+  if (rows.length === 0) {
+    return <p className="text-sm text-muted">No scored holdings available.</p>;
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border">
+      <table className="w-full min-w-[240px] text-left text-xs">
+        <thead className="bg-background/60 text-muted">
+          <tr>
+            <th className="px-3 py-2 font-medium">Ticker</th>
+            <th className="px-3 py-2 font-medium">Weight</th>
+            <th className="px-3 py-2 font-medium">Piotroski</th>
+            <th className="px-3 py-2 font-medium">Altman Z</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={`${tone}-${row.ticker ?? row.name}`} className="border-t border-border">
+              <td className="px-3 py-2">
+                {row.ticker ? (
+                  <Link
+                    href={symbolHubPath(row.ticker, "overview")}
+                    className="font-normal text-foreground hover:underline"
+                  >
+                    {row.ticker}
+                  </Link>
+                ) : (
+                  row.name
+                )}
+              </td>
+              <td className="px-3 py-2 tabular-nums text-muted">
+                {row.weight_pct.toFixed(2)}%
+              </td>
+              <td
+                className={cn(
+                  "px-3 py-2 tabular-nums",
+                  tone === "strong" && (row.piotroskiF ?? 0) >= 7
+                    ? "text-success"
+                    : tone === "weak" && (row.piotroskiF ?? 9) <= 3
+                      ? "text-danger"
+                      : "text-foreground",
+                )}
+              >
+                {formatPiotroski(row.piotroskiF)}
+              </td>
+              <td
+                className={cn(
+                  "px-3 py-2 tabular-nums",
+                  tone === "strong" && (row.altmanZ ?? 0) >= 2.99
+                    ? "text-success"
+                    : tone === "weak" && (row.altmanZ ?? 99) < 1.81
+                      ? "text-danger"
+                      : "text-foreground",
+                )}
+              >
+                {formatAltmanZ(row.altmanZ)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+type QualityProps = {
+  strongest?: EtfHoldingItem[];
+  weakest?: EtfHoldingItem[];
+  limit?: number;
+  stacked?: boolean;
+};
+
+export function EtfQualityHoldings({
+  strongest = [],
+  weakest = [],
+  limit = 5,
+  stacked = false,
+}: QualityProps) {
+  const strongRows = strongest.slice(0, limit);
+  const weakRows = weakest.slice(0, limit);
+
+  if (strongRows.length === 0 && weakRows.length === 0) {
+    return (
+      <p className="text-sm text-muted">
+        Quality scores are not available for this ETF&apos;s holdings yet.
+      </p>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "grid items-start gap-4",
+        stacked ? "grid-cols-1" : "lg:grid-cols-2 lg:gap-6",
+      )}
+    >
+      <div className="min-w-0">
+        <EtfCompositionSectionLabel>Strongest holdings</EtfCompositionSectionLabel>
+        <EtfQualityTable rows={strongRows} tone="strong" />
+      </div>
+      <div className="min-w-0">
+        <EtfCompositionSectionLabel>Weakest holdings</EtfCompositionSectionLabel>
+        <EtfQualityTable rows={weakRows} tone="weak" />
+      </div>
     </div>
   );
 }

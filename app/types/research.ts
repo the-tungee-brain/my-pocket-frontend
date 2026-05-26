@@ -14,6 +14,9 @@ export type EtfHoldingItem = {
   weight_pct: number;
   sector?: string | null;
   market_cap?: string | null;
+  piotroskiF?: number | null;
+  altmanZ?: number | null;
+  qualityScore?: number | null;
 };
 
 export type EtfHoldingsContext = {
@@ -22,6 +25,8 @@ export type EtfHoldingsContext = {
   aum?: string | null;
   sector_breakdown: Record<string, number>;
   holdings: EtfHoldingItem[];
+  strongestHoldings?: EtfHoldingItem[];
+  weakestHoldings?: EtfHoldingItem[];
   dividend_yield?: string | null;
   expense_ratio?: string | null;
   dataAsOf?: string | null;
