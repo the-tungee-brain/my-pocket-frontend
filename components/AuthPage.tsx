@@ -5,16 +5,22 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  BarChart3,
+  ArrowRight,
+  BellRing,
   BrainCircuit,
   BriefcaseBusiness,
   CircleDollarSign,
+  LineChart,
   Loader2,
+  MessageSquareText,
+  RefreshCw,
   Search,
   ShieldCheck,
   Sparkles,
+  Target,
   TrendingUp,
   Wallet,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -40,7 +46,7 @@ function getAuthErrorMessage(code: string | null): string | null {
   }
 }
 
-export default function AuthPage() {
+function useGoogleSignIn() {
   const searchParams = useSearchParams();
   const callbackError = searchParams.get("error");
 
@@ -64,7 +70,8 @@ export default function AuthPage() {
 
       if (result?.error) {
         setSignInError(
-          getAuthErrorMessage(result.error) ?? "Sign in failed. Please try again.",
+          getAuthErrorMessage(result.error) ??
+            "Sign in failed. Please try again.",
         );
         setSigningIn(false);
         return;
@@ -77,90 +84,141 @@ export default function AuthPage() {
 
       setSigningIn(false);
     } catch {
-      setSignInError("Something went wrong while starting sign in. Please try again.");
+      setSignInError(
+        "Something went wrong while starting sign in. Please try again.",
+      );
       setSigningIn(false);
     }
   }, []);
 
+  return { handleSignIn, signingIn, signInError };
+}
+
+export default function AuthPage() {
+  const { handleSignIn, signingIn, signInError } = useGoogleSignIn();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="mx-auto flex min-h-screen max-w-6xl flex-col items-center justify-center gap-12 px-6 py-6 lg:flex-row lg:gap-16 lg:py-8">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 h-[520px] w-[720px] -translate-x-1/2 rounded-full bg-accent/8 blur-3xl" />
+        <div className="absolute top-1/3 -right-32 h-80 w-80 rounded-full bg-accent-strong/5 blur-3xl" />
+      </div>
+
+      <LandingHeader
+        onSignIn={() => void handleSignIn()}
+        signingIn={signingIn}
+      />
+
+      <main>
+        <HeroSection
+          onSignIn={() => void handleSignIn()}
+          signingIn={signingIn}
+          signInError={signInError}
+        />
+
+        <FeaturesSection />
+        <HowItWorksSection />
+        <ProductShowcase />
+        <StrategySection />
+        <FinalCTASection
+          onSignIn={() => void handleSignIn()}
+          signingIn={signingIn}
+          signInError={signInError}
+        />
+      </main>
+
+      <LandingFooter />
+    </div>
+  );
+}
+
+function LandingHeader({
+  onSignIn,
+  signingIn,
+}: {
+  onSignIn: () => void;
+  signingIn: boolean;
+}) {
+  return (
+    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/80 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+            <Wallet className="h-4 w-4" aria-hidden="true" />
+          </div>
+          <span className="text-sm font-semibold tracking-tight">Tomcrest</span>
+        </div>
+
+        <SignInWithGoogleButton
+          onClick={onSignIn}
+          signingIn={signingIn}
+          size="sm"
+          variant="outline"
+        />
+      </div>
+    </header>
+  );
+}
+
+function HeroSection({
+  onSignIn,
+  signingIn,
+  signInError,
+}: {
+  onSignIn: () => void;
+  signingIn: boolean;
+  signInError: string | null;
+}) {
+  return (
+    <section className="relative mx-auto max-w-6xl px-6 pb-16 pt-12 lg:pb-24 lg:pt-16">
+      <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
-          className="flex-1"
         >
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-muted">
             <Sparkles
               className="h-3.5 w-3.5 text-accent-strong"
               aria-hidden="true"
             />
-            AI-powered portfolio intelligence
+            AI portfolio intelligence for Schwab investors
           </div>
 
-          <h1 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-            Analyze your portfolio with{" "}
-            <span className="text-accent-strong">AI insights</span>
+          <h1 className="max-w-xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.25rem]">
+            Your portfolio,{" "}
+            <span className="text-accent-strong">understood by AI</span>
           </h1>
 
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted">
-            Tomcrest combines real-time brokerage data, market news,
-            financial fundamentals, and AI analysis to help you make smarter
-            portfolio decisions.
+          <p className="mt-5 max-w-lg text-base leading-relaxed text-muted sm:text-lg">
+            Tomcrest connects to your Charles Schwab account and turns live
+            holdings, market data, and fundamentals into actionable insights —
+            from morning briefs to per-symbol research and strategy guidance.
           </p>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            <FeatureCard
-              icon={TrendingUp}
-              title="Real-time tracking"
-              description="Connect Schwab to monitor holdings, positions, and performance."
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <SignInWithGoogleButton
+              onClick={onSignIn}
+              signingIn={signingIn}
+              size="lg"
             />
-            <FeatureCard
-              icon={BrainCircuit}
-              title="AI analysis"
-              description="Get buy, hold, sell, and risk-management recommendations."
-            />
-            <FeatureCard
-              icon={BarChart3}
-              title="Market insights"
-              description="Analyze fundamentals, earnings, trends, and financial news."
-            />
-            <FeatureCard
-              icon={ShieldCheck}
-              title="Secure integration"
-              description="Brokerage APIs connected securely for real-time intelligence."
-            />
+            <p className="text-xs text-muted sm:max-w-[12rem]">
+              Free to start. Connect Schwab after sign-in.
+            </p>
           </div>
 
-          <div className="mt-8">
-            {signInError && (
-              <ErrorBanner
-                message={signInError}
-                onRetry={() => void handleSignIn()}
-                className="mb-4 max-w-md"
-              />
-            )}
+          {signInError && (
+            <ErrorBanner
+              message={signInError}
+              onRetry={onSignIn}
+              className="mt-4 max-w-md"
+            />
+          )}
 
-            <Button
-              onClick={() => void handleSignIn()}
-              disabled={signingIn}
-              aria-busy={signingIn}
-              size="lg"
-              className="rounded-xl px-8"
-            >
-              {signingIn ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  Signing in…
-                </>
-              ) : (
-                "Sign in with Google"
-              )}
-            </Button>
-            <p className="mt-3 text-xs text-muted">
-              Connect your Schwab account after signing in.
-            </p>
+          <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted">
+            <TrustBadge icon={ShieldCheck} label="Secure OAuth connection" />
+            <TrustBadge icon={Zap} label="Real-time Schwab sync" />
+            <TrustBadge icon={BrainCircuit} label="Context-aware AI chat" />
           </div>
         </motion.div>
 
@@ -168,12 +226,436 @@ export default function AuthPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.1 }}
-          className="w-full max-w-md flex-1 lg:max-w-lg"
+          className="lg:justify-self-end"
         >
           <AppPreview />
         </motion.div>
-      </main>
+      </div>
+    </section>
+  );
+}
+
+function TrustBadge({
+  icon: Icon,
+  label,
+}: {
+  icon: typeof ShieldCheck;
+  label: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <Icon className="h-3.5 w-3.5 text-accent-strong/80" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+function FeaturesSection() {
+  const features = [
+    {
+      icon: BriefcaseBusiness,
+      title: "Live portfolio snapshot",
+      description:
+        "See holdings, allocation, cash reserves, and options exposure pulled directly from Schwab.",
+    },
+    {
+      icon: BellRing,
+      title: "Morning brief & alerts",
+      description:
+        "Start each day with portfolio intelligence, proactive alerts, and items that need attention.",
+    },
+    {
+      icon: BrainCircuit,
+      title: "AI analysis on your book",
+      description:
+        "Streaming portfolio and position analysis with buy, hold, and reduce signals grounded in your data.",
+    },
+    {
+      icon: MessageSquareText,
+      title: "Always-on AI chat",
+      description:
+        "Ask follow-up questions from anywhere — the assistant knows your positions and research context.",
+    },
+    {
+      icon: Search,
+      title: "Deep symbol research",
+      description:
+        "Fundamentals, earnings, news, SEC filings, ratios, and charts in one research hub.",
+    },
+    {
+      icon: Target,
+      title: "Strategy-guided investing",
+      description:
+        "Follow guided journeys for the wheel, CSP income, covered calls, dividends, and ETF core.",
+    },
+  ];
+
+  return (
+    <section className="border-t border-border bg-secondary/30 py-16 lg:py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <SectionHeading
+          eyebrow="Everything in one workspace"
+          title="Built for investors who want clarity, not noise"
+          description="Tomcrest combines brokerage data, market research, and AI so you spend less time tab-hopping and more time making informed decisions."
+        />
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.35, delay: index * 0.05 }}
+            >
+              <FeatureCard {...feature} />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorksSection() {
+  const steps = [
+    {
+      step: "01",
+      icon: ShieldCheck,
+      title: "Sign in with Google",
+      description:
+        "Create your Tomcrest account in seconds with your Google identity. No passwords to manage.",
+    },
+    {
+      step: "02",
+      icon: RefreshCw,
+      title: "Connect Charles Schwab",
+      description:
+        "Link your brokerage via secure OAuth so Tomcrest can read positions, balances, and activity.",
+    },
+    {
+      step: "03",
+      icon: Sparkles,
+      title: "Get AI-powered insights",
+      description:
+        "Review your morning brief, explore research, and chat with AI about your actual portfolio.",
+    },
+  ];
+
+  return (
+    <section className="py-16 lg:py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <SectionHeading
+          eyebrow="How it works"
+          title="From sign-in to insights in minutes"
+          description="Three steps to turn your Schwab account into an intelligent portfolio workspace."
+          centered
+        />
+
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {steps.map((item, index) => (
+            <motion.div
+              key={item.step}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.35, delay: index * 0.08 }}
+              className="relative rounded-2xl border border-border bg-secondary/60 p-6"
+            >
+              {index < steps.length - 1 && (
+                <ArrowRight
+                  className="absolute -right-3 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-muted md:block lg:-right-4"
+                  aria-hidden="true"
+                />
+              )}
+              <p className="text-xs font-semibold uppercase tracking-wider text-accent-strong">
+                Step {item.step}
+              </p>
+              <div className="mt-4 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-muted text-accent-strong">
+                <item.icon className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <h3 className="mt-4 text-base font-semibold">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                {item.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProductShowcase() {
+  const highlights = [
+    {
+      icon: TrendingUp,
+      label: "Portfolio Today",
+      title: "Know what changed overnight",
+      description:
+        "The Today tab surfaces allocation shifts, attention items, assignment risk for options, and tax-aware alerts like wash-sale warnings.",
+    },
+    {
+      icon: LineChart,
+      label: "Research hub",
+      title: "Go deep on any symbol",
+      description:
+        "Charts, company snapshots, key metrics, earnings, news, and SEC financials — with AI intelligence tailored to each ticker.",
+    },
+    {
+      icon: MessageSquareText,
+      label: "AI sidebar",
+      title: "Ask questions in context",
+      description:
+        "Quick actions like “analyze portfolio” or “review NVDA” kick off streaming analysis. Follow up naturally in the same conversation.",
+    },
+  ];
+
+  return (
+    <section className="border-t border-border bg-secondary/30 py-16 lg:py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <SectionHeading
+          eyebrow="Inside the workspace"
+          title="Portfolio, research, and AI — side by side"
+          description="The same layout you will use every day: navigate holdings, drill into symbols, and chat with AI without losing context."
+        />
+
+        <div className="mt-10 space-y-6">
+          {highlights.map((item, index) => (
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.35, delay: index * 0.06 }}
+              className={cn(
+                "grid items-center gap-6 rounded-2xl border border-border bg-background/40 p-6 lg:grid-cols-[1fr_1.2fr] lg:p-8",
+                index % 2 === 1 && "lg:[&>*:first-child]:order-2",
+              )}
+            >
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-accent-strong">
+                  {item.label}
+                </p>
+                <h3 className="mt-2 text-xl font-semibold tracking-tight">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted">
+                  {item.description}
+                </p>
+              </div>
+
+              <ShowcasePanel icon={item.icon} variant={index} />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StrategySection() {
+  const strategies = [
+    { name: "The Wheel", detail: "CSP → assignment → covered call cycles" },
+    { name: "CSP Income", detail: "Cash-secured puts with risk guardrails" },
+    { name: "Covered Calls", detail: "Income on existing share positions" },
+    { name: "Dividend Growth", detail: "Yield and payout-focused screening" },
+    { name: "ETF Core", detail: "Long-term diversified core holdings" },
+  ];
+
+  return (
+    <section className="py-16 lg:py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+          <SectionHeading
+            eyebrow="Investment strategies"
+            title="Guidance that matches how you invest"
+            description="Choose a primary strategy during onboarding and get a guided journey with recommendations aligned to your goals — whether you run the wheel or build a dividend portfolio."
+          />
+
+          <div className="space-y-2">
+            {strategies.map((strategy, index) => (
+              <motion.div
+                key={strategy.name}
+                initial={{ opacity: 0, x: 12 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                className="flex items-center gap-4 rounded-xl border border-border bg-secondary/60 px-4 py-3.5 transition-colors hover:bg-secondary"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+                  <Target className="h-4 w-4" aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{strategy.name}</p>
+                  <p className="text-xs text-muted">{strategy.detail}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCTASection({
+  onSignIn,
+  signingIn,
+  signInError,
+}: {
+  onSignIn: () => void;
+  signingIn: boolean;
+  signInError: string | null;
+}) {
+  return (
+    <section className="border-t border-border bg-secondary/30 py-16 lg:py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+          className="relative overflow-hidden rounded-3xl border border-border bg-background/60 px-6 py-12 text-center sm:px-12 sm:py-16"
+        >
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--accent)_18%,transparent),transparent_60%)]" />
+
+          <div className="relative">
+            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Ready to understand your portfolio?
+            </h2>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted sm:text-base">
+              Join Tomcrest with Google, connect Schwab, and start getting
+              AI-powered insights on the holdings you already own.
+            </p>
+
+            <div className="mt-8 flex flex-col items-center gap-3">
+              <SignInWithGoogleButton
+                onClick={onSignIn}
+                signingIn={signingIn}
+                size="lg"
+              />
+              {signInError && (
+                <ErrorBanner
+                  message={signInError}
+                  onRetry={onSignIn}
+                  className="max-w-md text-left"
+                />
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function LandingFooter() {
+  return (
+    <footer className="border-t border-border py-8">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
+        <div className="flex items-center gap-2 text-sm text-muted">
+          <Wallet className="h-4 w-4 text-accent-strong/70" aria-hidden="true" />
+          <span>Tomcrest — AI portfolio intelligence</span>
+        </div>
+        <p className="text-xs text-muted">
+          Insights and recommendations only. Not financial advice.
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+function SectionHeading({
+  eyebrow,
+  title,
+  description,
+  centered,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  centered?: boolean;
+}) {
+  return (
+    <div className={cn(centered && "mx-auto max-w-2xl text-center")}>
+      <p className="text-xs font-semibold uppercase tracking-wider text-accent-strong">
+        {eyebrow}
+      </p>
+      <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+        {title}
+      </h2>
+      <p
+        className={cn(
+          "mt-3 text-sm leading-relaxed text-muted sm:text-base",
+          centered && "mx-auto",
+          !centered && "max-w-2xl",
+        )}
+      >
+        {description}
+      </p>
     </div>
+  );
+}
+
+function SignInWithGoogleButton({
+  onClick,
+  signingIn,
+  size = "lg",
+  variant = "default",
+}: {
+  onClick: () => void;
+  signingIn: boolean;
+  size?: "sm" | "lg";
+  variant?: "default" | "outline";
+}) {
+  return (
+    <Button
+      onClick={onClick}
+      disabled={signingIn}
+      aria-busy={signingIn}
+      size={size}
+      variant={variant}
+      className={cn(
+        size === "lg" && "min-w-[220px] rounded-xl px-8",
+        variant === "default" && "shadow-lg shadow-black/20",
+      )}
+    >
+      {signingIn ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          Signing in…
+        </>
+      ) : (
+        <>
+          <GoogleIcon />
+          Sign in with Google
+        </>
+      )}
+    </Button>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
+    </svg>
   );
 }
 
@@ -187,19 +669,172 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-secondary/60 p-4 transition-colors hover:bg-secondary">
+    <div className="h-full rounded-2xl border border-border bg-background/40 p-5 transition-colors hover:bg-background/60">
       <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
         <Icon className="h-4 w-4" aria-hidden="true" />
       </div>
       <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="mt-1 text-xs leading-relaxed text-muted">{description}</p>
+      <p className="mt-1.5 text-xs leading-relaxed text-muted">{description}</p>
+    </div>
+  );
+}
+
+function ShowcasePanel({
+  icon: Icon,
+  variant,
+}: {
+  icon: typeof TrendingUp;
+  variant: number;
+}) {
+  if (variant === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-secondary/80 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Icon className="h-4 w-4 text-accent-strong" aria-hidden="true" />
+          <span className="text-xs font-semibold">Morning brief</span>
+        </div>
+        <div className="space-y-2">
+          <BriefLine label="Portfolio up 1.2% pre-market" accent />
+          <BriefLine label="NVDA earnings in 3 days — review position" />
+          <BriefLine label="CSP on AAPL expires Friday — assignment risk low" />
+          <BriefLine label="Wash-sale window on TSLA — hold 12 more days" />
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === 1) {
+    return (
+      <div className="rounded-xl border border-border bg-secondary/80 p-4">
+        <div className="mb-3 flex gap-2">
+          {["Overview", "Fundamentals", "News", "Financials"].map((tab, i) => (
+            <span
+              key={tab}
+              className={cn(
+                "rounded-md px-2 py-1 text-[10px] font-medium",
+                i === 0
+                  ? "bg-accent-muted text-accent-strong"
+                  : "text-muted",
+              )}
+            >
+              {tab}
+            </span>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <MetricTile label="P/E" value="28.4x" />
+          <MetricTile label="Revenue growth" value="+18%" accent />
+          <MetricTile label="Margin" value="55.2%" />
+          <MetricTile label="FCF yield" value="2.1%" />
+        </div>
+        <div className="mt-3 flex items-end gap-0.5">
+          {[40, 55, 48, 62, 58, 72, 68, 80, 75, 88].map((h, i) => (
+            <div
+              key={i}
+              className="flex-1 rounded-sm bg-accent/30"
+              style={{ height: `${h * 0.4}px` }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-secondary/80 p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <Icon className="h-4 w-4 text-accent-strong" aria-hidden="true" />
+        <span className="text-xs font-semibold">AI chat</span>
+      </div>
+      <div className="space-y-2.5">
+        <ChatBubble role="user" text="Analyze my portfolio risk exposure" />
+        <ChatBubble
+          role="assistant"
+          text="Tech is 62% of your portfolio. NVDA and MSFT drive most of the concentration. Consider…"
+        />
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {["Analyze NVDA", "Review options", "Tax lots"].map((chip) => (
+            <span
+              key={chip}
+              className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[10px] text-muted"
+            >
+              {chip}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BriefLine({
+  label,
+  accent,
+}: {
+  label: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg bg-background/50 px-3 py-2">
+      <span
+        className={cn(
+          "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
+          accent ? "bg-accent-strong" : "bg-muted",
+        )}
+      />
+      <p className="text-[11px] leading-relaxed text-muted">{label}</p>
+    </div>
+  );
+}
+
+function MetricTile({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-background/50 px-3 py-2">
+      <p className="text-[9px] text-muted">{label}</p>
+      <p
+        className={cn(
+          "mt-0.5 text-xs font-semibold",
+          accent && "text-accent-strong",
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ChatBubble({
+  role,
+  text,
+}: {
+  role: "user" | "assistant";
+  text: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg px-3 py-2 text-[11px] leading-relaxed",
+        role === "user"
+          ? "ml-6 bg-muted-bg text-foreground"
+          : "mr-4 border border-border bg-background/60 text-muted",
+      )}
+    >
+      {text}
     </div>
   );
 }
 
 function AppPreview() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-lg shadow-black/10">
+    <div className="overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-2xl shadow-black/25">
       <div className="flex">
         <div className="hidden w-44 shrink-0 border-r border-border bg-secondary p-3 sm:block">
           <div className="mb-3 flex items-center gap-2 rounded-xl border border-border bg-background/60 px-2.5 py-2">
@@ -207,9 +842,7 @@ function AppPreview() {
               <Wallet className="h-3.5 w-3.5" aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <div className="truncate text-[11px] font-semibold">
-                Tomcrest
-              </div>
+              <div className="truncate text-[11px] font-semibold">Tomcrest</div>
               <div className="truncate text-[9px] text-muted">
                 Portfolio workspace
               </div>
@@ -220,7 +853,7 @@ function AppPreview() {
             <PreviewNavItem
               icon={BriefcaseBusiness}
               label="My portfolio"
-              sublabel="Overview"
+              sublabel="Today"
               active
             />
             <PreviewNavItem
@@ -241,7 +874,7 @@ function AppPreview() {
         <div className="min-w-0 flex-1">
           <div className="border-b border-border bg-surface-elevated/50 px-4 py-3">
             <p className="text-xs font-semibold">Portfolio</p>
-            <p className="text-[10px] text-muted">3 tracked symbols</p>
+            <p className="text-[10px] text-muted">Morning brief · 3 symbols</p>
           </div>
 
           <div className="space-y-3 p-4">
@@ -251,9 +884,7 @@ function AppPreview() {
                   <Sparkles className="h-3 w-3" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold">
-                    Portfolio insights
-                  </p>
+                  <p className="text-[11px] font-semibold">Portfolio insights</p>
                   <p className="text-[9px] text-muted">AI-generated analysis</p>
                 </div>
               </div>
