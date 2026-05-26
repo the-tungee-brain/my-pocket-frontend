@@ -518,7 +518,7 @@ export function SymbolIntelligencePanel({
                   href={`${researchBasePath}/${symbol}/holdings`}
                   className="text-xs font-medium text-accent-strong hover:underline"
                 >
-                  ETF holdings →
+                  ETF composition →
                 </Link>
                 <Link
                   href={`${researchBasePath}/${symbol}/fundamentals`}

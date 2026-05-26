@@ -39,7 +39,7 @@ const allTabs: Tab[] = [
   { id: "news", label: "News", icon: Newspaper, assetTypes: "all" },
   {
     id: "holdings",
-    label: "Holdings",
+    label: "Composition",
     icon: Layers,
     assetTypes: ["ETF"],
   },

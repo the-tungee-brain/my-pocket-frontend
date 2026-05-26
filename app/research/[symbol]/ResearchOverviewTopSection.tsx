@@ -15,6 +15,7 @@ import { pageSectionClass } from "@/lib/pageLayout";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
+import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
 
 type Props = {
   symbol: string;
@@ -62,6 +63,12 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
       main={
         <>
           <ResearchStockChart symbol={symbol} />
+          {isEtf ? (
+            <EtfHoldingsOverviewPreview
+              symbol={symbol}
+              className={pageSectionClass}
+            />
+          ) : null}
           <SymbolIntelligencePanel
             intelligence={intelligence}
             loading={loading}

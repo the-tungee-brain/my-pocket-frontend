@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useResearchSnapshot } from "@/app/hooks/useResearchSnapshot";
+import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -19,6 +20,10 @@ import { resolveResearchLogoUrl } from "@/lib/logoUrl";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { AssetTypeBadge } from "@/components/AssetTypeBadge";
+import {
+  formatSnapshotSizeLabel,
+  formatSnapshotSubtitle,
+} from "@/lib/researchSnapshotMeta";
 
 type Props = { symbol: string; compact?: boolean };
 
@@ -44,6 +49,11 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
   });
   const { assetType, isEtf } = useResearchAssetTypeContext();
   const researchLabel = isEtf ? "ETF research" : "Stock research";
+  const { holdings: etfHoldings } = useEtfHoldings(upperSymbol, {
+    accessToken,
+    limit: 8,
+    enabled: isEtf,
+  });
 
   if (isLoading) {
     if (compact) {
@@ -83,6 +93,8 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
     (sum, p) => sum + p.currentDayProfitLoss,
     0,
   );
+  const subtitle = formatSnapshotSubtitle(snapshot, { isEtf, etfHoldings });
+  const sizeLabel = formatSnapshotSizeLabel(snapshot, { isEtf, etfHoldings });
 
   if (compact) {
     return (
@@ -215,10 +227,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           <WatchlistButton symbol={upperSymbol} />
         </div>
         <WatchlistHint symbol={upperSymbol} />
-        <p className="text-sm text-muted">
-          {snapshot.sector} · {snapshot.country}
-          {isEtf ? " · Exchange-traded fund" : null}
-        </p>
+        <p className="text-sm text-muted">{subtitle}</p>
       </div>
 
       <div className="rounded-xl border border-border bg-secondary/80 px-4 py-3 text-sm">
@@ -243,9 +252,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
             </span>
           </span>
         </div>
-        <p className="mt-2 text-xs text-muted">
-          Market cap: {snapshot.marketCap} · 52-week: {snapshot.range52w}
-        </p>
+        <p className="mt-2 text-xs text-muted">{sizeLabel}</p>
       </div>
     </header>
   );

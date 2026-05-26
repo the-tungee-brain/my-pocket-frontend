@@ -9,6 +9,7 @@ import { PageSplit } from "@/components/PageShell";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { symbolHubPath } from "@/lib/symbolRoutes";
+import { cn } from "@/lib/utils";
 import {
   EtfFundStats,
   EtfHoldingsTable,
@@ -119,9 +120,13 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
 
 type PreviewProps = {
   symbol: string;
+  className?: string;
 };
 
-export function EtfHoldingsOverviewPreview({ symbol }: PreviewProps) {
+export function EtfHoldingsOverviewPreview({
+  symbol,
+  className,
+}: PreviewProps) {
   const { data: session } = useSession();
   const { holdings, isLoading } = useEtfHoldings(symbol, {
     accessToken: session?.accessToken,
@@ -132,9 +137,10 @@ export function EtfHoldingsOverviewPreview({ symbol }: PreviewProps) {
   if (isLoading) {
     return (
       <ResearchSectionCard
-        title="ETF composition"
-        description="Top holdings and sector mix"
+        title="Fund composition"
+        description="What this ETF owns — sectors and largest positions"
         icon={Layers}
+        className={className}
       >
         <LoadingBlock />
       </ResearchSectionCard>
@@ -145,15 +151,16 @@ export function EtfHoldingsOverviewPreview({ symbol }: PreviewProps) {
 
   return (
     <ResearchSectionCard
-      title="ETF composition"
-      description="Top holdings and sector mix"
+      title="Fund composition"
+      description="What this ETF owns — sectors and largest positions"
       icon={Layers}
+      className={className}
       action={
         <Link
           href={symbolHubPath(symbol, "holdings")}
           className="text-xs font-medium text-accent-strong hover:underline"
         >
-          View all holdings
+          Full composition
         </Link>
       }
     >
