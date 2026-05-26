@@ -28,6 +28,7 @@ import type {
 import {
   buildOptionCandidatePrompt,
   buildRollSuggestionPrompt,
+  formatOptionCandidateSummary,
   hasSymbolOptionsContent,
   hasSymbolResearchIntelligenceContent,
   signalSeverityClass,
@@ -828,6 +829,7 @@ export function SymbolOptionsWorkspace({
                 <OptionsCandidateTable
                   title="Covered call candidates"
                   symbol={symbol}
+                  underlyingPrice={options.underlyingPrice}
                   candidates={options.coveredCallCandidates.slice(0, 3)}
                   onAnalyzeOption={onAnalyzeOption}
                 />
@@ -837,6 +839,7 @@ export function SymbolOptionsWorkspace({
                 <OptionsCandidateTable
                   title="Cash-secured put candidates"
                   symbol={symbol}
+                  underlyingPrice={options.underlyingPrice}
                   candidates={options.cspCandidates.slice(0, 3)}
                   onAnalyzeOption={onAnalyzeOption}
                   className="mt-3"
@@ -1148,12 +1151,14 @@ function OptionChainPreviewTable({
 function OptionsCandidateTable({
   title,
   symbol,
+  underlyingPrice,
   candidates,
   onAnalyzeOption,
   className,
 }: {
   title: string;
   symbol?: string;
+  underlyingPrice?: number | null;
   candidates: NonNullable<
     SymbolIntelligence["optionsScorecard"]
   >["coveredCallCandidates"];
@@ -1182,11 +1187,11 @@ function OptionsCandidateTable({
                   {formatOptionExpiration(candidate.expiration)}
                 </p>
                 <OptionSideMetrics quote={candidate} className="mt-2" />
-                <p className="mt-2 text-[11px] text-muted">
-                  Score {candidate.score.toFixed(2)}
+                <p className="mt-2 text-xs leading-relaxed text-muted">
+                  {formatOptionCandidateSummary(candidate, underlyingPrice)}
                 </p>
-                <p className="mt-1.5 text-xs leading-relaxed text-foreground">
-                  {candidate.rationale}
+                <p className="mt-1 text-[11px] text-muted">
+                  Strategy fit {candidate.score.toFixed(2)}
                 </p>
               </div>
               {onAnalyzeOption && symbol && (
@@ -1194,7 +1199,11 @@ function OptionsCandidateTable({
                   type="button"
                   onClick={() =>
                     onAnalyzeOption(
-                      buildOptionCandidatePrompt(symbol, candidate),
+                      buildOptionCandidatePrompt(
+                        symbol,
+                        candidate,
+                        underlyingPrice,
+                      ),
                     )
                   }
                   className="shrink-0 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"

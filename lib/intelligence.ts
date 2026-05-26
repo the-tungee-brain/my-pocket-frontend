@@ -10,7 +10,7 @@ import type {
 import type { Position, SchwabAccounts } from "@/app/types/schwab";
 import type { SuggestedAnalysisAction } from "@/app/types/schwab";
 import { suggestedActionToQuickActionId } from "@/lib/recentOrders";
-import { formatOptionExpiration } from "@/lib/dateUtils";
+import { formatOptionExpiration, optionDaysToExpiration } from "@/lib/dateUtils";
 
 const SEVERITY_ORDER: Record<SignalSeverity, number> = {
   critical: 0,
@@ -172,20 +172,66 @@ export function signalToQuickActionId(
   }
 }
 
+export function formatOptionCandidateSummary(
+  candidate: OptionsStrikeCandidate,
+  underlyingPrice?: number | null,
+): string {
+  const parts: string[] = [];
+
+  const dte = optionDaysToExpiration(candidate.expiration);
+  if (dte != null) {
+    if (dte === 0) parts.push("Expires today");
+    else if (dte === 1) parts.push("1 day to expiry");
+    else parts.push(`${dte} days to expiry`);
+  }
+
+  if (candidate.delta != null) {
+    parts.push(`Delta ${Math.abs(candidate.delta).toFixed(2)}`);
+  }
+
+  if (candidate.openInterest != null) {
+    parts.push(`${candidate.openInterest.toLocaleString()} open interest`);
+  }
+
+  if (underlyingPrice != null && underlyingPrice > 0) {
+    const pctFromSpot = ((candidate.strike / underlyingPrice) - 1) * 100;
+    if (candidate.side === "put") {
+      if (pctFromSpot < -0.5) {
+        parts.push(`${Math.abs(pctFromSpot).toFixed(1)}% below stock price`);
+      } else if (pctFromSpot > 0.5) {
+        parts.push(`${pctFromSpot.toFixed(1)}% above stock price`);
+      } else {
+        parts.push("At the money");
+      }
+    } else if (pctFromSpot > 0.5) {
+      parts.push(`${pctFromSpot.toFixed(1)}% above stock price`);
+    } else if (pctFromSpot < -0.5) {
+      parts.push(`${Math.abs(pctFromSpot).toFixed(1)}% below stock price`);
+    } else {
+      parts.push("At the money");
+    }
+  }
+
+  if (parts.length > 0) {
+    return parts.join(" · ");
+  }
+
+  return candidate.rationale;
+}
+
 export function buildOptionCandidatePrompt(
   symbol: string,
   candidate: OptionsStrikeCandidate,
+  underlyingPrice?: number | null,
 ): string {
   const side =
     candidate.side === "call" ? "covered call" : "cash-secured put";
   const expiration = formatOptionExpiration(candidate.expiration);
-  const delta =
-    candidate.delta != null ? ` (delta ${candidate.delta.toFixed(2)})` : "";
-  const score = candidate.score.toFixed(2);
+  const summary = formatOptionCandidateSummary(candidate, underlyingPrice);
 
   return (
-    `Analyze the ${side} at $${candidate.strike} expiring ${expiration} for ${symbol.toUpperCase()}${delta}. ` +
-    `Score ${score}. ${candidate.rationale} ` +
+    `Analyze the ${side} at $${candidate.strike} expiring ${expiration} for ${symbol.toUpperCase()}. ` +
+    `${summary}. Strategy fit score ${candidate.score.toFixed(2)}. ` +
     `Compare to my current positions and recommend whether to open, roll, or avoid this strike.`
   );
 }

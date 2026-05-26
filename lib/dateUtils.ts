@@ -57,3 +57,14 @@ export function formatOptionExpiration(value: string): string {
 
   return label;
 }
+
+export function optionDaysToExpiration(value: string): number | null {
+  const date = parseDateInput(value);
+  if (!date) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expirationDay = new Date(date);
+  expirationDay.setHours(0, 0, 0, 0);
+  return Math.round((expirationDay.getTime() - today.getTime()) / 86_400_000);
+}
