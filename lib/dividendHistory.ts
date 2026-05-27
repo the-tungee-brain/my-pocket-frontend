@@ -6,7 +6,7 @@ import type {
 } from "@/app/types/research";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const STORAGE_KEY = "powerpocket-dividend-history:v3";
+const STORAGE_KEY = "powerpocket-dividend-history:v4";
 const DEFAULT_SHARES = 100;
 
 export type DividendFetchParams = DividendScenarioParams & {
@@ -167,11 +167,32 @@ function normalizeAdvancedScenario(
   };
 }
 
+export function dividendProjectionWindow(projectYears = 10) {
+  const currentYear = new Date().getFullYear();
+  const resolvedYears = Math.max(1, Math.min(Math.round(projectYears), 50));
+
+  return {
+    currentYear,
+    endYear: currentYear + resolvedYears,
+    projectYears: resolvedYears,
+  };
+}
+
 function normalizeScenario(raw: unknown): DividendHistoryContext["scenario"] | null {
   if (!raw || typeof raw !== "object") return null;
   const item = raw as Record<string, unknown>;
   const shares = readNumber(item.shares);
-  const startYear = readNumber(item.startYear ?? item.start_year);
+  const latestYearRaw = readNumber(item.latestYear ?? item.latest_year);
+  const projectYears = readNumber(item.projectYears ?? item.project_years) ?? 10;
+  const projection = dividendProjectionWindow(projectYears);
+  let startYear = readNumber(item.startYear ?? item.start_year);
+  let latestYear = latestYearRaw;
+
+  // Older API responses used a historical start year (e.g. 2016).
+  if (startYear == null || startYear < projection.currentYear) {
+    startYear = projection.currentYear;
+    latestYear = projection.endYear;
+  }
   const totalCollected = readNumber(item.totalCollected ?? item.total_collected);
   const annualIncomeLatest = readNumber(
     item.annualIncomeLatest ?? item.annual_income_latest,
@@ -179,7 +200,6 @@ function normalizeScenario(raw: unknown): DividendHistoryContext["scenario"] | n
   const annualIncomeStart = readNumber(
     item.annualIncomeStart ?? item.annual_income_start,
   );
-  const latestYear = readNumber(item.latestYear ?? item.latest_year);
   if (
     shares == null ||
     startYear == null ||
@@ -198,7 +218,7 @@ function normalizeScenario(raw: unknown): DividendHistoryContext["scenario"] | n
     annualIncomeLatest,
     annualIncomeStart,
     latestYear,
-    projectYears: readNumber(item.projectYears ?? item.project_years) ?? 10,
+    projectYears: projection.projectYears,
     dividendCagrPct:
       readNumber(item.dividendCagrPct ?? item.dividend_cagr_pct) ?? 0,
     investmentUsd: readNumber(item.investmentUsd ?? item.investment_usd),
@@ -253,6 +273,7 @@ export function normalizeDividendHistoryContext(
       ) ?? 0,
     cagr5yPct: readNumber(data.cagr5yPct ?? data.cagr_5y_pct),
     cagr10yPct: readNumber(data.cagr10yPct ?? data.cagr_10y_pct),
+    dividendYieldPct: readNumber(data.dividendYieldPct ?? data.dividend_yield_pct),
     annualIncome,
     recentPayments,
     payments,

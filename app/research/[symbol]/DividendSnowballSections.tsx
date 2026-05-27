@@ -9,6 +9,7 @@ import type {
 } from "@/app/types/research";
 import { DIVIDEND_PROJECTION_YEAR_PRESETS } from "@/app/types/research";
 import { formatUsd } from "@/lib/formatCurrency";
+import { dividendProjectionWindow } from "@/lib/dividendHistory";
 import { cn } from "@/lib/utils";
 
 const BAR_FILL = "#34d399";
@@ -265,34 +266,47 @@ function StatCard({ label, value, hint }: StatProps) {
   );
 }
 
+function formatYieldPct(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return `${value.toFixed(2)}%`;
+}
+
 export function DividendSnowballStats({ history }: { history: DividendHistoryContext }) {
   const { scenario } = history;
+  const { currentYear, endYear, projectYears } = dividendProjectionWindow(
+    scenario.projectYears,
+  );
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
       <StatCard
-        label="Annual increases"
+        label="Dividend streak"
         value={
           history.consecutiveAnnualIncreases > 0
             ? `${history.consecutiveAnnualIncreases} yrs`
             : "—"
         }
-        hint="Consecutive years dividend per share rose"
+        hint="Years in a row the annual dividend per share increased"
+      />
+      <StatCard
+        label="Current yield"
+        value={formatYieldPct(history.dividendYieldPct)}
+        hint="Latest annual dividend per share ÷ your share price"
       />
       <StatCard
         label="5Y dividend CAGR"
         value={formatPct(history.cagr5yPct)}
-        hint="Completed calendar years only"
+        hint="Average annual dividend growth, completed years"
       />
       <StatCard
-        label={`${scenario.latestYear} income`}
+        label={`${endYear} income`}
         value={formatUsd(scenario.annualIncomeLatest, { maximumFractionDigits: 0 })}
-        hint={`On ${scenario.shares.toLocaleString()} shares`}
+        hint={`Projected in ${projectYears} years`}
       />
       <StatCard
-        label={`Since ${scenario.startYear}`}
+        label={`${currentYear} outlook`}
         value={formatUsd(scenario.totalCollected, { maximumFractionDigits: 0 })}
-        hint={`Projected over ${scenario.projectYears} years`}
+        hint={`Projected over ${projectYears} years`}
       />
     </div>
   );
@@ -661,6 +675,7 @@ export function DividendSnowballScenarioCard({
   const sharePrice = scenarioParams?.sharePrice ?? scenario.sharePrice ?? null;
   const reinvestDividends = scenarioParams?.reinvestDividends ?? false;
   const projectYears = scenarioParams?.projectYears ?? scenario.projectYears ?? 10;
+  const { currentYear, endYear } = dividendProjectionWindow(projectYears);
   const shares =
     scenarioParams?.shares ??
     (investmentUsd != null &&
@@ -699,9 +714,9 @@ export function DividendSnowballScenarioCard({
         <div>
           <p className="text-sm font-medium text-foreground">Income snowball</p>
           <p className="mt-1 text-xs text-muted">
-            Forward-project dividend income from this year ({scenario.startYear})
-            through the next {projectYears} years ({scenario.latestYear}). Enter
-            investment or shares — the other is calculated from share price.
+            Forward-project dividend income from this year ({currentYear})
+            through the next {projectYears} years ({endYear}). Enter investment or
+            shares — the other is calculated from share price.
           </p>
         </div>
       </div>
@@ -784,7 +799,7 @@ export function DividendSnowballScenarioCard({
           <div>
             <p className="text-xs font-medium text-foreground">Projection horizon</p>
             <p className="mt-1 text-[11px] text-muted">
-              {scenario.startYear} → {scenario.latestYear} ·{" "}
+              {currentYear} → {endYear} ·{" "}
               {scenario.dividendCagrPct.toFixed(1)}% avg dividend growth / yr
             </p>
           </div>
@@ -872,7 +887,7 @@ export function DividendSnowballScenarioCard({
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] uppercase tracking-wide text-muted">
-            {scenario.startYear}
+            {currentYear}
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
             {formatUsd(scenario.annualIncomeStart, { maximumFractionDigits: 0 })}
@@ -883,7 +898,7 @@ export function DividendSnowballScenarioCard({
         </div>
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] uppercase tracking-wide text-muted">
-            {scenario.latestYear}
+            {endYear}
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
             {formatUsd(
@@ -895,7 +910,7 @@ export function DividendSnowballScenarioCard({
             {advanced
               ? `${formatSnowballShares(advanced.finalShares)} shares after DRIP`
               : growthPct != null && growthPct > 0
-                ? `Up ${growthPct.toFixed(0)}% vs ${scenario.startYear}`
+                ? `Up ${growthPct.toFixed(0)}% vs ${currentYear}`
                 : "Projected annual income"}
           </p>
         </div>
@@ -922,7 +937,7 @@ export function DividendSnowballScenarioCard({
             </p>
             <p className="mt-1 text-[11px] text-muted">
               Started with {formatSnowballShares(advanced.initialShares)} in{" "}
-              {scenario.startYear}
+              {currentYear}
             </p>
           </div>
           <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
