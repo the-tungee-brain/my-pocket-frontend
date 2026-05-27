@@ -56,6 +56,7 @@ type SymbolChatState = {
   sessionId?: string | null;
   historyHydrated?: boolean;
   pendingNewChatSession?: boolean;
+  historyRevision?: number;
 };
 
 type ChatStateMap = Record<string, SymbolChatState>;
@@ -598,6 +599,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           pendingNewChatSession: false,
           historyHydrated: true,
           loading: false,
+          historyRevision:
+            (ensureSymbolChatState(activeChatKey, prev[activeChatKey])
+              .historyRevision ?? 0) + 1,
         },
       }));
     },
@@ -609,18 +613,23 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       if (activeChatKey === "__NONE__") return;
 
       serverHydrateInflightRef.current.delete(activeChatKey);
-      setChatBySymbol((prev) => ({
-        ...prev,
-        [activeChatKey]: ensureSymbolChatState(activeChatKey, {
-          messages: [],
-          input: "",
-          loading: false,
-          modelMenuOpen: false,
-          sessionId: null,
-          pendingNewChatSession: true,
-          historyHydrated: true,
-        }),
-      }));
+      setChatBySymbol((prev) => {
+        const prevState = ensureSymbolChatState(activeChatKey, prev[activeChatKey]);
+        return {
+          ...prev,
+          [activeChatKey]: ensureSymbolChatState(activeChatKey, {
+            ...prevState,
+            messages: [],
+            input: "",
+            loading: false,
+            modelMenuOpen: false,
+            sessionId: null,
+            pendingNewChatSession: true,
+            historyHydrated: true,
+            historyRevision: (prevState.historyRevision ?? 0) + 1,
+          }),
+        };
+      });
     },
     [ensureSymbolChatState],
   );
@@ -648,6 +657,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       setChatBySymbol((prev) => ({
         ...prev,
         [activeChatKey]: ensureSymbolChatState(activeChatKey, {
+          ...(chatBySymbolRef.current[activeChatKey] ?? {}),
           messages: [],
           input: "",
           loading: false,
@@ -655,6 +665,8 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           sessionId: null,
           pendingNewChatSession: false,
           historyHydrated: true,
+          historyRevision:
+            (chatBySymbolRef.current[activeChatKey]?.historyRevision ?? 0) + 1,
         }),
       }));
       return true;
@@ -787,6 +799,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
                 ...prevState,
                 sessionId: chatSessionId,
                 pendingNewChatSession: false,
+                historyRevision: (prevState.historyRevision ?? 0) + 1,
               },
             };
           });
@@ -992,6 +1005,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
                 ...prevState,
                 sessionId: chatSessionId,
                 pendingNewChatSession: false,
+                historyRevision: (prevState.historyRevision ?? 0) + 1,
               },
             };
           });

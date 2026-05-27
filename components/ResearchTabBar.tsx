@@ -36,8 +36,18 @@ type Tab = {
 };
 
 const allTabs: Tab[] = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard, assetTypes: "all" },
-  { id: "position", label: "Position", icon: BriefcaseBusiness, assetTypes: "all" },
+  {
+    id: "overview",
+    label: "Overview",
+    icon: LayoutDashboard,
+    assetTypes: "all",
+  },
+  {
+    id: "position",
+    label: "Positions",
+    icon: BriefcaseBusiness,
+    assetTypes: "all",
+  },
   { id: "news", label: "News", icon: Newspaper, assetTypes: "all" },
   {
     id: "holdings",
@@ -87,7 +97,7 @@ function tabsForAssetType(
   assetType: AssetType | null | undefined,
   isEtf = false,
 ): Tab[] {
-  const resolved: AssetType = isEtf ? "ETF" : assetType ?? "STOCK";
+  const resolved: AssetType = isEtf ? "ETF" : (assetType ?? "STOCK");
   const matched = allTabs.filter((tab) => {
     if (tab.assetTypes === "all") return true;
     return tab.assetTypes?.includes(resolved);

@@ -28,7 +28,7 @@ export type ChatKeySessionQuery = {
 
 export function chatKeySessionQueries(
   activeChatKey: string,
-  selectedView?: MainView,
+  _selectedView?: MainView,
 ): ChatKeySessionQuery[] {
   if (activeChatKey === "__NONE__") return [];
 
@@ -48,11 +48,10 @@ export function chatKeySessionQueries(
   if (activeChatKey.startsWith("__")) return [];
 
   const symbol = activeChatKey.toUpperCase();
-  if (selectedView === "research") {
-    return [{ kind: "research", titlePrefix: `Research:${symbol}:` }];
-  }
-
-  return [{ kind: "portfolio", titlePrefix: `Symbol:${symbol}:` }];
+  return [
+    { kind: "portfolio", titlePrefix: `Symbol:${symbol}:` },
+    { kind: "research", titlePrefix: `Research:${symbol}:` },
+  ];
 }
 
 export function chatKeySessionQuery(
@@ -141,7 +140,12 @@ export async function listSessionsForChatKey(
     );
   }
 
-  return merged.sort(
+  return merged
+    .filter((session, index, all) => {
+      const firstIndex = all.findIndex((entry) => entry.id === session.id);
+      return firstIndex === index;
+    })
+    .sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
   );
 }

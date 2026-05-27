@@ -447,15 +447,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   messages={currentChat?.messages ?? []}
                   loading={!!currentChat?.loading}
                   onClear={handleClearChat}
-                  onStartNewChat={handleStartNewChat}
                   onFollowUpPrompt={(prompt) => void handleFollowUpPrompt(prompt)}
                   historyControl={
                     activeChatKey !== "__NONE__" ? (
                       <ChatSessionHistory
                         activeChatKey={activeChatKey}
-                        selectedView={selectedView}
                         accessToken={sessionAccessToken}
                         currentSessionId={currentChat?.sessionId}
+                        historyRevision={currentChat?.historyRevision ?? 0}
+                        showNewChat={
+                          (currentChat?.messages.length ?? 0) > 0 &&
+                          !currentChat?.loading
+                        }
                         onStartNewSession={handleStartNewChat}
                         onRestoreSession={(sessionId, messages) =>
                           restoreChatSession(activeChatKey, sessionId, messages)

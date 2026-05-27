@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Clock, Loader2, Plus } from "lucide-react";
 import type { ChatSessionSummary } from "@/app/types/chat";
 import type { ChatMessage } from "@/components/ConversationPane";
-import type { MainView } from "@/components/NavList";
 import { listSessionsForChatKey, loadChatSessionById } from "@/lib/chatHistory";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 import { compactTextButtonClass } from "@/components/ui/Button";
@@ -12,9 +11,10 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   activeChatKey: string;
-  selectedView: MainView;
   accessToken?: string | null;
   currentSessionId?: string | null;
+  historyRevision?: number;
+  showNewChat?: boolean;
   onRestoreSession: (sessionId: string, messages: ChatMessage[]) => void;
   onStartNewSession: () => void;
   className?: string;
@@ -22,9 +22,10 @@ type Props = {
 
 export function ChatSessionHistory({
   activeChatKey,
-  selectedView,
   accessToken,
   currentSessionId,
+  historyRevision = 0,
+  showNewChat = false,
   onRestoreSession,
   onStartNewSession,
   className,
@@ -33,6 +34,29 @@ export function ChatSessionHistory({
   const [loading, setLoading] = useState(false);
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open || !accessToken) return;
@@ -41,12 +65,9 @@ export function ChatSessionHistory({
 
     async function load() {
       setLoading(true);
+      setSessions([]);
       try {
-        const rows = await listSessionsForChatKey(
-          accessToken!,
-          activeChatKey,
-          selectedView,
-        );
+        const rows = await listSessionsForChatKey(accessToken!, activeChatKey);
         if (!cancelled) setSessions(rows);
       } catch {
         if (!cancelled) setSessions([]);
@@ -60,7 +81,7 @@ export function ChatSessionHistory({
     return () => {
       cancelled = true;
     };
-  }, [open, accessToken, activeChatKey, selectedView]);
+  }, [open, accessToken, activeChatKey, historyRevision]);
 
   const handleRestore = async (sessionId: string) => {
     if (!accessToken) return;
@@ -86,7 +107,7 @@ export function ChatSessionHistory({
   };
 
   return (
-    <div className={cn("relative", className)}>
+    <div ref={menuRef} className={cn("relative", className)}>
       <button
         type="button"
         className={compactTextButtonClass}
@@ -106,17 +127,21 @@ export function ChatSessionHistory({
                 Chat history
               </p>
               <p className="text-[10px] text-muted">
-                Start fresh or resume a past conversation
+                {showNewChat
+                  ? "Start fresh or resume a past conversation"
+                  : "Resume a past conversation"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleStartNew}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-accent/30 bg-accent-muted/40 px-2 py-1 text-[10px] font-medium text-accent-strong transition hover:border-accent/50 hover:bg-accent-muted"
-            >
-              <Plus className="h-3 w-3" aria-hidden />
-              New chat
-            </button>
+            {showNewChat && (
+              <button
+                type="button"
+                onClick={handleStartNew}
+                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-accent/30 bg-accent-muted/40 px-2 py-1 text-[10px] font-medium text-accent-strong transition hover:border-accent/50 hover:bg-accent-muted"
+              >
+                <Plus className="h-3 w-3" aria-hidden />
+                New chat
+              </button>
+            )}
           </div>
 
           <div className="max-h-64 overflow-y-auto">
