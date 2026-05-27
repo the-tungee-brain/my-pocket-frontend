@@ -178,15 +178,17 @@ export function PortfolioAllocationCard({
           <PiggyBank className="h-4 w-4 text-accent-strong" aria-hidden />
           <p className="text-sm font-semibold text-foreground">Cash map</p>
         </div>
-        <div className="space-y-1.5">
+        <div>
           {cashMap.steps.map((step, index) => {
             const isHighlight = step.step === 5 || step.step === 7;
             const amount = step.amount ?? 0;
+            const isLast = index === cashMap.steps.length - 1;
+
             return (
               <div key={step.step}>
                 <div
                   className={cn(
-                    "flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 text-xs",
+                    "flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-xs",
                     isHighlight && "border border-accent/20 bg-accent-muted/10",
                   )}
                 >
@@ -210,11 +212,14 @@ export function PortfolioAllocationCard({
                     })}
                   </span>
                 </div>
-                {index < cashMap.steps.length - 1 && (
-                  <div className="flex justify-center py-0.5 text-muted" aria-hidden>
+                {!isLast ? (
+                  <div
+                    className="flex h-6 items-center justify-center text-muted/80"
+                    aria-hidden
+                  >
                     <ArrowDown className="h-3.5 w-3.5" />
                   </div>
-                )}
+                ) : null}
               </div>
             );
           })}
