@@ -929,7 +929,44 @@ function OptionChainPreviewTable({
           yesterday&apos;s close and mark is an estimated price.
         </p>
 
-        <div className="max-h-[min(65vh,520px)] overflow-auto">
+        <div className="max-h-[min(65vh,520px)] overflow-y-auto md:hidden">
+          <table className="w-full text-left text-xs">
+            <thead className="sticky top-0 z-10 bg-secondary/95 text-muted shadow-sm backdrop-blur-sm">
+              <tr>
+                <th className="px-3 py-2 font-medium">Strike</th>
+                <th className="px-3 py-2 font-medium">Call mark</th>
+                <th className="px-3 py-2 font-medium">Put mark</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr
+                  key={`mobile-${row.strike}`}
+                  className={cn(
+                    "border-t border-border",
+                    atmStrike === row.strike &&
+                      "bg-accent-muted/25 ring-1 ring-inset ring-accent/20",
+                  )}
+                >
+                  <td className="px-3 py-2 font-mono font-medium tabular-nums">
+                    {formatUsd(row.strike, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 2,
+                    })}
+                  </td>
+                  <td className="px-3 py-2 tabular-nums">
+                    {formatOptionPrice(row.call?.mark)}
+                  </td>
+                  <td className="px-3 py-2 tabular-nums">
+                    {formatOptionPrice(row.put?.mark)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="hidden max-h-[min(65vh,520px)] overflow-auto md:block">
           <table className="w-full min-w-[1240px] text-left text-xs">
             <thead className="sticky top-0 z-10 bg-secondary/95 text-muted shadow-sm backdrop-blur-sm">
               <tr>

@@ -16,7 +16,7 @@ export function KeyMetricsGrid({ metrics }: KeyMetricsGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {metrics.map((metric) => (
         <div
           key={metric.label}
@@ -42,7 +42,7 @@ export function KeyMetricsGrid({ metrics }: KeyMetricsGridProps) {
 
 export function KeyMetricsGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={index}

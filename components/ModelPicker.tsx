@@ -28,7 +28,7 @@ export function ModelPicker({ open, value, onChange, onClose }: ModelPickerProps
 
   return (
     <div
-      className="absolute bottom-full right-0 mb-2 min-w-72 max-w-80 rounded-2xl border border-border bg-secondary p-1 text-xs shadow-2xl backdrop-blur"
+      className="absolute bottom-full right-0 z-30 mb-2 w-[min(20rem,calc(100vw-2rem))] min-w-0 rounded-2xl border border-border bg-secondary p-1 text-xs shadow-2xl backdrop-blur max-sm:left-0 max-sm:right-auto"
       role="listbox"
       aria-label="Choose AI model"
     >

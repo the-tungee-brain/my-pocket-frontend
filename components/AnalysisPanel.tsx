@@ -86,6 +86,8 @@ type CommonProps = {
   autoStart?: boolean;
   /** Render only the analyze prompt/output block for embedding in another card. */
   embedded?: boolean;
+  /** Hide held-option compare paths (e.g. on Positions tab). */
+  hideComparePaths?: boolean;
 };
 
 export type AnalysisPanelProps = CommonProps & (PortfolioProps | SymbolProps);
@@ -273,8 +275,8 @@ function PortfolioHoldingsTable({
 
   return (
     <>
-      <div className="hidden sm:block">
-        <table className="w-full table-fixed text-sm">
+      <div className="hidden overflow-x-auto scrollbar-dark md:block">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
             <tr>
               <th className="px-4 py-2.5 text-left">Symbol</th>
@@ -364,7 +366,7 @@ function PortfolioHoldingsTable({
         </table>
       </div>
 
-      <div className="divide-y divide-border sm:hidden">
+      <div className="divide-y divide-border md:hidden">
         {summaries.map(
           ({ symbol, totalValue, dayPL, openPL, costBasis, weightPct }) => {
             const openPLPctVal = openProfitLossPct(openPL, costBasis);
@@ -483,8 +485,9 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
 
   return (
     <>
-      <div className="hidden sm:block">
-        <table className="w-full text-sm">
+      <div className="hidden md:block">
+        <div className="overflow-x-auto scrollbar-dark">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
             <tr>
               <th className="px-4 py-2.5 text-left">Leg</th>
@@ -544,9 +547,10 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
-      <div className="divide-y divide-border sm:hidden">
+      <div className="divide-y divide-border md:hidden">
         {sorted.map((p) => {
           const qty = p.longQuantity - p.shortQuantity;
           const openPL = positionOpenProfitLoss(p);
@@ -572,6 +576,34 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
                     {formatUsd(p.marketValue)}
                   </p>
                 </div>
+                <div>
+                  <p className="text-muted">Open P/L</p>
+                  <p
+                    className={cn(
+                      "tabular-nums font-medium",
+                      openPL == null
+                        ? "text-muted"
+                        : openPL >= 0
+                          ? "text-success"
+                          : "text-danger",
+                    )}
+                  >
+                    {openPL != null ? formatSignedUsd(openPL) : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted">Today</p>
+                  <p
+                    className={cn(
+                      "tabular-nums font-medium",
+                      p.currentDayProfitLoss >= 0
+                        ? "text-success"
+                        : "text-danger",
+                    )}
+                  >
+                    {formatSignedUsd(p.currentDayProfitLoss)}
+                  </p>
+                </div>
               </div>
             </div>
           );
@@ -588,6 +620,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     onLoadingChange,
     autoStart = false,
     embedded = false,
+    hideComparePaths = false,
   } = props;
   const isPortfolio = props.mode === "portfolio";
   const portfolioView = isPortfolio
@@ -647,7 +680,8 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     "gpt-5.4",
   );
 
-  const showComparePaths = !isPortfolio && hasComparePaths(precomputed);
+  const showComparePaths =
+    !isPortfolio && hasComparePaths(precomputed) && !hideComparePaths;
   const showPortfolioAllocation =
     isPortfolio && hasPortfolioAllocation(portfolioPrecomputed);
 
@@ -954,7 +988,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
         </div>
 
         {!isPortfolio && (
-          <div className="mt-3 grid grid-cols-3 gap-2">
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
             <StatChip label="Value" value={formatUsd(totalValue)} />
             <StatChip
               label="Open P/L"

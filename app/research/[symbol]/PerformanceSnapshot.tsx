@@ -31,7 +31,7 @@ export function PerformanceSnapshot({ symbol, className }: Props) {
       {isLoading ? (
         <div className="space-y-2">
           <div className="h-4 w-48 animate-pulse rounded bg-muted-bg" />
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="h-12 animate-pulse rounded bg-muted-bg" />
             <div className="h-12 animate-pulse rounded bg-muted-bg" />
             <div className="h-12 animate-pulse rounded bg-muted-bg" />
@@ -46,7 +46,7 @@ export function PerformanceSnapshot({ symbol, className }: Props) {
           <p className="text-sm leading-relaxed text-foreground">
             {perf.trendLabel}
           </p>
-          <div className="grid grid-cols-3 gap-3 rounded-xl border border-border bg-background/40 p-3 text-xs">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 rounded-xl border border-border bg-background/40 p-3 text-xs">
             {(
               [
                 ["1 month", perf.oneMonth],

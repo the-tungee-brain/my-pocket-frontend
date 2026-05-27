@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import type { MainView } from "@/components/NavList";
 
-export type QuickActionMode = MainView | "position";
+export type QuickActionMode = MainView | "position" | "options";
 
 export type QuickAction = {
   id: string;
@@ -94,8 +94,45 @@ export const POSITION_QUICK_ACTIONS: QuickAction[] = [
     icon: Sparkles,
   },
   ...PORTFOLIO_QUICK_ACTIONS.filter(
-    (action) => action.id !== "concentration-check" && action.id !== "portfolio-review",
+    (action) =>
+      action.id !== "concentration-check" &&
+      action.id !== "portfolio-review" &&
+      action.id !== "assignment-risk",
   ),
+];
+
+export const OPTIONS_QUICK_ACTIONS: QuickAction[] = [
+  {
+    id: "options-review",
+    label: "Analyze options",
+    apiAction: "free-form",
+    message: (target) =>
+      `Analyze my ${target} option positions — rolls, assignment risk, and what to do next.`,
+    icon: Sparkles,
+  },
+  {
+    id: "assignment-risk",
+    label: "Assignment risk",
+    apiAction: "assignment risk",
+    message: (target) =>
+      `Review assignment and call-away risk in ${target} over the next two weeks. For each short option, say roll, close, or hold.`,
+    icon: Timer,
+  },
+  {
+    id: "roll-review",
+    label: "Roll review",
+    icon: TrendingUp,
+    prompt: (target) =>
+      `Review roll opportunities for my ${target} options. For each short leg, suggest roll targets with strike, expiration, and rationale.`,
+  },
+  {
+    id: "tax-angle",
+    label: "Tax angle",
+    apiAction: "tax angle",
+    message: (target) =>
+      `What tax considerations apply to my ${target} options — gains, losses, and whether to harvest or roll for tax efficiency?`,
+    icon: Scale,
+  },
 ];
 
 export const RESEARCH_QUICK_ACTIONS: QuickAction[] = [
@@ -133,6 +170,7 @@ export const RESEARCH_QUICK_ACTIONS: QuickAction[] = [
 export const QUICK_ACTIONS = PORTFOLIO_QUICK_ACTIONS;
 
 export function getQuickActionsForMode(mode: QuickActionMode): QuickAction[] {
+  if (mode === "options") return OPTIONS_QUICK_ACTIONS;
   if (mode === "position") return POSITION_QUICK_ACTIONS;
   if (mode === "research") return RESEARCH_QUICK_ACTIONS;
   return PORTFOLIO_QUICK_ACTIONS;

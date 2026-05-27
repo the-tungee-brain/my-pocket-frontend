@@ -317,10 +317,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     researchTab === "position" &&
     !!researchSymbol &&
     (positionMap[researchSymbol]?.length ?? 0) > 0;
+  const isOptionsTab =
+    selectedView === "research" &&
+    researchTab === "options" &&
+    !!researchSymbol;
 
-  const quickActionMode: QuickActionMode = isPositionTab
-    ? "position"
-    : selectedView;
+  const quickActionMode: QuickActionMode = isOptionsTab
+    ? "options"
+    : isPositionTab
+      ? "position"
+      : selectedView;
 
   const portfolioSection = searchParams.get("section");
   const chatContextLabel =
@@ -374,7 +380,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         Skip to content
       </a>
 
-      <main className="flex min-h-screen text-foreground">
+      <main className="flex min-h-screen min-w-0 text-foreground">
         <DesktopNav
           loading={loading}
           symbols={symbols}
@@ -397,7 +403,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           symbolAlertMap={symbolAlertMap}
         />
 
-        <section className="flex min-h-screen flex-1 flex-col">
+        <section className="flex min-h-screen min-w-0 flex-1 flex-col">
           <div className="sticky top-0 z-30 border-b border-border bg-secondary/80 backdrop-blur-md">
             <div className="flex min-h-14 items-center justify-between gap-3 px-4">
               <IconButton
@@ -430,11 +436,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="flex flex-1 flex-col">
+          <div className="flex min-w-0 flex-1 flex-col">
             <div
               id="main-content"
               className={cn(
-                "flex-1 overflow-y-auto px-4 pt-3 pb-2",
+                "min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pt-3 pb-2",
                 "max-md:pb-20",
               )}
             >

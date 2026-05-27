@@ -71,21 +71,32 @@ export function StrategyFlowDiagram({ flow, className }: Props) {
         {rows.map((row, rowIndex) => (
           <div key={`row-${rowIndex}`}>
             {row.kind === "pair" ? (
-              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-2">
-                {row.direction === "ltr" ? (
-                  <>
-                    <FlowNodeCard {...row.nodes[0]} />
-                    <FlowArrowHorizontal direction="right" />
-                    <FlowNodeCard {...row.nodes[1]} />
-                  </>
-                ) : (
-                  <>
-                    <FlowNodeCard {...row.nodes[1]} />
-                    <FlowArrowHorizontal direction="left" />
-                    <FlowNodeCard {...row.nodes[0]} />
-                  </>
-                )}
-              </div>
+              <>
+                <div className="hidden items-stretch gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                  {row.direction === "ltr" ? (
+                    <>
+                      <FlowNodeCard {...row.nodes[0]} />
+                      <FlowArrowHorizontal direction="right" />
+                      <FlowNodeCard {...row.nodes[1]} />
+                    </>
+                  ) : (
+                    <>
+                      <FlowNodeCard {...row.nodes[1]} />
+                      <FlowArrowHorizontal direction="left" />
+                      <FlowNodeCard {...row.nodes[0]} />
+                    </>
+                  )}
+                </div>
+                <div className="flex flex-col items-stretch gap-2 sm:hidden">
+                  <FlowNodeCard
+                    {...(row.direction === "ltr" ? row.nodes[0] : row.nodes[1])}
+                  />
+                  <FlowArrowVertical direction="down" align="center" />
+                  <FlowNodeCard
+                    {...(row.direction === "ltr" ? row.nodes[1] : row.nodes[0])}
+                  />
+                </div>
+              </>
             ) : (
               <div className="flex justify-center px-6">
                 <div className="w-full max-w-[15rem]">
@@ -96,7 +107,7 @@ export function StrategyFlowDiagram({ flow, className }: Props) {
 
             {rowIndex < rows.length - 1 &&
               (showLoop && rowIndex === 0 ? (
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] py-1">
+                <div className="hidden py-1 sm:grid sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
                   <FlowArrowVertical direction="up" inline />
                   <div />
                   <FlowArrowVertical direction="down" inline />

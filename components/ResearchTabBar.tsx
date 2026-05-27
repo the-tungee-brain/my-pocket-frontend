@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import {
   BriefcaseBusiness,
+  ChevronDown,
   CircleDollarSign,
   FileSpreadsheet,
   LayoutDashboard,
   Layers,
   LineChart,
   Newspaper,
+  Target,
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
@@ -20,6 +23,7 @@ import type { AssetType } from "@/app/types/research";
 export type ResearchTabId =
   | "overview"
   | "position"
+  | "options"
   | "news"
   | "holdings"
   | "dividends"
@@ -33,7 +37,10 @@ type Tab = {
   label: string;
   icon: LucideIcon;
   assetTypes?: AssetType[] | "all";
+  requiresOptions?: boolean;
 };
+
+const TAB_GAP_PX = 4;
 
 const allTabs: Tab[] = [
   {
@@ -47,6 +54,13 @@ const allTabs: Tab[] = [
     label: "Positions",
     icon: BriefcaseBusiness,
     assetTypes: "all",
+  },
+  {
+    id: "options",
+    label: "Options",
+    icon: Target,
+    assetTypes: "all",
+    requiresOptions: true,
   },
   { id: "news", label: "News", icon: Newspaper, assetTypes: "all" },
   {
@@ -96,9 +110,11 @@ const allTabs: Tab[] = [
 function tabsForAssetType(
   assetType: AssetType | null | undefined,
   isEtf = false,
+  showOptionsTab = false,
 ): Tab[] {
   const resolved: AssetType = isEtf ? "ETF" : (assetType ?? "STOCK");
   const matched = allTabs.filter((tab) => {
+    if (tab.requiresOptions && !showOptionsTab) return false;
     if (tab.assetTypes === "all") return true;
     return tab.assetTypes?.includes(resolved);
   });
@@ -111,10 +127,90 @@ function tabsForAssetType(
   });
 }
 
+function tabLinkClassName(isActive: boolean) {
+  return cn(
+    "relative flex flex-none items-center gap-1.5 rounded-md border px-3 py-1.5 whitespace-nowrap transition-all",
+    isActive
+      ? "border-border bg-secondary text-foreground shadow-sm"
+      : "border-transparent text-muted hover:bg-muted-bg/60 hover:text-foreground",
+  );
+}
+
+function computeVisibleCount(
+  containerWidth: number,
+  tabWidths: number[],
+  moreWidth: number,
+): number {
+  const total = tabWidths.length;
+  if (total === 0 || containerWidth <= 0) return 0;
+
+  let used = 0;
+  for (let i = 0; i < total; i++) {
+    used += tabWidths[i] + (i > 0 ? TAB_GAP_PX : 0);
+  }
+  if (used <= containerWidth) return total;
+
+  used = 0;
+  let count = 0;
+  for (let i = 0; i < total; i++) {
+    const tabWidth = tabWidths[i] + (i > 0 ? TAB_GAP_PX : 0);
+    const hasOverflowAfter = i < total - 1;
+    const requiredWidth =
+      used + tabWidth + (hasOverflowAfter ? TAB_GAP_PX + moreWidth : 0);
+
+    if (requiredWidth > containerWidth) break;
+
+    used += tabWidth;
+    count = i + 1;
+  }
+
+  return Math.max(1, count);
+}
+
+type ResearchTabLinkProps = {
+  tab: Tab;
+  href: string;
+  isActive: boolean;
+  onNavigate?: () => void;
+  className?: string;
+  measure?: boolean;
+};
+
+function ResearchTabLink({
+  tab,
+  href,
+  isActive,
+  onNavigate,
+  className,
+  measure = false,
+}: ResearchTabLinkProps) {
+  const Icon = tab.icon;
+
+  return (
+    <Link
+      href={href}
+      data-tab-measure={measure ? "" : undefined}
+      onClick={onNavigate}
+      className={cn(tabLinkClassName(isActive), className)}
+      aria-current={isActive ? "page" : undefined}
+    >
+      <Icon
+        className={cn(
+          "h-3.5 w-3.5",
+          isActive ? "text-accent-strong" : "text-muted",
+        )}
+        aria-hidden="true"
+      />
+      <span className="text-xs font-medium">{tab.label}</span>
+    </Link>
+  );
+}
+
 type ResearchTabBarProps = {
   symbol: string;
   assetType?: AssetType | null;
   isEtf?: boolean;
+  showOptionsTab?: boolean;
   className?: string;
 };
 
@@ -122,56 +218,148 @@ export function ResearchTabBar({
   symbol,
   assetType,
   isEtf = false,
+  showOptionsTab = false,
   className,
 }: ResearchTabBarProps) {
   const pathname = usePathname();
-  const navRef = useRef<HTMLElement>(null);
-  const [showRightFade, setShowRightFade] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const morePanelRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState<number | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [moreMenuPosition, setMoreMenuPosition] = useState<{
+    top: number;
+    right: number;
+  } | null>(null);
   const encoded = encodeURIComponent(symbol.toUpperCase());
   const activeTab =
     (pathname.split("/")[3] as ResearchTabId | undefined) ?? "overview";
-  const tabs = tabsForAssetType(assetType, isEtf);
+  const tabs = tabsForAssetType(assetType, isEtf, showOptionsTab);
+
+  const recalculateVisibleTabs = useCallback(() => {
+    const container = containerRef.current;
+    const measure = measureRef.current;
+    if (!container || !measure) return;
+
+    const tabWidths = Array.from(
+      measure.querySelectorAll<HTMLElement>("[data-tab-measure]"),
+    ).map((element) => element.offsetWidth);
+
+    const moreMeasure = measure.querySelector<HTMLElement>(
+      "[data-more-measure]",
+    );
+    const moreWidth = moreMeasure?.offsetWidth ?? 72;
+
+    setVisibleCount(
+      computeVisibleCount(container.clientWidth, tabWidths, moreWidth),
+    );
+  }, [tabs]);
+
+  useLayoutEffect(() => {
+    recalculateVisibleTabs();
+  }, [recalculateVisibleTabs]);
 
   useEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
+    const container = containerRef.current;
+    if (!container) return;
 
-    const updateFade = () => {
-      const hasOverflow = nav.scrollWidth > nav.clientWidth + 1;
-      const atEnd = nav.scrollLeft + nav.clientWidth >= nav.scrollWidth - 1;
-      setShowRightFade(hasOverflow && !atEnd);
-    };
+    const observer = new ResizeObserver(() => {
+      recalculateVisibleTabs();
+    });
+    observer.observe(container);
 
-    updateFade();
-    nav.addEventListener("scroll", updateFade, { passive: true });
-    const observer = new ResizeObserver(updateFade);
-    observer.observe(nav);
+    return () => observer.disconnect();
+  }, [recalculateVisibleTabs]);
+
+  const updateMoreMenuPosition = useCallback(() => {
+    const button = moreButtonRef.current;
+    if (!button) return;
+
+    const rect = button.getBoundingClientRect();
+    setMoreMenuPosition({
+      top: rect.bottom + 4,
+      right: window.innerWidth - rect.right,
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!moreOpen) {
+      setMoreMenuPosition(null);
+      return;
+    }
+
+    updateMoreMenuPosition();
+
+    const handleReposition = () => updateMoreMenuPosition();
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
 
     return () => {
-      nav.removeEventListener("scroll", updateFade);
-      observer.disconnect();
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
     };
-  }, [symbol, assetType, isEtf]);
+  }, [moreOpen, updateMoreMenuPosition]);
 
-  return (
-    <div className={cn("relative", className)}>
-      <nav
-        ref={navRef}
-        className="flex max-w-full gap-1 overflow-x-auto rounded-lg bg-muted-bg/50 p-0.5 scrollbar-dark"
-        aria-label="Research sections"
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (moreMenuRef.current?.contains(target)) return;
+      if (morePanelRef.current?.contains(target)) return;
+      setMoreOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [moreOpen]);
+
+  const resolvedVisibleCount = visibleCount ?? tabs.length;
+  const visibleTabs = tabs.slice(0, resolvedVisibleCount);
+  const overflowTabs = tabs.slice(resolvedVisibleCount);
+  const overflowHasActive = overflowTabs.some((tab) => tab.id === activeTab);
+
+  const moreMenu =
+    moreOpen && moreMenuPosition && overflowTabs.length > 0 ? (
+      <div
+        ref={morePanelRef}
+        role="menu"
+        style={{
+          top: moreMenuPosition.top,
+          right: moreMenuPosition.right,
+        }}
+        className="fixed z-[50] min-w-44 overflow-hidden rounded-xl border border-border bg-background py-1 shadow-lg"
       >
-        {tabs.map((tab) => {
+        {overflowTabs.map((tab) => {
           const isActive = tab.id === activeTab;
           const Icon = tab.icon;
+
           return (
             <Link
               key={tab.id}
               href={`/research/${encoded}/${tab.id}`}
+              role="menuitem"
+              onClick={() => setMoreOpen(false)}
               className={cn(
-                "relative flex flex-none items-center gap-1.5 rounded-md border px-3 py-1.5 whitespace-nowrap transition-all",
+                "flex items-center gap-2 px-3 py-2 text-xs font-medium transition hover:bg-muted-bg/60",
                 isActive
-                  ? "border-border bg-secondary text-foreground shadow-sm"
-                  : "border-transparent text-muted hover:text-foreground",
+                  ? "bg-accent-muted/30 text-foreground"
+                  : "text-muted hover:text-foreground",
               )}
               aria-current={isActive ? "page" : undefined}
             >
@@ -182,17 +370,78 @@ export function ResearchTabBar({
                 )}
                 aria-hidden="true"
               />
-              <span className="text-xs font-medium">{tab.label}</span>
+              {tab.label}
             </Link>
           );
         })}
+      </div>
+    ) : null;
+
+  return (
+    <div ref={containerRef} className={cn("relative min-w-0", className)}>
+      <nav
+        className="flex min-w-0 gap-1 rounded-lg bg-muted-bg/50 p-0.5"
+        aria-label="Research sections"
+      >
+        {visibleTabs.map((tab) => (
+          <ResearchTabLink
+            key={tab.id}
+            tab={tab}
+            href={`/research/${encoded}/${tab.id}`}
+            isActive={tab.id === activeTab}
+          />
+        ))}
+
+        {overflowTabs.length > 0 && (
+          <div ref={moreMenuRef} className="relative shrink-0">
+            <button
+              ref={moreButtonRef}
+              type="button"
+              aria-expanded={moreOpen}
+              aria-haspopup="menu"
+              onClick={() => setMoreOpen((open) => !open)}
+              className={tabLinkClassName(overflowHasActive)}
+            >
+              <span className="text-xs font-medium">More</span>
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform",
+                  moreOpen && "rotate-180",
+                  overflowHasActive ? "text-accent-strong" : "text-muted",
+                )}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        )}
       </nav>
-      {showRightFade && (
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 w-8 rounded-r-lg bg-linear-to-l from-background to-transparent"
-          aria-hidden="true"
-        />
-      )}
+
+      {typeof document !== "undefined" && moreMenu
+        ? createPortal(moreMenu, document.body)
+        : null}
+
+      <div
+        ref={measureRef}
+        className="pointer-events-none invisible absolute left-0 top-0 flex gap-1"
+        aria-hidden="true"
+      >
+        {tabs.map((tab) => (
+          <ResearchTabLink
+            key={tab.id}
+            tab={tab}
+            href={`/research/${encoded}/${tab.id}`}
+            isActive={false}
+            measure
+          />
+        ))}
+        <span
+          data-more-measure
+          className={tabLinkClassName(false)}
+        >
+          <span className="text-xs font-medium">More</span>
+          <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+        </span>
+      </div>
     </div>
   );
 }
@@ -213,7 +462,7 @@ export function researchTabLabel(
     return direct.label;
   }
 
-  const tabs = tabsForAssetType(assetType, isEtf);
+  const tabs = tabsForAssetType(assetType, isEtf, tabId === "options");
   const found = tabs.find((entry) => entry.id === tabId);
   return found?.label ?? "Overview";
 }

@@ -335,7 +335,7 @@ export default function PortfolioPage() {
       )}
 
       {showContent && (
-        <div className="sticky top-14 z-10 -mx-4 mb-4 border-b border-border/60 bg-background/95 px-4 pb-3 pt-1 backdrop-blur-md">
+        <div className="sticky top-14 z-10 mb-4 border-b border-border/60 bg-background/95 pb-3 pt-1 backdrop-blur-md">
           <PortfolioSectionTabBar
             activeSection={activeSection}
             onChange={setActiveSection}

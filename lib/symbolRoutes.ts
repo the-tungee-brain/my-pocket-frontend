@@ -2,7 +2,7 @@ import type { ResearchTabId } from "@/components/ResearchTabBar";
 
 export function symbolHubPath(
   symbol: string,
-  tab: ResearchTabId | "position" | "news" = "overview",
+  tab: ResearchTabId = "overview",
 ): string {
   const encoded = encodeURIComponent(symbol.trim().toUpperCase());
   return `/research/${encoded}/${tab}`;

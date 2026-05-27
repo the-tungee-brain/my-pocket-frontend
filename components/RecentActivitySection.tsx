@@ -165,19 +165,19 @@ function OrderRows({
 
   return (
     <>
-      <div className="hidden sm:block">
-        <table className="w-full table-fixed text-sm">
+      <div className="hidden overflow-x-auto scrollbar-dark md:block">
+        <table className="w-full min-w-[880px] table-auto text-sm">
           <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
             <tr>
-              <th className="w-[12%] px-4 py-2.5 text-left">Filled</th>
-              <th className="w-[18%] px-4 py-2.5 text-left">Symbol / contract</th>
-              <th className="w-[12%] px-4 py-2.5 text-left">Side</th>
-              <th className="w-[8%] px-4 py-2.5 text-right">Qty</th>
-              <th className="w-[12%] px-4 py-2.5 text-right">Fill</th>
-              <th className="w-[12%] px-4 py-2.5 text-right">Premium</th>
-              <th className="w-[12%] px-4 py-2.5 text-right">Total cash</th>
+              <th className="px-4 py-2.5 text-left">Filled</th>
+              <th className="px-4 py-2.5 text-left">Symbol / contract</th>
+              <th className="px-4 py-2.5 text-left">Side</th>
+              <th className="px-4 py-2.5 text-right">Qty</th>
+              <th className="px-4 py-2.5 text-right">Fill</th>
+              <th className="px-4 py-2.5 text-right">Premium</th>
+              <th className="px-4 py-2.5 text-right">Total cash</th>
               {!compact && (
-                <th className="w-[10%] px-4 py-2.5 text-left">Type</th>
+                <th className="px-4 py-2.5 text-left">Type</th>
               )}
             </tr>
           </thead>
@@ -218,7 +218,7 @@ function OrderRows({
         </table>
       </div>
 
-      <div className="divide-y divide-border sm:hidden">
+      <div className="divide-y divide-border md:hidden">
         {displayGroups.map((group) => {
           if (group.kind === "roll") {
             return (

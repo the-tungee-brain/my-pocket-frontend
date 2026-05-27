@@ -9,8 +9,10 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { track } from "@/lib/analytics";
 import { addRecentSymbol } from "@/lib/recentSymbols";
 import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
+import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { usePositionsContext } from "@/app/Providers";
 import { symbolHubPath } from "@/lib/symbolRoutes";
+import { shouldShowOptionsTab } from "@/lib/symbolOptions";
 import { pageShellClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 import {
@@ -25,6 +27,8 @@ type Props = {
 
 function ResearchSymbolShellInner({ symbol, children }: Props) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
   const { positionMap } = usePositionsContext();
   const { assetType, isEtf } = useResearchAssetTypeContext();
   const [collapsed, setCollapsed] = useState(false);
@@ -32,6 +36,12 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
   const symbolUpper = symbol.toUpperCase();
   const activeTab = pathname.split("/")[3] ?? "overview";
   const hasPosition = (positionMap[symbolUpper]?.length ?? 0) > 0;
+  const { intelligence } = useSymbolIntelligence(symbol, { accessToken });
+  const showOptionsTab = shouldShowOptionsTab(
+    positionMap[symbolUpper],
+    intelligence,
+    activeTab,
+  );
 
   useResearchSearchShortcut();
 
@@ -68,7 +78,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
 
       <div
         className={cn(
-          "sticky top-0 z-20 -mx-4 bg-background/95 px-4 backdrop-blur-md transition-[padding] duration-200",
+          "sticky top-0 z-20 bg-background/95 backdrop-blur-md transition-[padding] duration-200",
           collapsed ? "pb-2 pt-1.5" : "pb-3 pt-2",
         )}
       >
@@ -88,7 +98,12 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
 
         <div className={cn("space-y-3", collapsed && "space-y-2")}>
           <CompanySnapshot symbol={symbol} compact={collapsed} />
-          <ResearchTabBar symbol={symbol} assetType={assetType} isEtf={isEtf} />
+          <ResearchTabBar
+            symbol={symbol}
+            assetType={assetType}
+            isEtf={isEtf}
+            showOptionsTab={showOptionsTab}
+          />
         </div>
       </div>
 

@@ -10,7 +10,10 @@ export const pageSectionClass = "mx-0 w-full max-w-none";
 
 /** Primary + sidebar split for dashboard-style pages. */
 export const pageSplitClass =
-  "grid gap-6 lg:grid-cols-[minmax(0,1.62fr)_minmax(280px,1fr)] lg:items-start";
+  "grid gap-6 xl:grid-cols-[minmax(0,1.62fr)_minmax(240px,1fr)] xl:items-start";
+
+/** Horizontal scroll wrapper for wide data tables. */
+export const responsiveTableScrollClass = "overflow-x-auto scrollbar-dark";
 
 export const pageMainClass = "min-w-0 space-y-4";
 

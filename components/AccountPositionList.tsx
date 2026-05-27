@@ -160,7 +160,7 @@ export function AccountPositionList({
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm">
-          <div className="divide-y divide-border sm:hidden">
+          <div className="divide-y divide-border md:hidden">
             {positions.map((p) => {
               const qty = p.longQuantity - p.shortQuantity;
               const isPositive = p.currentDayProfitLoss >= 0;
@@ -258,7 +258,8 @@ export function AccountPositionList({
             })}
           </div>
 
-          <table className="hidden w-full text-sm sm:table">
+          <div className="hidden overflow-x-auto scrollbar-dark md:block">
+          <table className="w-full min-w-[720px] text-sm">
             <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
               <tr>
                 <th className="px-4 py-2.5 text-left">Name</th>
@@ -358,6 +359,7 @@ export function AccountPositionList({
               })}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </section>
