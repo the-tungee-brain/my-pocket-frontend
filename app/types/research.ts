@@ -32,3 +32,39 @@ export type EtfHoldingsContext = {
   dataAsOf?: string | null;
   confidenceScore?: number | null;
 };
+
+export type DividendPaymentItem = {
+  date: string;
+  amountPerShare: number;
+};
+
+export type AnnualDividendIncome = {
+  year: number;
+  totalPerShare: number;
+  incomeOnShares: number;
+  isPartialYear?: boolean;
+};
+
+export type DividendSnowballScenario = {
+  shares: number;
+  startYear: number;
+  totalCollected: number;
+  annualIncomeLatest: number;
+  annualIncomeStart: number;
+  latestYear: number;
+};
+
+export type DividendHistoryContext = {
+  ticker: string;
+  totalDividends: number;
+  totalSplits?: number;
+  consecutiveAnnualIncreases: number;
+  cagr5yPct?: number | null;
+  cagr10yPct?: number | null;
+  annualIncome: AnnualDividendIncome[];
+  recentPayments: DividendPaymentItem[];
+  payments: DividendPaymentItem[];
+  scenario: DividendSnowballScenario;
+  dataAsOf?: string | null;
+  confidenceScore?: number | null;
+};

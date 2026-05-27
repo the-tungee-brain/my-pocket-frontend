@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   BriefcaseBusiness,
+  CircleDollarSign,
   FileSpreadsheet,
   LayoutDashboard,
   Layers,
@@ -21,6 +22,7 @@ export type ResearchTabId =
   | "position"
   | "news"
   | "holdings"
+  | "dividends"
   | "business"
   | "earnings"
   | "fundamentals"
@@ -42,6 +44,12 @@ const allTabs: Tab[] = [
     label: "Composition",
     icon: Layers,
     assetTypes: ["ETF"],
+  },
+  {
+    id: "dividends",
+    label: "Dividends",
+    icon: CircleDollarSign,
+    assetTypes: ["STOCK", "ADR", "ETF"],
   },
   {
     id: "business",
