@@ -10,20 +10,14 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { KeyMetricsGrid, KeyMetricsGridSkeleton } from "./KeyMetricsGrid";
 import { SecCompanyBadge } from "./SecCompanyBadge";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
+import {
+  FundamentalOverviewSection,
+  FundamentalOverviewSkeleton,
+} from "./FundamentalOverviewSection";
 
 type FundamentalsPageContentProps = {
   symbol: string;
 };
-
-function OverviewSkeleton() {
-  return (
-    <div className="space-y-2">
-      <div className="h-4 w-full animate-pulse rounded bg-muted-bg" />
-      <div className="h-4 w-5/6 animate-pulse rounded bg-muted-bg" />
-      <div className="h-4 w-4/6 animate-pulse rounded bg-muted-bg" />
-    </div>
-  );
-}
 
 export function FundamentalsPageContent({ symbol }: FundamentalsPageContentProps) {
   const { data: session } = useSession();
@@ -49,11 +43,13 @@ export function FundamentalsPageContent({ symbol }: FundamentalsPageContentProps
               icon={FileSpreadsheet}
             >
               {isLoading ? (
-                <OverviewSkeleton />
-              ) : fundamentals?.overviewNote ? (
-                <p className="text-sm leading-relaxed text-foreground">
-                  {fundamentals.overviewNote}
-                </p>
+                <FundamentalOverviewSkeleton />
+              ) : fundamentals?.overview || fundamentals?.overviewNote ? (
+                <FundamentalOverviewSection
+                  overview={fundamentals.overview}
+                  fallbackNote={fundamentals.overviewNote}
+                  isEtf={isEtf}
+                />
               ) : (
                 <EmptyState
                   icon={FileSpreadsheet}

@@ -32,8 +32,17 @@ export type FinancialStrength = {
   highlights: string[];
 };
 
+export type FundamentalsOverview = {
+  atAGlance: string;
+  valuationTake: string;
+  strengths: string[];
+  concerns: string[];
+  assumptions: string;
+};
+
 export type FundamentalsBlock = {
-  overviewNote: string;
+  overview?: FundamentalsOverview | null;
+  overviewNote?: string;
   metrics: FundamentalMetric[];
   quarterlyFinancials?: YFinanceFinancialStatements | null;
   annualFinancials?: YFinanceFinancialStatements | null;
