@@ -3,7 +3,6 @@
 import { Newspaper } from "lucide-react";
 import { StockNewsView } from "@/app/hooks/useCompanyNews";
 import NewsAnalytics from "./NewsAnalytics";
-import { ThinkingSpinner } from "./ui/ThinkingSpinner";
 import { ErrorBanner } from "./ui/ErrorBanner";
 import { EmptyState } from "./ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -31,17 +30,13 @@ export function CompanyNews({
 }: Props) {
   return (
     <section className={cn("w-full", className)}>
-        {isLoading && (
-          <ThinkingSpinner message="Fetching and analyzing news" />
-        )}
-
         {error && !isLoading && (
           <div className="rounded-2xl border border-border bg-secondary/60 px-4 py-6">
             <ErrorBanner message={error} onRetry={onRetry} />
           </div>
         )}
 
-        {!error && analytics && (
+        {!error && (analytics || isLoading) && (
           <NewsAnalytics
             analytics={analytics}
             isLoading={isLoading}
