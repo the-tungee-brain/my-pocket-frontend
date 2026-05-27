@@ -9,9 +9,35 @@ export type FundamentalMetric = {
   note?: string | null;
 };
 
+export type YFinanceFinancialLineItem = {
+  label: string;
+  values: Record<string, number | null>;
+};
+
+export type YFinanceFinancialStatements = {
+  periods: string[];
+  incomeStatement: YFinanceFinancialLineItem[];
+  balanceSheet: YFinanceFinancialLineItem[];
+  cashFlow: YFinanceFinancialLineItem[];
+};
+
+export type FinancialStrengthRating = "strong" | "solid" | "mixed" | "weak";
+
+export type FinancialStrength = {
+  rating: FinancialStrengthRating;
+  score: number;
+  headline: string;
+  strengths: string[];
+  risks: string[];
+  highlights: string[];
+};
+
 export type FundamentalsBlock = {
   overviewNote: string;
   metrics: FundamentalMetric[];
+  quarterlyFinancials?: YFinanceFinancialStatements | null;
+  annualFinancials?: YFinanceFinancialStatements | null;
+  strength?: FinancialStrength | null;
 };
 
 const fundamentalsCache = new Map<string, FundamentalsBlock>();
