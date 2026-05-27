@@ -11,15 +11,25 @@ export type AnalyticsProperties = Record<
 function withPostHog(run: (client: NonNullable<ReturnType<typeof getPostHogClient>>) => void) {
   if (typeof window === "undefined") return;
 
-  const existing = getPostHogClient();
-  if (existing) {
-    run(existing);
-    return;
-  }
+  const schedule =
+    typeof window.requestIdleCallback === "function"
+      ? (task: () => void) =>
+          window.requestIdleCallback(() => task(), { timeout: 2000 })
+      : (task: () => void) => window.setTimeout(task, 0);
 
-  void initPostHogClient().then((client) => {
-    if (client) run(client);
-  });
+  const execute = () => {
+    const existing = getPostHogClient();
+    if (existing) {
+      run(existing);
+      return;
+    }
+
+    void initPostHogClient().then((client) => {
+      if (client) run(client);
+    });
+  };
+
+  schedule(execute);
 }
 
 export function identify(userId: string, traits?: AnalyticsProperties) {
