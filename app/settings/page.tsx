@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { ArrowLeft } from "lucide-react";
+import { SchwabConnectionSettings } from "@/components/SchwabConnectionSettings";
 import { StrategyProfileEditor } from "@/components/StrategyProfileEditor";
 import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
 import type { StrategyFormValues } from "@/lib/strategyProfileForm";
@@ -50,36 +51,50 @@ export default function SettingsPage() {
         <p className="text-[11px] font-semibold uppercase tracking-wide text-accent-strong">
           Settings
         </p>
-        <h1 className="mt-1 text-xl font-semibold text-foreground">
-          Investment strategy
-        </h1>
+        <h1 className="mt-1 text-xl font-semibold text-foreground">Account</h1>
         <p className="mt-1 text-sm text-muted">
-          Update your strategy, symbols, risk preferences, and options settings.
-          Changes apply to your journey checklist and recommendations.
+          Manage your brokerage connection and investment strategy preferences.
         </p>
       </div>
 
-      {loading && catalog.length === 0 ? (
-        <p className="text-sm text-muted">Loading strategy settings…</p>
-      ) : error ? (
-        <p className="text-sm text-danger">{error}</p>
-      ) : (
-        <StrategyProfileEditor
-          accessToken={accessToken}
-          catalog={catalog}
-          profile={profile}
-          onSave={handleSave}
-        />
-      )}
+      <section className="mb-8">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">
+          Brokerage connection
+        </h2>
+        <SchwabConnectionSettings />
+      </section>
 
-      {!profile?.onboardingCompletedAt && profile == null && !loading && (
-        <p className="mt-4 text-sm text-muted">
-          No strategy saved yet.{" "}
-          <Link href="/onboarding" className="text-accent-strong hover:underline">
-            Complete onboarding
-          </Link>
+      <section>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">
+          Investment strategy
+        </h2>
+        <p className="mb-4 text-sm text-muted">
+          Update your strategy, symbols, risk preferences, and options settings.
+          Changes apply to your journey checklist and recommendations.
         </p>
-      )}
+
+        {loading && catalog.length === 0 ? (
+          <p className="text-sm text-muted">Loading strategy settings…</p>
+        ) : error ? (
+          <p className="text-sm text-danger">{error}</p>
+        ) : (
+          <StrategyProfileEditor
+            accessToken={accessToken}
+            catalog={catalog}
+            profile={profile}
+            onSave={handleSave}
+          />
+        )}
+
+        {!profile?.onboardingCompletedAt && profile == null && !loading && (
+          <p className="mt-4 text-sm text-muted">
+            No strategy saved yet.{" "}
+            <Link href="/onboarding" className="text-accent-strong hover:underline">
+              Complete onboarding
+            </Link>
+          </p>
+        )}
+      </section>
     </div>
   );
 }

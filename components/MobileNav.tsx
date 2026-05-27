@@ -157,7 +157,6 @@ export function MobileNav({
                 symbolAlertMap={symbolAlertMap}
                 containerClassName="flex flex-col gap-2"
                 portfolioButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors"
-                symbolButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm transition-colors"
               />
             </nav>
           </motion.aside>
