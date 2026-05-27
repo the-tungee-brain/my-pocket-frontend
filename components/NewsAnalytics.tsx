@@ -124,9 +124,18 @@ function NewsArticleCard({ item }: { item: EnrichedNewsItem }) {
             day: "numeric",
             hour: "2-digit",
             minute: "2-digit",
-          })}{" "}
-          · {item.source}
+          })}
         </span>
+        {item.source ? (
+          <>
+            <span className="text-[11px] text-muted" aria-hidden>
+              ·
+            </span>
+            <span className="font-mono text-[11px] font-semibold text-accent-strong">
+              {item.source}
+            </span>
+          </>
+        ) : null}
         {item.topics.map((topic) => (
           <span
             key={topic}
@@ -292,11 +301,7 @@ export default function NewsAnalytics({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-muted">
-              {isLoading
-                ? updatedLabel
-                  ? `${updatedLabel} · Updating…`
-                  : "Updating…"
-                : updatedLabel}
+              {isLoading ? "Updating…" : updatedLabel}
             </span>
             {onRefresh && (
               <IconButton
