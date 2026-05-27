@@ -11,31 +11,27 @@ type FinancialStrengthSectionProps = {
 
 const RATING_STYLES: Record<
   FinancialStrength["rating"],
-  { label: string; badge: string; ring: string; listHeading: string }
+  { label: string; badge: string; ring: string }
 > = {
   strong: {
     label: "Strong",
     badge: "border-accent/30 bg-accent-muted text-accent-strong",
     ring: "ring-accent/20",
-    listHeading: "text-accent-strong",
   },
   solid: {
     label: "Solid",
     badge: "border-accent/25 bg-surface-elevated text-accent-strong",
     ring: "ring-accent/15",
-    listHeading: "text-accent-strong",
   },
   mixed: {
     label: "Mixed",
     badge: "border-border bg-muted-bg text-foreground",
     ring: "ring-border",
-    listHeading: "text-foreground",
   },
   weak: {
     label: "Weak",
     badge: "border-danger/30 bg-danger/10 text-danger",
     ring: "ring-danger/20",
-    listHeading: "text-danger",
   },
 };
 
@@ -117,12 +113,7 @@ export function FinancialStrengthSection({
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {strength.strengths.length > 0 && (
           <div>
-            <p
-              className={cn(
-                "mb-1.5 text-[10px] font-semibold uppercase tracking-wide",
-                style.listHeading,
-              )}
-            >
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-accent-strong">
               Strengths
             </p>
             <ul className="space-y-1 text-sm text-foreground">

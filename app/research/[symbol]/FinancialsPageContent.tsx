@@ -36,10 +36,7 @@ export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
     <div className="space-y-4">
       {error && <ErrorBanner message={error} />}
 
-      <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-muted">
-          Market statements (Yahoo Finance) and filed history (SEC EDGAR)
-        </p>
+      <div className="flex justify-end px-1">
         <SecPeriodToggle period={period} onChange={setPeriod} />
       </div>
 
@@ -59,7 +56,7 @@ export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
           <>
             <ResearchSectionCard
               title="Financial statements"
-              description="Income, balance sheet, and cash flow from Yahoo Finance"
+              description="Income, balance sheet, and cash flow"
               icon={LineChart}
             >
               <YFinanceStatementsSection

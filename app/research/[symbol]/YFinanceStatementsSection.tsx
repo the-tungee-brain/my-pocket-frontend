@@ -29,7 +29,7 @@ export function YFinanceStatementsSection({
   if (!snapshot?.periods.length) {
     return (
       <p className="text-sm text-muted">
-        Statement data isn&apos;t available from market sources for this symbol.
+        Statement data isn&apos;t available for this symbol right now.
       </p>
     );
   }
