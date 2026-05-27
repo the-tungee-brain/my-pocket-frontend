@@ -10,6 +10,7 @@ import {
   stripStreamingStatusPrefix,
   type MarkdownSection,
 } from "@/lib/conversationalAnalysis";
+import { getVisibleAssistantContent } from "@/lib/chatFollowUpSuggestions";
 import { cn } from "@/lib/utils";
 
 type ConversationalMarkdownProps = {
@@ -87,7 +88,7 @@ export function ConversationalMarkdown({
   className,
 }: ConversationalMarkdownProps) {
   const displayContent = useMemo(
-    () => (isStreaming ? content : stripStreamingStatusPrefix(content)),
+    () => getVisibleAssistantContent(content, isStreaming),
     [content, isStreaming],
   );
   const trimmed = displayContent.trim();

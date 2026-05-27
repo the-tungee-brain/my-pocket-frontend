@@ -6,7 +6,8 @@ import { ConversationalMarkdown } from "@/components/ui/ConversationalMarkdown";
 import { ChatFollowUpChips } from "@/components/ChatFollowUpChips";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 import {
-  getChatFollowUpSuggestions,
+  getVisibleAssistantContent,
+  parseChatFollowUps,
   shouldShowFollowUpSuggestions,
 } from "@/lib/chatFollowUpSuggestions";
 import { Button } from "@/components/ui/Button";
@@ -157,10 +158,11 @@ export function ConversationPane({
           const isLastUser =
             m.role === "user" &&
             messages.findLastIndex((mm) => mm.role === "user") === idx;
-          const followUpSuggestions =
-            isAssistant && shouldShowFollowUpSuggestions(messages, idx, loading)
-              ? getChatFollowUpSuggestions(m.content)
-              : [];
+          const showFollowUps =
+            isAssistant && shouldShowFollowUpSuggestions(messages, idx, loading);
+          const followUpSuggestions = showFollowUps
+            ? parseChatFollowUps(m.content)
+            : [];
 
           return (
             <div
@@ -199,10 +201,12 @@ export function ConversationPane({
                 )}
                 {isAssistant && m.content && !loading && (
                   <div className="mt-2 border-t border-border pt-2">
-                    <CopyMessageButton content={m.content} />
+                    <CopyMessageButton
+                      content={getVisibleAssistantContent(m.content)}
+                    />
                   </div>
                 )}
-                {isAssistant && onFollowUpPrompt && followUpSuggestions.length > 0 && (
+                {isAssistant && onFollowUpPrompt && showFollowUps && (
                   <ChatFollowUpChips
                     suggestions={followUpSuggestions}
                     disabled={loading}
