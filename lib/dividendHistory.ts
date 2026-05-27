@@ -338,6 +338,7 @@ export function normalizeDividendHistoryContext(
     cagr5yPct: readNumber(data.cagr5yPct ?? data.cagr_5y_pct),
     cagr10yPct: readNumber(data.cagr10yPct ?? data.cagr_10y_pct),
     dividendYieldPct: readNumber(data.dividendYieldPct ?? data.dividend_yield_pct),
+    priceCagrPct: readNumber(data.priceCagrPct ?? data.price_cagr_pct),
     annualIncome,
     recentPayments,
     payments,

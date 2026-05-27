@@ -99,6 +99,7 @@ export type DividendHistoryContext = {
   cagr5yPct?: number | null;
   cagr10yPct?: number | null;
   dividendYieldPct?: number | null;
+  priceCagrPct?: number | null;
   annualIncome: AnnualDividendIncome[];
   recentPayments: DividendPaymentItem[];
   payments: DividendPaymentItem[];

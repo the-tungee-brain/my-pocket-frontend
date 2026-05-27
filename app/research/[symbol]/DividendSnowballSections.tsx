@@ -317,47 +317,58 @@ export function DividendSnowballStats({
     scenario.projectYears,
   );
   const currentYieldPct = resolveCurrentYieldPct(history, sharePrice);
-  const projectedAnnualIncome =
-    scenario.advanced?.annualIncomeLatestDrip ?? scenario.annualIncomeLatest;
+  const priceGrowthPct =
+    history.priceCagrPct ?? history.scenario.advanced?.priceCagrPct ?? null;
 
   return (
-    <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-3">
-      <StatCard
-        label="Dividend streak"
-        value={
-          history.consecutiveAnnualIncreases > 0
-            ? `${history.consecutiveAnnualIncreases} yrs`
-            : "—"
-        }
-        hint="Years in a row the annual dividend per share increased"
-      />
-      <StatCard
-        label="Current yield"
-        value={formatYieldPct(currentYieldPct)}
-        hint="Latest annual dividend per share ÷ your share price"
-      />
-      {isEtf ? (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-3">
         <StatCard
-          label="Expense ratio"
-          value={formatExpenseRatio(expenseRatio) ?? "—"}
-          hint="Annual fund fee deducted from ETF returns"
+          label="Dividend streak"
+          value={
+            history.consecutiveAnnualIncreases > 0
+              ? `${history.consecutiveAnnualIncreases} yrs`
+              : "—"
+          }
+          hint="Years in a row the annual dividend per share increased"
         />
-      ) : null}
-      <StatCard
-        label="5Y dividend CAGR"
-        value={formatPct(history.cagr5yPct)}
-        hint="Average annual dividend growth, completed years"
-      />
-      <StatCard
-        label={`${endYear} annual dividend`}
-        value={formatUsd(projectedAnnualIncome, { maximumFractionDigits: 0 })}
-        hint={`Estimated cash per year in ${projectYears} years`}
-      />
-      <StatCard
-        label={`${projectYears}-year total`}
-        value={formatUsd(scenario.totalCollected, { maximumFractionDigits: 0 })}
-        hint={`Estimated dividend cash collected ${currentYear}–${endYear}`}
-      />
+        <StatCard
+          label="Current yield"
+          value={formatYieldPct(currentYieldPct)}
+          hint="Latest annual dividend per share ÷ your share price"
+        />
+        {isEtf ? (
+          <StatCard
+            label="Expense ratio"
+            value={formatExpenseRatio(expenseRatio) ?? "—"}
+            hint="Annual fund fee deducted from ETF returns"
+          />
+        ) : null}
+        <StatCard
+          label="5Y dividend CAGR"
+          value={formatPct(history.cagr5yPct)}
+          hint="Average annual dividend growth, completed years"
+        />
+        <StatCard
+          label="5Y price growth"
+          value={formatPct(priceGrowthPct)}
+          hint="Average annual share price growth, applied automatically"
+        />
+        <StatCard
+          label={`${projectYears}-year total`}
+          value={formatUsd(scenario.totalCollected, { maximumFractionDigits: 0 })}
+          hint={`Estimated dividend cash collected ${currentYear}–${endYear}`}
+        />
+      </div>
+      <p className="text-xs leading-relaxed text-muted">
+        Projections combine historic dividend growth (5Y CAGR when available),{" "}
+        {priceGrowthPct != null
+          ? `${priceGrowthPct.toFixed(1)}%`
+          : "estimated"}{" "}
+        annual price growth, and your share count. Portfolio value also reflects
+        price growth; enable DRIP below to reinvest dividends into more shares.
+        Past growth rates are not guaranteed to continue.
+      </p>
     </div>
   );
 }
@@ -721,12 +732,6 @@ export function DividendSnowballScenarioCard({
 }) {
   const { scenario } = history;
   const [lastEdited, setLastEdited] = useState<SnowballInputSource>("investment");
-  const growthPct =
-    scenario.annualIncomeStart > 0
-      ? ((scenario.annualIncomeLatest - scenario.annualIncomeStart) /
-          scenario.annualIncomeStart) *
-        100
-      : null;
 
   const investmentUsd = scenarioParams?.investmentUsd ?? scenario.investmentUsd ?? null;
   const sharePrice = scenarioParams?.sharePrice ?? scenario.sharePrice ?? null;
@@ -742,6 +747,8 @@ export function DividendSnowballScenarioCard({
       ? roundSnowball(investmentUsd / sharePrice)
       : roundSnowball(scenario.shares));
   const advanced = scenario.advanced;
+  const priceGrowthPct =
+    history.priceCagrPct ?? advanced?.priceCagrPct ?? null;
 
   function emitScenario(
     source: SnowballInputSource,
@@ -771,9 +778,12 @@ export function DividendSnowballScenarioCard({
         <div>
           <p className="text-sm font-medium text-foreground">Income snowball</p>
           <p className="mt-1 text-xs text-muted">
-            Forward-project dividend income from this year ({currentYear})
-            through the next {projectYears} years ({endYear}). Enter investment or
-            shares — the other is calculated from share price.
+            Forward-project dividend income from {currentYear} through {endYear}{" "}
+            using historic dividend growth
+            {history.priceCagrPct != null
+              ? ` and ${history.priceCagrPct.toFixed(1)}% price growth`
+              : ""}
+            . Enter investment or shares — the other is calculated from share price.
           </p>
         </div>
       </div>
@@ -893,34 +903,6 @@ export function DividendSnowballScenarioCard({
         </div>
       ) : null}
 
-      {onScenarioChange && sharePrice != null && sharePrice > 0 ? (
-        <label className="block max-w-xs space-y-1 text-xs text-muted">
-          Price growth (% / yr)
-          <input
-            type="number"
-            min={-99}
-            max={500}
-            step={0.1}
-            placeholder={
-              advanced?.priceCagrPct != null
-                ? String(advanced.priceCagrPct)
-                : "Auto from 5Y history"
-            }
-            value={scenarioParams?.priceCagrPct ?? ""}
-            onChange={(event) => {
-              const raw = event.target.value.trim();
-              updateScenario({
-                priceCagrPct: raw === "" ? null : Number(event.target.value),
-              });
-            }}
-            className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
-          />
-          <span className="block text-[11px] leading-snug">
-            Applied to portfolio value and historical DRIP backtest
-          </span>
-        </label>
-      ) : null}
-
       {onScenarioChange ? (
         <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
           <label className="flex items-start gap-3 text-sm text-foreground">
@@ -959,22 +941,13 @@ export function DividendSnowballScenarioCard({
         </div>
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Est. annual dividend · {endYear}
+            5Y price growth
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
-            {formatUsd(
-              advanced?.annualIncomeLatestDrip ?? scenario.annualIncomeLatest,
-              { maximumFractionDigits: 0 },
-            )}
+            {formatPct(priceGrowthPct)}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {advanced && reinvestDividends
-              ? `Cash per year with ${formatSnowballShares(advanced.finalShares)} shares after DRIP`
-              : advanced
-                ? "Cash per year with the same share count"
-                : growthPct != null && growthPct > 0
-                  ? `Up ${growthPct.toFixed(0)}% vs ${currentYear}, same share count`
-                  : "Cash per year with the same share count"}
+            Applied automatically to portfolio value and DRIP share purchases
           </p>
         </div>
       </div>
@@ -1010,19 +983,23 @@ export function DividendSnowballScenarioCard({
           </div>
           <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
-              {reinvestDividends ? "Reinvested" : "Price growth"}
+              {reinvestDividends ? "Reinvested" : `Share price · ${endYear}`}
             </p>
             <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
               {reinvestDividends
                 ? formatUsd(advanced.totalDividendsReinvested, {
                     maximumFractionDigits: 0,
                   })
-                : `${advanced.priceCagrPct.toFixed(1)}% / yr`}
+                : formatUsd(advanced.sharePriceLatest, {
+                    maximumFractionDigits: 2,
+                  })}
             </p>
             <p className="mt-1 text-[11px] text-muted">
               {reinvestDividends
                 ? `${advanced.priceCagrPct.toFixed(1)}% avg price growth / yr`
-                : "Used for portfolio value projection"}
+                : `Up from ${formatUsd(advanced.sharePriceAtStart, {
+                    maximumFractionDigits: 2,
+                  })} in ${currentYear}`}
             </p>
           </div>
         </div>
@@ -1069,18 +1046,22 @@ export function DividendSnowballScenarioCard({
       ) : null}
 
       <p className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2 text-xs text-muted">
+        {`Uses ${scenario.dividendCagrPct.toFixed(1)}% dividend growth and ${
+          advanced?.priceCagrPct != null
+            ? `${advanced.priceCagrPct.toFixed(1)}%`
+            : history.priceCagrPct != null
+              ? `${history.priceCagrPct.toFixed(1)}%`
+              : "historic"
+        } price growth over ${projectYears} years. `}
         {reinvestDividends && advanced
-          ? `Projects ${formatUsd(investmentUsd ?? 0, {
+          ? `DRIP reinvests ${formatUsd(advanced.totalDividendsReinvested, {
               maximumFractionDigits: 0,
-            })} invested today with DRIP, ${scenario.dividendCagrPct.toFixed(
-              1,
-            )}% dividend growth, and ${advanced.priceCagrPct.toFixed(
-              1,
-            )}% price growth over ${projectYears} years. `
-          : `Projected dividends collected over ${projectYears} years: ${formatUsd(
-              scenario.totalCollected,
-              { maximumFractionDigits: 0 },
-            )} on a flat ${formatSnowballShares(shares)}-share position. `}
+            })} of dividends into additional shares. `
+          : advanced
+            ? `Portfolio value assumes flat share count with compounding share price. `
+            : `Projected dividends collected: ${formatUsd(scenario.totalCollected, {
+                maximumFractionDigits: 0,
+              })} on ${formatSnowballShares(shares)} shares. `}
         Forward projections assume historic growth rates continue. Past performance
         does not guarantee future results.
       </p>
