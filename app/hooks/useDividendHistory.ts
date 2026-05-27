@@ -5,7 +5,10 @@ import type { DividendHistoryContext } from "@/app/types/research";
 import {
   fetchDividendHistory,
   getCachedDividendHistory,
+  mergeDividendHistoryContext,
+  needsProjectionRefetch,
   resolveDividendScenarioShares,
+  resolveSnowballPriceCagrPct,
   scenarioCacheKey,
   type DividendFetchParams,
 } from "@/lib/dividendHistory";
@@ -67,10 +70,25 @@ export function useDividendHistory(
   const [retryCount, setRetryCount] = useState(0);
   const historyRef = useRef(history);
   historyRef.current = history;
+  const priceCagrRef = useRef<number | null>(null);
 
   const refetch = useCallback(() => {
     setRetryCount((count) => count + 1);
   }, []);
+
+  function mergeHistory(
+    next: DividendHistoryContext,
+    previous: DividendHistoryContext | null,
+  ): DividendHistoryContext {
+    const merged = mergeDividendHistoryContext(next, previous);
+    const resolvedPriceCagr = resolveSnowballPriceCagrPct(merged);
+    if (resolvedPriceCagr != null) {
+      priceCagrRef.current = resolvedPriceCagr;
+    } else if (priceCagrRef.current != null) {
+      return { ...merged, priceCagrPct: priceCagrRef.current };
+    }
+    return merged;
+  }
 
   useEffect(() => {
     if (!symbolKey) {
@@ -78,6 +96,7 @@ export function useDividendHistory(
       setIsLoading(false);
       setIsFetching(false);
       setError(null);
+      priceCagrRef.current = null;
       return;
     }
 
@@ -90,8 +109,15 @@ export function useDividendHistory(
     }
 
     const cached = getCachedDividendHistory(symbolKey, fetchParams);
-    if (cached && retryCount === 0) {
-      setHistory(cached);
+    const hasFetchSharePrice =
+      fetchParams.sharePrice != null && fetchParams.sharePrice > 0;
+    if (
+      cached &&
+      retryCount === 0 &&
+      !hasFetchSharePrice &&
+      !needsProjectionRefetch(cached, fetchParams)
+    ) {
+      setHistory(mergeHistory(cached, historyRef.current));
       setIsLoading(false);
       setIsFetching(false);
       setError(null);
@@ -122,7 +148,7 @@ export function useDividendHistory(
           return;
         }
 
-        setHistory(data);
+        setHistory(mergeHistory(data, historyRef.current));
         setError(null);
       } catch (e: unknown) {
         if (cancelled) return;

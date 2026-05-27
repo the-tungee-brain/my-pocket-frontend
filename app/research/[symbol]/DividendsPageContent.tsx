@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { History, LineChart, TrendingUp } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useDividendHistory } from "@/app/hooks/useDividendHistory";
@@ -15,7 +15,12 @@ import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { PageSplit } from "@/components/PageShell";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { defaultDividendInvestmentUsd } from "@/lib/dividendHistory";
+import {
+  defaultDividendInvestmentUsd,
+  resolveEffectiveScenarioParams,
+  resolveSnowballAdvancedMetrics,
+  resolveSnowballPriceCagrPct,
+} from "@/lib/dividendHistory";
 import {
   DividendHistoryCharts,
   DividendRecentPaymentsTable,
@@ -131,59 +136,93 @@ export function DividendsPageContent({ symbol }: Props) {
   );
 
   useEffect(() => {
-    if (marketSharePrice == null) return;
     setScenarioParams((current) => {
-      if (current.sharePrice != null && current.sharePrice > 0) {
-        return current;
-      }
-      const next = { ...current, sharePrice: marketSharePrice };
+      const next = resolveEffectiveScenarioParams(current, {
+        marketSharePrice,
+        heldShares,
+      });
       if (
-        (next.shares == null || next.shares <= 0) &&
-        next.investmentUsd != null &&
-        next.investmentUsd > 0
+        next.sharePrice === current.sharePrice &&
+        next.investmentUsd === current.investmentUsd &&
+        next.shares === current.shares
       ) {
-        next.shares = roundToTwo(next.investmentUsd / marketSharePrice);
+        return current;
       }
       return next;
     });
-  }, [marketSharePrice]);
-
-  useEffect(() => {
-    setScenarioParams((current) => {
-      if (current.investmentUsd != null && current.investmentUsd > 0) {
-        if (current.shares != null && current.shares > 0) {
-          return current;
-        }
-        const price = current.sharePrice ?? marketSharePrice;
-        if (price != null && price > 0) {
-          return {
-            ...current,
-            shares: roundToTwo(current.investmentUsd / price),
-          };
-        }
-        return current;
-      }
-
-      const price = current.sharePrice ?? marketSharePrice;
-      const investmentUsd = defaultDividendInvestmentUsd(heldShares, price);
-      return {
-        ...current,
-        investmentUsd,
-        sharePrice: current.sharePrice ?? price,
-        shares:
-          price != null && investmentUsd > 0
-            ? roundToTwo(investmentUsd / price)
-            : current.shares ?? null,
-      };
-    });
   }, [heldShares, marketSharePrice]);
 
-  const debouncedScenarioParams = useDebouncedValue(scenarioParams, 400);
+  const debouncedInvestmentInputs = useDebouncedValue(
+    {
+      investmentUsd: scenarioParams.investmentUsd,
+      shares: scenarioParams.shares,
+    },
+    400,
+  );
+
+  const fetchScenarioParams = useMemo(
+    () =>
+      resolveEffectiveScenarioParams(
+        {
+          ...scenarioParams,
+          investmentUsd: debouncedInvestmentInputs.investmentUsd,
+          shares: debouncedInvestmentInputs.shares,
+        },
+        {
+          marketSharePrice,
+          heldShares,
+        },
+      ),
+    [scenarioParams, debouncedInvestmentInputs, marketSharePrice, heldShares],
+  );
 
   const { history, isLoading, isFetching, error, refetch } = useDividendHistory(symbol, {
     accessToken: session?.accessToken,
-    ...debouncedScenarioParams,
+    ...fetchScenarioParams,
   });
+
+  const displayScenarioParams = useMemo(
+    () =>
+      resolveEffectiveScenarioParams(scenarioParams, {
+        marketSharePrice,
+        heldShares,
+        scenario: history?.scenario ?? null,
+      }),
+    [scenarioParams, marketSharePrice, heldShares, history?.scenario],
+  );
+
+  const advancedMetrics = useMemo(() => {
+    if (!history) return null;
+    const sharePrice = displayScenarioParams.sharePrice ?? marketSharePrice ?? null;
+    if (sharePrice == null || sharePrice <= 0) return null;
+
+    const shares =
+      displayScenarioParams.shares != null && displayScenarioParams.shares > 0
+        ? displayScenarioParams.shares
+        : history.scenario.shares;
+    return resolveSnowballAdvancedMetrics(history, {
+      shares,
+      sharePrice,
+      reinvestDividends: displayScenarioParams.reinvestDividends ?? false,
+      projectYears: displayScenarioParams.projectYears ?? 10,
+      priceCagrPct: resolveSnowballPriceCagrPct(
+        history,
+        displayScenarioParams.priceCagrPct,
+      ),
+    });
+  }, [history, displayScenarioParams, marketSharePrice]);
+
+  const marketPriceReadyRef = useRef(false);
+  useEffect(() => {
+    marketPriceReadyRef.current = false;
+  }, [symbolUpper]);
+
+  useEffect(() => {
+    if (marketSharePrice == null || marketSharePrice <= 0) return;
+    if (marketPriceReadyRef.current) return;
+    marketPriceReadyRef.current = true;
+    refetch();
+  }, [marketSharePrice, refetch]);
 
   const showInitialLoading = isLoading && !history;
   const showUnavailable = !showInitialLoading && !history;
@@ -252,7 +291,8 @@ export function DividendsPageContent({ symbol }: Props) {
                 />
                 <DividendSnowballScenarioCard
                   history={history}
-                  scenarioParams={scenarioParams}
+                  scenarioParams={displayScenarioParams}
+                  advancedMetrics={advancedMetrics}
                   onScenarioChange={setScenarioParams}
                 />
               </div>

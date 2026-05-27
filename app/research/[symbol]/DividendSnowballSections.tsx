@@ -3,13 +3,19 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import type {
   AnnualDividendIncome,
+  DividendAdvancedSnowballScenario,
   DividendHistoryContext,
   DividendPaymentItem,
   DividendScenarioParams,
 } from "@/app/types/research";
 import { DIVIDEND_PROJECTION_YEAR_PRESETS } from "@/app/types/research";
 import { formatUsd } from "@/lib/formatCurrency";
-import { dividendProjectionWindow, resolveCurrentYieldPct } from "@/lib/dividendHistory";
+import {
+  dividendProjectionWindow,
+  resolveCurrentYieldPct,
+  resolveSnowballAdvancedMetrics,
+  resolveSnowballPriceCagrPct,
+} from "@/lib/dividendHistory";
 import { formatExpenseRatio } from "@/lib/etfHoldings";
 import { cn } from "@/lib/utils";
 
@@ -78,7 +84,9 @@ function SnowballNumericInput({
         setIsFocused(false);
         const trimmed = text.trim();
         if (trimmed === "") {
-          setText(value != null && value > 0 ? String(roundSnowball(value)) : "");
+          setText(
+            value != null && value > 0 ? String(roundSnowball(value)) : "",
+          );
           return;
         }
         const next = Number(trimmed);
@@ -120,10 +128,12 @@ function buildScenarioParams(
   },
 ): DividendScenarioParams {
   const sharePrice = values.sharePrice ?? base?.sharePrice ?? null;
-  const reinvestDividends = values.reinvestDividends ?? base?.reinvestDividends ?? false;
+  const reinvestDividends =
+    values.reinvestDividends ?? base?.reinvestDividends ?? false;
   const priceCagrPct = values.priceCagrPct ?? base?.priceCagrPct ?? null;
   const projectYears = values.projectYears ?? base?.projectYears ?? 10;
-  const dividendCagrPct = values.dividendCagrPct ?? base?.dividendCagrPct ?? null;
+  const dividendCagrPct =
+    values.dividendCagrPct ?? base?.dividendCagrPct ?? null;
 
   if (sharePrice != null && sharePrice > 0) {
     if (source === "shares" && values.shares != null && values.shares > 0) {
@@ -174,7 +184,8 @@ function mergeScenarioParams(
     shares: next.shares ?? base?.shares ?? null,
     projectYears: next.projectYears ?? base?.projectYears ?? 10,
     dividendCagrPct: next.dividendCagrPct ?? base?.dividendCagrPct ?? null,
-    reinvestDividends: next.reinvestDividends ?? base?.reinvestDividends ?? false,
+    reinvestDividends:
+      next.reinvestDividends ?? base?.reinvestDividends ?? false,
     priceCagrPct: next.priceCagrPct ?? base?.priceCagrPct ?? null,
   };
 }
@@ -356,15 +367,15 @@ export function DividendSnowballStats({
         />
         <StatCard
           label={`${projectYears}-year total`}
-          value={formatUsd(scenario.totalCollected, { maximumFractionDigits: 0 })}
+          value={formatUsd(scenario.totalCollected, {
+            maximumFractionDigits: 0,
+          })}
           hint={`Estimated dividend cash collected ${currentYear}–${endYear}`}
         />
       </div>
       <p className="text-xs leading-relaxed text-muted">
         Projections combine historic dividend growth (5Y CAGR when available),{" "}
-        {priceGrowthPct != null
-          ? `${priceGrowthPct.toFixed(1)}%`
-          : "estimated"}{" "}
+        {priceGrowthPct != null ? `${priceGrowthPct.toFixed(1)}%` : "estimated"}{" "}
         annual price growth, and your share count. Portfolio value also reflects
         price growth; enable DRIP below to reinvest dividends into more shares.
         Past growth rates are not guaranteed to continue.
@@ -384,7 +395,9 @@ export function DividendAnnualTotalsChart({
   const chartRows = rows.slice(-limit);
   if (chartRows.length === 0) {
     return (
-      <p className="text-sm text-muted">Annual dividend totals are not available.</p>
+      <p className="text-sm text-muted">
+        Annual dividend totals are not available.
+      </p>
     );
   }
 
@@ -479,7 +492,13 @@ export function DividendAnnualTotalsChart({
                 rx={3}
                 fill={row.isPartialYear ? BAR_FILL_PARTIAL : BAR_FILL}
                 fillOpacity={
-                  isDimmed ? 0.35 : row.isPartialYear ? 0.65 : isActive ? 1 : 0.95
+                  isDimmed
+                    ? 0.35
+                    : row.isPartialYear
+                      ? 0.65
+                      : isActive
+                        ? 1
+                        : 0.95
                 }
                 className="pointer-events-none transition-[fill-opacity] duration-150"
               />
@@ -530,7 +549,9 @@ export function DividendPayoutHistoryChart({
   const chartPayments = payments.slice(-limit);
   if (chartPayments.length === 0) {
     return (
-      <p className="text-sm text-muted">Dividend payout history is not available.</p>
+      <p className="text-sm text-muted">
+        Dividend payout history is not available.
+      </p>
     );
   }
 
@@ -544,12 +565,15 @@ export function DividendPayoutHistoryChart({
     0.0001,
   );
   const yTicks = buildYTicks(maxValue);
-  const step = chartPayments.length > 1 ? plotWidth / (chartPayments.length - 1) : 0;
+  const step =
+    chartPayments.length > 1 ? plotWidth / (chartPayments.length - 1) : 0;
 
   const points = chartPayments.map((payment, index) => {
     const x = padding.left + index * step;
     const y =
-      padding.top + plotHeight - (payment.amountPerShare / maxValue) * plotHeight;
+      padding.top +
+      plotHeight -
+      (payment.amountPerShare / maxValue) * plotHeight;
     return { payment, x, y, index };
   });
 
@@ -576,7 +600,12 @@ export function DividendPayoutHistoryChart({
     const pointerX = svgPointerX(event);
     if (pointerX == null) return;
     setActiveIndex(
-      nearestSeriesIndex(pointerX, padding.left, plotWidth, chartPayments.length),
+      nearestSeriesIndex(
+        pointerX,
+        padding.left,
+        plotWidth,
+        chartPayments.length,
+      ),
     );
   }
 
@@ -619,7 +648,12 @@ export function DividendPayoutHistoryChart({
           );
         })}
 
-        <path d={areaPath} fill={LINE_STROKE} fillOpacity={0.12} className="pointer-events-none" />
+        <path
+          d={areaPath}
+          fill={LINE_STROKE}
+          fillOpacity={0.12}
+          className="pointer-events-none"
+        />
         <path
           d={linePath}
           fill="none"
@@ -724,31 +758,53 @@ export function DividendHistoryCharts({
 export function DividendSnowballScenarioCard({
   history,
   scenarioParams,
+  advancedMetrics,
   onScenarioChange,
 }: {
   history: DividendHistoryContext;
   scenarioParams?: DividendScenarioParams;
+  advancedMetrics?: DividendAdvancedSnowballScenario | null;
   onScenarioChange?: (params: DividendScenarioParams) => void;
 }) {
   const { scenario } = history;
-  const [lastEdited, setLastEdited] = useState<SnowballInputSource>("investment");
+  const [lastEdited, setLastEdited] =
+    useState<SnowballInputSource>("investment");
 
-  const investmentUsd = scenarioParams?.investmentUsd ?? scenario.investmentUsd ?? null;
   const sharePrice = scenarioParams?.sharePrice ?? scenario.sharePrice ?? null;
   const reinvestDividends = scenarioParams?.reinvestDividends ?? false;
-  const projectYears = scenarioParams?.projectYears ?? scenario.projectYears ?? 10;
+  const projectYears =
+    scenarioParams?.projectYears ?? scenario.projectYears ?? 10;
   const { currentYear, endYear } = dividendProjectionWindow(projectYears);
   const shares =
-    scenarioParams?.shares ??
-    (investmentUsd != null &&
-    investmentUsd > 0 &&
-    sharePrice != null &&
-    sharePrice > 0
-      ? roundSnowball(investmentUsd / sharePrice)
-      : roundSnowball(scenario.shares));
-  const advanced = scenario.advanced;
-  const priceGrowthPct =
-    history.priceCagrPct ?? advanced?.priceCagrPct ?? null;
+    scenarioParams?.shares != null && scenarioParams.shares > 0
+      ? roundSnowball(scenarioParams.shares)
+      : roundSnowball(scenario.shares);
+  const investmentUsd =
+    scenarioParams?.investmentUsd != null && scenarioParams.investmentUsd > 0
+      ? scenarioParams.investmentUsd
+      : scenario.investmentUsd != null && scenario.investmentUsd > 0
+        ? scenario.investmentUsd
+        : sharePrice != null && sharePrice > 0 && shares > 0
+          ? roundSnowball(shares * sharePrice)
+          : null;
+  const advanced =
+    advancedMetrics ??
+    resolveSnowballAdvancedMetrics(history, {
+      shares,
+      sharePrice,
+      reinvestDividends,
+      projectYears,
+      priceCagrPct: resolveSnowballPriceCagrPct(
+        history,
+        scenarioParams?.priceCagrPct,
+      ),
+    });
+  const endYearDividendGrowthPct =
+    scenario.annualIncomeStart > 0
+      ? ((scenario.annualIncomeLatest - scenario.annualIncomeStart) /
+          scenario.annualIncomeStart) *
+        100
+      : null;
 
   function emitScenario(
     source: SnowballInputSource,
@@ -783,7 +839,8 @@ export function DividendSnowballScenarioCard({
             {history.priceCagrPct != null
               ? ` and ${history.priceCagrPct.toFixed(1)}% price growth`
               : ""}
-            . Enter investment or shares — the other is calculated from share price.
+            . Enter investment or shares — the other is calculated from share
+            price.
           </p>
         </div>
       </div>
@@ -864,10 +921,12 @@ export function DividendSnowballScenarioCard({
       {onScenarioChange ? (
         <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
           <div>
-            <p className="text-xs font-medium text-foreground">Projection horizon</p>
+            <p className="text-xs font-medium text-foreground">
+              Projection horizon
+            </p>
             <p className="mt-1 text-[11px] text-muted">
-              {currentYear} → {endYear} ·{" "}
-              {scenario.dividendCagrPct.toFixed(1)}% avg dividend growth / yr
+              {currentYear} → {endYear} · {scenario.dividendCagrPct.toFixed(1)}%
+              avg dividend growth / yr
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -895,7 +954,9 @@ export function DividendSnowballScenarioCard({
               step={1}
               value={projectYears}
               onCommit={(next) =>
-                updateScenario({ projectYears: Math.max(1, Math.min(50, Math.round(next))) })
+                updateScenario({
+                  projectYears: Math.max(1, Math.min(50, Math.round(next))),
+                })
               }
               className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
             />
@@ -931,7 +992,9 @@ export function DividendSnowballScenarioCard({
             Est. annual dividend · {currentYear}
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
-            {formatUsd(scenario.annualIncomeStart, { maximumFractionDigits: 0 })}
+            {formatUsd(scenario.annualIncomeStart, {
+              maximumFractionDigits: 0,
+            })}
           </p>
           <p className="mt-1 text-xs text-muted">
             {reinvestDividends
@@ -941,13 +1004,23 @@ export function DividendSnowballScenarioCard({
         </div>
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            5Y price growth
+            Est. annual dividend · {endYear}
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
-            {formatPct(priceGrowthPct)}
+            {formatUsd(
+              reinvestDividends
+                ? (advanced?.annualIncomeLatestDrip ??
+                    scenario.annualIncomeLatest)
+                : scenario.annualIncomeLatest,
+              { maximumFractionDigits: 0 },
+            )}
           </p>
           <p className="mt-1 text-xs text-muted">
-            Applied automatically to portfolio value and DRIP share purchases
+            {reinvestDividends && advanced
+              ? `Cash per year with ${formatSnowballShares(advanced.finalShares)} shares after DRIP`
+              : endYearDividendGrowthPct != null && endYearDividendGrowthPct > 0
+                ? `Up ${endYearDividendGrowthPct.toFixed(0)}% vs ${currentYear}, same share count`
+                : "Cash per year with the same share count"}
           </p>
         </div>
       </div>
@@ -971,7 +1044,7 @@ export function DividendSnowballScenarioCard({
           </div>
           <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
-              {reinvestDividends ? "Shares after DRIP" : "Share count"}
+              {reinvestDividends ? "Shares after DRIP" : "Shares"}
             </p>
             <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
               {formatSnowballShares(advanced.finalShares)}
@@ -983,64 +1056,18 @@ export function DividendSnowballScenarioCard({
           </div>
           <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
-              {reinvestDividends ? "Reinvested" : `Share price · ${endYear}`}
+              Reinvested
             </p>
             <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
-              {reinvestDividends
-                ? formatUsd(advanced.totalDividendsReinvested, {
-                    maximumFractionDigits: 0,
-                  })
-                : formatUsd(advanced.sharePriceLatest, {
-                    maximumFractionDigits: 2,
-                  })}
+              {formatUsd(advanced.totalDividendsReinvested, {
+                maximumFractionDigits: 0,
+              })}
             </p>
             <p className="mt-1 text-[11px] text-muted">
               {reinvestDividends
                 ? `${advanced.priceCagrPct.toFixed(1)}% avg price growth / yr`
-                : `Up from ${formatUsd(advanced.sharePriceAtStart, {
-                    maximumFractionDigits: 2,
-                  })} in ${currentYear}`}
+                : `${advanced.priceCagrPct.toFixed(1)}% avg price growth / yr · no reinvestment`}
             </p>
-          </div>
-        </div>
-      ) : null}
-
-      {history.historicalBacktest ? (
-        <div className="rounded-xl border border-border bg-surface-elevated/20 p-3">
-          <p className="text-sm font-medium text-foreground">Historical backtest</p>
-          <p className="mt-1 text-xs text-muted">
-            Actual dividend cash collected {history.historicalBacktest.startYear}–
-            {history.historicalBacktest.endYear} on {formatSnowballShares(shares)}{" "}
-            shares
-          </p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
-              <p className="text-[11px] uppercase tracking-wide text-muted">
-                Cash collected
-              </p>
-              <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
-                {formatUsd(history.historicalBacktest.cashCollected, {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
-            </div>
-            {history.historicalBacktest.drip ? (
-              <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
-                <p className="text-[11px] uppercase tracking-wide text-muted">
-                  If DRIP&apos;d since {history.historicalBacktest.startYear}
-                </p>
-                <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
-                  {formatUsd(
-                    history.historicalBacktest.drip.portfolioValueLatest,
-                    { maximumFractionDigits: 0 },
-                  )}
-                </p>
-                <p className="mt-1 text-[11px] text-muted">
-                  {formatSnowballShares(history.historicalBacktest.drip.finalShares)}{" "}
-                  shares today
-                </p>
-              </div>
-            ) : null}
           </div>
         </div>
       ) : null}
@@ -1059,11 +1086,14 @@ export function DividendSnowballScenarioCard({
             })} of dividends into additional shares. `
           : advanced
             ? `Portfolio value assumes flat share count with compounding share price. `
-            : `Projected dividends collected: ${formatUsd(scenario.totalCollected, {
-                maximumFractionDigits: 0,
-              })} on ${formatSnowballShares(shares)} shares. `}
-        Forward projections assume historic growth rates continue. Past performance
-        does not guarantee future results.
+            : `Projected dividends collected: ${formatUsd(
+                scenario.totalCollected,
+                {
+                  maximumFractionDigits: 0,
+                },
+              )} on ${formatSnowballShares(shares)} shares. `}
+        Forward projections assume historic growth rates continue. Past
+        performance does not guarantee future results.
       </p>
     </div>
   );
@@ -1075,7 +1105,9 @@ export function DividendRecentPaymentsTable({
   payments: DividendPaymentItem[];
 }) {
   if (payments.length === 0) {
-    return <p className="text-sm text-muted">No recent payments were returned.</p>;
+    return (
+      <p className="text-sm text-muted">No recent payments were returned.</p>
+    );
   }
 
   return (
@@ -1090,7 +1122,9 @@ export function DividendRecentPaymentsTable({
         <tbody>
           {payments.map((payment) => (
             <tr key={payment.date} className="border-t border-border">
-              <td className="py-2 pr-4 text-foreground">{formatDate(payment.date)}</td>
+              <td className="py-2 pr-4 text-foreground">
+                {formatDate(payment.date)}
+              </td>
               <td className="py-2 tabular-nums text-foreground">
                 ${payment.amountPerShare.toFixed(4)}
               </td>
@@ -1107,7 +1141,10 @@ export function DividendSnowballSkeleton() {
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="h-20 animate-pulse rounded-xl bg-muted-bg" />
+          <div
+            key={index}
+            className="h-20 animate-pulse rounded-xl bg-muted-bg"
+          />
         ))}
       </div>
       <div className="h-56 animate-pulse rounded-xl bg-muted-bg" />
