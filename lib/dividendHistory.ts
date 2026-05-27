@@ -61,6 +61,16 @@ export function scenarioCacheKey(symbol: string, params: DividendFetchParams): s
     ].join("|");
   }
 
+  if (params.sharePrice != null && params.sharePrice > 0) {
+    return [
+      base,
+      `shares:${shares}`,
+      `px:${params.sharePrice.toFixed(2)}`,
+      `years:${params.projectYears ?? 10}`,
+      params.reinvestDividends ? "drip" : "cash",
+    ].join("|");
+  }
+
   return [
     base,
     `shares:${shares}`,
@@ -308,15 +318,40 @@ export function getCachedDividendHistory(
   return normalized;
 }
 
+export function resolveCurrentYieldPct(
+  history: DividendHistoryContext,
+  sharePrice?: number | null,
+): number | null {
+  if (history.dividendYieldPct != null && Number.isFinite(history.dividendYieldPct)) {
+    return history.dividendYieldPct;
+  }
+
+  const resolvedPrice = sharePrice ?? history.scenario.sharePrice ?? null;
+  const { shares, annualIncomeStart } = history.scenario;
+  if (
+    resolvedPrice == null ||
+    resolvedPrice <= 0 ||
+    shares <= 0 ||
+    annualIncomeStart <= 0
+  ) {
+    return null;
+  }
+
+  const baseDps = annualIncomeStart / shares;
+  return Math.round((baseDps / resolvedPrice) * 10000) / 100;
+}
+
 function buildQueryParams(symbol: string, params: DividendFetchParams): URLSearchParams {
   const query = new URLSearchParams({
     symbol: normalizeKey(symbol),
     shares: String(resolveDividendScenarioShares(params)),
   });
 
+  if (params.sharePrice != null && params.sharePrice > 0) {
+    query.set("share_price", String(params.sharePrice));
+  }
   if (hasInvestment(params)) {
     query.set("investment_usd", String(params.investmentUsd));
-    query.set("share_price", String(params.sharePrice));
   }
   if (params.reinvestDividends) {
     query.set("reinvest_dividends", "true");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import type {
   AnnualDividendIncome,
   DividendHistoryContext,
@@ -9,7 +9,7 @@ import type {
 } from "@/app/types/research";
 import { DIVIDEND_PROJECTION_YEAR_PRESETS } from "@/app/types/research";
 import { formatUsd } from "@/lib/formatCurrency";
-import { dividendProjectionWindow } from "@/lib/dividendHistory";
+import { dividendProjectionWindow, resolveCurrentYieldPct } from "@/lib/dividendHistory";
 import { cn } from "@/lib/utils";
 
 const BAR_FILL = "#34d399";
@@ -209,6 +209,33 @@ function buildYTicks(maxValue: number, tickCount = 4): number[] {
   );
 }
 
+function nearestSeriesIndex(
+  pointerX: number,
+  paddingLeft: number,
+  plotWidth: number,
+  pointCount: number,
+): number {
+  if (pointCount <= 0) return 0;
+  if (pointCount === 1) return 0;
+
+  const step = plotWidth / (pointCount - 1);
+  const relativeX = Math.max(0, Math.min(plotWidth, pointerX - paddingLeft));
+  return Math.round(relativeX / step);
+}
+
+function svgPointerX(event: MouseEvent<SVGElement>): number | null {
+  const svg = event.currentTarget.ownerSVGElement;
+  if (!svg) return null;
+
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return null;
+
+  const point = svg.createSVGPoint();
+  point.x = event.clientX;
+  point.y = event.clientY;
+  return point.matrixTransform(ctm.inverse()).x;
+}
+
 type ChartHoverReadoutProps = {
   label: string;
   value: string;
@@ -271,11 +298,18 @@ function formatYieldPct(value: number | null | undefined): string {
   return `${value.toFixed(2)}%`;
 }
 
-export function DividendSnowballStats({ history }: { history: DividendHistoryContext }) {
+export function DividendSnowballStats({
+  history,
+  sharePrice,
+}: {
+  history: DividendHistoryContext;
+  sharePrice?: number | null;
+}) {
   const { scenario } = history;
   const { currentYear, endYear, projectYears } = dividendProjectionWindow(
     scenario.projectYears,
   );
+  const currentYieldPct = resolveCurrentYieldPct(history, sharePrice);
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
@@ -290,7 +324,7 @@ export function DividendSnowballStats({ history }: { history: DividendHistoryCon
       />
       <StatCard
         label="Current yield"
-        value={formatYieldPct(history.dividendYieldPct)}
+        value={formatYieldPct(currentYieldPct)}
         hint="Latest annual dividend per share ÷ your share price"
       />
       <StatCard
@@ -511,6 +545,14 @@ export function DividendPayoutHistoryChart({
   const activePoint = activeIndex != null ? points[activeIndex] : null;
   const displayPoint = activePoint ?? points[points.length - 1];
 
+  function handlePlotHover(event: MouseEvent<SVGRectElement>) {
+    const pointerX = svgPointerX(event);
+    if (pointerX == null) return;
+    setActiveIndex(
+      nearestSeriesIndex(pointerX, padding.left, plotWidth, chartPayments.length),
+    );
+  }
+
   return (
     <div className="space-y-3">
       <ChartHoverReadout
@@ -561,36 +603,11 @@ export function DividendPayoutHistoryChart({
           className="pointer-events-none"
         />
 
-        {activePoint ? (
-          <line
-            x1={activePoint.x}
-            x2={activePoint.x}
-            y1={padding.top}
-            y2={padding.top + plotHeight}
-            stroke={LINE_STROKE}
-            strokeOpacity={0.35}
-            strokeDasharray="3 3"
-            className="pointer-events-none"
-          />
-        ) : null}
-
         {points.map(({ payment, x, y, index }) => {
           const isActive = activeIndex === index;
           const isDimmed = activeIndex != null && !isActive;
           return (
             <g key={payment.date}>
-              <circle
-                cx={x}
-                cy={y}
-                r={12}
-                fill="transparent"
-                className="cursor-pointer"
-                onMouseEnter={() => setActiveIndex(index)}
-                onFocus={() => setActiveIndex(index)}
-                onBlur={() => setActiveIndex(null)}
-                tabIndex={0}
-                aria-label={`${formatDate(payment.date)}: ${formatPerShare(payment.amountPerShare)} per share`}
-              />
               <circle
                 cx={x}
                 cy={y}
@@ -602,6 +619,30 @@ export function DividendPayoutHistoryChart({
             </g>
           );
         })}
+
+        <rect
+          x={padding.left}
+          y={padding.top}
+          width={plotWidth}
+          height={plotHeight}
+          fill="transparent"
+          className="cursor-crosshair"
+          onMouseMove={handlePlotHover}
+          aria-hidden="true"
+        />
+
+        {activePoint ? (
+          <line
+            x1={activePoint.x}
+            x2={activePoint.x}
+            y1={padding.top}
+            y2={padding.top + plotHeight}
+            stroke={LINE_STROKE}
+            strokeOpacity={0.45}
+            strokeDasharray="3 3"
+            className="pointer-events-none"
+          />
+        ) : null}
 
         {points.map(({ payment, x, index }) =>
           xLabelIndexes.has(index) ? (

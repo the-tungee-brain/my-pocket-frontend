@@ -213,7 +213,10 @@ export function DividendsPageContent({ symbol }: Props) {
               <DividendSnowballSkeleton />
             ) : history ? (
               <div className="space-y-4">
-                <DividendSnowballStats history={history} />
+                <DividendSnowballStats
+                  history={history}
+                  sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
+                />
                 <DividendSnowballScenarioCard
                   history={history}
                   scenarioParams={scenarioParams}
