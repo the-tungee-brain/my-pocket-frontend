@@ -383,35 +383,35 @@ export default function PortfolioPage() {
         </div>
       )}
 
-      <PortfolioSnapshot
-        className={cn(pageSectionClass, "mb-4")}
-        loading={loading}
-        allPositions={allPositions}
-        symbols={symbols}
-        account={account}
-        cashSecuredPutSummary={cashSecuredPutSummary}
-        portfolioMetrics={portfolioMetrics}
-        compactAccountDetails={showContent && activeSection !== "holdings"}
-      />
-
       {showContent && activeSection === "today" && (
         <PageSplit
           main={
-            <AnalysisPanel
-              mode="portfolio"
-              portfolioView="analysis"
-              positions={allPositions}
-              positionMap={positionMap}
-              liquidationValue={
-                account?.securitiesAccount.currentBalances.liquidationValue
-              }
-              symbolAlertMap={symbolAlertMap}
-              autoStart={pendingPortfolioAnalysis}
-              portfolioNavigation={portfolioNavigation}
-              onLoadingChange={setPortfolioAnalysisLoading}
-              onAskFollowUp={() => scrollToChat()}
-              className={pageSectionClass}
-            />
+            <>
+              <PortfolioSnapshot
+                className={pageSectionClass}
+                loading={loading}
+                allPositions={allPositions}
+                symbols={symbols}
+                account={account}
+                cashSecuredPutSummary={cashSecuredPutSummary}
+                portfolioMetrics={portfolioMetrics}
+              />
+              <AnalysisPanel
+                mode="portfolio"
+                portfolioView="analysis"
+                positions={allPositions}
+                positionMap={positionMap}
+                liquidationValue={
+                  account?.securitiesAccount.currentBalances.liquidationValue
+                }
+                symbolAlertMap={symbolAlertMap}
+                autoStart={pendingPortfolioAnalysis}
+                portfolioNavigation={portfolioNavigation}
+                onLoadingChange={setPortfolioAnalysisLoading}
+                onAskFollowUp={() => scrollToChat()}
+                className={pageSectionClass}
+              />
+            </>
           }
           aside={
             <>
@@ -451,17 +451,28 @@ export default function PortfolioPage() {
       {showContent && activeSection === "holdings" && (
         <PageSplit
           main={
-            <AnalysisPanel
-              mode="portfolio"
-              portfolioView="holdings"
-              positions={allPositions}
-              positionMap={positionMap}
-              liquidationValue={
-                account?.securitiesAccount.currentBalances.liquidationValue
-              }
-              symbolAlertMap={symbolAlertMap}
-              className={cn(pageSectionClass, "mb-0")}
-            />
+            <>
+              <PortfolioSnapshot
+                className={pageSectionClass}
+                loading={loading}
+                allPositions={allPositions}
+                symbols={symbols}
+                account={account}
+                cashSecuredPutSummary={cashSecuredPutSummary}
+                portfolioMetrics={portfolioMetrics}
+              />
+              <AnalysisPanel
+                mode="portfolio"
+                portfolioView="holdings"
+                positions={allPositions}
+                positionMap={positionMap}
+                liquidationValue={
+                  account?.securitiesAccount.currentBalances.liquidationValue
+                }
+                symbolAlertMap={symbolAlertMap}
+                className={cn(pageSectionClass, "mb-0")}
+              />
+            </>
           }
           aside={
             <PortfolioRiskSection
@@ -474,15 +485,38 @@ export default function PortfolioPage() {
         />
       )}
 
-      {showContent && activeSection === "activity" && sessionAccessToken && (
-        <RecentActivitySection
-          className={pageSectionClass}
-          accessToken={sessionAccessToken}
-          summary={recentActivity}
-          onRefresh={() => refreshPositions(true)}
-          onRunSuggestedAction={handleSuggestedAction}
-          hideSuggestedActions
+      {!showContent && (
+        <PortfolioSnapshot
+          className={cn(pageSectionClass, "mb-4")}
+          loading={loading}
+          allPositions={allPositions}
+          symbols={symbols}
+          account={account}
+          cashSecuredPutSummary={cashSecuredPutSummary}
+          portfolioMetrics={portfolioMetrics}
         />
+      )}
+
+      {showContent && activeSection === "activity" && sessionAccessToken && (
+        <>
+          <PortfolioSnapshot
+            className={cn(pageSectionClass, "mb-4")}
+            loading={loading}
+            allPositions={allPositions}
+            symbols={symbols}
+            account={account}
+            cashSecuredPutSummary={cashSecuredPutSummary}
+            portfolioMetrics={portfolioMetrics}
+          />
+          <RecentActivitySection
+            className={pageSectionClass}
+            accessToken={sessionAccessToken}
+            summary={recentActivity}
+            onRefresh={() => refreshPositions(true)}
+            onRunSuggestedAction={handleSuggestedAction}
+            hideSuggestedActions
+          />
+        </>
       )}
     </PageShell>
   );

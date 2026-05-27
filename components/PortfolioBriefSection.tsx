@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import {
   AlertTriangle,
   CalendarDays,
-  ChevronDown,
   ExternalLink,
   GitCompareArrows,
   Newspaper,
@@ -35,8 +33,6 @@ import {
   hasPortfolioChangeDetails,
   PortfolioChangesBody,
 } from "@/components/PortfolioChangesSection";
-import { AskAIChip } from "@/components/AskAIChip";
-import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 
@@ -94,15 +90,8 @@ function truncateText(text: string, maxLength: number) {
   return `${trimmed.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
-type BriefHighlight = {
-  id: string;
-  label: string;
-  text: string;
-};
-
 type BriefPreview = {
   lead: string;
-  highlights: BriefHighlight[];
   urgentLead: boolean;
 };
 
@@ -112,7 +101,6 @@ function buildBriefPreview(
 ): BriefPreview {
   const digest = brief.digest;
   const signals = sortSignalsBySeverity(brief.signals ?? []);
-  const highlights: BriefHighlight[] = [];
 
   const urgentSignal = signals.find(
     (signal) => signal.severity === "critical" || signal.severity === "warning",
@@ -138,65 +126,8 @@ function buildBriefPreview(
     lead = `Earnings this week: ${digest!.earningsThisWeek.slice(0, 3).join(", ")}`;
   }
 
-  const addHighlight = (id: string, label: string, text: string) => {
-    if (highlights.length >= 2) return;
-    const normalized = text.trim();
-    if (!normalized || normalized === lead.trim()) return;
-    if (highlights.some((item) => item.text === normalized)) return;
-    highlights.push({
-      id,
-      label,
-      text: truncateText(normalized, 120),
-    });
-  };
-
-  if (changes?.summary && changes.summary !== lead) {
-    addHighlight("changes", "Since yesterday", changes.summary);
-  }
-
-  if (digest?.macroRegime && digest.macroRegime !== lead) {
-    addHighlight("macro", "Macro", digest.macroRegime);
-  }
-
-  for (const signal of signals) {
-    if (signal.message === lead) continue;
-    addHighlight(
-      `signal-${signal.symbol ?? signal.kind}`,
-      signal.symbol ?? "Signal",
-      signal.message,
-    );
-    if (highlights.length >= 2) break;
-  }
-
-  if (highlights.length < 2 && digest?.macroNews?.[0]) {
-    const item = digest.macroNews[0];
-    addHighlight(
-      "market-news",
-      item.source ?? "Market",
-      item.headline,
-    );
-  }
-
-  if (highlights.length < 2 && digest?.topNews?.[0]) {
-    const item = digest.topNews[0];
-    addHighlight(
-      `news-${item.symbol}`,
-      item.symbol,
-      item.headline,
-    );
-  }
-
-  if (highlights.length < 2 && (digest?.earningsThisWeek?.length ?? 0) > 0) {
-    addHighlight(
-      "earnings",
-      "Earnings",
-      digest!.earningsThisWeek.slice(0, 4).join(", "),
-    );
-  }
-
   return {
     lead: lead || "Your daily portfolio snapshot",
-    highlights,
     urgentLead,
   };
 }
@@ -215,8 +146,6 @@ export function PortfolioBriefSection({
   hideSuggestedActions = false,
   className,
 }: Props) {
-  const [expanded, setExpanded] = useState(true);
-
   const mergedBrief: PortfolioIntelligence | null = brief ?? {
     signals: [],
     digest: null,
@@ -234,11 +163,8 @@ export function PortfolioBriefSection({
     ? buildBriefPreview(mergedBrief, changes)
     : {
         lead: "Your daily portfolio snapshot",
-        highlights: [],
         urgentLead: false,
       };
-
-  const hasBodyBelowHeader = expanded || !!error;
 
   return (
     <section
@@ -248,18 +174,8 @@ export function PortfolioBriefSection({
       )}
       aria-label="Portfolio brief"
     >
-      <div
-        className={cn(
-          "flex items-start justify-between gap-2 bg-surface-elevated/50 px-4 py-3",
-          hasBodyBelowHeader && "border-b border-border",
-        )}
-      >
-        <button
-          type="button"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((open) => !open)}
-          className="flex min-w-0 flex-1 items-start gap-2.5 text-left transition hover:opacity-90"
-        >
+      <div className="flex items-start justify-between gap-2 border-b border-border bg-surface-elevated/50 px-4 py-3">
+        <div className="flex min-w-0 flex-1 items-start gap-2.5">
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
             <Sparkles className="h-4 w-4" aria-hidden />
           </div>
@@ -274,68 +190,15 @@ export function PortfolioBriefSection({
                 </span>
               )}
             </div>
-
-            {!expanded && (
-              <>
-                {loading && !hasContent ? (
-                  <p className="mt-1 text-sm text-muted">Loading your brief…</p>
-                ) : (
-                  <>
-                    <p
-                      className={cn(
-                        "mt-1 text-sm leading-snug text-foreground line-clamp-3",
-                        preview.urgentLead && "font-medium",
-                      )}
-                    >
-                      {preview.lead}
-                    </p>
-                    {preview.highlights.length > 0 && (
-                      <ul className="mt-2 space-y-1.5">
-                        {preview.highlights.map((item) => (
-                          <li
-                            key={item.id}
-                            className="flex min-w-0 items-baseline gap-2 text-xs leading-relaxed"
-                          >
-                            <span className="shrink-0 font-medium uppercase tracking-wide text-[10px] text-muted">
-                              {item.label}
-                            </span>
-                            <span className="min-w-0 line-clamp-2 text-muted">
-                              {item.text}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-
-            {expanded && (
-              <p className="mt-1 text-xs leading-relaxed text-muted line-clamp-2">
-                {preview.lead}
-              </p>
-            )}
-          </div>
-        </button>
-
-        <div className="flex shrink-0 items-center gap-2 pt-0.5">
-          {onGoDeeper && !expanded && (
-            <AskAIChip onClick={onGoDeeper} disabled={analyzeLoading} />
-          )}
-          <IconButton
-            size="sm"
-            aria-label={expanded ? "Collapse brief" : "Expand brief"}
-            onClick={() => setExpanded((open) => !open)}
-          >
-            <ChevronDown
+            <p
               className={cn(
-                "h-4 w-4 transition-transform",
-                expanded && "rotate-180",
+                "mt-1 text-xs leading-relaxed text-muted line-clamp-2",
+                preview.urgentLead && "font-medium text-foreground",
               )}
-              aria-hidden
-            />
-          </IconButton>
+            >
+              {loading && !hasContent ? "Loading your brief…" : preview.lead}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -345,8 +208,7 @@ export function PortfolioBriefSection({
         </div>
       )}
 
-      {expanded && (
-        <div className="space-y-4 px-4 py-4">
+      <div className="space-y-4 px-4 py-4">
           {(changesLoading || hasChanges || changes?.summary) && (
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
@@ -610,8 +472,7 @@ export function PortfolioBriefSection({
               )}
             </>
           )}
-        </div>
-      )}
+      </div>
     </section>
   );
 }

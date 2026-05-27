@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertTriangle, BriefcaseBusiness, ChevronDown } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { AlertTriangle, BriefcaseBusiness } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import type {
   CashSecuredPutSummary,
@@ -21,8 +21,6 @@ type Props = {
   cashSecuredPutSummary?: CashSecuredPutSummary | null;
   portfolioMetrics?: PortfolioMetrics | null;
   children?: ReactNode;
-  /** Collapse cash and buying-power stats until expanded. Defaults open on Holdings. */
-  compactAccountDetails?: boolean;
   className?: string;
 };
 
@@ -62,19 +60,11 @@ export function PortfolioSnapshot({
   cashSecuredPutSummary,
   portfolioMetrics,
   children,
-  compactAccountDetails = false,
   className,
 }: Props) {
   const [headerActionsEl, setHeaderActionsEl] = useState<HTMLDivElement | null>(
     null,
   );
-  const [accountDetailsOpen, setAccountDetailsOpen] = useState(
-    !compactAccountDetails,
-  );
-
-  useEffect(() => {
-    setAccountDetailsOpen(!compactAccountDetails);
-  }, [compactAccountDetails]);
 
   if (loading) {
     return (
@@ -197,57 +187,36 @@ export function PortfolioSnapshot({
       </div>
 
       {account && (
-        <>
-          {compactAccountDetails && (
-            <button
-              type="button"
-              aria-expanded={accountDetailsOpen}
-              onClick={() => setAccountDetailsOpen((open) => !open)}
-              className="flex w-full items-center justify-between gap-2 border-t border-border/70 px-4 py-2.5 text-left text-[11px] font-medium text-muted transition hover:bg-muted-bg/40 hover:text-foreground"
-            >
-              <span>Account details · cash & buying power</span>
-              <ChevronDown
-                className={cn(
-                  "h-3.5 w-3.5 shrink-0 transition-transform",
-                  accountDetailsOpen && "rotate-180",
-                )}
-                aria-hidden
-              />
-            </button>
-          )}
-          {(!compactAccountDetails || accountDetailsOpen) && (
-            <div className="grid grid-cols-2 gap-2 border-t border-border/70 px-4 py-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 border-t border-border/70 px-4 py-3 sm:grid-cols-4">
+          <Stat
+            label="Cash"
+            value={formatUsd(balances?.cashBalance ?? 0)}
+          />
+          <Stat
+            label="Buying power"
+            value={formatUsd(balances?.buyingPower ?? 0)}
+          />
+          {cspReserved > 0 ? (
+            <>
               <Stat
-                label="Cash"
-                value={formatUsd(balances?.cashBalance ?? 0)}
+                label="CSP reserved"
+                value={formatUsd(cspReserved)}
+                tone="warning"
               />
               <Stat
-                label="Buying power"
-                value={formatUsd(balances?.buyingPower ?? 0)}
+                label="Cash after CSP"
+                value={cashAfterCsp != null ? formatUsd(cashAfterCsp) : "—"}
               />
-              {cspReserved > 0 ? (
-                <>
-                  <Stat
-                    label="CSP reserved"
-                    value={formatUsd(cspReserved)}
-                    tone="warning"
-                  />
-                  <Stat
-                    label="Cash after CSP"
-                    value={cashAfterCsp != null ? formatUsd(cashAfterCsp) : "—"}
-                  />
-                </>
-              ) : (
-                <Stat
-                  label="Available funds"
-                  value={formatUsd(
-                    balances?.availableFunds ?? balances?.cashBalance ?? 0,
-                  )}
-                />
+            </>
+          ) : (
+            <Stat
+              label="Available funds"
+              value={formatUsd(
+                balances?.availableFunds ?? balances?.cashBalance ?? 0,
               )}
-            </div>
+            />
           )}
-        </>
+        </div>
       )}
 
       <PortfolioSnapshotHeaderActionsContext.Provider value={headerActionsEl}>
