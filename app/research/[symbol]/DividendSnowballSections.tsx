@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import type {
   AnnualDividendIncome,
   DividendHistoryContext,
   DividendPaymentItem,
+  DividendScenarioParams,
 } from "@/app/types/research";
 import { formatUsd } from "@/lib/formatCurrency";
+import { cn } from "@/lib/utils";
 
 const BAR_FILL = "#34d399";
 const BAR_FILL_PARTIAL = "#6ee7b7";
@@ -51,6 +54,43 @@ function buildYTicks(maxValue: number, tickCount = 4): number[] {
   const step = maxValue / tickCount;
   return Array.from({ length: tickCount + 1 }, (_, index) =>
     Number((step * index).toFixed(4)),
+  );
+}
+
+type ChartHoverReadoutProps = {
+  label: string;
+  value: string;
+  sublabel?: string | null;
+  highlighted?: boolean;
+};
+
+function ChartHoverReadout({
+  label,
+  value,
+  sublabel,
+  highlighted = false,
+}: ChartHoverReadoutProps) {
+  return (
+    <div className="mb-2 h-14 shrink-0" aria-live="polite">
+      <div
+        className={cn(
+          "flex h-full items-center justify-between gap-3 rounded-lg border px-3 py-2 transition-colors duration-150",
+          highlighted
+            ? "border-border/70 bg-surface-elevated/50"
+            : "border-border/40 bg-surface-elevated/25",
+        )}
+      >
+        <div className="min-w-0">
+          <p className="truncate text-xs text-muted">{label}</p>
+          {sublabel ? (
+            <p className="truncate text-[10px] text-muted">{sublabel}</p>
+          ) : null}
+        </div>
+        <p className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+          {value}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -114,6 +154,7 @@ export function DividendAnnualTotalsChart({
   rows: AnnualDividendIncome[];
   limit?: number;
 }) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const chartRows = rows.slice(-limit);
   if (chartRows.length === 0) {
     return (
@@ -137,13 +178,27 @@ export function DividendAnnualTotalsChart({
     8,
   );
 
+  const activeRow = activeIndex != null ? chartRows[activeIndex] : null;
+  const displayRow = activeRow ?? chartRows[chartRows.length - 1];
+
   return (
     <div className="space-y-3">
+      <ChartHoverReadout
+        label={`${displayRow.year}${displayRow.isPartialYear ? " (YTD)" : ""}`}
+        value={`${formatPerShare(displayRow.totalPerShare)} / share`}
+        sublabel={
+          activeRow
+            ? `${formatUsd(displayRow.incomeOnShares, { maximumFractionDigits: 2 })} on selected shares`
+            : `Latest year · ${formatUsd(displayRow.incomeOnShares, { maximumFractionDigits: 2 })} on selected shares`
+        }
+        highlighted={activeIndex != null}
+      />
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="h-56 w-full text-border"
         role="img"
         aria-label="Annual dividend totals per share"
+        onMouseLeave={() => setActiveIndex(null)}
       >
         {yTicks.map((tick) => {
           const y = padding.top + plotHeight - (tick / maxValue) * plotHeight;
@@ -173,8 +228,23 @@ export function DividendAnnualTotalsChart({
           const barHeight = (row.totalPerShare / maxValue) * plotHeight;
           const x = padding.left + index * (barWidth + barGap);
           const y = padding.top + plotHeight - barHeight;
+          const isActive = activeIndex === index;
+          const isDimmed = activeIndex != null && !isActive;
           return (
             <g key={row.year}>
+              <rect
+                x={x - 2}
+                y={padding.top}
+                width={barWidth + 4}
+                height={plotHeight}
+                fill="transparent"
+                className="cursor-pointer"
+                onMouseEnter={() => setActiveIndex(index)}
+                onFocus={() => setActiveIndex(index)}
+                onBlur={() => setActiveIndex(null)}
+                tabIndex={0}
+                aria-label={`${row.year}: ${formatPerShare(row.totalPerShare)} per share`}
+              />
               <rect
                 x={x}
                 y={y}
@@ -182,18 +252,31 @@ export function DividendAnnualTotalsChart({
                 height={Math.max(barHeight, 2)}
                 rx={3}
                 fill={row.isPartialYear ? BAR_FILL_PARTIAL : BAR_FILL}
-                fillOpacity={row.isPartialYear ? 0.65 : 0.95}
-              >
-                <title>
-                  {row.year}: {formatPerShare(row.totalPerShare)}
-                  {row.isPartialYear ? " (YTD)" : ""}
-                </title>
-              </rect>
+                fillOpacity={
+                  isDimmed ? 0.35 : row.isPartialYear ? 0.65 : isActive ? 1 : 0.95
+                }
+                className="pointer-events-none transition-[fill-opacity] duration-150"
+              />
+              {isActive ? (
+                <line
+                  x1={x + barWidth / 2}
+                  x2={x + barWidth / 2}
+                  y1={padding.top}
+                  y2={padding.top + plotHeight}
+                  stroke={BAR_FILL}
+                  strokeOpacity={0.35}
+                  strokeDasharray="3 3"
+                  className="pointer-events-none"
+                />
+              ) : null}
               <text
                 x={x + barWidth / 2}
                 y={height - 10}
                 textAnchor="middle"
-                className="fill-muted text-[10px]"
+                className={cn(
+                  "fill-muted text-[10px] pointer-events-none",
+                  isActive && "fill-foreground font-medium",
+                )}
               >
                 {row.year}
                 {row.isPartialYear ? "*" : ""}
@@ -217,6 +300,7 @@ export function DividendPayoutHistoryChart({
   payments: DividendPaymentItem[];
   limit?: number;
 }) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const chartPayments = payments.slice(-limit);
   if (chartPayments.length === 0) {
     return (
@@ -240,7 +324,7 @@ export function DividendPayoutHistoryChart({
     const x = padding.left + index * step;
     const y =
       padding.top + plotHeight - (payment.amountPerShare / maxValue) * plotHeight;
-    return { payment, x, y };
+    return { payment, x, y, index };
   });
 
   const linePath = points
@@ -259,13 +343,23 @@ export function DividendPayoutHistoryChart({
     chartPayments.length - 1,
   ]);
 
+  const activePoint = activeIndex != null ? points[activeIndex] : null;
+  const displayPoint = activePoint ?? points[points.length - 1];
+
   return (
     <div className="space-y-3">
+      <ChartHoverReadout
+        label={formatDate(displayPoint.payment.date)}
+        value={`${formatPerShare(displayPoint.payment.amountPerShare)} / share`}
+        sublabel={activePoint ? null : "Most recent payment"}
+        highlighted={activeIndex != null}
+      />
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="h-56 w-full text-border"
         role="img"
         aria-label="Dividend payout per share over time"
+        onMouseLeave={() => setActiveIndex(null)}
       >
         {yTicks.map((tick) => {
           const y = padding.top + plotHeight - (tick / maxValue) * plotHeight;
@@ -291,7 +385,7 @@ export function DividendPayoutHistoryChart({
           );
         })}
 
-        <path d={areaPath} fill={LINE_STROKE} fillOpacity={0.12} />
+        <path d={areaPath} fill={LINE_STROKE} fillOpacity={0.12} className="pointer-events-none" />
         <path
           d={linePath}
           fill="none"
@@ -299,23 +393,62 @@ export function DividendPayoutHistoryChart({
           strokeWidth={2}
           strokeLinejoin="round"
           strokeLinecap="round"
+          className="pointer-events-none"
         />
-        {points.map(({ payment, x, y }) => (
-          <circle key={payment.date} cx={x} cy={y} r={3.5} fill={LINE_STROKE}>
-            <title>
-              {formatDate(payment.date)}: {formatPerShare(payment.amountPerShare)}
-            </title>
-          </circle>
-        ))}
 
-        {points.map(({ payment, x }, index) =>
+        {activePoint ? (
+          <line
+            x1={activePoint.x}
+            x2={activePoint.x}
+            y1={padding.top}
+            y2={padding.top + plotHeight}
+            stroke={LINE_STROKE}
+            strokeOpacity={0.35}
+            strokeDasharray="3 3"
+            className="pointer-events-none"
+          />
+        ) : null}
+
+        {points.map(({ payment, x, y, index }) => {
+          const isActive = activeIndex === index;
+          const isDimmed = activeIndex != null && !isActive;
+          return (
+            <g key={payment.date}>
+              <circle
+                cx={x}
+                cy={y}
+                r={12}
+                fill="transparent"
+                className="cursor-pointer"
+                onMouseEnter={() => setActiveIndex(index)}
+                onFocus={() => setActiveIndex(index)}
+                onBlur={() => setActiveIndex(null)}
+                tabIndex={0}
+                aria-label={`${formatDate(payment.date)}: ${formatPerShare(payment.amountPerShare)} per share`}
+              />
+              <circle
+                cx={x}
+                cy={y}
+                r={isActive ? 5 : 3.5}
+                fill={LINE_STROKE}
+                fillOpacity={isDimmed ? 0.35 : 1}
+                className="pointer-events-none transition-all duration-150"
+              />
+            </g>
+          );
+        })}
+
+        {points.map(({ payment, x, index }) =>
           xLabelIndexes.has(index) ? (
             <text
               key={`${payment.date}-label`}
               x={x}
               y={height - 10}
               textAnchor="middle"
-              className="fill-muted text-[10px]"
+              className={cn(
+                "fill-muted text-[10px] pointer-events-none",
+                activeIndex === index && "fill-foreground font-medium",
+              )}
             >
               {formatAxisYear(payment.date)}
             </text>
@@ -357,10 +490,12 @@ export function DividendHistoryCharts({
 
 export function DividendSnowballScenarioCard({
   history,
-  onSharesChange,
+  scenarioParams,
+  onScenarioChange,
 }: {
   history: DividendHistoryContext;
-  onSharesChange?: (shares: number) => void;
+  scenarioParams?: DividendScenarioParams;
+  onScenarioChange?: (params: DividendScenarioParams) => void;
 }) {
   const { scenario } = history;
   const growthPct =
@@ -370,6 +505,18 @@ export function DividendSnowballScenarioCard({
         100
       : null;
 
+  const investmentUsd = scenarioParams?.investmentUsd ?? scenario.investmentUsd ?? null;
+  const sharePrice = scenarioParams?.sharePrice ?? scenario.sharePrice ?? null;
+  const reinvestDividends = scenarioParams?.reinvestDividends ?? false;
+  const computedShares =
+    investmentUsd != null &&
+    investmentUsd > 0 &&
+    sharePrice != null &&
+    sharePrice > 0
+      ? investmentUsd / sharePrice
+      : scenario.shares;
+  const advanced = scenario.advanced;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -377,29 +524,121 @@ export function DividendSnowballScenarioCard({
           <p className="text-sm font-medium text-foreground">Income snowball</p>
           <p className="mt-1 text-xs text-muted">
             Compare annual dividend cash from {scenario.startYear} to{" "}
-            {scenario.latestYear} on the same share count.
+            {scenario.latestYear}. Enter dollars to derive fractional shares.
           </p>
         </div>
-        {onSharesChange ? (
-          <label className="flex items-center gap-2 text-xs text-muted">
-            Shares
+      </div>
+
+      {onScenarioChange ? (
+        <div className="grid gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 sm:grid-cols-3">
+          <label className="space-y-1 text-xs text-muted">
+            Investment
             <input
               type="number"
               min={1}
-              max={1000000}
+              max={100000000}
               step={1}
-              defaultValue={scenario.shares}
+              value={investmentUsd ?? ""}
               onChange={(event) => {
                 const next = Number(event.target.value);
-                if (Number.isFinite(next) && next > 0) {
-                  onSharesChange(Math.round(next));
-                }
+                if (!Number.isFinite(next) || next <= 0) return;
+                onScenarioChange({
+                  investmentUsd: next,
+                  sharePrice: sharePrice ?? null,
+                  reinvestDividends,
+                  priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                });
               }}
-              className="w-24 rounded-md border border-border bg-background px-2 py-1 text-sm tabular-nums text-foreground"
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
             />
           </label>
-        ) : null}
-      </div>
+          <label className="space-y-1 text-xs text-muted">
+            Share price
+            <input
+              type="number"
+              min={0.01}
+              max={1000000}
+              step={0.01}
+              value={sharePrice ?? ""}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (!Number.isFinite(next) || next <= 0) return;
+                onScenarioChange({
+                  investmentUsd: investmentUsd ?? null,
+                  sharePrice: next,
+                  reinvestDividends,
+                  priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                });
+              }}
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+            />
+          </label>
+          <div className="space-y-1 text-xs text-muted">
+            Shares
+            <div className="rounded-md border border-border/70 bg-background px-2 py-1.5 text-sm tabular-nums text-foreground">
+              {computedShares.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 4,
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {onScenarioChange ? (
+        <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
+          <label className="flex items-start gap-3 text-sm text-foreground">
+            <input
+              type="checkbox"
+              checked={reinvestDividends}
+              onChange={(event) => {
+                onScenarioChange({
+                  investmentUsd: investmentUsd ?? null,
+                  sharePrice: sharePrice ?? null,
+                  reinvestDividends: event.target.checked,
+                  priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                });
+              }}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="font-medium">Advanced: DRIP + price growth</span>
+              <span className="mt-1 block text-xs text-muted">
+                Reinvest dividends each year and apply average annual price
+                appreciation from {scenario.startYear} to {scenario.latestYear}.
+              </span>
+            </span>
+          </label>
+
+          {reinvestDividends ? (
+            <label className="block space-y-1 text-xs text-muted">
+              Price growth override (% / yr, optional)
+              <input
+                type="number"
+                min={-99}
+                max={500}
+                step={0.1}
+                placeholder={
+                  advanced?.priceCagrPct != null
+                    ? String(advanced.priceCagrPct)
+                    : "Auto from 5Y history"
+                }
+                value={scenarioParams?.priceCagrPct ?? ""}
+                onChange={(event) => {
+                  const raw = event.target.value.trim();
+                  onScenarioChange({
+                    investmentUsd: investmentUsd ?? null,
+                    sharePrice: sharePrice ?? null,
+                    reinvestDividends: true,
+                    priceCagrPct: raw === "" ? null : Number(event.target.value),
+                  });
+                }}
+                className="w-full max-w-xs rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+              />
+            </label>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
@@ -409,30 +648,91 @@ export function DividendSnowballScenarioCard({
           <p className="mt-1 text-xl font-semibold tabular-nums">
             {formatUsd(scenario.annualIncomeStart, { maximumFractionDigits: 0 })}
           </p>
-          <p className="mt-1 text-xs text-muted">Annual dividend cash</p>
+          <p className="mt-1 text-xs text-muted">
+            {reinvestDividends ? "Flat share count" : "Annual dividend cash"}
+          </p>
         </div>
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] uppercase tracking-wide text-muted">
             {scenario.latestYear}
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
-            {formatUsd(scenario.annualIncomeLatest, { maximumFractionDigits: 0 })}
+            {formatUsd(
+              advanced?.annualIncomeLatestDrip ?? scenario.annualIncomeLatest,
+              { maximumFractionDigits: 0 },
+            )}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {growthPct != null && growthPct > 0
-              ? `Up ${growthPct.toFixed(0)}% vs ${scenario.startYear}`
-              : "Annual dividend cash"}
+            {advanced
+              ? `${advanced.finalShares.toLocaleString(undefined, {
+                  maximumFractionDigits: 2,
+                })} shares after DRIP`
+              : growthPct != null && growthPct > 0
+                ? `Up ${growthPct.toFixed(0)}% vs ${scenario.startYear}`
+                : "Annual dividend cash"}
           </p>
         </div>
       </div>
 
+      {advanced ? (
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-muted">
+              Portfolio value
+            </p>
+            <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
+              {formatUsd(advanced.portfolioValueLatest, {
+                maximumFractionDigits: 0,
+              })}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-muted">
+              Shares after DRIP
+            </p>
+            <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
+              {advanced.finalShares.toLocaleString(undefined, {
+                maximumFractionDigits: 4,
+              })}
+            </p>
+            <p className="mt-1 text-[11px] text-muted">
+              Started with{" "}
+              {advanced.initialShares.toLocaleString(undefined, {
+                maximumFractionDigits: 4,
+              })}{" "}
+              in {scenario.startYear}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-muted">
+              Reinvested
+            </p>
+            <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
+              {formatUsd(advanced.totalDividendsReinvested, {
+                maximumFractionDigits: 0,
+              })}
+            </p>
+            <p className="mt-1 text-[11px] text-muted">
+              {advanced.priceCagrPct.toFixed(1)}% avg price growth / yr
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <p className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2 text-xs text-muted">
-        Total cash collected since {scenario.startYear}:{" "}
-        <span className="font-medium text-foreground">
-          {formatUsd(scenario.totalCollected, { maximumFractionDigits: 0 })}
-        </span>
-        . Assumes dividends were taken as cash, not reinvested (DRIP coming later).
-        Past dividend growth does not guarantee future payouts.
+        {reinvestDividends && advanced
+          ? `Simulates investing ${formatUsd(investmentUsd ?? 0, {
+              maximumFractionDigits: 0,
+            })} at the start of ${scenario.startYear}, reinvesting all dividends, and compounding share price at ${advanced.priceCagrPct.toFixed(
+              1,
+            )}% per year. `
+          : `Total cash collected since ${scenario.startYear}: ${formatUsd(
+              scenario.totalCollected,
+              { maximumFractionDigits: 0 },
+            )} on a flat ${computedShares.toLocaleString(undefined, {
+              maximumFractionDigits: 4,
+            })}-share position. Assumes dividends were taken as cash. `}
+        Past dividend and price growth do not guarantee future results.
       </p>
     </div>
   );

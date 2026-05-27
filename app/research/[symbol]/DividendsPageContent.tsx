@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { History, LineChart, TrendingUp } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useDividendHistory } from "@/app/hooks/useDividendHistory";
+import { useStockData } from "@/app/hooks/useStockData";
 import { usePositionsContext } from "@/app/Providers";
 import type { Position } from "@/app/types/schwab";
+import type { DividendScenarioParams } from "@/app/types/research";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { PageSplit } from "@/components/PageShell";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { defaultDividendInvestmentUsd } from "@/lib/dividendHistory";
 import {
   DividendHistoryCharts,
   DividendRecentPaymentsTable,
@@ -32,6 +35,19 @@ function equityShareCount(positions: Position[] | undefined): number {
     );
 }
 
+function equitySharePrice(positions: Position[] | undefined): number | null {
+  if (!positions?.length) return null;
+  const equity = positions.find(
+    (position) =>
+      position.instrument.assetType === "EQUITY" &&
+      position.longQuantity - position.shortQuantity > 0,
+  );
+  if (!equity) return null;
+  const shares = equity.longQuantity - equity.shortQuantity;
+  if (shares <= 0) return null;
+  return equity.marketValue / shares;
+}
+
 export function DividendsPageContent({ symbol }: Props) {
   const { data: session } = useSession();
   const { positionMap } = usePositionsContext();
@@ -40,14 +56,64 @@ export function DividendsPageContent({ symbol }: Props) {
     () => equityShareCount(positionMap[symbolUpper]),
     [positionMap, symbolUpper],
   );
-  const [scenarioShares, setScenarioShares] = useState<number | null>(
-    heldShares > 0 ? Math.round(heldShares) : null,
+  const heldSharePrice = useMemo(
+    () => equitySharePrice(positionMap[symbolUpper]),
+    [positionMap, symbolUpper],
   );
-  const resolvedShares = scenarioShares ?? (heldShares > 0 ? Math.round(heldShares) : 100);
+
+  const { data: stockData } = useStockData({
+    symbol,
+    accessToken: session?.accessToken,
+    enabled: !!symbol && !!session?.accessToken,
+    period: "5d",
+    interval: "1d",
+  });
+
+  const marketSharePrice = useMemo(() => {
+    if (heldSharePrice != null && heldSharePrice > 0) {
+      return heldSharePrice;
+    }
+    const closes = stockData?.data ?? [];
+    const lastClose = closes[closes.length - 1]?.close;
+    return lastClose != null && lastClose > 0 ? lastClose : null;
+  }, [heldSharePrice, stockData?.data]);
+
+  const [scenarioParams, setScenarioParams] = useState<DividendScenarioParams>(() => ({
+    investmentUsd: defaultDividendInvestmentUsd(heldShares, heldSharePrice),
+    sharePrice: heldSharePrice,
+    reinvestDividends: false,
+    priceCagrPct: null,
+  }));
+
+  useEffect(() => {
+    if (marketSharePrice == null) return;
+    setScenarioParams((current) => {
+      if (current.sharePrice != null && current.sharePrice > 0) {
+        return current;
+      }
+      return { ...current, sharePrice: marketSharePrice };
+    });
+  }, [marketSharePrice]);
+
+  useEffect(() => {
+    setScenarioParams((current) => {
+      if (current.investmentUsd != null && current.investmentUsd > 0) {
+        return current;
+      }
+      return {
+        ...current,
+        investmentUsd: defaultDividendInvestmentUsd(
+          heldShares,
+          current.sharePrice ?? marketSharePrice,
+        ),
+      };
+    });
+  }, [heldShares, marketSharePrice]);
 
   const { history, isLoading, error } = useDividendHistory(symbol, {
     accessToken: session?.accessToken,
-    shares: resolvedShares,
+    ...scenarioParams,
+    shares: heldShares > 0 ? heldShares : undefined,
   });
 
   return (
@@ -89,7 +155,8 @@ export function DividendsPageContent({ symbol }: Props) {
                 <DividendSnowballStats history={history} />
                 <DividendSnowballScenarioCard
                   history={history}
-                  onSharesChange={setScenarioShares}
+                  scenarioParams={scenarioParams}
+                  onScenarioChange={setScenarioParams}
                 />
               </div>
             ) : null}

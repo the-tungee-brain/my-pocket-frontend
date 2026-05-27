@@ -45,6 +45,18 @@ export type AnnualDividendIncome = {
   isPartialYear?: boolean;
 };
 
+export type DividendAdvancedSnowballScenario = {
+  enabled: boolean;
+  initialShares: number;
+  finalShares: number;
+  sharePriceAtStart: number;
+  sharePriceLatest: number;
+  priceCagrPct: number;
+  annualIncomeLatestDrip: number;
+  portfolioValueLatest: number;
+  totalDividendsReinvested: number;
+};
+
 export type DividendSnowballScenario = {
   shares: number;
   startYear: number;
@@ -52,6 +64,16 @@ export type DividendSnowballScenario = {
   annualIncomeLatest: number;
   annualIncomeStart: number;
   latestYear: number;
+  investmentUsd?: number | null;
+  sharePrice?: number | null;
+  advanced?: DividendAdvancedSnowballScenario | null;
+};
+
+export type DividendScenarioParams = {
+  investmentUsd?: number | null;
+  sharePrice?: number | null;
+  reinvestDividends?: boolean;
+  priceCagrPct?: number | null;
 };
 
 export type DividendHistoryContext = {

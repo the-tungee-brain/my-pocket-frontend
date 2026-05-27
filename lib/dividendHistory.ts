@@ -1,9 +1,17 @@
 import { apiFetch } from "@/lib/apiClient";
-import type { DividendHistoryContext } from "@/app/types/research";
+import type {
+  DividendAdvancedSnowballScenario,
+  DividendHistoryContext,
+  DividendScenarioParams,
+} from "@/app/types/research";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const STORAGE_KEY = "powerpocket-dividend-history:v2";
+const STORAGE_KEY = "powerpocket-dividend-history:v3";
 const DEFAULT_SHARES = 100;
+
+export type DividendFetchParams = DividendScenarioParams & {
+  shares?: number | null;
+};
 
 type StoredEntry = {
   data: DividendHistoryContext;
@@ -17,8 +25,42 @@ function normalizeKey(symbol: string): string {
   return symbol.trim().toUpperCase();
 }
 
-function cacheKey(symbol: string, shares: number): string {
-  return `${normalizeKey(symbol)}:${shares}`;
+function hasInvestment(params: DividendFetchParams): boolean {
+  return (
+    params.investmentUsd != null &&
+    params.investmentUsd > 0 &&
+    params.sharePrice != null &&
+    params.sharePrice > 0
+  );
+}
+
+export function resolveDividendScenarioShares(params: DividendFetchParams): number {
+  if (hasInvestment(params)) {
+    return params.investmentUsd! / params.sharePrice!;
+  }
+  if (params.shares != null && params.shares > 0) {
+    return params.shares;
+  }
+  return DEFAULT_SHARES;
+}
+
+export function scenarioCacheKey(symbol: string, params: DividendFetchParams): string {
+  const base = normalizeKey(symbol);
+  if (hasInvestment(params)) {
+    return [
+      base,
+      `inv:${params.investmentUsd!.toFixed(2)}`,
+      `px:${params.sharePrice!.toFixed(4)}`,
+      params.reinvestDividends ? "drip" : "cash",
+      params.priceCagrPct != null ? `pcagr:${params.priceCagrPct}` : "pcagr:auto",
+    ].join("|");
+  }
+
+  return [
+    base,
+    `shares:${resolveDividendScenarioShares(params).toFixed(6)}`,
+    params.reinvestDividends ? "drip" : "cash",
+  ].join("|");
 }
 
 function readPersistentStore(): Record<string, StoredEntry> {
@@ -70,6 +112,55 @@ function normalizePayments(raw: unknown): DividendHistoryContext["payments"] {
   return payments;
 }
 
+function normalizeAdvancedScenario(
+  raw: unknown,
+): DividendAdvancedSnowballScenario | null {
+  if (!raw || typeof raw !== "object") return null;
+  const item = raw as Record<string, unknown>;
+  const initialShares = readNumber(item.initialShares ?? item.initial_shares);
+  const finalShares = readNumber(item.finalShares ?? item.final_shares);
+  const sharePriceAtStart = readNumber(
+    item.sharePriceAtStart ?? item.share_price_at_start,
+  );
+  const sharePriceLatest = readNumber(
+    item.sharePriceLatest ?? item.share_price_latest,
+  );
+  const priceCagrPct = readNumber(item.priceCagrPct ?? item.price_cagr_pct);
+  const annualIncomeLatestDrip = readNumber(
+    item.annualIncomeLatestDrip ?? item.annual_income_latest_drip,
+  );
+  const portfolioValueLatest = readNumber(
+    item.portfolioValueLatest ?? item.portfolio_value_latest,
+  );
+  const totalDividendsReinvested = readNumber(
+    item.totalDividendsReinvested ?? item.total_dividends_reinvested,
+  );
+  if (
+    initialShares == null ||
+    finalShares == null ||
+    sharePriceAtStart == null ||
+    sharePriceLatest == null ||
+    priceCagrPct == null ||
+    annualIncomeLatestDrip == null ||
+    portfolioValueLatest == null ||
+    totalDividendsReinvested == null
+  ) {
+    return null;
+  }
+
+  return {
+    enabled: Boolean(item.enabled ?? true),
+    initialShares,
+    finalShares,
+    sharePriceAtStart,
+    sharePriceLatest,
+    priceCagrPct,
+    annualIncomeLatestDrip,
+    portfolioValueLatest,
+    totalDividendsReinvested,
+  };
+}
+
 function normalizeScenario(raw: unknown): DividendHistoryContext["scenario"] | null {
   if (!raw || typeof raw !== "object") return null;
   const item = raw as Record<string, unknown>;
@@ -101,6 +192,9 @@ function normalizeScenario(raw: unknown): DividendHistoryContext["scenario"] | n
     annualIncomeLatest,
     annualIncomeStart,
     latestYear,
+    investmentUsd: readNumber(item.investmentUsd ?? item.investment_usd),
+    sharePrice: readNumber(item.sharePrice ?? item.share_price),
+    advanced: normalizeAdvancedScenario(item.advanced),
   };
 }
 
@@ -166,9 +260,9 @@ export function normalizeDividendHistoryContext(
 
 export function getCachedDividendHistory(
   symbol: string,
-  shares = DEFAULT_SHARES,
+  params: DividendFetchParams = {},
 ): DividendHistoryContext | null {
-  const key = cacheKey(symbol, shares);
+  const key = scenarioCacheKey(symbol, params);
   const memory = memoryCache.get(key);
   if (memory) return memory;
 
@@ -184,17 +278,34 @@ export function getCachedDividendHistory(
   return normalized;
 }
 
+function buildQueryParams(symbol: string, params: DividendFetchParams): URLSearchParams {
+  const query = new URLSearchParams({
+    symbol: normalizeKey(symbol),
+    shares: String(resolveDividendScenarioShares(params)),
+  });
+
+  if (hasInvestment(params)) {
+    query.set("investment_usd", String(params.investmentUsd));
+    query.set("share_price", String(params.sharePrice));
+  }
+  if (params.reinvestDividends) {
+    query.set("reinvest_dividends", "true");
+  }
+  if (params.priceCagrPct != null && Number.isFinite(params.priceCagrPct)) {
+    query.set("price_cagr_pct", String(params.priceCagrPct));
+  }
+
+  return query;
+}
+
 async function fetchDividendHistoryFromApi(
   symbol: string,
   accessToken: string,
-  shares: number,
+  params: DividendFetchParams,
 ): Promise<DividendHistoryContext | null> {
   try {
-    const params = new URLSearchParams({
-      symbol: normalizeKey(symbol),
-      shares: String(shares),
-    });
-    const res = await apiFetch(`/research/dividends?${params.toString()}`, {
+    const query = buildQueryParams(symbol, params);
+    const res = await apiFetch(`/research/dividends?${query.toString()}`, {
       method: "GET",
       accessToken,
     });
@@ -206,7 +317,7 @@ async function fetchDividendHistoryFromApi(
     const data = normalizeDividendHistoryContext(raw);
     if (!data) return null;
 
-    const key = cacheKey(symbol, shares);
+    const key = scenarioCacheKey(symbol, params);
     memoryCache.set(key, data);
 
     const store = readPersistentStore();
@@ -222,16 +333,16 @@ async function fetchDividendHistoryFromApi(
 export async function fetchDividendHistory(
   symbol: string,
   accessToken: string,
-  shares = DEFAULT_SHARES,
+  params: DividendFetchParams = {},
 ): Promise<DividendHistoryContext | null> {
-  const key = cacheKey(symbol, shares);
-  const cached = getCachedDividendHistory(symbol, shares);
+  const key = scenarioCacheKey(symbol, params);
+  const cached = getCachedDividendHistory(symbol, params);
   if (cached) return cached;
 
   const inflight = inflightRequests.get(key);
   if (inflight) return inflight;
 
-  const request = fetchDividendHistoryFromApi(symbol, accessToken, shares).finally(
+  const request = fetchDividendHistoryFromApi(symbol, accessToken, params).finally(
     () => {
       inflightRequests.delete(key);
     },
@@ -245,7 +356,20 @@ export function defaultDividendScenarioShares(
   positionShareCount: number | null | undefined,
 ): number {
   if (positionShareCount != null && positionShareCount > 0) {
-    return Math.round(positionShareCount);
+    return positionShareCount;
   }
   return DEFAULT_SHARES;
+}
+
+export function defaultDividendInvestmentUsd(
+  heldShares: number,
+  sharePrice: number | null,
+): number {
+  if (heldShares > 0 && sharePrice != null && sharePrice > 0) {
+    return Math.round(heldShares * sharePrice);
+  }
+  if (sharePrice != null && sharePrice > 0) {
+    return Math.round(DEFAULT_SHARES * sharePrice);
+  }
+  return 10_000;
 }
