@@ -105,6 +105,7 @@ type PositionsContextValue = {
   portfolioBrief: PortfolioIntelligence | null;
   portfolioMetrics: PortfolioMetrics | null;
   refreshPositions: (refresh?: boolean) => Promise<void>;
+  clearPortfolioData: () => void;
   schwabReauth: SchwabReauthDetail | null;
   clearSchwabReauth: () => void;
 };
@@ -354,6 +355,20 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     },
     [accessToken, applyPositionsPayload],
   );
+
+  const clearPortfolioData = useCallback(() => {
+    setSchwabReauth(null);
+    setError(null);
+    setPositionMap({});
+    setAccount(null);
+    setCashSecuredPutSummary(null);
+    setAssignmentRiskSummary(null);
+    setRecentActivity(null);
+    setProactiveAlerts([]);
+    setPortfolioBrief(null);
+    setPortfolioMetrics(null);
+    setSelectedSymbol(null);
+  }, []);
 
   const ensureSymbolChatState = useCallback(
     (key: string, base?: Partial<SymbolChatState>): SymbolChatState => ({
@@ -955,6 +970,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       portfolioBrief,
       portfolioMetrics,
       refreshPositions,
+      clearPortfolioData,
       schwabReauth,
       clearSchwabReauth: () => setSchwabReauth(null),
     }),
@@ -983,6 +999,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       portfolioBrief,
       portfolioMetrics,
       refreshPositions,
+      clearPortfolioData,
       schwabReauth,
     ],
   );
