@@ -10,7 +10,7 @@ import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { PortfolioAttentionSection, countAttentionItems } from "@/components/PortfolioAttentionSection";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
-import { AnalysisPanel } from "@/components/AnalysisPanel";
+import { AnalysisPanel, type PortfolioNavigationRequest } from "@/components/AnalysisPanel";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
 import { StrategyJourneyPanel } from "@/components/StrategyJourneyPanel";
 import { StrategyOnboardingWizard } from "@/components/StrategyOnboardingWizard";
@@ -37,9 +37,9 @@ import {
 } from "@/lib/onboardingStorage";
 import { scrollToChat } from "@/lib/scrollToChat";
 import {
-  ANALYZE_PORTFOLIO_EVENT,
+  hasPortfolioAnalysis,
   PORTFOLIO_ANALYSIS_SECTION_ID,
-  requestPortfolioAnalysis,
+  scrollToAnalysisSection,
 } from "@/lib/positionAnalysis";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { PageShell, PageSplit } from "@/components/PageShell";
@@ -73,6 +73,9 @@ export default function PortfolioPage() {
   const [strategyDismissed, setStrategyDismissed] = useState(true);
   const [pendingPortfolioAnalysis, setPendingPortfolioAnalysis] = useState(false);
   const [portfolioAnalysisLoading, setPortfolioAnalysisLoading] = useState(false);
+  const [portfolioNavigation, setPortfolioNavigation] =
+    useState<PortfolioNavigationRequest | null>(null);
+  const pendingGoToAnalysisRef = useRef<{ forceAnalyze: boolean } | null>(null);
 
   useEffect(() => {
     setStrategyDismissed(isStrategyOnboardingDismissed());
@@ -87,24 +90,28 @@ export default function PortfolioPage() {
 
   const startPortfolioAnalysis = useCallback(() => {
     setPendingPortfolioAnalysis(true);
-    window.requestAnimationFrame(() => {
-      document
-        .getElementById(PORTFOLIO_ANALYSIS_SECTION_ID)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    scrollToAnalysisSection(PORTFOLIO_ANALYSIS_SECTION_ID);
   }, []);
-
-  useEffect(() => {
-    window.addEventListener(ANALYZE_PORTFOLIO_EVENT, startPortfolioAnalysis);
-    return () =>
-      window.removeEventListener(ANALYZE_PORTFOLIO_EVENT, startPortfolioAnalysis);
-  }, [startPortfolioAnalysis]);
 
   useEffect(() => {
     if (!pendingPortfolioAnalysis) return;
     const timer = window.setTimeout(() => setPendingPortfolioAnalysis(false), 0);
     return () => window.clearTimeout(timer);
   }, [pendingPortfolioAnalysis]);
+
+  useEffect(() => {
+    if (activeSection !== "today") return;
+
+    const pending = pendingGoToAnalysisRef.current;
+    if (!pending) return;
+
+    pendingGoToAnalysisRef.current = null;
+    setPortfolioNavigation({
+      token: Date.now(),
+      forceAnalyze: pending.forceAnalyze,
+    });
+    scrollToAnalysisSection(PORTFOLIO_ANALYSIS_SECTION_ID);
+  }, [activeSection]);
 
   const {
     catalog,
@@ -222,8 +229,24 @@ export default function PortfolioPage() {
   }, []);
 
   const handleAnalyzePortfolio = useCallback(() => {
-    requestPortfolioAnalysis();
-  }, []);
+    const forceAnalyze = !hasPortfolioAnalysis(allPositions);
+
+    if (forceAnalyze) {
+      startPortfolioAnalysis();
+    }
+
+    if (activeSection !== "today") {
+      pendingGoToAnalysisRef.current = { forceAnalyze };
+      setActiveSection("today");
+      return;
+    }
+
+    setPortfolioNavigation({
+      token: Date.now(),
+      forceAnalyze,
+    });
+    scrollToAnalysisSection(PORTFOLIO_ANALYSIS_SECTION_ID);
+  }, [activeSection, allPositions, setActiveSection, startPortfolioAnalysis]);
 
   const handleTaxAlert = useCallback(
     (item: TaxAlertItem) => {
@@ -372,6 +395,7 @@ export default function PortfolioPage() {
               }
               symbolAlertMap={symbolAlertMap}
               autoStart={pendingPortfolioAnalysis}
+              portfolioNavigation={portfolioNavigation}
               onLoadingChange={setPortfolioAnalysisLoading}
               onAskFollowUp={() => scrollToChat()}
               className={pageSectionClass}

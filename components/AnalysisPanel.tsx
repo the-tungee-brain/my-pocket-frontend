@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Filter,
@@ -52,6 +52,8 @@ import {
   ANALYZE_POSITION_EVENT,
   PORTFOLIO_ANALYSIS_SECTION_ID,
   SYMBOL_ANALYSIS_SECTION_ID,
+  scrollToAnalysisSection,
+  type PortfolioAnalysisRequestDetail,
 } from "@/lib/positionAnalysis";
 import { scrollToChat } from "@/lib/scrollToChat";
 import { symbolHubPath } from "@/lib/symbolRoutes";
@@ -71,6 +73,13 @@ type PortfolioProps = {
   symbolAlertMap?: Record<string, SymbolAlertSummary>;
   /** Which slice of the portfolio panel to show on the current tab. */
   portfolioView?: "analysis" | "holdings";
+  /** Morning Brief / portfolio navigation requests. */
+  portfolioNavigation?: PortfolioNavigationRequest | null;
+};
+
+export type PortfolioNavigationRequest = {
+  token: number;
+  forceAnalyze: boolean;
 };
 
 type SymbolProps = {
@@ -639,6 +648,10 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const [pendingAnalyze, setPendingAnalyze] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("weight");
   const [alertsOnly, setAlertsOnly] = useState(false);
+  const portfolioRescrollRef = useRef(false);
+  const portfolioWaitForAnalyzeRef = useRef(false);
+  const portfolioNavigation =
+    isPortfolio ? (props.portfolioNavigation ?? null) : null;
 
   const symbolAlertMap = isPortfolio ? (props.symbolAlertMap ?? {}) : {};
   const positionMap = isPortfolio ? props.positionMap : null;
@@ -730,6 +743,13 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       setRequested(true);
     };
 
+    const requestPortfolioScroll = (forceAnalyze: boolean) => {
+      portfolioRescrollRef.current = true;
+      portfolioWaitForAnalyzeRef.current = forceAnalyze;
+      setRequested(true);
+      scrollToAnalysisSection(PORTFOLIO_ANALYSIS_SECTION_ID);
+    };
+
     const handlePositionAnalyze = (event: Event) => {
       if (isPortfolio || loading || pendingAnalyze) return;
       const detail = (event as CustomEvent<{ symbol?: string }>).detail;
@@ -737,8 +757,16 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       beginAnalyze();
     };
 
-    const handlePortfolioAnalyze = () => {
-      if (!isPortfolio || loading || pendingAnalyze) return;
+    const handlePortfolioAnalyze = (event: Event) => {
+      if (!isPortfolio) return;
+
+      const forceAnalyze =
+        (event as CustomEvent<PortfolioAnalysisRequestDetail>).detail
+          ?.forceAnalyze ?? true;
+
+      requestPortfolioScroll(forceAnalyze);
+
+      if (!forceAnalyze || loading || pendingAnalyze) return;
       beginAnalyze();
     };
 
@@ -752,6 +780,45 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       );
     };
   }, [isPortfolio, loading, pendingAnalyze, refetch, symbol]);
+
+  useEffect(() => {
+    if (!isPortfolio || !showPortfolioAnalysis || !portfolioNavigation) return;
+
+    const { forceAnalyze } = portfolioNavigation;
+
+    portfolioRescrollRef.current = true;
+    portfolioWaitForAnalyzeRef.current = forceAnalyze;
+    setRequested(true);
+
+    if (forceAnalyze && !loading && !pendingAnalyze) {
+      setPendingAnalyze(true);
+      refetch();
+    }
+  }, [isPortfolio, showPortfolioAnalysis, portfolioNavigation?.token]);
+
+  useEffect(() => {
+    if (!isPortfolio || !showPortfolioAnalysis || !portfolioRescrollRef.current) {
+      return;
+    }
+
+    if (portfolioWaitForAnalyzeRef.current && (loading || pendingAnalyze)) {
+      return;
+    }
+
+    const hasOutput = !!content?.trim() || !!structuredAnalysis;
+    if (!hasOutput) return;
+
+    portfolioRescrollRef.current = false;
+    portfolioWaitForAnalyzeRef.current = false;
+    scrollToAnalysisSection(PORTFOLIO_ANALYSIS_SECTION_ID);
+  }, [
+    isPortfolio,
+    showPortfolioAnalysis,
+    loading,
+    pendingAnalyze,
+    content,
+    structuredAnalysis,
+  ]);
 
   const symbolSummaries = useMemo(() => {
     if (!isPortfolio || !positionMap) return [];
@@ -810,9 +877,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     refetch();
     setRequested(true);
     if (isPortfolio) {
-      document
-        .getElementById(PORTFOLIO_ANALYSIS_SECTION_ID)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollToAnalysisSection(PORTFOLIO_ANALYSIS_SECTION_ID);
     }
   };
 
@@ -960,6 +1025,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   return (
     <section
       id={sectionId}
+      style={{ scrollMarginTop: "5.5rem" }}
       className={cn(
         "overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-sm",
         className,
