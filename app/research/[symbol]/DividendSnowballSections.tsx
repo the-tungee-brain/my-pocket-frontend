@@ -893,28 +893,31 @@ export function DividendSnowballScenarioCard({
         </div>
       ) : null}
 
-      {onScenarioChange ? (
+      {onScenarioChange && sharePrice != null && sharePrice > 0 ? (
         <label className="block max-w-xs space-y-1 text-xs text-muted">
-          Dividend growth override (% / yr, optional)
+          Price growth (% / yr)
           <input
             type="number"
             min={-99}
             max={500}
             step={0.1}
             placeholder={
-              history.cagr5yPct != null
-                ? String(history.cagr5yPct)
+              advanced?.priceCagrPct != null
+                ? String(advanced.priceCagrPct)
                 : "Auto from 5Y history"
             }
-            value={scenarioParams?.dividendCagrPct ?? ""}
+            value={scenarioParams?.priceCagrPct ?? ""}
             onChange={(event) => {
               const raw = event.target.value.trim();
               updateScenario({
-                dividendCagrPct: raw === "" ? null : Number(event.target.value),
+                priceCagrPct: raw === "" ? null : Number(event.target.value),
               });
             }}
             className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
           />
+          <span className="block text-[11px] leading-snug">
+            Applied to portfolio value and historical DRIP backtest
+          </span>
         </label>
       ) : null}
 
@@ -930,39 +933,13 @@ export function DividendSnowballScenarioCard({
               className="mt-0.5"
             />
             <span>
-              <span className="font-medium">Advanced: DRIP + price growth</span>
+              <span className="font-medium">Reinvest dividends (DRIP)</span>
               <span className="mt-1 block text-xs text-muted">
-                Reinvest dividends each year and compound share price over the
+                Use each year&apos;s dividend cash to buy more shares over the
                 next {projectYears} years.
               </span>
             </span>
           </label>
-
-          {reinvestDividends ? (
-            <label className="block space-y-1 text-xs text-muted">
-              Price growth override (% / yr, optional)
-              <input
-                type="number"
-                min={-99}
-                max={500}
-                step={0.1}
-                placeholder={
-                  advanced?.priceCagrPct != null
-                    ? String(advanced.priceCagrPct)
-                    : "Auto from 5Y history"
-                }
-                value={scenarioParams?.priceCagrPct ?? ""}
-                onChange={(event) => {
-                  const raw = event.target.value.trim();
-                  updateScenario({
-                    reinvestDividends: true,
-                    priceCagrPct: raw === "" ? null : Number(event.target.value),
-                  });
-                }}
-                className="w-full max-w-xs rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
-              />
-            </label>
-          ) : null}
         </div>
       ) : null}
 
@@ -991,11 +968,13 @@ export function DividendSnowballScenarioCard({
             )}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {advanced
+            {advanced && reinvestDividends
               ? `Cash per year with ${formatSnowballShares(advanced.finalShares)} shares after DRIP`
-              : growthPct != null && growthPct > 0
-                ? `Up ${growthPct.toFixed(0)}% vs ${currentYear}, same share count`
-                : "Cash per year with the same share count"}
+              : advanced
+                ? "Cash per year with the same share count"
+                : growthPct != null && growthPct > 0
+                  ? `Up ${growthPct.toFixed(0)}% vs ${currentYear}, same share count`
+                  : "Cash per year with the same share count"}
           </p>
         </div>
       </div>
@@ -1011,10 +990,15 @@ export function DividendSnowballScenarioCard({
                 maximumFractionDigits: 0,
               })}
             </p>
+            <p className="mt-1 text-[11px] text-muted">
+              {reinvestDividends
+                ? "After DRIP and price growth"
+                : "Flat share count with price growth"}
+            </p>
           </div>
           <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
-              Shares after DRIP
+              {reinvestDividends ? "Shares after DRIP" : "Share count"}
             </p>
             <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
               {formatSnowballShares(advanced.finalShares)}
@@ -1026,15 +1010,19 @@ export function DividendSnowballScenarioCard({
           </div>
           <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
-              Reinvested
+              {reinvestDividends ? "Reinvested" : "Price growth"}
             </p>
             <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
-              {formatUsd(advanced.totalDividendsReinvested, {
-                maximumFractionDigits: 0,
-              })}
+              {reinvestDividends
+                ? formatUsd(advanced.totalDividendsReinvested, {
+                    maximumFractionDigits: 0,
+                  })
+                : `${advanced.priceCagrPct.toFixed(1)}% / yr`}
             </p>
             <p className="mt-1 text-[11px] text-muted">
-              {advanced.priceCagrPct.toFixed(1)}% avg price growth / yr
+              {reinvestDividends
+                ? `${advanced.priceCagrPct.toFixed(1)}% avg price growth / yr`
+                : "Used for portfolio value projection"}
             </p>
           </div>
         </div>
