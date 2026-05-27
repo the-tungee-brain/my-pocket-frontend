@@ -33,6 +33,9 @@ export type HoldingAllocationReview = {
   symbol: string;
   weightPct: number;
   marketValue: number;
+  cspReservedCash?: number;
+  portfolioSpending?: number;
+  spendingWeightPct?: number;
   status: string;
   actionSummary: string;
 };

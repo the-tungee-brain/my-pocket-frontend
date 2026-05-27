@@ -57,18 +57,52 @@ function MetricChip({
 }
 
 function HoldingRow({ holding }: { holding: HoldingAllocationReview }) {
+  const cspReserved = holding.cspReservedCash ?? 0;
+  const spendingWeight = holding.spendingWeightPct ?? holding.weightPct;
+  const portfolioSpending = holding.portfolioSpending ?? holding.marketValue;
+  const showSpending = cspReserved > 0;
+
   return (
     <div className="rounded-lg border border-border/70 bg-background/40 px-2.5 py-2">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-medium text-foreground">{holding.symbol}</p>
           <p className="text-xs text-muted">
-            {holding.weightPct.toFixed(1)}% ·{" "}
-            {formatUsd(holding.marketValue, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            })}
+            {showSpending ? (
+              <>
+                {spendingWeight.toFixed(1)}% portfolio spending ·{" "}
+                {formatUsd(portfolioSpending, {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
+              </>
+            ) : (
+              <>
+                {holding.weightPct.toFixed(1)}% ·{" "}
+                {formatUsd(holding.marketValue, {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
+              </>
+            )}
           </p>
+          {showSpending ? (
+            <p className="mt-0.5 text-[10px] text-muted">
+              {formatUsd(holding.marketValue, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}{" "}
+              stock +{" "}
+              {formatUsd(cspReserved, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}{" "}
+              CSP reserve
+              {holding.weightPct > 0
+                ? ` (${holding.weightPct.toFixed(1)}% shares)`
+                : null}
+            </p>
+          ) : null}
         </div>
         <span
           className={cn(
