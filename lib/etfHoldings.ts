@@ -3,7 +3,7 @@ import type { EtfHoldingItem, EtfHoldingsContext } from "@/app/types/research";
 import { rankEtfHoldingsByQuality, withQualityScore } from "@/lib/etfHoldingsQuality";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const STORAGE_KEY = "powerpocket-etf-holdings:v2";
+const STORAGE_KEY = "powerpocket-etf-holdings:v3";
 const DEFAULT_QUALITY_LIMIT = 5;
 
 type StoredEntry = {
@@ -16,6 +16,21 @@ const inflightRequests = new Map<string, Promise<EtfHoldingsContext | null>>();
 
 function normalizeKey(symbol: string): string {
   return symbol.trim().toUpperCase();
+}
+
+/** Correct legacy/API values that scaled percent-form ratios by 100 (e.g. 6.00% → 0.06%). */
+export function formatExpenseRatio(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null;
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(\d+(?:\.\d+)?)%$/);
+  if (!match) return trimmed;
+
+  const pct = Number(match[1]);
+  if (!Number.isFinite(pct)) return trimmed;
+  if (pct >= 4) {
+    return `${(pct / 100).toFixed(2)}%`;
+  }
+  return trimmed;
 }
 
 function readPersistentStore(): Record<string, StoredEntry> {
@@ -143,12 +158,13 @@ export function normalizeEtfHoldingsContext(
         : typeof data.dividendYield === "string"
           ? data.dividendYield
           : null,
-    expense_ratio:
+    expense_ratio: formatExpenseRatio(
       typeof data.expense_ratio === "string"
         ? data.expense_ratio
         : typeof data.expenseRatio === "string"
           ? data.expenseRatio
           : null,
+    ),
     dataAsOf:
       typeof data.dataAsOf === "string"
         ? data.dataAsOf

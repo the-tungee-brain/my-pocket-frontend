@@ -5,8 +5,10 @@ import { History, LineChart, TrendingUp } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useDividendHistory } from "@/app/hooks/useDividendHistory";
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
+import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import { useStockData } from "@/app/hooks/useStockData";
 import { usePositionsContext } from "@/app/Providers";
+import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import type { Position } from "@/app/types/schwab";
 import type { DividendScenarioParams } from "@/app/types/research";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
@@ -88,6 +90,7 @@ function buildInitialScenarioParams(
 
 export function DividendsPageContent({ symbol }: Props) {
   const { data: session } = useSession();
+  const { isEtf } = useResearchAssetTypeContext();
   const { positionMap } = usePositionsContext();
   const symbolUpper = symbol.toUpperCase();
   const heldShares = useMemo(
@@ -105,6 +108,12 @@ export function DividendsPageContent({ symbol }: Props) {
     enabled: !!symbol && !!session?.accessToken,
     period: "5d",
     interval: "1d",
+  });
+
+  const { holdings: etfHoldings } = useEtfHoldings(symbol, {
+    accessToken: session?.accessToken,
+    enabled: isEtf && !!session?.accessToken,
+    limit: 25,
   });
 
   const marketSharePrice = useMemo(() => {
@@ -216,6 +225,8 @@ export function DividendsPageContent({ symbol }: Props) {
                 <DividendSnowballStats
                   history={history}
                   sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
+                  isEtf={isEtf}
+                  expenseRatio={etfHoldings?.expense_ratio}
                 />
                 <DividendSnowballScenarioCard
                   history={history}

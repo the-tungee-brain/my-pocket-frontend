@@ -10,6 +10,7 @@ import type {
 import { DIVIDEND_PROJECTION_YEAR_PRESETS } from "@/app/types/research";
 import { formatUsd } from "@/lib/formatCurrency";
 import { dividendProjectionWindow, resolveCurrentYieldPct } from "@/lib/dividendHistory";
+import { formatExpenseRatio } from "@/lib/etfHoldings";
 import { cn } from "@/lib/utils";
 
 const BAR_FILL = "#34d399";
@@ -281,14 +282,16 @@ type StatProps = {
 
 function StatCard({ label, value, hint }: StatProps) {
   return (
-    <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-2.5">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+    <div className="flex h-full flex-col rounded-xl border border-border bg-surface-elevated/40 px-3 py-2.5">
+      <p className="min-h-[2.5rem] text-[11px] font-medium uppercase leading-snug tracking-wide text-muted">
         {label}
       </p>
-      <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+      <p className="mt-1 min-h-[1.75rem] text-lg font-semibold tabular-nums leading-none text-foreground">
         {value}
       </p>
-      {hint ? <p className="mt-1 text-[11px] text-muted">{hint}</p> : null}
+      <p className="mt-2 min-h-[2.75rem] text-[11px] leading-snug text-muted">
+        {hint ?? ""}
+      </p>
     </div>
   );
 }
@@ -301,9 +304,13 @@ function formatYieldPct(value: number | null | undefined): string {
 export function DividendSnowballStats({
   history,
   sharePrice,
+  isEtf = false,
+  expenseRatio,
 }: {
   history: DividendHistoryContext;
   sharePrice?: number | null;
+  isEtf?: boolean;
+  expenseRatio?: string | null;
 }) {
   const { scenario } = history;
   const { currentYear, endYear, projectYears } = dividendProjectionWindow(
@@ -312,7 +319,7 @@ export function DividendSnowballStats({
   const currentYieldPct = resolveCurrentYieldPct(history, sharePrice);
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-3">
       <StatCard
         label="Dividend streak"
         value={
@@ -327,6 +334,13 @@ export function DividendSnowballStats({
         value={formatYieldPct(currentYieldPct)}
         hint="Latest annual dividend per share ÷ your share price"
       />
+      {isEtf ? (
+        <StatCard
+          label="Expense ratio"
+          value={formatExpenseRatio(expenseRatio) ?? "—"}
+          hint="Annual fund fee deducted from ETF returns"
+        />
+      ) : null}
       <StatCard
         label="5Y dividend CAGR"
         value={formatPct(history.cagr5yPct)}
