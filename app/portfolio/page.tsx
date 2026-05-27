@@ -18,6 +18,7 @@ import { PortfolioSectionTabBar } from "@/components/PortfolioSectionTabBar";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { useToast } from "@/app/contexts/ToastContext";
 import { useMorningBrief } from "@/app/hooks/useMorningBrief";
 import type { AttentionItem, ProactiveAlert } from "@/app/types/intelligence";
 import {
@@ -65,7 +66,9 @@ export default function PortfolioPage() {
   } = usePositionsContext();
   const { activeSection, setActiveSection } = usePortfolioSection();
   const searchParams = useSearchParams();
+  const { showToast } = useToast();
   const defaultTabApplied = useRef(false);
+  const schwabSuccessNotifiedRef = useRef(false);
   const [showStrategySetup, setShowStrategySetup] = useState(false);
   const [strategyDismissed, setStrategyDismissed] = useState(true);
   const [pendingPortfolioAnalysis, setPendingPortfolioAnalysis] = useState(false);
@@ -74,6 +77,13 @@ export default function PortfolioPage() {
   useEffect(() => {
     setStrategyDismissed(isStrategyOnboardingDismissed());
   }, []);
+
+  useEffect(() => {
+    if (schwabSuccessNotifiedRef.current) return;
+    if (searchParams.get("status") !== "success") return;
+    schwabSuccessNotifiedRef.current = true;
+    showToast("Schwab account connected.");
+  }, [searchParams, showToast]);
 
   const startPortfolioAnalysis = useCallback(() => {
     setPendingPortfolioAnalysis(true);

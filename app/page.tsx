@@ -4,6 +4,7 @@ import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AuthPage from "@/components/AuthPage";
 import { useSession } from "next-auth/react";
+import { resolveSchwabOAuthLandingPath } from "@/lib/schwabOAuthRedirect";
 
 function RedirectingScreen() {
   return (
@@ -24,14 +25,20 @@ function HomeContent() {
   const router = useRouter();
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const landingPath = resolveSchwabOAuthLandingPath(params.get("status"));
+    if (landingPath) {
+      window.location.replace(landingPath);
+    }
+  }, []);
+
+  useEffect(() => {
     if (status === "loading") return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("status")) return;
+
     if (session?.accessToken) {
-      const params = new URLSearchParams(window.location.search);
-      const schwabStatus = params.get("status");
-      if (schwabStatus === "success") {
-        router.replace("/portfolio?status=success");
-        return;
-      }
       router.replace("/portfolio");
     }
   }, [status, session?.accessToken, router]);

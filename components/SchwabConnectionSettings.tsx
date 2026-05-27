@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { Check, Link2, Loader2, Unlink } from "lucide-react";
 import { useToast } from "@/app/contexts/ToastContext";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
@@ -56,6 +57,30 @@ export function SchwabConnectionSettings() {
 
   const linked = authorized === true;
   const busy = statusLoading || connecting || disconnecting;
+  const schwabErrorNotifiedRef = useRef(false);
+
+  useEffect(() => {
+    if (schwabErrorNotifiedRef.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    if (!status || status === "success") return;
+
+    schwabErrorNotifiedRef.current = true;
+
+    const messages: Record<string, string> = {
+      error: "Schwab connection was cancelled.",
+      invalid: "Schwab returned an invalid authorization response.",
+      error_state: "Schwab connection expired. Please try again.",
+      error_token: "Could not finish Schwab connection. Please try again.",
+    };
+
+    showToast(messages[status] ?? "Could not connect Schwab. Please try again.");
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("status");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [showToast]);
 
   return (
     <div className="rounded-2xl border border-border bg-secondary/60 p-4 sm:p-5">
@@ -130,12 +155,20 @@ export function SchwabConnectionSettings() {
         {!statusLoading && !linked && (
           <Button
             type="button"
+            variant="outline"
             size="sm"
             disabled={connecting}
             onClick={handleConnect}
             className="shrink-0 sm:min-w-36"
           >
-            {connecting ? "Connecting…" : "Connect Schwab"}
+            {connecting ? (
+              "Connecting…"
+            ) : (
+              <>
+                <Link2 className="h-4 w-4" aria-hidden="true" />
+                Connect Schwab
+              </>
+            )}
           </Button>
         )}
       </div>

@@ -1,5 +1,5 @@
 export const SCHWAB_READ_ONLY_LINE =
-  "Read-only Schwab access via OAuth — Tomcrest never sees your password and cannot place trades.";
+  "Read-only Schwab access via OAuth — Tomcrest does not receive your login credentials and cannot place trades.";
 
 export const SCHWAB_CONNECT_PROMPT =
   "Connect with Schwab’s secure login. We import holdings, balances, and orders to power your portfolio — nothing more.";

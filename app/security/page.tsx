@@ -7,7 +7,7 @@ const sections = [
   {
     icon: ShieldCheck,
     title: "Read-only brokerage access",
-    body: "Tomcrest connects to Charles Schwab through OAuth. You sign in on Schwab’s site — we never see or store your Schwab password. The connection is read-only: we can view positions, balances, and order history to power portfolio insights, but we cannot place trades, move money, or change your account.",
+    body: "Tomcrest connects to Charles Schwab through OAuth. You sign in on Schwab’s site; Tomcrest does not receive or store your Schwab credentials. The connection is read-only: we can view positions, balances, and order history to power portfolio insights, but we cannot place trades, move money, or change your account.",
   },
   {
     icon: Lock,

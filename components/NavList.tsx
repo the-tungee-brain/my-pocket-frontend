@@ -178,8 +178,8 @@ export function NavList({
       {!loading && symbols.length === 0 && (
         <div className="rounded-lg border border-dashed border-border bg-background/50 px-3 py-3 text-[11px] text-muted">
           <p>
-            Connect Schwab in Settings to import holdings. Read-only OAuth — we
-            never see your password.
+            Connect Schwab in Settings to import holdings. Read-only OAuth —
+            your login credentials remain with Schwab.
           </p>
           <Link
             href="/settings"
