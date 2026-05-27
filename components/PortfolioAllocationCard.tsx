@@ -9,10 +9,7 @@ import { formatUsd } from "@/lib/formatCurrency";
 import { cn } from "@/lib/utils";
 
 function statusTone(status: string): string {
-  if (
-    status.startsWith("Too large") ||
-    status.startsWith("Very large")
-  ) {
+  if (status.startsWith("Too large") || status.startsWith("Very large")) {
     return "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400";
   }
   if (
@@ -70,7 +67,7 @@ function HoldingRow({ holding }: { holding: HoldingAllocationReview }) {
           <p className="text-xs text-muted">
             {showSpending ? (
               <>
-                {spendingWeight.toFixed(1)}% portfolio spending ·{" "}
+                {spendingWeight.toFixed(1)}% portfolio ·{" "}
                 {formatUsd(portfolioSpending, {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 0,
@@ -78,7 +75,7 @@ function HoldingRow({ holding }: { holding: HoldingAllocationReview }) {
               </>
             ) : (
               <>
-                {holding.weightPct.toFixed(1)}% ·{" "}
+                {holding.weightPct.toFixed(1)}% portfolio ·{" "}
                 {formatUsd(holding.marketValue, {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 0,
@@ -141,8 +138,13 @@ export function PortfolioAllocationCard({
   precomputed: PortfolioAnalysisPrecomputed;
   className?: string;
 }) {
-  const { concentration: c, cashMap, holdings, trimPlan, deployPlan } =
-    precomputed;
+  const {
+    concentration: c,
+    cashMap,
+    holdings,
+    trimPlan,
+    deployPlan,
+  } = precomputed;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -240,22 +242,28 @@ export function PortfolioAllocationCard({
       )}
 
       {(trimPlan.length > 0 || deployPlan.length > 0) && (
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="space-y-3">
           {trimPlan.length > 0 && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-3">
+            <div className="w-full rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-3">
               <div className="mb-2 flex items-center gap-2">
-                <Scissors className="h-4 w-4 text-red-600 dark:text-red-400" aria-hidden />
-                <p className="text-sm font-semibold text-foreground">Trim oversized positions</p>
+                <Scissors
+                  className="h-4 w-4 text-red-600 dark:text-red-400"
+                  aria-hidden
+                />
+                <p className="text-sm font-semibold text-foreground">
+                  Trim oversized positions
+                </p>
               </div>
-              <ul className="space-y-2 text-xs">
+              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
                 {trimPlan.map((item) => (
                   <li
                     key={item.symbol}
-                    className="rounded-lg border border-border/60 bg-background/50 px-2.5 py-2"
+                    className="min-w-0 rounded-lg border border-border/60 bg-background/50 px-2.5 py-2"
                   >
                     <p className="font-medium text-foreground">{item.symbol}</p>
                     <p className="text-muted">
-                      {item.currentWeightPct.toFixed(1)}% → ~{item.targetWeightPct.toFixed(0)}%
+                      {item.currentWeightPct.toFixed(1)}% → ~
+                      {item.targetWeightPct.toFixed(0)}%
                     </p>
                     <p className="mt-0.5 font-semibold tabular-nums text-foreground">
                       Trim{" "}
@@ -271,19 +279,21 @@ export function PortfolioAllocationCard({
           )}
 
           {deployPlan.length > 0 && (
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-3">
+            <div className="w-full rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-3">
               <div className="mb-2 flex items-center gap-2">
                 <TrendingUp
                   className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
                   aria-hidden
                 />
-                <p className="text-sm font-semibold text-foreground">Where to invest next</p>
+                <p className="text-sm font-semibold text-foreground">
+                  Where to invest next
+                </p>
               </div>
-              <ul className="space-y-2 text-xs">
+              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
                 {deployPlan.map((item) => (
                   <li
                     key={item.symbol}
-                    className="rounded-lg border border-border/60 bg-background/50 px-2.5 py-2"
+                    className="min-w-0 rounded-lg border border-border/60 bg-background/50 px-2.5 py-2"
                   >
                     <p className="font-medium text-foreground">{item.symbol}</p>
                     <p className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
