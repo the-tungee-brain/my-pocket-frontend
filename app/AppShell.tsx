@@ -102,7 +102,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ]);
 
   useEffect(() => {
-    const openChat = () => setMobileChatExpanded(true);
+    const openChat = () => {
+      setMobileChatExpanded(true);
+    };
     window.addEventListener(OPEN_CHAT_EVENT, openChat);
     return () => window.removeEventListener(OPEN_CHAT_EVENT, openChat);
   }, []);

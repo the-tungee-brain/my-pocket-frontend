@@ -10,6 +10,7 @@ import type { QuickActionMode } from "@/lib/quickActions";
 import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import { pageShellClass } from "@/lib/pageLayout";
+import { ASSISTANT_CHAT_INPUT_CLASS } from "@/lib/scrollToChat";
 import { DEFAULT_CHAT_MODEL, getModelButtonLabel } from "@/lib/chatModels";
 
 export { DEFAULT_CHAT_MODEL };
@@ -148,7 +149,10 @@ export function ChatBox({
             rows={inputRows}
             disabled={isBusy}
             aria-label={`Ask about ${placeholderLabel}`}
-            className="max-h-52 min-h-12 w-full resize-none rounded-xl bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground outline-none ring-1 ring-transparent transition placeholder:text-muted focus:ring-border disabled:cursor-not-allowed disabled:opacity-60"
+            className={cn(
+              ASSISTANT_CHAT_INPUT_CLASS,
+              "max-h-52 min-h-12 w-full resize-none rounded-xl bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground outline-none ring-1 ring-transparent transition placeholder:text-muted focus:ring-border disabled:cursor-not-allowed disabled:opacity-60",
+            )}
             placeholder={
               disabled
                 ? "Load holdings to start chatting…"
