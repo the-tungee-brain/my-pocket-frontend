@@ -215,7 +215,7 @@ export function PortfolioBriefSection({
   hideSuggestedActions = false,
   className,
 }: Props) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const mergedBrief: PortfolioIntelligence | null = brief ?? {
     signals: [],
