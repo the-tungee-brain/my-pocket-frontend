@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { AppShell } from "@/app/AppShell";
+import { SignedInRedirect } from "@/components/SignedInRedirect";
 import { PortfolioSectionProvider } from "@/app/contexts/PortfolioSectionContext";
 
 export default function PortfolioLayout({
@@ -12,7 +13,9 @@ export default function PortfolioLayout({
   return (
     <PortfolioSectionProvider>
       <Suspense fallback={null}>
-        <AppShell>{children}</AppShell>
+        <SignedInRedirect>
+          <AppShell>{children}</AppShell>
+        </SignedInRedirect>
       </Suspense>
     </PortfolioSectionProvider>
   );

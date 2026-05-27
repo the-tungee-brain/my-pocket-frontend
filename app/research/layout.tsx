@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { AppShell } from "@/app/AppShell";
+import { SignedInRedirect } from "@/components/SignedInRedirect";
 
 export default function ResearchLayout({
   children,
@@ -10,7 +11,9 @@ export default function ResearchLayout({
 }) {
   return (
     <Suspense fallback={null}>
-      <AppShell>{children}</AppShell>
+      <SignedInRedirect>
+        <AppShell>{children}</AppShell>
+      </SignedInRedirect>
     </Suspense>
   );
 }
