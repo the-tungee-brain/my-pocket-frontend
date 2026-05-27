@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { History, LineChart, TrendingUp } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useDividendHistory } from "@/app/hooks/useDividendHistory";
@@ -13,7 +13,6 @@ import type { Position } from "@/app/types/schwab";
 import type { DividendScenarioParams } from "@/app/types/research";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { PageSplit } from "@/components/PageShell";
-import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   defaultDividendInvestmentUsd,
@@ -235,13 +234,6 @@ export function DividendsPageContent({ symbol }: Props) {
         error ??
         "Historic dividend data is not available for this symbol right now."
       }
-      action={
-        error ? (
-          <Button size="sm" variant="outline" onClick={refetch}>
-            Try again
-          </Button>
-        ) : undefined
-      }
       variant="solid"
       className="py-4"
     />
@@ -250,29 +242,25 @@ export function DividendsPageContent({ symbol }: Props) {
   return (
     <PageSplit
       main={
-        <>
-          <ResearchSectionCard
-            title="Dividend history"
-            description="How annual totals and each payout per share have changed over time"
-            icon={LineChart}
-          >
-            {showInitialLoading ? (
-              <DividendSnowballSkeleton />
-            ) : history ? (
+        showInitialLoading ? (
+          <DividendSnowballSkeleton />
+        ) : showUnavailable ? (
+          unavailableState
+        ) : history ? (
+          <>
+            <ResearchSectionCard
+              title="Dividend history"
+              description="How annual totals and each payout per share have changed over time"
+              icon={LineChart}
+            >
               <DividendHistoryCharts history={history} />
-            ) : showUnavailable ? (
-              unavailableState
-            ) : null}
-          </ResearchSectionCard>
+            </ResearchSectionCard>
 
-          <ResearchSectionCard
-            title="Dividend snowball"
-            description="Historic payout growth and cash income on your share count"
-            icon={TrendingUp}
-          >
-            {showInitialLoading ? (
-              <DividendSnowballSkeleton />
-            ) : history ? (
+            <ResearchSectionCard
+              title="Dividend snowball"
+              description="Historic payout growth and cash income on your share count"
+              icon={TrendingUp}
+            >
               <div
                 className={
                   isFetching ? "space-y-4 opacity-60 transition-opacity" : "space-y-4"
@@ -296,11 +284,9 @@ export function DividendsPageContent({ symbol }: Props) {
                   onScenarioChange={setScenarioParams}
                 />
               </div>
-            ) : showUnavailable ? (
-              unavailableState
-            ) : null}
-          </ResearchSectionCard>
-        </>
+            </ResearchSectionCard>
+          </>
+        ) : null
       }
       aside={
         history ? (
