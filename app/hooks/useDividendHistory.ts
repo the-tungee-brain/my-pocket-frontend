@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { DividendHistoryContext } from "@/app/types/research";
 import {
   fetchDividendHistory,
@@ -25,6 +25,8 @@ export function useDividendHistory(
     reinvestDividends,
     priceCagrPct,
     shares,
+    projectYears,
+    dividendCagrPct,
   } = options;
 
   const fetchParams = useMemo<DividendFetchParams>(
@@ -34,26 +36,38 @@ export function useDividendHistory(
       reinvestDividends,
       priceCagrPct,
       shares,
+      projectYears,
+      dividendCagrPct,
     }),
-    [investmentUsd, sharePrice, reinvestDividends, priceCagrPct, shares],
+    [
+      investmentUsd,
+      sharePrice,
+      reinvestDividends,
+      priceCagrPct,
+      shares,
+      projectYears,
+      dividendCagrPct,
+    ],
   );
 
   const resolvedShares = resolveDividendScenarioShares(fetchParams);
   const cacheKey = symbol ? scenarioCacheKey(symbol, fetchParams) : "";
+  const symbolKey = symbol?.toUpperCase().trim() ?? "";
 
   const [history, setHistory] = useState<DividendHistoryContext | null>(() => {
-    if (!symbol) return null;
-    return getCachedDividendHistory(symbol, fetchParams);
+    if (!symbolKey) return null;
+    return getCachedDividendHistory(symbolKey, fetchParams);
   });
   const [isLoading, setIsLoading] = useState<boolean>(() => {
-    if (!symbol) return false;
-    return getCachedDividendHistory(symbol, fetchParams) === null;
+    if (!symbolKey) return false;
+    return getCachedDividendHistory(symbolKey, fetchParams) === null;
   });
   const [error, setError] = useState<string | null>(null);
+  const historyRef = useRef(history);
+  historyRef.current = history;
 
   useEffect(() => {
-    const key = symbol?.toUpperCase().trim();
-    if (!key) {
+    if (!symbolKey) {
       setHistory(null);
       setIsLoading(false);
       setError(null);
@@ -67,7 +81,7 @@ export function useDividendHistory(
       return;
     }
 
-    const cached = getCachedDividendHistory(key, fetchParams);
+    const cached = getCachedDividendHistory(symbolKey, fetchParams);
     if (cached) {
       setHistory(cached);
       setIsLoading(false);
@@ -76,17 +90,24 @@ export function useDividendHistory(
     }
 
     let cancelled = false;
+    const keepStaleData = historyRef.current?.ticker === symbolKey;
+
+    if (!keepStaleData) {
+      setHistory(null);
+      setIsLoading(true);
+    }
 
     async function load() {
-      setIsLoading(true);
       setError(null);
 
       try {
-        const data = await fetchDividendHistory(key!, accessToken!, fetchParams);
+        const data = await fetchDividendHistory(symbolKey, accessToken!, fetchParams);
         if (cancelled) return;
 
         if (!data) {
-          setHistory(null);
+          if (!keepStaleData) {
+            setHistory(null);
+          }
           setError("Dividend history is not available for this symbol.");
           return;
         }
@@ -95,7 +116,9 @@ export function useDividendHistory(
         setError(null);
       } catch (e: unknown) {
         if (cancelled) return;
-        setHistory(null);
+        if (!keepStaleData) {
+          setHistory(null);
+        }
         setError(
           e instanceof Error ? e.message : "Error fetching dividend history",
         );
@@ -111,7 +134,7 @@ export function useDividendHistory(
     return () => {
       cancelled = true;
     };
-  }, [symbol, accessToken, cacheKey, fetchParams]);
+  }, [symbolKey, accessToken, cacheKey, fetchParams]);
 
   return { history, isLoading, error, shares: resolvedShares };
 }

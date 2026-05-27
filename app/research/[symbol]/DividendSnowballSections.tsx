@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   AnnualDividendIncome,
   DividendHistoryContext,
   DividendPaymentItem,
   DividendScenarioParams,
 } from "@/app/types/research";
+import { DIVIDEND_PROJECTION_YEAR_PRESETS } from "@/app/types/research";
 import { formatUsd } from "@/lib/formatCurrency";
 import { cn } from "@/lib/utils";
 
@@ -21,9 +22,159 @@ function formatPct(value: number | null | undefined): string {
 }
 
 function formatPerShare(value: number): string {
+  if (value === 0) return "$0";
   if (value >= 1) return `$${value.toFixed(2)}`;
   if (value >= 0.1) return `$${value.toFixed(3)}`;
   return `$${value.toFixed(4)}`;
+}
+
+function formatSnowballShares(value: number): string {
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
+function roundSnowball(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+type SnowballNumericInputProps = {
+  value: number | null | undefined;
+  onCommit: (value: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  className?: string;
+};
+
+function SnowballNumericInput({
+  value,
+  onCommit,
+  min,
+  max,
+  step,
+  className,
+}: SnowballNumericInputProps) {
+  const [text, setText] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (isFocused) return;
+    setText(value != null && value > 0 ? String(roundSnowball(value)) : "");
+  }, [value, isFocused]);
+
+  return (
+    <input
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      value={text}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => {
+        setIsFocused(false);
+        const trimmed = text.trim();
+        if (trimmed === "") {
+          setText(value != null && value > 0 ? String(roundSnowball(value)) : "");
+          return;
+        }
+        const next = Number(trimmed);
+        if (Number.isFinite(next) && next > 0) {
+          onCommit(next);
+          setText(String(roundSnowball(next)));
+          return;
+        }
+        setText(value != null && value > 0 ? String(roundSnowball(value)) : "");
+      }}
+      onChange={(event) => {
+        const nextText = event.target.value;
+        setText(nextText);
+        const trimmed = nextText.trim();
+        if (trimmed === "") return;
+        const next = Number(trimmed);
+        if (Number.isFinite(next) && next > 0) {
+          onCommit(next);
+        }
+      }}
+      className={className}
+    />
+  );
+}
+
+type SnowballInputSource = "investment" | "shares";
+
+function buildScenarioParams(
+  base: DividendScenarioParams | undefined,
+  source: SnowballInputSource,
+  values: {
+    investmentUsd?: number | null;
+    sharePrice?: number | null;
+    shares?: number | null;
+    projectYears?: number | null;
+    dividendCagrPct?: number | null;
+    reinvestDividends?: boolean;
+    priceCagrPct?: number | null;
+  },
+): DividendScenarioParams {
+  const sharePrice = values.sharePrice ?? base?.sharePrice ?? null;
+  const reinvestDividends = values.reinvestDividends ?? base?.reinvestDividends ?? false;
+  const priceCagrPct = values.priceCagrPct ?? base?.priceCagrPct ?? null;
+  const projectYears = values.projectYears ?? base?.projectYears ?? 10;
+  const dividendCagrPct = values.dividendCagrPct ?? base?.dividendCagrPct ?? null;
+
+  if (sharePrice != null && sharePrice > 0) {
+    if (source === "shares" && values.shares != null && values.shares > 0) {
+      const shares = roundSnowball(values.shares);
+      return {
+        investmentUsd: roundSnowball(shares * sharePrice),
+        sharePrice: roundSnowball(sharePrice),
+        shares,
+        projectYears,
+        dividendCagrPct,
+        reinvestDividends,
+        priceCagrPct,
+      };
+    }
+
+    if (values.investmentUsd != null && values.investmentUsd > 0) {
+      const investmentUsd = roundSnowball(values.investmentUsd);
+      return {
+        investmentUsd,
+        sharePrice: roundSnowball(sharePrice),
+        shares: roundSnowball(investmentUsd / sharePrice),
+        projectYears,
+        dividendCagrPct,
+        reinvestDividends,
+        priceCagrPct,
+      };
+    }
+  }
+
+  return {
+    investmentUsd: values.investmentUsd ?? base?.investmentUsd ?? null,
+    sharePrice,
+    shares: values.shares ?? base?.shares ?? null,
+    projectYears,
+    dividendCagrPct,
+    reinvestDividends,
+    priceCagrPct,
+  };
+}
+
+function mergeScenarioParams(
+  base: DividendScenarioParams | undefined,
+  next: Partial<DividendScenarioParams>,
+): DividendScenarioParams {
+  return {
+    investmentUsd: next.investmentUsd ?? base?.investmentUsd ?? null,
+    sharePrice: next.sharePrice ?? base?.sharePrice ?? null,
+    shares: next.shares ?? base?.shares ?? null,
+    projectYears: next.projectYears ?? base?.projectYears ?? 10,
+    dividendCagrPct: next.dividendCagrPct ?? base?.dividendCagrPct ?? null,
+    reinvestDividends: next.reinvestDividends ?? base?.reinvestDividends ?? false,
+    priceCagrPct: next.priceCagrPct ?? base?.priceCagrPct ?? null,
+  };
 }
 
 function formatDate(value: string): string {
@@ -141,7 +292,7 @@ export function DividendSnowballStats({ history }: { history: DividendHistoryCon
       <StatCard
         label={`Since ${scenario.startYear}`}
         value={formatUsd(scenario.totalCollected, { maximumFractionDigits: 0 })}
-        hint="Cash dividends collected (no DRIP)"
+        hint={`Projected over ${scenario.projectYears} years`}
       />
     </div>
   );
@@ -498,6 +649,7 @@ export function DividendSnowballScenarioCard({
   onScenarioChange?: (params: DividendScenarioParams) => void;
 }) {
   const { scenario } = history;
+  const [lastEdited, setLastEdited] = useState<SnowballInputSource>("investment");
   const growthPct =
     scenario.annualIncomeStart > 0
       ? ((scenario.annualIncomeLatest - scenario.annualIncomeStart) /
@@ -508,14 +660,38 @@ export function DividendSnowballScenarioCard({
   const investmentUsd = scenarioParams?.investmentUsd ?? scenario.investmentUsd ?? null;
   const sharePrice = scenarioParams?.sharePrice ?? scenario.sharePrice ?? null;
   const reinvestDividends = scenarioParams?.reinvestDividends ?? false;
-  const computedShares =
-    investmentUsd != null &&
+  const projectYears = scenarioParams?.projectYears ?? scenario.projectYears ?? 10;
+  const shares =
+    scenarioParams?.shares ??
+    (investmentUsd != null &&
     investmentUsd > 0 &&
     sharePrice != null &&
     sharePrice > 0
-      ? investmentUsd / sharePrice
-      : scenario.shares;
+      ? roundSnowball(investmentUsd / sharePrice)
+      : roundSnowball(scenario.shares));
   const advanced = scenario.advanced;
+
+  function emitScenario(
+    source: SnowballInputSource,
+    values: {
+      investmentUsd?: number | null;
+      sharePrice?: number | null;
+      shares?: number | null;
+      projectYears?: number | null;
+      dividendCagrPct?: number | null;
+      reinvestDividends?: boolean;
+      priceCagrPct?: number | null;
+    },
+  ) {
+    if (!onScenarioChange) return;
+    setLastEdited(source);
+    onScenarioChange(buildScenarioParams(scenarioParams, source, values));
+  }
+
+  function updateScenario(next: Partial<DividendScenarioParams>) {
+    if (!onScenarioChange) return;
+    onScenarioChange(mergeScenarioParams(scenarioParams, next));
+  }
 
   return (
     <div className="space-y-4">
@@ -523,8 +699,9 @@ export function DividendSnowballScenarioCard({
         <div>
           <p className="text-sm font-medium text-foreground">Income snowball</p>
           <p className="mt-1 text-xs text-muted">
-            Compare annual dividend cash from {scenario.startYear} to{" "}
-            {scenario.latestYear}. Enter dollars to derive fractional shares.
+            Forward-project dividend income from this year ({scenario.startYear})
+            through the next {projectYears} years ({scenario.latestYear}). Enter
+            investment or shares — the other is calculated from share price.
           </p>
         </div>
       </div>
@@ -533,18 +710,16 @@ export function DividendSnowballScenarioCard({
         <div className="grid gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 sm:grid-cols-3">
           <label className="space-y-1 text-xs text-muted">
             Investment
-            <input
-              type="number"
-              min={1}
+            <SnowballNumericInput
+              min={0.01}
               max={100000000}
-              step={1}
-              value={investmentUsd ?? ""}
-              onChange={(event) => {
-                const next = Number(event.target.value);
-                if (!Number.isFinite(next) || next <= 0) return;
-                onScenarioChange({
+              step={0.01}
+              value={investmentUsd}
+              onCommit={(next) => {
+                emitScenario("investment", {
                   investmentUsd: next,
-                  sharePrice: sharePrice ?? null,
+                  sharePrice,
+                  projectYears,
                   reinvestDividends,
                   priceCagrPct: scenarioParams?.priceCagrPct ?? null,
                 });
@@ -554,18 +729,27 @@ export function DividendSnowballScenarioCard({
           </label>
           <label className="space-y-1 text-xs text-muted">
             Share price
-            <input
-              type="number"
+            <SnowballNumericInput
               min={0.01}
               max={1000000}
               step={0.01}
-              value={sharePrice ?? ""}
-              onChange={(event) => {
-                const next = Number(event.target.value);
-                if (!Number.isFinite(next) || next <= 0) return;
-                onScenarioChange({
-                  investmentUsd: investmentUsd ?? null,
-                  sharePrice: next,
+              value={sharePrice}
+              onCommit={(next) => {
+                const roundedPrice = roundSnowball(next);
+                if (lastEdited === "shares" && shares > 0) {
+                  emitScenario("shares", {
+                    shares,
+                    sharePrice: roundedPrice,
+                    projectYears,
+                    reinvestDividends,
+                    priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                  });
+                  return;
+                }
+                emitScenario("investment", {
+                  investmentUsd,
+                  sharePrice: roundedPrice,
+                  projectYears,
                   reinvestDividends,
                   priceCagrPct: scenarioParams?.priceCagrPct ?? null,
                 });
@@ -573,15 +757,67 @@ export function DividendSnowballScenarioCard({
               className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
             />
           </label>
-          <div className="space-y-1 text-xs text-muted">
+          <label className="space-y-1 text-xs text-muted">
             Shares
-            <div className="rounded-md border border-border/70 bg-background px-2 py-1.5 text-sm tabular-nums text-foreground">
-              {computedShares.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 4,
-              })}
-            </div>
+            <SnowballNumericInput
+              min={0.01}
+              max={1000000}
+              step={0.01}
+              value={shares}
+              onCommit={(next) => {
+                emitScenario("shares", {
+                  shares: next,
+                  sharePrice,
+                  projectYears,
+                  reinvestDividends,
+                  priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                });
+              }}
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+            />
+          </label>
+        </div>
+      ) : null}
+
+      {onScenarioChange ? (
+        <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
+          <div>
+            <p className="text-xs font-medium text-foreground">Projection horizon</p>
+            <p className="mt-1 text-[11px] text-muted">
+              {scenario.startYear} → {scenario.latestYear} ·{" "}
+              {scenario.dividendCagrPct.toFixed(1)}% avg dividend growth / yr
+            </p>
           </div>
+          <div className="flex flex-wrap gap-2">
+            {DIVIDEND_PROJECTION_YEAR_PRESETS.map((years) => (
+              <button
+                key={years}
+                type="button"
+                onClick={() => updateScenario({ projectYears: years })}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs tabular-nums transition-colors",
+                  projectYears === years
+                    ? "border-accent/60 bg-accent/10 text-foreground"
+                    : "border-border bg-background text-muted hover:text-foreground",
+                )}
+              >
+                {years}y
+              </button>
+            ))}
+          </div>
+          <label className="block max-w-xs space-y-1 text-xs text-muted">
+            Custom years
+            <SnowballNumericInput
+              min={1}
+              max={50}
+              step={1}
+              value={projectYears}
+              onCommit={(next) =>
+                updateScenario({ projectYears: Math.max(1, Math.min(50, Math.round(next))) })
+              }
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+            />
+          </label>
         </div>
       ) : null}
 
@@ -592,20 +828,15 @@ export function DividendSnowballScenarioCard({
               type="checkbox"
               checked={reinvestDividends}
               onChange={(event) => {
-                onScenarioChange({
-                  investmentUsd: investmentUsd ?? null,
-                  sharePrice: sharePrice ?? null,
-                  reinvestDividends: event.target.checked,
-                  priceCagrPct: scenarioParams?.priceCagrPct ?? null,
-                });
+                updateScenario({ reinvestDividends: event.target.checked });
               }}
               className="mt-0.5"
             />
             <span>
               <span className="font-medium">Advanced: DRIP + price growth</span>
               <span className="mt-1 block text-xs text-muted">
-                Reinvest dividends each year and apply average annual price
-                appreciation from {scenario.startYear} to {scenario.latestYear}.
+                Reinvest dividends each year and compound share price over the
+                next {projectYears} years.
               </span>
             </span>
           </label>
@@ -626,9 +857,7 @@ export function DividendSnowballScenarioCard({
                 value={scenarioParams?.priceCagrPct ?? ""}
                 onChange={(event) => {
                   const raw = event.target.value.trim();
-                  onScenarioChange({
-                    investmentUsd: investmentUsd ?? null,
-                    sharePrice: sharePrice ?? null,
+                  updateScenario({
                     reinvestDividends: true,
                     priceCagrPct: raw === "" ? null : Number(event.target.value),
                   });
@@ -649,7 +878,7 @@ export function DividendSnowballScenarioCard({
             {formatUsd(scenario.annualIncomeStart, { maximumFractionDigits: 0 })}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {reinvestDividends ? "Flat share count" : "Annual dividend cash"}
+            {reinvestDividends ? "Flat share count" : "At today's dividend rate"}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
@@ -664,12 +893,10 @@ export function DividendSnowballScenarioCard({
           </p>
           <p className="mt-1 text-xs text-muted">
             {advanced
-              ? `${advanced.finalShares.toLocaleString(undefined, {
-                  maximumFractionDigits: 2,
-                })} shares after DRIP`
+              ? `${formatSnowballShares(advanced.finalShares)} shares after DRIP`
               : growthPct != null && growthPct > 0
                 ? `Up ${growthPct.toFixed(0)}% vs ${scenario.startYear}`
-                : "Annual dividend cash"}
+                : "Projected annual income"}
           </p>
         </div>
       </div>
@@ -691,16 +918,11 @@ export function DividendSnowballScenarioCard({
               Shares after DRIP
             </p>
             <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
-              {advanced.finalShares.toLocaleString(undefined, {
-                maximumFractionDigits: 4,
-              })}
+              {formatSnowballShares(advanced.finalShares)}
             </p>
             <p className="mt-1 text-[11px] text-muted">
-              Started with{" "}
-              {advanced.initialShares.toLocaleString(undefined, {
-                maximumFractionDigits: 4,
-              })}{" "}
-              in {scenario.startYear}
+              Started with {formatSnowballShares(advanced.initialShares)} in{" "}
+              {scenario.startYear}
             </p>
           </div>
           <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
@@ -721,18 +943,19 @@ export function DividendSnowballScenarioCard({
 
       <p className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2 text-xs text-muted">
         {reinvestDividends && advanced
-          ? `Simulates investing ${formatUsd(investmentUsd ?? 0, {
+          ? `Projects ${formatUsd(investmentUsd ?? 0, {
               maximumFractionDigits: 0,
-            })} at the start of ${scenario.startYear}, reinvesting all dividends, and compounding share price at ${advanced.priceCagrPct.toFixed(
+            })} invested today with DRIP, ${scenario.dividendCagrPct.toFixed(
               1,
-            )}% per year. `
-          : `Total cash collected since ${scenario.startYear}: ${formatUsd(
+            )}% dividend growth, and ${advanced.priceCagrPct.toFixed(
+              1,
+            )}% price growth over ${projectYears} years. `
+          : `Projected dividends collected over ${projectYears} years: ${formatUsd(
               scenario.totalCollected,
               { maximumFractionDigits: 0 },
-            )} on a flat ${computedShares.toLocaleString(undefined, {
-              maximumFractionDigits: 4,
-            })}-share position. Assumes dividends were taken as cash. `}
-        Past dividend and price growth do not guarantee future results.
+            )} on a flat ${formatSnowballShares(shares)}-share position. `}
+        Forward projections assume historic growth rates continue. Past performance
+        does not guarantee future results.
       </p>
     </div>
   );

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { History, LineChart, TrendingUp } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useDividendHistory } from "@/app/hooks/useDividendHistory";
+import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 import { useStockData } from "@/app/hooks/useStockData";
 import { usePositionsContext } from "@/app/Providers";
 import type { Position } from "@/app/types/schwab";
@@ -35,6 +36,10 @@ function equityShareCount(positions: Position[] | undefined): number {
     );
 }
 
+function roundToTwo(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 function equitySharePrice(positions: Position[] | undefined): number | null {
   if (!positions?.length) return null;
   const equity = positions.find(
@@ -45,7 +50,40 @@ function equitySharePrice(positions: Position[] | undefined): number | null {
   if (!equity) return null;
   const shares = equity.longQuantity - equity.shortQuantity;
   if (shares <= 0) return null;
-  return equity.marketValue / shares;
+  return roundToTwo(equity.marketValue / shares);
+}
+
+function buildInitialScenarioParams(
+  heldShares: number,
+  sharePrice: number | null,
+): DividendScenarioParams {
+  const price =
+    sharePrice != null && sharePrice > 0 ? roundToTwo(sharePrice) : null;
+
+  if (heldShares > 0 && price != null) {
+    const shares = roundToTwo(heldShares);
+    return {
+      investmentUsd: roundToTwo(shares * price),
+      sharePrice: price,
+      shares,
+      projectYears: 10,
+      reinvestDividends: false,
+      priceCagrPct: null,
+    };
+  }
+
+  const investmentUsd = defaultDividendInvestmentUsd(heldShares, price);
+  return {
+    investmentUsd,
+    sharePrice: price,
+    shares:
+      price != null && investmentUsd > 0
+        ? roundToTwo(investmentUsd / price)
+        : null,
+    projectYears: 10,
+    reinvestDividends: false,
+    priceCagrPct: null,
+  };
 }
 
 export function DividendsPageContent({ symbol }: Props) {
@@ -75,15 +113,12 @@ export function DividendsPageContent({ symbol }: Props) {
     }
     const closes = stockData?.data ?? [];
     const lastClose = closes[closes.length - 1]?.close;
-    return lastClose != null && lastClose > 0 ? lastClose : null;
+    return lastClose != null && lastClose > 0 ? roundToTwo(lastClose) : null;
   }, [heldSharePrice, stockData?.data]);
 
-  const [scenarioParams, setScenarioParams] = useState<DividendScenarioParams>(() => ({
-    investmentUsd: defaultDividendInvestmentUsd(heldShares, heldSharePrice),
-    sharePrice: heldSharePrice,
-    reinvestDividends: false,
-    priceCagrPct: null,
-  }));
+  const [scenarioParams, setScenarioParams] = useState<DividendScenarioParams>(() =>
+    buildInitialScenarioParams(heldShares, heldSharePrice),
+  );
 
   useEffect(() => {
     if (marketSharePrice == null) return;
@@ -91,30 +126,56 @@ export function DividendsPageContent({ symbol }: Props) {
       if (current.sharePrice != null && current.sharePrice > 0) {
         return current;
       }
-      return { ...current, sharePrice: marketSharePrice };
+      const next = { ...current, sharePrice: marketSharePrice };
+      if (
+        (next.shares == null || next.shares <= 0) &&
+        next.investmentUsd != null &&
+        next.investmentUsd > 0
+      ) {
+        next.shares = roundToTwo(next.investmentUsd / marketSharePrice);
+      }
+      return next;
     });
   }, [marketSharePrice]);
 
   useEffect(() => {
     setScenarioParams((current) => {
       if (current.investmentUsd != null && current.investmentUsd > 0) {
+        if (current.shares != null && current.shares > 0) {
+          return current;
+        }
+        const price = current.sharePrice ?? marketSharePrice;
+        if (price != null && price > 0) {
+          return {
+            ...current,
+            shares: roundToTwo(current.investmentUsd / price),
+          };
+        }
         return current;
       }
+
+      const price = current.sharePrice ?? marketSharePrice;
+      const investmentUsd = defaultDividendInvestmentUsd(heldShares, price);
       return {
         ...current,
-        investmentUsd: defaultDividendInvestmentUsd(
-          heldShares,
-          current.sharePrice ?? marketSharePrice,
-        ),
+        investmentUsd,
+        sharePrice: current.sharePrice ?? price,
+        shares:
+          price != null && investmentUsd > 0
+            ? roundToTwo(investmentUsd / price)
+            : current.shares ?? null,
       };
     });
   }, [heldShares, marketSharePrice]);
 
+  const debouncedScenarioParams = useDebouncedValue(scenarioParams, 400);
+
   const { history, isLoading, error } = useDividendHistory(symbol, {
     accessToken: session?.accessToken,
-    ...scenarioParams,
-    shares: heldShares > 0 ? heldShares : undefined,
+    ...debouncedScenarioParams,
   });
+
+  const showInitialLoading = isLoading && !history;
 
   return (
     <PageSplit
@@ -125,7 +186,7 @@ export function DividendsPageContent({ symbol }: Props) {
             description="How annual totals and each payout per share have changed over time"
             icon={LineChart}
           >
-            {isLoading ? (
+            {showInitialLoading ? (
               <DividendSnowballSkeleton />
             ) : history ? (
               <DividendHistoryCharts history={history} />
@@ -148,7 +209,7 @@ export function DividendsPageContent({ symbol }: Props) {
             description="Historic payout growth and cash income on your share count"
             icon={TrendingUp}
           >
-            {isLoading ? (
+            {showInitialLoading ? (
               <DividendSnowballSkeleton />
             ) : history ? (
               <div className="space-y-4">

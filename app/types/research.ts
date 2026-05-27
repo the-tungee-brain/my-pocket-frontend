@@ -64,14 +64,21 @@ export type DividendSnowballScenario = {
   annualIncomeLatest: number;
   annualIncomeStart: number;
   latestYear: number;
+  projectYears: number;
+  dividendCagrPct: number;
   investmentUsd?: number | null;
   sharePrice?: number | null;
   advanced?: DividendAdvancedSnowballScenario | null;
 };
 
+export const DIVIDEND_PROJECTION_YEAR_PRESETS = [5, 10, 15, 20, 25, 30] as const;
+
 export type DividendScenarioParams = {
   investmentUsd?: number | null;
   sharePrice?: number | null;
+  shares?: number | null;
+  projectYears?: number | null;
+  dividendCagrPct?: number | null;
   reinvestDividends?: boolean;
   priceCagrPct?: number | null;
 };

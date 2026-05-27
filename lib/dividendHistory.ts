@@ -35,30 +35,36 @@ function hasInvestment(params: DividendFetchParams): boolean {
 }
 
 export function resolveDividendScenarioShares(params: DividendFetchParams): number {
-  if (hasInvestment(params)) {
-    return params.investmentUsd! / params.sharePrice!;
-  }
   if (params.shares != null && params.shares > 0) {
     return params.shares;
+  }
+  if (hasInvestment(params)) {
+    return Math.round((params.investmentUsd! / params.sharePrice!) * 100) / 100;
   }
   return DEFAULT_SHARES;
 }
 
 export function scenarioCacheKey(symbol: string, params: DividendFetchParams): string {
   const base = normalizeKey(symbol);
+  const shares = resolveDividendScenarioShares(params).toFixed(2);
+
   if (hasInvestment(params)) {
     return [
       base,
       `inv:${params.investmentUsd!.toFixed(2)}`,
-      `px:${params.sharePrice!.toFixed(4)}`,
+      `px:${params.sharePrice!.toFixed(2)}`,
+      `shares:${shares}`,
+      `years:${params.projectYears ?? 10}`,
       params.reinvestDividends ? "drip" : "cash",
       params.priceCagrPct != null ? `pcagr:${params.priceCagrPct}` : "pcagr:auto",
+      params.dividendCagrPct != null ? `dcagr:${params.dividendCagrPct}` : "dcagr:auto",
     ].join("|");
   }
 
   return [
     base,
-    `shares:${resolveDividendScenarioShares(params).toFixed(6)}`,
+    `shares:${shares}`,
+    `years:${params.projectYears ?? 10}`,
     params.reinvestDividends ? "drip" : "cash",
   ].join("|");
 }
@@ -192,6 +198,9 @@ function normalizeScenario(raw: unknown): DividendHistoryContext["scenario"] | n
     annualIncomeLatest,
     annualIncomeStart,
     latestYear,
+    projectYears: readNumber(item.projectYears ?? item.project_years) ?? 10,
+    dividendCagrPct:
+      readNumber(item.dividendCagrPct ?? item.dividend_cagr_pct) ?? 0,
     investmentUsd: readNumber(item.investmentUsd ?? item.investment_usd),
     sharePrice: readNumber(item.sharePrice ?? item.share_price),
     advanced: normalizeAdvancedScenario(item.advanced),
@@ -293,6 +302,12 @@ function buildQueryParams(symbol: string, params: DividendFetchParams): URLSearc
   }
   if (params.priceCagrPct != null && Number.isFinite(params.priceCagrPct)) {
     query.set("price_cagr_pct", String(params.priceCagrPct));
+  }
+  if (params.projectYears != null && Number.isFinite(params.projectYears)) {
+    query.set("project_years", String(Math.round(params.projectYears)));
+  }
+  if (params.dividendCagrPct != null && Number.isFinite(params.dividendCagrPct)) {
+    query.set("dividend_cagr_pct", String(params.dividendCagrPct));
   }
 
   return query;
