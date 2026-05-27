@@ -1,8 +1,10 @@
 import { apiFetch } from "@/lib/apiClient";
-import type { EtfHoldingsContext } from "@/app/types/research";
+import type { EtfHoldingItem, EtfHoldingsContext } from "@/app/types/research";
+import { rankEtfHoldingsByQuality, withQualityScore } from "@/lib/etfHoldingsQuality";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const STORAGE_KEY = "powerpocket-etf-holdings";
+const STORAGE_KEY = "powerpocket-etf-holdings:v2";
+const DEFAULT_QUALITY_LIMIT = 5;
 
 type StoredEntry = {
   data: EtfHoldingsContext;
@@ -46,6 +48,117 @@ function cacheKey(symbol: string, limit: number): string {
   return `${normalizeKey(symbol)}:${limit}`;
 }
 
+function readNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function normalizeHolding(raw: unknown): EtfHoldingItem | null {
+  if (!raw || typeof raw !== "object") return null;
+  const item = raw as Record<string, unknown>;
+  const name = typeof item.name === "string" ? item.name : null;
+  const weight = readNumber(item.weight_pct ?? item.weightPct);
+  if (!name || weight == null) return null;
+
+  const ticker =
+    typeof item.ticker === "string" ? item.ticker.trim().toUpperCase() : null;
+
+  return withQualityScore({
+    ticker,
+    name,
+    weight_pct: weight,
+    sector: typeof item.sector === "string" ? item.sector : null,
+    market_cap:
+      typeof item.market_cap === "string"
+        ? item.market_cap
+        : typeof item.marketCap === "string"
+          ? item.marketCap
+          : null,
+    piotroskiF: readNumber(item.piotroskiF ?? item.piotroski_f),
+    altmanZ: readNumber(item.altmanZ ?? item.altman_z),
+    qualityScore: readNumber(item.qualityScore ?? item.quality_score),
+  });
+}
+
+function normalizeHoldingsList(raw: unknown): EtfHoldingItem[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(normalizeHolding)
+    .filter((item): item is EtfHoldingItem => item != null);
+}
+
+export function normalizeEtfHoldingsContext(
+  raw: unknown,
+  fallbackLimit = 25,
+): EtfHoldingsContext | null {
+  if (!raw || typeof raw !== "object") return null;
+  const data = raw as Record<string, unknown>;
+
+  const ticker =
+    typeof data.ticker === "string" ? data.ticker.trim().toUpperCase() : null;
+  const totalHoldings = readNumber(data.total_holdings ?? data.totalHoldings);
+  if (!ticker || totalHoldings == null) return null;
+
+  const holdings = normalizeHoldingsList(data.holdings);
+  let strongestHoldings = normalizeHoldingsList(
+    data.strongestHoldings ?? data.strongest_holdings,
+  );
+  let weakestHoldings = normalizeHoldingsList(
+    data.weakestHoldings ?? data.weakest_holdings,
+  );
+
+  if (strongestHoldings.length === 0 && weakestHoldings.length === 0) {
+    const ranked = rankEtfHoldingsByQuality(holdings, DEFAULT_QUALITY_LIMIT);
+    strongestHoldings = ranked.strongest;
+    weakestHoldings = ranked.weakest;
+  }
+
+  const sectorBreakdownRaw =
+    data.sector_breakdown ?? data.sectorBreakdown ?? {};
+  const sector_breakdown: Record<string, number> = {};
+  if (sectorBreakdownRaw && typeof sectorBreakdownRaw === "object") {
+    for (const [sector, weight] of Object.entries(
+      sectorBreakdownRaw as Record<string, unknown>,
+    )) {
+      const parsed = readNumber(weight);
+      if (parsed != null) sector_breakdown[sector] = parsed;
+    }
+  }
+
+  return {
+    ticker,
+    total_holdings: Math.trunc(totalHoldings),
+    aum: typeof data.aum === "string" ? data.aum : null,
+    sector_breakdown,
+    holdings: holdings.slice(0, Math.max(1, fallbackLimit)),
+    strongestHoldings,
+    weakestHoldings,
+    dividend_yield:
+      typeof data.dividend_yield === "string"
+        ? data.dividend_yield
+        : typeof data.dividendYield === "string"
+          ? data.dividendYield
+          : null,
+    expense_ratio:
+      typeof data.expense_ratio === "string"
+        ? data.expense_ratio
+        : typeof data.expenseRatio === "string"
+          ? data.expenseRatio
+          : null,
+    dataAsOf:
+      typeof data.dataAsOf === "string"
+        ? data.dataAsOf
+        : typeof data.data_as_of === "string"
+          ? data.data_as_of
+          : null,
+    confidenceScore: readNumber(data.confidenceScore ?? data.confidence_score),
+  };
+}
+
 export function getCachedEtfHoldings(
   symbol: string,
   limit = 25,
@@ -64,8 +177,11 @@ export function getCachedEtfHoldings(
     return null;
   }
 
-  memoryCache.set(key, entry.data);
-  return entry.data;
+  const normalized = normalizeEtfHoldingsContext(entry.data, limit);
+  if (!normalized) return null;
+
+  memoryCache.set(key, normalized);
+  return normalized;
 }
 
 async function fetchEtfHoldingsFromApi(
@@ -86,7 +202,10 @@ async function fetchEtfHoldingsFromApi(
     if (res.status === 404) return null;
     if (!res.ok) return null;
 
-    const data = (await res.json()) as EtfHoldingsContext;
+    const raw: unknown = await res.json();
+    const data = normalizeEtfHoldingsContext(raw, limit);
+    if (!data) return null;
+
     const key = cacheKey(symbol, limit);
     memoryCache.set(key, data);
 

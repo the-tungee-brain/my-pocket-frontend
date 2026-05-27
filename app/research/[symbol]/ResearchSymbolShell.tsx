@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { CompanySnapshot } from "./CompanySnapshot";
-import { ResearchTabBar, researchTabLabel } from "@/components/ResearchTabBar";
+import { ResearchTabBar, researchBreadcrumbLabel } from "@/components/ResearchTabBar";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { addRecentSymbol } from "@/lib/recentSymbols";
 import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
@@ -75,7 +75,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
                 : []),
               { label: "Research", href: "/research" },
               { label: symbolUpper, href: symbolHubPath(symbolUpper, "overview") },
-              { label: researchTabLabel(activeTab, assetType, isEtf) },
+              { label: researchBreadcrumbLabel(activeTab) },
             ]}
           />
         )}

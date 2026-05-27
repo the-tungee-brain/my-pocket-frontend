@@ -45,7 +45,6 @@ export function useEtfHoldings(
     if (!accessToken) {
       setHoldings(null);
       setIsLoading(false);
-      setError("Missing access token");
       return;
     }
 
@@ -68,14 +67,8 @@ export function useEtfHoldings(
         if (cancelled) return;
 
         setHoldings(data);
-        if (!data) {
-          setError("ETF holdings are not available for this symbol.");
-        }
-      } catch (e: unknown) {
+      } catch {
         if (cancelled) return;
-        setError(
-          e instanceof Error ? e.message : "Error loading ETF holdings",
-        );
         setHoldings(null);
       } finally {
         if (!cancelled) {

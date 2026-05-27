@@ -184,7 +184,25 @@ export function researchTabLabel(
   assetType?: AssetType | null,
   isEtf = false,
 ): string {
+  const tabId = (tab as ResearchTabId | undefined) ?? "overview";
+
+  if (tabId === "fundamentals" && (isEtf || assetType === "ETF")) {
+    return "Fund metrics";
+  }
+
+  const direct = allTabs.find((entry) => entry.id === tabId);
+  if (direct) {
+    return direct.label;
+  }
+
   const tabs = tabsForAssetType(assetType, isEtf);
-  const found = tabs.find((entry) => entry.id === tab);
+  const found = tabs.find((entry) => entry.id === tabId);
   return found?.label ?? "Overview";
+}
+
+/** Pathname-only label for SSR-safe breadcrumbs (no asset-type detection). */
+export function researchBreadcrumbLabel(tab: string | undefined): string {
+  const tabId = (tab as ResearchTabId | undefined) ?? "overview";
+  const direct = allTabs.find((entry) => entry.id === tabId);
+  return direct?.label ?? "Overview";
 }
