@@ -347,14 +347,14 @@ export function DividendSnowballStats({
         hint="Average annual dividend growth, completed years"
       />
       <StatCard
-        label={`${endYear} income`}
+        label={`${endYear} annual dividend`}
         value={formatUsd(scenario.annualIncomeLatest, { maximumFractionDigits: 0 })}
-        hint={`Projected in ${projectYears} years`}
+        hint={`Estimated cash per year in ${projectYears} years`}
       />
       <StatCard
-        label={`${currentYear} outlook`}
+        label={`${projectYears}-year total`}
         value={formatUsd(scenario.totalCollected, { maximumFractionDigits: 0 })}
-        hint={`Projected over ${projectYears} years`}
+        hint={`Estimated dividend cash collected ${currentYear}–${endYear}`}
       />
     </div>
   );
@@ -941,19 +941,21 @@ export function DividendSnowballScenarioCard({
 
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
-          <p className="text-[11px] uppercase tracking-wide text-muted">
-            {currentYear}
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+            Est. annual dividend · {currentYear}
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
             {formatUsd(scenario.annualIncomeStart, { maximumFractionDigits: 0 })}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {reinvestDividends ? "Flat share count" : "At today's dividend rate"}
+            {reinvestDividends
+              ? "Cash per year at your starting share count"
+              : "Cash per year at today's dividend rate"}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
-          <p className="text-[11px] uppercase tracking-wide text-muted">
-            {endYear}
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+            Est. annual dividend · {endYear}
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
             {formatUsd(
@@ -963,10 +965,10 @@ export function DividendSnowballScenarioCard({
           </p>
           <p className="mt-1 text-xs text-muted">
             {advanced
-              ? `${formatSnowballShares(advanced.finalShares)} shares after DRIP`
+              ? `Cash per year with ${formatSnowballShares(advanced.finalShares)} shares after DRIP`
               : growthPct != null && growthPct > 0
-                ? `Up ${growthPct.toFixed(0)}% vs ${currentYear}`
-                : "Projected annual income"}
+                ? `Up ${growthPct.toFixed(0)}% vs ${currentYear}, same share count`
+                : "Cash per year with the same share count"}
           </p>
         </div>
       </div>
