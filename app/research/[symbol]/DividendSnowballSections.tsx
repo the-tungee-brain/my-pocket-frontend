@@ -294,13 +294,13 @@ type StatProps = {
 function StatCard({ label, value, hint }: StatProps) {
   return (
     <div className="flex h-full flex-col rounded-xl border border-border bg-surface-elevated/40 px-3 py-2.5">
-      <p className="min-h-[2.5rem] text-[11px] font-medium uppercase leading-snug tracking-wide text-muted">
+      <p className="min-h-10 text-[11px] font-medium uppercase leading-snug tracking-wide text-muted">
         {label}
       </p>
-      <p className="mt-1 min-h-[1.75rem] text-lg font-semibold tabular-nums leading-none text-foreground">
+      <p className="mt-1 min-h-7 text-lg font-semibold tabular-nums leading-none text-foreground">
         {value}
       </p>
-      <p className="mt-2 min-h-[2.75rem] text-[11px] leading-snug text-muted">
+      <p className="mt-2 min-h-11 text-[11px] leading-snug text-muted">
         {hint ?? ""}
       </p>
     </div>
