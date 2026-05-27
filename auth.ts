@@ -9,7 +9,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     clientSecret: process.env.NEXT_PUBLIC_AUTH_GOOGLE_SECRET
   })],
   session: { strategy: 'jwt' },
-  debug: true,
+  debug: process.env.AUTH_DEBUG === 'true',
   trustHost: true,
   logger: {
     error(code, ...message) {
