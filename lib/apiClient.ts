@@ -229,7 +229,7 @@ async function streamPost(
   body: unknown,
   accessToken: string,
   onChunk: (text: string) => void,
-): Promise<void> {
+): Promise<{ chatSessionId: string | null }> {
   const url = `${API_BASE_URL}${path}`;
   let res: Response;
   try {
@@ -263,14 +263,17 @@ async function streamPost(
     throw new Error("Failed to start stream (no body)");
   }
 
+  const chatSessionId = res.headers.get("X-Chat-Session-Id");
+
   await streamResponseBody(res, onChunk);
+  return { chatSessionId };
 }
 
 export async function streamAnalysis(
   body: any,
   accessToken: string,
   onChunk: (text: string) => void,
-): Promise<void> {
+): Promise<{ chatSessionId: string | null }> {
   return streamPost("/analyze-positions-by-symbol", body, accessToken, onChunk);
 }
 
@@ -279,10 +282,12 @@ export async function streamResearchChat(
     symbol: string;
     prompt: string;
     model?: string;
+    chat_session_id?: string | null;
+    new_chat_session?: boolean;
   },
   accessToken: string,
   onChunk: (text: string) => void,
-): Promise<void> {
+): Promise<{ chatSessionId: string | null }> {
   return streamPost("/research/chat", body, accessToken, onChunk);
 }
 

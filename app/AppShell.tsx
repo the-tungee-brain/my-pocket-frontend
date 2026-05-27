@@ -46,6 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     hydrateChatFromServer,
     clearChatHistory,
     restoreChatSession,
+    startNewChatSession,
     proactiveAlerts,
     portfolioBrief,
     recentActivity,
@@ -136,8 +137,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!showChat || activeChatKey === "__NONE__") return;
-    void hydrateChatFromServer(activeChatKey);
-  }, [activeChatKey, showChat, hydrateChatFromServer]);
+    void hydrateChatFromServer(activeChatKey, selectedView);
+  }, [activeChatKey, showChat, selectedView, hydrateChatFromServer]);
 
   const handleChatInputChange = (value: string) => {
     if (activeChatKey === "__NONE__") return;
@@ -257,6 +258,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       actionId: id,
     });
 
+    setInputRows(MIN_ROWS);
+  };
+
+  const handleStartNewChat = () => {
+    if (activeChatKey === "__NONE__") return;
+    if (currentChat?.loading) return;
+    startNewChatSession(activeChatKey);
     setInputRows(MIN_ROWS);
   };
 
@@ -439,13 +447,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   messages={currentChat?.messages ?? []}
                   loading={!!currentChat?.loading}
                   onClear={handleClearChat}
+                  onStartNewChat={handleStartNewChat}
                   onFollowUpPrompt={(prompt) => void handleFollowUpPrompt(prompt)}
                   historyControl={
                     activeChatKey !== "__NONE__" ? (
                       <ChatSessionHistory
                         activeChatKey={activeChatKey}
+                        selectedView={selectedView}
                         accessToken={sessionAccessToken}
                         currentSessionId={currentChat?.sessionId}
+                        onStartNewSession={handleStartNewChat}
                         onRestoreSession={(sessionId, messages) =>
                           restoreChatSession(activeChatKey, sessionId, messages)
                         }

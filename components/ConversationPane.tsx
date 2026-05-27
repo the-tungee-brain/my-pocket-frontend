@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bot, Check, Copy, Trash2, User } from "lucide-react";
+import { Bot, Check, Copy, Plus, Trash2, User } from "lucide-react";
 import { ConversationalMarkdown } from "@/components/ui/ConversationalMarkdown";
 import { ChatFollowUpChips } from "@/components/ChatFollowUpChips";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
@@ -26,6 +26,7 @@ interface ConversationPaneProps {
   messages: ChatMessage[];
   loading: boolean;
   onClear?: () => void;
+  onStartNewChat?: () => void;
   onFollowUpPrompt?: (prompt: string) => void;
   historyControl?: React.ReactNode;
 }
@@ -70,6 +71,7 @@ export function ConversationPane({
   messages,
   loading,
   onClear,
+  onStartNewChat,
   onFollowUpPrompt,
   historyControl,
 }: ConversationPaneProps) {
@@ -101,11 +103,27 @@ export function ConversationPane({
   if (!symbol) return null;
 
   const label = symbol === "PORTFOLIO" ? "portfolio" : symbol;
+  const canStartNew = !!onStartNewChat && !loading;
   const canClear = !!onClear && messages.length > 0 && !loading;
 
   if (messages.length === 0 && !loading) {
     return (
       <div className={cn("mx-auto mt-6", pageShellClass)}>
+        {(historyControl || canStartNew) && (
+          <div className="mb-4 flex items-center justify-end gap-2">
+            {historyControl}
+            {canStartNew && (
+              <button
+                type="button"
+                className={compactTextButtonClass}
+                onClick={onStartNewChat}
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                New chat
+              </button>
+            )}
+          </div>
+        )}
         <EmptyState
           icon={Bot}
           title={`Ask anything about ${label === "portfolio" ? "your portfolio" : label}`}
@@ -131,6 +149,16 @@ export function ConversationPane({
         </div>
         <div className="flex items-center gap-2">
           {historyControl}
+          {canStartNew && (
+            <button
+              type="button"
+              className={compactTextButtonClass}
+              onClick={onStartNewChat}
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              New chat
+            </button>
+          )}
           {canClear && (
             <button
               type="button"

@@ -17,6 +17,11 @@ function focusVisibleAssistantInput() {
   return false;
 }
 
+export function openAssistantChat() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(OPEN_CHAT_EVENT));
+}
+
 export function scrollToChat() {
   if (typeof window === "undefined") return;
 

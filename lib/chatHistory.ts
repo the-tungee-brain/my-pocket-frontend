@@ -7,6 +7,7 @@ import {
   PORTFOLIO_CHAT_KEY,
   symbolFromLegacyResearchChatKey,
 } from "@/lib/chatKeys";
+import type { MainView } from "@/components/NavList";
 import type { ChatMessage } from "@/components/ConversationPane";
 import type {
   ChatSessionKind,
@@ -27,6 +28,7 @@ export type ChatKeySessionQuery = {
 
 export function chatKeySessionQueries(
   activeChatKey: string,
+  selectedView?: MainView,
 ): ChatKeySessionQuery[] {
   if (activeChatKey === "__NONE__") return [];
 
@@ -46,10 +48,11 @@ export function chatKeySessionQueries(
   if (activeChatKey.startsWith("__")) return [];
 
   const symbol = activeChatKey.toUpperCase();
-  return [
-    { kind: "portfolio", titlePrefix: `Symbol:${symbol}:` },
-    { kind: "research", titlePrefix: `Research:${symbol}:` },
-  ];
+  if (selectedView === "research") {
+    return [{ kind: "research", titlePrefix: `Research:${symbol}:` }];
+  }
+
+  return [{ kind: "portfolio", titlePrefix: `Symbol:${symbol}:` }];
 }
 
 export function chatKeySessionQuery(
@@ -118,8 +121,9 @@ export function mapServerMessages(
 export async function listSessionsForChatKey(
   accessToken: string,
   activeChatKey: string,
+  selectedView?: MainView,
 ): Promise<ChatSessionSummary[]> {
-  const queries = chatKeySessionQueries(activeChatKey);
+  const queries = chatKeySessionQueries(activeChatKey, selectedView);
   if (!queries.length) return [];
 
   const kinds = new Set(queries.map((query) => query.kind));
@@ -156,8 +160,9 @@ export async function loadChatSessionById(
 export async function loadChatHistoryForKey(
   accessToken: string,
   activeChatKey: string,
+  selectedView?: MainView,
 ): Promise<{ sessionId: string; messages: ChatMessage[] } | null> {
-  const queries = chatKeySessionQueries(activeChatKey);
+  const queries = chatKeySessionQueries(activeChatKey, selectedView);
   if (!queries.length) return null;
 
   const kinds = new Set(queries.map((query) => query.kind));

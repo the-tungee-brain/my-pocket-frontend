@@ -21,7 +21,7 @@ import {
   persistChatState,
 } from "@/lib/chatPersistence";
 import { formatQuickActionMessage, getQuickActionApiAction, isFreeFormQuickAction, isStructuredAnalyzeAction } from "@/lib/quickActions";
-import { scrollToAssistantChat } from "@/lib/scrollToChat";
+import { openAssistantChat } from "@/lib/scrollToChat";
 import { buildStructuredAnalyzeRequest } from "@/lib/structuredAnalysis";
 import {
   requestPortfolioAnalysis,
@@ -42,6 +42,7 @@ import {
   loadChatHistoryForKey,
   shouldApplyServerHistory,
   clearChatHistoryForKey,
+  loadChatSessionById,
 } from "@/lib/chatHistory";
 import { MainView } from "@/components/NavList";
 import { usePathname } from "next/navigation";
@@ -54,6 +55,7 @@ type SymbolChatState = {
   modelMenuOpen: boolean;
   sessionId?: string | null;
   historyHydrated?: boolean;
+  pendingNewChatSession?: boolean;
 };
 
 type ChatStateMap = Record<string, SymbolChatState>;
@@ -90,12 +92,16 @@ type PositionsContextValue = {
     positionsForSelectedSymbol: Position[] | null;
     actionId: string;
   }) => Promise<void>;
-  hydrateChatFromServer: (activeChatKey: string) => Promise<void>;
+  hydrateChatFromServer: (
+    activeChatKey: string,
+    selectedView?: MainView,
+  ) => Promise<void>;
   restoreChatSession: (
     activeChatKey: string,
     sessionId: string,
     messages: ChatMessage[],
   ) => void;
+  startNewChatSession: (activeChatKey: string) => void;
   clearChatHistory: (activeChatKey: string) => Promise<boolean>;
   account: SchwabAccounts | null;
   cashSecuredPutSummary: CashSecuredPutSummary | null;
@@ -115,6 +121,15 @@ const PositionsContext = createContext<PositionsContextValue | null>(null);
 const PERSIST_DEBOUNCE_MS = 500;
 
 type SetChatBySymbol = React.Dispatch<React.SetStateAction<ChatStateMap>>;
+
+function chatSessionRequestFields(state: SymbolChatState) {
+  return {
+    chat_session_id: state.pendingNewChatSession
+      ? undefined
+      : (state.sessionId ?? undefined),
+    new_chat_session: state.pendingNewChatSession ?? false,
+  };
+}
 
 function createStreamingAssistantUpdater(
   activeChatKey: string,
@@ -487,7 +502,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   }, [selectedView, selectedSymbol, positionMap, allPositions]);
 
   const hydrateChatFromServer = useCallback(
-    async (activeChatKey: string) => {
+    async (activeChatKey: string, selectedView?: MainView) => {
       if (!accessToken || activeChatKey === "__NONE__") return;
       if (serverHydrateInflightRef.current.has(activeChatKey)) return;
 
@@ -495,10 +510,23 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         chatBySymbolRef.current[activeChatKey] ??
         ensureSymbolChatState(activeChatKey);
       if (currentState.loading) return;
+      if (currentState.pendingNewChatSession) return;
 
       serverHydrateInflightRef.current.add(activeChatKey);
       try {
-        const loaded = await loadChatHistoryForKey(accessToken, activeChatKey);
+        const loaded = currentState.sessionId
+          ? await loadChatSessionById(
+              accessToken,
+              activeChatKey,
+              currentState.sessionId,
+            )
+          : currentState.messages.length === 0 && currentState.historyHydrated
+            ? null
+            : await loadChatHistoryForKey(
+                accessToken,
+                activeChatKey,
+                selectedView,
+              );
         if (!loaded) {
           setChatBySymbol((prev) => ({
             ...prev,
@@ -567,9 +595,31 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           ...ensureSymbolChatState(activeChatKey, prev[activeChatKey]),
           messages,
           sessionId,
+          pendingNewChatSession: false,
           historyHydrated: true,
           loading: false,
         },
+      }));
+    },
+    [ensureSymbolChatState],
+  );
+
+  const startNewChatSession = useCallback(
+    (activeChatKey: string) => {
+      if (activeChatKey === "__NONE__") return;
+
+      serverHydrateInflightRef.current.delete(activeChatKey);
+      setChatBySymbol((prev) => ({
+        ...prev,
+        [activeChatKey]: ensureSymbolChatState(activeChatKey, {
+          messages: [],
+          input: "",
+          loading: false,
+          modelMenuOpen: false,
+          sessionId: null,
+          pendingNewChatSession: true,
+          historyHydrated: true,
+        }),
       }));
     },
     [ensureSymbolChatState],
@@ -603,6 +653,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           loading: false,
           modelMenuOpen: false,
           sessionId: null,
+          pendingNewChatSession: false,
           historyHydrated: true,
         }),
       }));
@@ -655,7 +706,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           },
         };
       });
-      scrollToAssistantChat();
+      openAssistantChat();
 
       const symbolForApi =
         selectedView === "portfolio"
@@ -678,6 +729,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       );
       streamer.beginAssistantMessage();
 
+      const chatSessionFields = chatSessionRequestFields(state);
+      let chatSessionId: string | null = null;
+
       try {
         if (hasHoldingsContext && !account) {
           throw new Error("Account data is not loaded yet.");
@@ -686,17 +740,18 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         if (selectedView === "research" && !hasHoldingsContext) {
           if (!symbolForApi) return;
 
-          await streamResearchChat(
+          ({ chatSessionId } = await streamResearchChat(
             {
               symbol: symbolForApi,
               prompt: userInput,
               model: state.model,
+              ...chatSessionFields,
             },
             accessToken,
             streamer.appendChunk,
-          );
+          ));
         } else {
-          await streamAnalysis(
+          ({ chatSessionId } = await streamAnalysis(
             {
               account: account,
               positions: positionsForSelectedSymbol ?? [],
@@ -705,10 +760,11 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
               prompt: userInput,
               model: state.model,
               session_id: state.sessionId ?? undefined,
+              ...chatSessionFields,
             },
             accessToken,
             streamer.appendChunk,
-          );
+          ));
         }
 
         if (!streamer.assistantContent.current.trim()) {
@@ -718,7 +774,25 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         }
 
         streamer.flushNow();
-        await hydrateChatFromServer(activeChatKey);
+
+        if (chatSessionId) {
+          setChatBySymbol((prev) => {
+            const prevState = ensureSymbolChatState(
+              activeChatKey,
+              prev[activeChatKey],
+            );
+            return {
+              ...prev,
+              [activeChatKey]: {
+                ...prevState,
+                sessionId: chatSessionId,
+                pendingNewChatSession: false,
+              },
+            };
+          });
+        }
+
+        await hydrateChatFromServer(activeChatKey, selectedView);
       } catch (err) {
         console.error("Chat prompt failed:", err);
         setChatBySymbol((prev) => {
@@ -819,7 +893,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           },
         };
       });
-      scrollToAssistantChat();
+      openAssistantChat();
 
       const symbolForApi =
         selectedView === "portfolio"
@@ -845,6 +919,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       );
       streamer.beginAssistantMessage();
 
+      const chatSessionFields = chatSessionRequestFields(state);
+      let chatSessionId: string | null = null;
+
       try {
         const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);
 
@@ -855,15 +932,16 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         if (selectedView === "research" && !hasHoldingsContext) {
           if (!symbolForApi) return;
 
-          await streamResearchChat(
+          ({ chatSessionId } = await streamResearchChat(
             {
               symbol: symbolForApi,
               prompt: userMessage.content,
               model: state.model,
+              ...chatSessionFields,
             },
             accessToken,
             streamer.appendChunk,
-          );
+          ));
         } else {
           const analysisBody =
             structuredAnalyze && account
@@ -884,9 +962,14 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
                   user_display_message: userMessage.content,
                   model: state.model,
                   session_id: state.sessionId ?? undefined,
+                  ...chatSessionFields,
                 };
 
-          await streamAnalysis(analysisBody, accessToken, streamer.appendChunk);
+          ({ chatSessionId } = await streamAnalysis(
+            analysisBody,
+            accessToken,
+            streamer.appendChunk,
+          ));
         }
 
         if (!streamer.assistantContent.current.trim()) {
@@ -896,7 +979,25 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         }
 
         streamer.flushNow();
-        await hydrateChatFromServer(activeChatKey);
+
+        if (chatSessionId) {
+          setChatBySymbol((prev) => {
+            const prevState = ensureSymbolChatState(
+              activeChatKey,
+              prev[activeChatKey],
+            );
+            return {
+              ...prev,
+              [activeChatKey]: {
+                ...prevState,
+                sessionId: chatSessionId,
+                pendingNewChatSession: false,
+              },
+            };
+          });
+        }
+
+        await hydrateChatFromServer(activeChatKey, selectedView);
       } catch (err) {
         console.error("Chat quick action failed:", err);
         setChatBySymbol((prev) => {
@@ -961,6 +1062,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       sendQuickAction,
       hydrateChatFromServer,
       restoreChatSession,
+      startNewChatSession,
       clearChatHistory,
       account,
       cashSecuredPutSummary,
@@ -990,6 +1092,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       sendQuickAction,
       hydrateChatFromServer,
       restoreChatSession,
+      startNewChatSession,
       clearChatHistory,
       account,
       cashSecuredPutSummary,
