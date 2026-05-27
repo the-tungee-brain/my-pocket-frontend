@@ -108,18 +108,6 @@ export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
           </>
         }
       />
-
-      {fundamentals?.overviewNote && (
-        <ResearchSectionCard
-          title="Fundamental overview"
-          description="AI narrative from SEC filings, statements, and market data"
-          icon={BarChart3}
-        >
-          <p className="text-sm leading-relaxed text-foreground">
-            {fundamentals.overviewNote}
-          </p>
-        </ResearchSectionCard>
-      )}
     </div>
   );
 }

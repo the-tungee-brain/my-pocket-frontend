@@ -32,17 +32,22 @@ export function WatchlistHint({ symbol }: Props) {
   };
 
   return (
-    <div className="flex items-start justify-between gap-3 rounded-xl border border-accent/30 bg-accent-muted/30 px-3 py-2.5">
-      <p className="text-xs leading-relaxed text-muted">
-        <Star
-          className="mr-1 inline h-3.5 w-3.5 fill-accent-strong text-accent-strong"
-          aria-hidden="true"
-        />
-        Star <span className="font-mono font-medium text-foreground">{upper}</span>{" "}
-        to save it to your sidebar watchlist.
+    <div
+      role="note"
+      className="inline-flex max-w-full min-w-0 items-center gap-2 rounded-xl border border-accent/30 bg-accent-muted/30 py-2 pl-2.5 pr-1.5"
+    >
+      <Star
+        className="h-3.5 w-3.5 shrink-0 fill-accent-strong text-accent-strong"
+        aria-hidden="true"
+      />
+      <p className="m-0 min-w-0 flex-1 text-xs leading-snug text-muted">
+        Star{" "}
+        <span className="font-mono font-medium text-foreground">{upper}</span> to
+        save it to your sidebar watchlist.
       </p>
       <IconButton
         size="sm"
+        className="shrink-0"
         aria-label="Dismiss watchlist tip"
         onClick={handleDismiss}
       >

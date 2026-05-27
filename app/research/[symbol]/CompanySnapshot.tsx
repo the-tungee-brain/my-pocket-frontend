@@ -173,7 +173,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
 
   return (
     <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-      <div className="space-y-2">
+      <div className="min-w-0 max-w-full space-y-2">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
           {researchLabel}
         </p>
