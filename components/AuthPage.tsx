@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
   BellRing,
+  Bookmark,
   BrainCircuit,
   BriefcaseBusiness,
   CircleDollarSign,
@@ -99,7 +100,7 @@ export default function AuthPage() {
   const { handleSignIn, signingIn, signInError } = useGoogleSignIn();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen scroll-smooth bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/2 h-130 w-180 -translate-x-1/2 rounded-full bg-accent/8 blur-3xl" />
         <div className="absolute top-1/3 -right-32 h-80 w-80 rounded-full bg-accent-strong/5 blur-3xl" />
@@ -142,8 +143,17 @@ function LandingHeader({
 }) {
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-6">
         <TomcrestLogo size="sm" />
+
+        <nav
+          className="hidden flex-1 items-center justify-center gap-5 md:flex"
+          aria-label="Page sections"
+        >
+          <LandingNavLink href="#features">Features</LandingNavLink>
+          <LandingNavLink href="#how-it-works">How it works</LandingNavLink>
+          <LandingNavLink href="#product">Product</LandingNavLink>
+        </nav>
 
         <SignInWithGoogleButton
           onClick={onSignIn}
@@ -189,7 +199,8 @@ function HeroSection({
           <p className="mt-5 max-w-lg text-base leading-relaxed text-muted sm:text-lg">
             Tomcrest connects to your Charles Schwab account and turns live
             holdings, market data, and fundamentals into actionable insights —
-            from morning briefs to per-symbol research and strategy guidance.
+            from morning briefs and dividend projections to per-symbol research
+            and strategy guidance.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -246,6 +257,23 @@ function TrustBadge({
   );
 }
 
+function LandingNavLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      className="text-xs font-medium text-muted transition-colors hover:text-foreground"
+    >
+      {children}
+    </a>
+  );
+}
+
 function FeaturesSection() {
   const features = [
     {
@@ -276,7 +304,13 @@ function FeaturesSection() {
       icon: Search,
       title: "Deep symbol research",
       description:
-        "Fundamentals, earnings, news, SEC filings, ratios, and charts in one research hub.",
+        "Fundamentals, earnings, dividends, ETF composition, news, SEC filings, and charts — with a watchlist to track names you care about.",
+    },
+    {
+      icon: CircleDollarSign,
+      title: "Dividend snowball",
+      description:
+        "Project income forward with historic payout growth, DRIP scenarios, and portfolio value estimates using price and dividend CAGR.",
     },
     {
       icon: Target,
@@ -287,7 +321,10 @@ function FeaturesSection() {
   ];
 
   return (
-    <section className="border-t border-border bg-secondary/30 py-16 lg:py-20">
+    <section
+      id="features"
+      className="scroll-mt-20 border-t border-border bg-secondary/30 py-16 lg:py-20"
+    >
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeading
           eyebrow="Everything in one workspace"
@@ -334,12 +371,12 @@ function HowItWorksSection() {
       icon: Sparkles,
       title: "Get AI-powered insights",
       description:
-        "Review your morning brief, explore research, and chat with AI about your actual portfolio.",
+        "Review your morning brief, model dividend income, explore research, and chat with AI about your actual portfolio.",
     },
   ];
 
   return (
-    <section className="py-16 lg:py-20">
+    <section id="how-it-works" className="scroll-mt-20 py-16 lg:py-20">
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeading
           eyebrow="How it works"
@@ -405,7 +442,14 @@ function ProductShowcase() {
       label: "Research hub",
       title: "Go deep on any symbol",
       description:
-        "Charts, company snapshots, key metrics, earnings, news, and SEC financials — with AI intelligence tailored to each ticker.",
+        "Overview, fundamentals, earnings, dividends, ETF composition, news, and SEC financials — with AI intelligence tailored to each ticker.",
+    },
+    {
+      icon: CircleDollarSign,
+      label: "Dividend snowball",
+      title: "Model income years ahead",
+      description:
+        "Use historic payout growth and optional DRIP to project annual cash, share count, and portfolio value with automatic price CAGR.",
     },
     {
       icon: MessageSquareText,
@@ -417,7 +461,10 @@ function ProductShowcase() {
   ];
 
   return (
-    <section className="border-t border-border bg-secondary/30 py-16 lg:py-20">
+    <section
+      id="product"
+      className="scroll-mt-20 border-t border-border bg-secondary/30 py-16 lg:py-20"
+    >
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeading
           eyebrow="Inside the workspace"
@@ -464,12 +511,15 @@ function StrategySection() {
     { name: "The Wheel", detail: "CSP → assignment → covered call cycles" },
     { name: "CSP Income", detail: "Cash-secured puts with risk guardrails" },
     { name: "Covered Calls", detail: "Income on existing share positions" },
-    { name: "Dividend Growth", detail: "Yield and payout-focused screening" },
+    {
+      name: "Dividend Growth",
+      detail: "Snowball projections, yield, and payout history",
+    },
     { name: "ETF Core", detail: "Long-term diversified core holdings" },
   ];
 
   return (
-    <section className="py-16 lg:py-20">
+    <section id="strategies" className="scroll-mt-20 py-16 lg:py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
           <SectionHeading
@@ -558,16 +608,21 @@ function FinalCTASection({
 function LandingFooter() {
   return (
     <footer className="border-t border-border py-8">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 sm:flex-row sm:items-start">
         <div className="flex items-center gap-2.5 text-sm text-muted">
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent-muted text-accent-strong">
             <TomcrestMark className="h-3.5 w-3.5" />
           </div>
           <span>Tomcrest — AI portfolio intelligence</span>
         </div>
-        <p className="text-xs text-muted">
-          Insights and recommendations only. Not financial advice.
-        </p>
+        <div className="max-w-md text-center sm:text-right">
+          <p className="text-xs text-muted">
+            Insights and recommendations only. Not financial advice.
+          </p>
+          <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
+            Read-only Schwab access via OAuth.
+          </p>
+        </div>
       </div>
     </footer>
   );
@@ -713,15 +768,13 @@ function ShowcasePanel({
   if (variant === 1) {
     return (
       <div className="rounded-xl border border-border bg-secondary/80 p-4">
-        <div className="mb-3 flex gap-2">
-          {["Overview", "Fundamentals", "News", "Financials"].map((tab, i) => (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {["Overview", "Dividends", "Fundamentals", "News"].map((tab, i) => (
             <span
               key={tab}
               className={cn(
                 "rounded-md px-2 py-1 text-[10px] font-medium",
-                i === 0
-                  ? "bg-accent-muted text-accent-strong"
-                  : "text-muted",
+                i === 1 ? "bg-accent-muted text-accent-strong" : "text-muted",
               )}
             >
               {tab}
@@ -729,10 +782,10 @@ function ShowcasePanel({
           ))}
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <MetricTile label="P/E" value="28.4x" />
-          <MetricTile label="Revenue growth" value="+18%" accent />
-          <MetricTile label="Margin" value="55.2%" />
-          <MetricTile label="FCF yield" value="2.1%" />
+          <MetricTile label="Dividend streak" value="14 yrs" accent />
+          <MetricTile label="Current yield" value="3.4%" />
+          <MetricTile label="5Y dividend CAGR" value="9.2%" />
+          <MetricTile label="Expense ratio" value="0.06%" />
         </div>
         <div className="mt-3 flex items-end gap-0.5">
           {[40, 55, 48, 62, 58, 72, 68, 80, 75, 88].map((h, i) => (
@@ -742,6 +795,39 @@ function ShowcasePanel({
               style={{ height: `${h * 0.4}px` }}
             />
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === 2) {
+    return (
+      <div className="rounded-xl border border-border bg-secondary/80 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Icon className="h-4 w-4 text-accent-strong" aria-hidden="true" />
+          <span className="text-xs font-semibold">Income snowball · SCHD</span>
+        </div>
+        <div className="mb-3 grid grid-cols-3 gap-2">
+          <MetricTile label="5Y dividend CAGR" value="9.2%" accent />
+          <MetricTile label="5Y price growth" value="8.8%" />
+          <MetricTile label="10-yr total" value="$18.4k" />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-lg border border-border bg-background/50 px-3 py-2">
+            <p className="text-[9px] uppercase tracking-wide text-muted">
+              Est. annual dividend · 2036
+            </p>
+            <p className="mt-1 text-sm font-semibold text-accent-strong">
+              $768
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-background/50 px-3 py-2">
+            <p className="text-[9px] uppercase tracking-wide text-muted">
+              Portfolio value
+            </p>
+            <p className="mt-1 text-sm font-semibold">$31,999</p>
+            <p className="mt-0.5 text-[9px] text-muted">After DRIP + growth</p>
+          </div>
         </div>
       </div>
     );
@@ -774,13 +860,7 @@ function ShowcasePanel({
   );
 }
 
-function BriefLine({
-  label,
-  accent,
-}: {
-  label: string;
-  accent?: boolean;
-}) {
+function BriefLine({ label, accent }: { label: string; accent?: boolean }) {
   return (
     <div className="flex items-start gap-2 rounded-lg bg-background/50 px-3 py-2">
       <span
@@ -860,6 +940,11 @@ function AppPreview() {
               label="Research"
               sublabel="Snapshots"
             />
+            <PreviewNavItem
+              icon={Bookmark}
+              label="Watchlist"
+              sublabel="5 symbols"
+            />
             <div className="my-2 h-px bg-border" />
             <p className="px-1 text-[9px] font-semibold uppercase tracking-wide text-muted">
               Positions
@@ -883,7 +968,9 @@ function AppPreview() {
                   <Sparkles className="h-3 w-3" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold">Portfolio insights</p>
+                  <p className="text-[11px] font-semibold">
+                    Portfolio insights
+                  </p>
                   <p className="text-[9px] text-muted">AI-generated analysis</p>
                 </div>
               </div>
