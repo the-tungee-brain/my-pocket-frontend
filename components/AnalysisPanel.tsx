@@ -15,7 +15,10 @@ import type { PositionMap } from "@/components/AccountPositionList";
 import { formatInsightsAnalyzedAt } from "@/lib/insightsCache";
 import { AnalyzePrompt } from "@/components/AnalyzePrompt";
 import { StructuredAnalysisView } from "@/components/StructuredAnalysisView";
-import { ComparePathsCard, ComparePathsIntro } from "@/components/ComparePathsCard";
+import {
+  ComparePathsCard,
+  ComparePathsIntro,
+} from "@/components/ComparePathsCard";
 import {
   PortfolioAllocationCard,
   PortfolioAllocationIntro,
@@ -417,7 +420,8 @@ function PortfolioHoldingsTable({
 
 function SymbolLegsTable({ positions }: { positions: Position[] }) {
   const sorted = [...positions].sort(
-    (a, b) => b.longQuantity - b.shortQuantity - (a.longQuantity - a.shortQuantity),
+    (a, b) =>
+      b.longQuantity - b.shortQuantity - (a.longQuantity - a.shortQuantity),
   );
 
   if (sorted.length === 1) {
@@ -435,11 +439,15 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
         <div className="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
           <div>
             <p className="text-muted">Qty</p>
-            <p className="mt-0.5 tabular-nums font-medium">{qty.toLocaleString()}</p>
+            <p className="mt-0.5 tabular-nums font-medium">
+              {qty.toLocaleString()}
+            </p>
           </div>
           <div>
             <p className="text-muted">Value</p>
-            <p className="mt-0.5 tabular-nums font-medium">{formatUsd(p.marketValue)}</p>
+            <p className="mt-0.5 tabular-nums font-medium">
+              {formatUsd(p.marketValue)}
+            </p>
           </div>
           <div>
             <p className="text-muted">Open P/L</p>
@@ -498,7 +506,9 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
                   className="border-t border-border transition-colors hover:bg-muted-bg/30"
                 >
                   <td className="px-4 py-3 text-left">
-                    <p className="text-sm text-foreground">{positionLabel(p)}</p>
+                    <p className="text-sm text-foreground">
+                      {positionLabel(p)}
+                    </p>
                     <PositionTypeChip position={p} siblingPositions={sorted} />
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
@@ -522,7 +532,9 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
                   <td
                     className={cn(
                       "px-4 py-3 text-right tabular-nums",
-                      p.currentDayProfitLoss >= 0 ? "text-success" : "text-danger",
+                      p.currentDayProfitLoss >= 0
+                        ? "text-success"
+                        : "text-danger",
                     )}
                   >
                     {formatSignedUsd(p.currentDayProfitLoss)}
@@ -550,11 +562,15 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <p className="text-muted">Qty</p>
-                  <p className="tabular-nums font-medium">{qty.toLocaleString()}</p>
+                  <p className="tabular-nums font-medium">
+                    {qty.toLocaleString()}
+                  </p>
                 </div>
                 <div>
                   <p className="text-muted">Value</p>
-                  <p className="tabular-nums font-medium">{formatUsd(p.marketValue)}</p>
+                  <p className="tabular-nums font-medium">
+                    {formatUsd(p.marketValue)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -574,14 +590,18 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     embedded = false,
   } = props;
   const isPortfolio = props.mode === "portfolio";
-  const portfolioView = isPortfolio ? (props.portfolioView ?? "holdings") : null;
+  const portfolioView = isPortfolio
+    ? (props.portfolioView ?? "holdings")
+    : null;
   const showPortfolioAnalysis = !isPortfolio || portfolioView === "analysis";
   const showPortfolioHoldings = !isPortfolio || portfolioView === "holdings";
   const symbol = isPortfolio ? null : props.symbol.toUpperCase();
   const positions = props.positions;
 
   const { account, sessionAccessToken } = usePositionsContext();
-  const portfolioHeaderActionsEl = useContext(PortfolioSnapshotHeaderActionsContext);
+  const portfolioHeaderActionsEl = useContext(
+    PortfolioSnapshotHeaderActionsContext,
+  );
   const [requested, setRequested] = useState(autoStart);
   const [pendingAnalyze, setPendingAnalyze] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("weight");
@@ -644,7 +664,8 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   }, [structuredAnalysis, showComparePaths, showPortfolioAllocation]);
 
   const recommendedComparePath = useMemo(
-    () => inferRecommendedComparePath(displayAnalysis?.recommendedAction?.title),
+    () =>
+      inferRecommendedComparePath(displayAnalysis?.recommendedAction?.title),
     [displayAnalysis?.recommendedAction?.title],
   );
 
@@ -691,7 +712,10 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     window.addEventListener(ANALYZE_PORTFOLIO_EVENT, handlePortfolioAnalyze);
     return () => {
       window.removeEventListener(ANALYZE_POSITION_EVENT, handlePositionAnalyze);
-      window.removeEventListener(ANALYZE_PORTFOLIO_EVENT, handlePortfolioAnalyze);
+      window.removeEventListener(
+        ANALYZE_PORTFOLIO_EVENT,
+        handlePortfolioAnalyze,
+      );
     };
   }, [isPortfolio, loading, pendingAnalyze, refetch, symbol]);
 
@@ -725,13 +749,11 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const analyzeLabel = isPortfolio ? "Analyze portfolio" : "Analyze position";
   const hasContent = !!content?.trim();
   const isAnalyzing = loading || pendingAnalyze;
-  const analysisReady =
-    !isAnalyzing && (!!structuredAnalysis || hasContent);
+  const analysisReady = !isAnalyzing && (!!structuredAnalysis || hasContent);
   const showAnalyzePrompt =
     showPortfolioAnalysis && !error && (isAnalyzing || !analysisReady);
   const analyzeButtonLoading = isAnalyzing;
-  const showAnalysisOutput =
-    showPortfolioAnalysis && (error || analysisReady);
+  const showAnalysisOutput = showPortfolioAnalysis && (error || analysisReady);
 
   const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
   const openPL = sumOpenProfitLoss(positions);
@@ -783,10 +805,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     (hasCachedInsights || analysisReady || error || requested);
 
   const headerReanalyzeButton =
-    embedded &&
-    isPortfolio &&
-    showReanalyze &&
-    portfolioHeaderActionsEl
+    embedded && isPortfolio && showReanalyze && portfolioHeaderActionsEl
       ? createPortal(
           <ReanalyzeButton loading={loading} onClick={handleRefresh} />,
           portfolioHeaderActionsEl,
@@ -819,7 +838,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
               )}
             >
               <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted">
-                {showPortfolioAllocation ? "What to do next" : "AI analysis"}
+                AI analysis
               </p>
               {showPortfolioAllocation && portfolioPrecomputed && (
                 <div className="mb-4 space-y-3">
@@ -860,7 +879,9 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
 
           {requested && !isAnalyzing && !error && !analysisReady && (
             <div className="space-y-3 py-4 text-center">
-              <p className="text-sm text-muted">Analysis unavailable right now.</p>
+              <p className="text-sm text-muted">
+                Analysis unavailable right now.
+              </p>
               <button
                 type="button"
                 onClick={refetch}
@@ -948,7 +969,11 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
               }
               tone={openTone}
             />
-            <StatChip label="Today" value={formatSignedUsd(dayPL)} tone={dayTone} />
+            <StatChip
+              label="Today"
+              value={formatSignedUsd(dayPL)}
+              tone={dayTone}
+            />
           </div>
         )}
       </div>
@@ -1003,7 +1028,9 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
         </div>
       )}
 
-      <div className={cn("bg-background/20", !showPortfolioHoldings && "hidden")}>
+      <div
+        className={cn("bg-background/20", !showPortfolioHoldings && "hidden")}
+      >
         {isPortfolio ? (
           alertsOnly && symbolSummaries.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-muted">

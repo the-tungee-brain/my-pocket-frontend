@@ -35,13 +35,13 @@ function MetricChip({
   accent?: "positive" | "neutral";
 }) {
   return (
-    <div className="rounded-lg border border-border/80 bg-background/50 px-2.5 py-2">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
+    <div className="flex h-full min-h-[4.75rem] flex-col rounded-xl border border-border/80 bg-background/50 px-3 py-2.5">
+      <p className="min-h-8 text-[10px] font-medium uppercase leading-snug tracking-wide text-muted">
         {label}
       </p>
       <p
         className={cn(
-          "mt-0.5 text-sm font-semibold tabular-nums",
+          "mt-auto text-base font-semibold tabular-nums",
           accent === "positive"
             ? "text-emerald-600 dark:text-emerald-400"
             : "text-foreground",
@@ -148,7 +148,7 @@ export function PortfolioAllocationCard({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid auto-rows-fr gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <MetricChip
           label="Cash to invest"
           value={formatUsd(cashMap.deployableCash, {
