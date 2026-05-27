@@ -317,6 +317,8 @@ export function DividendSnowballStats({
     scenario.projectYears,
   );
   const currentYieldPct = resolveCurrentYieldPct(history, sharePrice);
+  const projectedAnnualIncome =
+    scenario.advanced?.annualIncomeLatestDrip ?? scenario.annualIncomeLatest;
 
   return (
     <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-3">
@@ -348,7 +350,7 @@ export function DividendSnowballStats({
       />
       <StatCard
         label={`${endYear} annual dividend`}
-        value={formatUsd(scenario.annualIncomeLatest, { maximumFractionDigits: 0 })}
+        value={formatUsd(projectedAnnualIncome, { maximumFractionDigits: 0 })}
         hint={`Estimated cash per year in ${projectYears} years`}
       />
       <StatCard
@@ -892,6 +894,31 @@ export function DividendSnowballScenarioCard({
       ) : null}
 
       {onScenarioChange ? (
+        <label className="block max-w-xs space-y-1 text-xs text-muted">
+          Dividend growth override (% / yr, optional)
+          <input
+            type="number"
+            min={-99}
+            max={500}
+            step={0.1}
+            placeholder={
+              history.cagr5yPct != null
+                ? String(history.cagr5yPct)
+                : "Auto from 5Y history"
+            }
+            value={scenarioParams?.dividendCagrPct ?? ""}
+            onChange={(event) => {
+              const raw = event.target.value.trim();
+              updateScenario({
+                dividendCagrPct: raw === "" ? null : Number(event.target.value),
+              });
+            }}
+            className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+          />
+        </label>
+      ) : null}
+
+      {onScenarioChange ? (
         <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
           <label className="flex items-start gap-3 text-sm text-foreground">
             <input
@@ -1009,6 +1036,46 @@ export function DividendSnowballScenarioCard({
             <p className="mt-1 text-[11px] text-muted">
               {advanced.priceCagrPct.toFixed(1)}% avg price growth / yr
             </p>
+          </div>
+        </div>
+      ) : null}
+
+      {history.historicalBacktest ? (
+        <div className="rounded-xl border border-border bg-surface-elevated/20 p-3">
+          <p className="text-sm font-medium text-foreground">Historical backtest</p>
+          <p className="mt-1 text-xs text-muted">
+            Actual dividend cash collected {history.historicalBacktest.startYear}–
+            {history.historicalBacktest.endYear} on {formatSnowballShares(shares)}{" "}
+            shares
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+              <p className="text-[11px] uppercase tracking-wide text-muted">
+                Cash collected
+              </p>
+              <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
+                {formatUsd(history.historicalBacktest.cashCollected, {
+                  maximumFractionDigits: 0,
+                })}
+              </p>
+            </div>
+            {history.historicalBacktest.drip ? (
+              <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+                <p className="text-[11px] uppercase tracking-wide text-muted">
+                  If DRIP&apos;d since {history.historicalBacktest.startYear}
+                </p>
+                <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
+                  {formatUsd(
+                    history.historicalBacktest.drip.portfolioValueLatest,
+                    { maximumFractionDigits: 0 },
+                  )}
+                </p>
+                <p className="mt-1 text-[11px] text-muted">
+                  {formatSnowballShares(history.historicalBacktest.drip.finalShares)}{" "}
+                  shares today
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

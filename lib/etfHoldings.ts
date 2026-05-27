@@ -3,8 +3,9 @@ import type { EtfHoldingItem, EtfHoldingsContext } from "@/app/types/research";
 import { rankEtfHoldingsByQuality, withQualityScore } from "@/lib/etfHoldingsQuality";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const STORAGE_KEY = "powerpocket-etf-holdings:v3";
+const STORAGE_KEY = "powerpocket-etf-holdings:v4";
 const DEFAULT_QUALITY_LIMIT = 5;
+export const MAX_ETF_HOLDINGS_FETCH = 25;
 
 type StoredEntry = {
   data: EtfHoldingsContext;
@@ -59,8 +60,19 @@ function writePersistentStore(store: Record<string, StoredEntry>): void {
   }
 }
 
-function cacheKey(symbol: string, limit: number): string {
-  return `${normalizeKey(symbol)}:${limit}`;
+function cacheKey(symbol: string): string {
+  return normalizeKey(symbol);
+}
+
+function sliceEtfHoldingsContext(
+  full: EtfHoldingsContext,
+  limit: number,
+): EtfHoldingsContext {
+  const resolvedLimit = Math.max(1, Math.min(limit, full.holdings.length || limit));
+  return {
+    ...full,
+    holdings: full.holdings.slice(0, resolvedLimit),
+  };
 }
 
 function readNumber(value: unknown): number | null {
@@ -177,11 +189,13 @@ export function normalizeEtfHoldingsContext(
 
 export function getCachedEtfHoldings(
   symbol: string,
-  limit = 25,
+  limit = MAX_ETF_HOLDINGS_FETCH,
 ): EtfHoldingsContext | null {
-  const key = cacheKey(symbol, limit);
+  const key = cacheKey(symbol);
   const fromMemory = memoryCache.get(key);
-  if (fromMemory) return fromMemory;
+  if (fromMemory) {
+    return sliceEtfHoldingsContext(fromMemory, limit);
+  }
 
   const store = readPersistentStore();
   const entry = store[key];
@@ -193,22 +207,21 @@ export function getCachedEtfHoldings(
     return null;
   }
 
-  const normalized = normalizeEtfHoldingsContext(entry.data, limit);
+  const normalized = normalizeEtfHoldingsContext(entry.data, MAX_ETF_HOLDINGS_FETCH);
   if (!normalized) return null;
 
   memoryCache.set(key, normalized);
-  return normalized;
+  return sliceEtfHoldingsContext(normalized, limit);
 }
 
 async function fetchEtfHoldingsFromApi(
   symbol: string,
   accessToken: string,
-  limit: number,
 ): Promise<EtfHoldingsContext | null> {
   try {
     const params = new URLSearchParams({
       symbol: normalizeKey(symbol),
-      limit: String(limit),
+      limit: String(MAX_ETF_HOLDINGS_FETCH),
     });
     const res = await apiFetch(`/research/etf-holdings?${params.toString()}`, {
       method: "GET",
@@ -219,10 +232,10 @@ async function fetchEtfHoldingsFromApi(
     if (!res.ok) return null;
 
     const raw: unknown = await res.json();
-    const data = normalizeEtfHoldingsContext(raw, limit);
+    const data = normalizeEtfHoldingsContext(raw, MAX_ETF_HOLDINGS_FETCH);
     if (!data) return null;
 
-    const key = cacheKey(symbol, limit);
+    const key = cacheKey(symbol);
     memoryCache.set(key, data);
 
     const store = readPersistentStore();
@@ -238,23 +251,24 @@ async function fetchEtfHoldingsFromApi(
 export async function fetchEtfHoldings(
   symbol: string,
   accessToken: string,
-  limit = 25,
+  limit = MAX_ETF_HOLDINGS_FETCH,
 ): Promise<EtfHoldingsContext | null> {
-  const key = cacheKey(symbol, limit);
-  if (!key.startsWith(normalizeKey(symbol))) return null;
+  const key = cacheKey(symbol);
 
   const cached = getCachedEtfHoldings(symbol, limit);
   if (cached) return cached;
 
   const inflight = inflightRequests.get(key);
-  if (inflight) return inflight;
+  if (inflight) {
+    const full = await inflight;
+    return full ? sliceEtfHoldingsContext(full, limit) : null;
+  }
 
-  const request = fetchEtfHoldingsFromApi(symbol, accessToken, limit).finally(
-    () => {
-      inflightRequests.delete(key);
-    },
-  );
+  const request = fetchEtfHoldingsFromApi(symbol, accessToken).finally(() => {
+    inflightRequests.delete(key);
+  });
 
   inflightRequests.set(key, request);
-  return request;
+  const full = await request;
+  return full ? sliceEtfHoldingsContext(full, limit) : null;
 }

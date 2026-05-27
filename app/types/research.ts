@@ -57,6 +57,14 @@ export type DividendAdvancedSnowballScenario = {
   totalDividendsReinvested: number;
 };
 
+export type DividendHistoricalBacktest = {
+  startYear: number;
+  endYear: number;
+  cashCollected: number;
+  cashCollectedAnnual: number;
+  drip?: DividendAdvancedSnowballScenario | null;
+};
+
 export type DividendSnowballScenario = {
   shares: number;
   startYear: number;
@@ -95,6 +103,7 @@ export type DividendHistoryContext = {
   recentPayments: DividendPaymentItem[];
   payments: DividendPaymentItem[];
   scenario: DividendSnowballScenario;
+  historicalBacktest?: DividendHistoricalBacktest | null;
   dataAsOf?: string | null;
   confidenceScore?: number | null;
 };

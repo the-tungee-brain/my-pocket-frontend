@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DividendHistoryContext } from "@/app/types/research";
 import {
   fetchDividendHistory,
@@ -62,14 +62,21 @@ export function useDividendHistory(
     if (!symbolKey) return false;
     return getCachedDividendHistory(symbolKey, fetchParams) === null;
   });
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const historyRef = useRef(history);
   historyRef.current = history;
+
+  const refetch = useCallback(() => {
+    setRetryCount((count) => count + 1);
+  }, []);
 
   useEffect(() => {
     if (!symbolKey) {
       setHistory(null);
       setIsLoading(false);
+      setIsFetching(false);
       setError(null);
       return;
     }
@@ -77,14 +84,16 @@ export function useDividendHistory(
     if (!accessToken) {
       setHistory(null);
       setIsLoading(false);
+      setIsFetching(false);
       setError("Missing access token");
       return;
     }
 
     const cached = getCachedDividendHistory(symbolKey, fetchParams);
-    if (cached) {
+    if (cached && retryCount === 0) {
       setHistory(cached);
       setIsLoading(false);
+      setIsFetching(false);
       setError(null);
       return;
     }
@@ -96,6 +105,7 @@ export function useDividendHistory(
       setHistory(null);
       setIsLoading(true);
     }
+    setIsFetching(true);
 
     async function load() {
       setError(null);
@@ -125,6 +135,7 @@ export function useDividendHistory(
       } finally {
         if (!cancelled) {
           setIsLoading(false);
+          setIsFetching(false);
         }
       }
     }
@@ -134,7 +145,14 @@ export function useDividendHistory(
     return () => {
       cancelled = true;
     };
-  }, [symbolKey, accessToken, cacheKey, fetchParams]);
+  }, [symbolKey, accessToken, cacheKey, fetchParams, retryCount]);
 
-  return { history, isLoading, error, shares: resolvedShares };
+  return {
+    history,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+    shares: resolvedShares,
+  };
 }

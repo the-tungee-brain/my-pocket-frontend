@@ -13,6 +13,7 @@ import type { Position } from "@/app/types/schwab";
 import type { DividendScenarioParams } from "@/app/types/research";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { PageSplit } from "@/components/PageShell";
+import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { defaultDividendInvestmentUsd } from "@/lib/dividendHistory";
 import {
@@ -179,12 +180,33 @@ export function DividendsPageContent({ symbol }: Props) {
 
   const debouncedScenarioParams = useDebouncedValue(scenarioParams, 400);
 
-  const { history, isLoading, error } = useDividendHistory(symbol, {
+  const { history, isLoading, isFetching, error, refetch } = useDividendHistory(symbol, {
     accessToken: session?.accessToken,
     ...debouncedScenarioParams,
   });
 
   const showInitialLoading = isLoading && !history;
+  const showUnavailable = !showInitialLoading && !history;
+
+  const unavailableState = (
+    <EmptyState
+      icon={TrendingUp}
+      title="Dividend data unavailable"
+      description={
+        error ??
+        "Historic dividend data is not available for this symbol right now."
+      }
+      action={
+        error ? (
+          <Button size="sm" variant="outline" onClick={refetch}>
+            Try again
+          </Button>
+        ) : undefined
+      }
+      variant="solid"
+      className="py-4"
+    />
+  );
 
   return (
     <PageSplit
@@ -199,18 +221,9 @@ export function DividendsPageContent({ symbol }: Props) {
               <DividendSnowballSkeleton />
             ) : history ? (
               <DividendHistoryCharts history={history} />
-            ) : (
-              <EmptyState
-                icon={LineChart}
-                title="Dividend history unavailable"
-                description={
-                  error ??
-                  "Historic dividend data is not available for this symbol right now."
-                }
-                variant="solid"
-                className="py-4"
-              />
-            )}
+            ) : showUnavailable ? (
+              unavailableState
+            ) : null}
           </ResearchSectionCard>
 
           <ResearchSectionCard
@@ -221,7 +234,16 @@ export function DividendsPageContent({ symbol }: Props) {
             {showInitialLoading ? (
               <DividendSnowballSkeleton />
             ) : history ? (
-              <div className="space-y-4">
+              <div
+                className={
+                  isFetching ? "space-y-4 opacity-60 transition-opacity" : "space-y-4"
+                }
+              >
+                {isFetching ? (
+                  <p className="text-xs text-muted" aria-live="polite">
+                    Updating projections…
+                  </p>
+                ) : null}
                 <DividendSnowballStats
                   history={history}
                   sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
@@ -234,6 +256,8 @@ export function DividendsPageContent({ symbol }: Props) {
                   onScenarioChange={setScenarioParams}
                 />
               </div>
+            ) : showUnavailable ? (
+              unavailableState
             ) : null}
           </ResearchSectionCard>
         </>

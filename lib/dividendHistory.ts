@@ -6,7 +6,8 @@ import type {
 } from "@/app/types/research";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const STORAGE_KEY = "powerpocket-dividend-history:v4";
+const STORAGE_KEY = "powerpocket-dividend-history:v5";
+const MAX_PERSISTENT_CACHE_ENTRIES = 40;
 const DEFAULT_SHARES = 100;
 
 export type DividendFetchParams = DividendScenarioParams & {
@@ -79,6 +80,22 @@ export function scenarioCacheKey(symbol: string, params: DividendFetchParams): s
   ].join("|");
 }
 
+function prunePersistentStore(
+  store: Record<string, StoredEntry>,
+): Record<string, StoredEntry> {
+  const now = Date.now();
+  const freshEntries = Object.entries(store).filter(
+    ([, entry]) => now - entry.fetchedAt <= CACHE_TTL_MS,
+  );
+
+  if (freshEntries.length <= MAX_PERSISTENT_CACHE_ENTRIES) {
+    return Object.fromEntries(freshEntries);
+  }
+
+  freshEntries.sort((left, right) => right[1].fetchedAt - left[1].fetchedAt);
+  return Object.fromEntries(freshEntries.slice(0, MAX_PERSISTENT_CACHE_ENTRIES));
+}
+
 function readPersistentStore(): Record<string, StoredEntry> {
   if (typeof window === "undefined") return {};
 
@@ -89,7 +106,12 @@ function readPersistentStore(): Record<string, StoredEntry> {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {};
     }
-    return parsed as Record<string, StoredEntry>;
+    const store = parsed as Record<string, StoredEntry>;
+    const pruned = prunePersistentStore(store);
+    if (Object.keys(pruned).length !== Object.keys(store).length) {
+      writePersistentStore(pruned);
+    }
+    return pruned;
   } catch {
     return {};
   }
@@ -99,7 +121,10 @@ function writePersistentStore(store: Record<string, StoredEntry>): void {
   if (typeof window === "undefined") return;
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(prunePersistentStore(store)),
+    );
   } catch {
     // ignore quota errors
   }
@@ -174,6 +199,35 @@ function normalizeAdvancedScenario(
     annualIncomeLatestDrip,
     portfolioValueLatest,
     totalDividendsReinvested,
+  };
+}
+
+function normalizeHistoricalBacktest(
+  raw: unknown,
+): DividendHistoryContext["historicalBacktest"] {
+  if (!raw || typeof raw !== "object") return null;
+  const item = raw as Record<string, unknown>;
+  const startYear = readNumber(item.startYear ?? item.start_year);
+  const endYear = readNumber(item.endYear ?? item.end_year);
+  const cashCollected = readNumber(item.cashCollected ?? item.cash_collected);
+  const cashCollectedAnnual = readNumber(
+    item.cashCollectedAnnual ?? item.cash_collected_annual,
+  );
+  if (
+    startYear == null ||
+    endYear == null ||
+    cashCollected == null ||
+    cashCollectedAnnual == null
+  ) {
+    return null;
+  }
+
+  return {
+    startYear,
+    endYear,
+    cashCollected,
+    cashCollectedAnnual,
+    drip: normalizeAdvancedScenario(item.drip),
   };
 }
 
@@ -288,6 +342,9 @@ export function normalizeDividendHistoryContext(
     recentPayments,
     payments,
     scenario,
+    historicalBacktest: normalizeHistoricalBacktest(
+      data.historicalBacktest ?? data.historical_backtest,
+    ),
     dataAsOf:
       typeof data.dataAsOf === "string"
         ? data.dataAsOf
@@ -309,7 +366,11 @@ export function getCachedDividendHistory(
   const store = readPersistentStore();
   const entry = store[key];
   if (!entry) return null;
-  if (Date.now() - entry.fetchedAt > CACHE_TTL_MS) return null;
+  if (Date.now() - entry.fetchedAt > CACHE_TTL_MS) {
+    delete store[key];
+    writePersistentStore(store);
+    return null;
+  }
 
   const normalized = normalizeDividendHistoryContext(entry.data);
   if (!normalized) return null;
@@ -382,11 +443,15 @@ async function fetchDividendHistoryFromApi(
     });
 
     if (res.status === 404) return null;
-    if (!res.ok) return null;
+    if (!res.ok) {
+      throw new Error(`Dividend history request failed (${res.status})`);
+    }
 
     const raw: unknown = await res.json();
     const data = normalizeDividendHistoryContext(raw);
-    if (!data) return null;
+    if (!data) {
+      throw new Error("Dividend history response was invalid.");
+    }
 
     const key = scenarioCacheKey(symbol, params);
     memoryCache.set(key, data);
@@ -396,8 +461,11 @@ async function fetchDividendHistoryFromApi(
     writePersistentStore(store);
 
     return data;
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Dividend history request failed.");
   }
 }
 
