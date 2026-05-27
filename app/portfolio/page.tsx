@@ -369,6 +369,18 @@ export default function PortfolioPage() {
         <PortfolioOnboarding className={pageSectionClass} />
       )}
 
+      {(showContent || loading) && (
+        <PortfolioSnapshot
+          className={cn(pageSectionClass, "mb-4")}
+          loading={loading}
+          allPositions={allPositions}
+          symbols={symbols}
+          account={account}
+          cashSecuredPutSummary={cashSecuredPutSummary}
+          portfolioMetrics={portfolioMetrics}
+        />
+      )}
+
       {showContent && (
         <div className="sticky top-14 z-10 mb-4 border-b border-border/60 bg-background/95 pb-3 pt-1 backdrop-blur-md">
           <PortfolioSectionTabBar
@@ -386,32 +398,21 @@ export default function PortfolioPage() {
       {showContent && activeSection === "today" && (
         <PageSplit
           main={
-            <>
-              <PortfolioSnapshot
-                className={pageSectionClass}
-                loading={loading}
-                allPositions={allPositions}
-                symbols={symbols}
-                account={account}
-                cashSecuredPutSummary={cashSecuredPutSummary}
-                portfolioMetrics={portfolioMetrics}
-              />
-              <AnalysisPanel
-                mode="portfolio"
-                portfolioView="analysis"
-                positions={allPositions}
-                positionMap={positionMap}
-                liquidationValue={
-                  account?.securitiesAccount.currentBalances.liquidationValue
-                }
-                symbolAlertMap={symbolAlertMap}
-                autoStart={pendingPortfolioAnalysis}
-                portfolioNavigation={portfolioNavigation}
-                onLoadingChange={setPortfolioAnalysisLoading}
-                onAskFollowUp={() => scrollToChat()}
-                className={pageSectionClass}
-              />
-            </>
+            <AnalysisPanel
+              mode="portfolio"
+              portfolioView="analysis"
+              positions={allPositions}
+              positionMap={positionMap}
+              liquidationValue={
+                account?.securitiesAccount.currentBalances.liquidationValue
+              }
+              symbolAlertMap={symbolAlertMap}
+              autoStart={pendingPortfolioAnalysis}
+              portfolioNavigation={portfolioNavigation}
+              onLoadingChange={setPortfolioAnalysisLoading}
+              onAskFollowUp={() => scrollToChat()}
+              className={pageSectionClass}
+            />
           }
           aside={
             <>
@@ -451,28 +452,17 @@ export default function PortfolioPage() {
       {showContent && activeSection === "holdings" && (
         <PageSplit
           main={
-            <>
-              <PortfolioSnapshot
-                className={pageSectionClass}
-                loading={loading}
-                allPositions={allPositions}
-                symbols={symbols}
-                account={account}
-                cashSecuredPutSummary={cashSecuredPutSummary}
-                portfolioMetrics={portfolioMetrics}
-              />
-              <AnalysisPanel
-                mode="portfolio"
-                portfolioView="holdings"
-                positions={allPositions}
-                positionMap={positionMap}
-                liquidationValue={
-                  account?.securitiesAccount.currentBalances.liquidationValue
-                }
-                symbolAlertMap={symbolAlertMap}
-                className={cn(pageSectionClass, "mb-0")}
-              />
-            </>
+            <AnalysisPanel
+              mode="portfolio"
+              portfolioView="holdings"
+              positions={allPositions}
+              positionMap={positionMap}
+              liquidationValue={
+                account?.securitiesAccount.currentBalances.liquidationValue
+              }
+              symbolAlertMap={symbolAlertMap}
+              className={cn(pageSectionClass, "mb-0")}
+            />
           }
           aside={
             <PortfolioRiskSection
@@ -485,38 +475,15 @@ export default function PortfolioPage() {
         />
       )}
 
-      {!showContent && (
-        <PortfolioSnapshot
-          className={cn(pageSectionClass, "mb-4")}
-          loading={loading}
-          allPositions={allPositions}
-          symbols={symbols}
-          account={account}
-          cashSecuredPutSummary={cashSecuredPutSummary}
-          portfolioMetrics={portfolioMetrics}
-        />
-      )}
-
       {showContent && activeSection === "activity" && sessionAccessToken && (
-        <>
-          <PortfolioSnapshot
-            className={cn(pageSectionClass, "mb-4")}
-            loading={loading}
-            allPositions={allPositions}
-            symbols={symbols}
-            account={account}
-            cashSecuredPutSummary={cashSecuredPutSummary}
-            portfolioMetrics={portfolioMetrics}
-          />
-          <RecentActivitySection
-            className={pageSectionClass}
-            accessToken={sessionAccessToken}
-            summary={recentActivity}
-            onRefresh={() => refreshPositions(true)}
-            onRunSuggestedAction={handleSuggestedAction}
-            hideSuggestedActions
-          />
-        </>
+        <RecentActivitySection
+          className={pageSectionClass}
+          accessToken={sessionAccessToken}
+          summary={recentActivity}
+          onRefresh={() => refreshPositions(true)}
+          onRunSuggestedAction={handleSuggestedAction}
+          hideSuggestedActions
+        />
       )}
     </PageShell>
   );
