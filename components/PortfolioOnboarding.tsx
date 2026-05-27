@@ -22,6 +22,8 @@ import {
   dismissOnboarding,
   isOnboardingDismissed,
 } from "@/lib/onboardingStorage";
+import { SCHWAB_READ_ONLY_LINE } from "@/lib/schwabTrustCopy";
+import { track } from "@/lib/analytics";
 
 type Step = {
   id: string;
@@ -53,7 +55,8 @@ export function PortfolioOnboarding({ className }: { className?: string }) {
       {
         id: "connect",
         label: "Connect Schwab",
-        description: "Link your account from the sidebar to import holdings.",
+        description:
+          "Link your account in Settings with Schwab’s secure OAuth login.",
         done: schwabAuthorized === true,
       },
       {
@@ -108,6 +111,10 @@ export function PortfolioOnboarding({ className }: { className?: string }) {
   const handleDismiss = () => {
     dismissOnboarding();
     setDismissed(true);
+    track("onboarding_dismissed", {
+      completed_count: completedCount,
+      total_steps: coreSteps.length,
+    });
   };
 
   const stepIcon = (id: string) => {
@@ -191,10 +198,21 @@ export function PortfolioOnboarding({ className }: { className?: string }) {
                   </div>
                   <p className="mt-0.5 text-xs text-muted">{step.description}</p>
                   {step.id === "connect" && !step.done && (
-                    <p className="mt-1.5 text-[11px] text-muted">
-                      On mobile, open the menu — Connect is at the bottom of the
-                      sidebar.
-                    </p>
+                    <>
+                      <p className="mt-1.5 text-[11px] text-muted">
+                        {SCHWAB_READ_ONLY_LINE}
+                      </p>
+                      <Link
+                        href="/settings"
+                        className="mt-1.5 inline-flex text-[11px] font-medium text-accent-strong transition hover:underline"
+                      >
+                        Open Settings to connect
+                      </Link>
+                      <p className="mt-1.5 text-[11px] text-muted">
+                        On mobile, open the menu — Connect is at the bottom of the
+                        sidebar.
+                      </p>
+                    </>
                   )}
                   {step.id === "assistant" &&
                     !step.done &&

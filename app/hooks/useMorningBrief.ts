@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { track } from "@/lib/analytics";
 import { fetchMorningBrief } from "@/lib/apiClient";
 import type { MorningBrief, PortfolioIntelligence } from "@/app/types/intelligence";
 
@@ -45,6 +46,10 @@ export function useMorningBrief(
         });
         setMorningBrief(data);
         setLastUpdated(Date.now());
+        track("morning_brief_viewed", {
+          alert_count: data.topAlerts?.length ?? 0,
+          refreshed: forceRefresh,
+        });
       } catch (err) {
         const status =
           err instanceof Error && "status" in err

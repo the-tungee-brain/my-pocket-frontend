@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useSession } from "next-auth/react";
+import { track } from "@/lib/analytics";
 import { apiFetch } from "@/lib/apiClient";
 
 export function useSchwabConnect() {
@@ -17,6 +18,7 @@ export function useSchwabConnect() {
 
     setConnectError(null);
     setConnecting(true);
+    track("schwab_connect_started");
 
     try {
       const res = await apiFetch("/auth/schwab/connect", {
@@ -35,11 +37,12 @@ export function useSchwabConnect() {
 
       window.location.assign(data.auth_url);
     } catch (error) {
-      setConnectError(
+      const message =
         error instanceof Error
           ? error.message
-          : "Could not connect Schwab. Please try again.",
-      );
+          : "Could not connect Schwab. Please try again.";
+      track("schwab_connect_failed", { error: message });
+      setConnectError(message);
       setConnecting(false);
     }
   }, [session?.accessToken]);

@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { Link2Off, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
+import { SCHWAB_RECONNECT_PROMPT } from "@/lib/schwabTrustCopy";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -50,8 +52,13 @@ export function SchwabConnectionBanner({
             Schwab connection needs attention
           </p>
           <p className="text-xs text-muted">
-            {message ??
-              "Reconnect Schwab to refresh positions, options, and order history."}
+            {message ?? SCHWAB_RECONNECT_PROMPT}{" "}
+            <Link
+              href="/security"
+              className="font-medium text-accent-strong hover:underline"
+            >
+              Security details
+            </Link>
           </p>
         </div>
       </div>

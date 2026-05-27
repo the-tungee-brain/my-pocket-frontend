@@ -11,6 +11,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
+import { track } from "@/lib/analytics";
 import { apiFetch, fetchAccountPositions, streamAnalysis, streamResearchChat } from "@/lib/apiClient";
 import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
@@ -252,12 +253,17 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const accessToken = session?.accessToken ?? "";
   const chatUserId = session?.user?.email ?? session?.user?.id ?? null;
   const initialRefreshRef = useRef<boolean | null>(null);
+  const schwabConnectPendingRef = useRef(false);
+  const positionsLoadedTrackedRef = useRef(false);
   if (initialRefreshRef.current === null && typeof window !== "undefined") {
     const params = new URLSearchParams(window.location.search);
+    const schwabConnected =
+      params.get("status") === "success" || params.get("schwab") === "connected";
     initialRefreshRef.current =
-      params.get("refresh") === "1" ||
-      params.get("status") === "success" ||
-      params.get("schwab") === "connected";
+      params.get("refresh") === "1" || schwabConnected;
+    if (schwabConnected) {
+      schwabConnectPendingRef.current = true;
+    }
   }
 
   const applyPositionsPayload = useCallback(
@@ -300,6 +306,28 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         const data = await fetchAccountPositions(accessToken, { refresh });
         applyPositionsPayload(data);
         setSchwabReauth(null);
+
+        const loadedPositions = Object.values(data.schwab_positions ?? {})
+          .flat()
+          .filter(Boolean) as Position[];
+        const symbolCount = Object.keys(data.schwab_positions ?? {}).length;
+
+        if (!positionsLoadedTrackedRef.current) {
+          positionsLoadedTrackedRef.current = true;
+          track("positions_loaded", {
+            symbol_count: symbolCount,
+            position_count: loadedPositions.length,
+            refreshed: refresh,
+          });
+        }
+
+        if (schwabConnectPendingRef.current) {
+          schwabConnectPendingRef.current = false;
+          track("schwab_connect_completed", {
+            symbol_count: symbolCount,
+            position_count: loadedPositions.length,
+          });
+        }
       } catch (err) {
         const apiError = err as Error & {
           reauth?: SchwabReauthDetail | null;
@@ -621,6 +649,13 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
             ? selectedSymbol
             : (selectedSymbol ?? "UNKNOWN");
 
+      const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);
+      track("ai_message_sent", {
+        view: selectedView,
+        symbol: symbolForApi,
+        has_holdings: hasHoldingsContext,
+      });
+
       const streamer = createStreamingAssistantUpdater(
         activeChatKey,
         setChatBySymbol,
@@ -629,8 +664,6 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       streamer.beginAssistantMessage();
 
       try {
-        const hasHoldingsContext = !!(positionsForSelectedSymbol?.length ?? 0);
-
         if (hasHoldingsContext && !account) {
           throw new Error("Account data is not loaded yet.");
         }
@@ -779,6 +812,12 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
           : selectedView === "research"
             ? selectedSymbol
             : (selectedSymbol ?? "UNKNOWN");
+
+      track("quick_action_used", {
+        action_id: actionId,
+        view: selectedView,
+        symbol: symbolForApi,
+      });
 
       const structuredAnalyze = isStructuredAnalyzeAction(actionId);
       const freeForm = isFreeFormQuickAction(actionId);

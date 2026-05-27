@@ -1,10 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { Check, Link2, Loader2 } from "lucide-react";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import {
+  SCHWAB_CONNECT_PROMPT,
+  SCHWAB_READ_ONLY_LINE,
+} from "@/lib/schwabTrustCopy";
 import { cn } from "@/lib/utils";
 
 export function SchwabConnectionSettings() {
@@ -58,11 +63,22 @@ export function SchwabConnectionSettings() {
               {statusLoading
                 ? "Checking connection…"
                 : connecting
-                  ? "Redirecting to Schwab…"
+                  ? "Redirecting to Schwab’s secure login…"
                   : linked
                     ? "Account linked — positions and activity sync from Schwab."
-                    : "Not linked — connect to load holdings, balances, and orders."}
+                    : SCHWAB_CONNECT_PROMPT}
             </p>
+            {!statusLoading && !linked && (
+              <p className="mt-2 text-xs leading-relaxed text-muted">
+                {SCHWAB_READ_ONLY_LINE}{" "}
+                <Link
+                  href="/security"
+                  className="font-medium text-accent-strong hover:underline"
+                >
+                  Learn more
+                </Link>
+              </p>
+            )}
           </div>
         </div>
 

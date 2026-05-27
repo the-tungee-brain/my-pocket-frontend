@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { CompanySnapshot } from "./CompanySnapshot";
 import { ResearchTabBar, researchBreadcrumbLabel } from "@/components/ResearchTabBar";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { track } from "@/lib/analytics";
 import { addRecentSymbol } from "@/lib/recentSymbols";
 import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
 import { usePositionsContext } from "@/app/Providers";
@@ -36,7 +37,12 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
 
   useEffect(() => {
     addRecentSymbol(symbol);
-  }, [symbol]);
+    track("research_symbol_opened", {
+      symbol: symbolUpper,
+      tab: activeTab,
+      has_position: hasPosition,
+    });
+  }, [symbol, symbolUpper, activeTab, hasPosition]);
 
   useEffect(() => {
     const root = document.getElementById("main-content");

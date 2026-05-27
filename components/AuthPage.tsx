@@ -27,6 +27,7 @@ import { TomcrestMark } from "@/components/brand/TomcrestMark";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 
 function getAuthErrorMessage(code: string | null): string | null {
   if (!code) return null;
@@ -63,6 +64,7 @@ function useGoogleSignIn() {
   const handleSignIn = useCallback(async () => {
     setSignInError(null);
     setSigningIn(true);
+    track("sign_in_clicked", { provider: "google" });
 
     try {
       const result = await signIn("google", {
@@ -620,7 +622,13 @@ function LandingFooter() {
             Insights and recommendations only. Not financial advice.
           </p>
           <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
-            Read-only Schwab access via OAuth.
+            Read-only Schwab access via OAuth.{" "}
+            <a
+              href="/security"
+              className="font-medium text-accent-strong hover:underline"
+            >
+              Security & privacy
+            </a>
           </p>
         </div>
       </div>

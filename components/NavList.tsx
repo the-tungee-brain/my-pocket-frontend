@@ -177,7 +177,10 @@ export function NavList({
 
       {!loading && symbols.length === 0 && (
         <div className="rounded-lg border border-dashed border-border bg-background/50 px-3 py-3 text-[11px] text-muted">
-          <p>Connect Schwab in Settings to load your holdings here.</p>
+          <p>
+            Connect Schwab in Settings to import holdings. Read-only OAuth — we
+            never see your password.
+          </p>
           <Link
             href="/settings"
             className="mt-2 inline-flex text-xs font-medium text-accent-strong transition hover:underline"

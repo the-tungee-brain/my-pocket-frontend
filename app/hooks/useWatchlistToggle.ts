@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useToast } from "@/app/contexts/ToastContext";
 import { useWatchlist } from "./useWatchlist";
+import { track } from "@/lib/analytics";
 
 export function useWatchlistToggle(symbol: string) {
   const { isWatchlisted, toggle } = useWatchlist();
@@ -19,6 +20,10 @@ export function useWatchlistToggle(symbol: string) {
           ? `${upper} added to watchlist`
           : `${upper} removed from watchlist`,
       );
+      track("watchlist_symbol_toggled", {
+        symbol: upper,
+        action: added ? "added" : "removed",
+      });
       return added;
     },
     [toggle, upper, showToast],

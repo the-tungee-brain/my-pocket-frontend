@@ -126,7 +126,7 @@ export function ChatBox({
           <p className="rounded-lg border border-dashed border-border bg-muted-bg/30 px-3 py-2 text-xs text-muted">
             {mode === "research"
               ? "Sign in to ask questions about this symbol."
-              : "Connect Schwab and load holdings to use the assistant."}
+              : "Connect Schwab in Settings to load holdings, then ask about your portfolio."}
           </p>
         ) : (
           <QuickAnalysisBar
