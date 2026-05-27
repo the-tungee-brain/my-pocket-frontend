@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { Settings } from "lucide-react";
-import { Button } from "./ui/Button";
 
 export function HeaderActions() {
   const handleSignOut = () => {
@@ -19,14 +18,13 @@ export function HeaderActions() {
         <Settings className="h-3.5 w-3.5" aria-hidden="true" />
         Settings
       </Link>
-      <Button
-        size="xs"
-        variant="ghost"
-        className="text-[11px] text-muted hover:text-foreground"
+      <button
+        type="button"
         onClick={handleSignOut}
+        className="inline-flex h-7 items-center rounded-md px-2 text-[11px] font-semibold text-muted transition hover:bg-muted-bg hover:text-foreground"
       >
         Log out
-      </Button>
+      </button>
     </div>
   );
 }
