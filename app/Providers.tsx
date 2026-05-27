@@ -15,7 +15,16 @@ import { track } from "@/lib/analytics";
 import { apiFetch, fetchAccountPositions, streamAnalysis, streamResearchChat } from "@/lib/apiClient";
 import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
-import { DEFAULT_CHAT_MODEL } from "@/lib/chatModels";
+import {
+  clearModelMenuOpenBlock,
+  markModelMenuDismissed,
+  registerModelMenuDismissListener,
+  shouldBlockModelMenuOpen,
+} from "@/lib/chatModelMenu";
+import {
+  CHAT_MODEL_OPTIONS,
+  DEFAULT_CHAT_MODEL,
+} from "@/lib/chatModels";
 import {
   loadPersistedChat,
   persistChatState,
@@ -79,6 +88,9 @@ type PositionsContextValue = {
     key: string,
     base?: Partial<SymbolChatState>,
   ) => SymbolChatState;
+  setChatModel: (activeChatKey: string, model: string) => void;
+  setChatModelMenuOpen: (activeChatKey: string, open: boolean) => void;
+  closeAllChatModelMenus: () => void;
   sendPrompt: (opts: {
     activeChatKey: string;
     selectedView: MainView;
@@ -262,7 +274,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     null,
   );
   const [chatBySymbol, setChatBySymbol] = useState<ChatStateMap>({});
-  const chatHydratedRef = useRef(false);
+  const chatHydratedUserRef = useRef<string | null>(null);
   const chatBySymbolRef = useRef(chatBySymbol);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const serverHydrateInflightRef = useRef<Set<string>>(new Set());
@@ -386,44 +398,129 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     setSelectedSymbol(null);
   }, []);
 
+  const resolveChatModel = useCallback((model: string | undefined | null) => {
+    const trimmed = model?.trim();
+    if (!trimmed) return DEFAULT_CHAT_MODEL;
+    return CHAT_MODEL_OPTIONS.some((option) => option.id === trimmed)
+      ? trimmed
+      : DEFAULT_CHAT_MODEL;
+  }, []);
+
   const ensureSymbolChatState = useCallback(
     (key: string, base?: Partial<SymbolChatState>): SymbolChatState => ({
       loading: false,
       input: "",
       messages: [],
-      model: DEFAULT_CHAT_MODEL,
       modelMenuOpen: false,
       ...base,
+      model: resolveChatModel(base?.model),
     }),
-    [],
+    [resolveChatModel],
   );
+
+  const setChatModel = useCallback(
+    (activeChatKey: string, model: string) => {
+      if (activeChatKey === "__NONE__") return;
+
+      const resolvedModel = resolveChatModel(model);
+      clearModelMenuOpenBlock();
+
+      setChatBySymbol((prev) => {
+        const existing = prev[activeChatKey];
+        const nextState: SymbolChatState = existing
+          ? {
+              ...existing,
+              model: resolvedModel,
+              modelMenuOpen: false,
+            }
+          : {
+              ...ensureSymbolChatState(activeChatKey),
+              model: resolvedModel,
+              modelMenuOpen: false,
+            };
+
+        const next = {
+          ...prev,
+          [activeChatKey]: nextState,
+        };
+
+        if (chatUserId) {
+          persistChatState(chatUserId, next);
+        }
+
+        return next;
+      });
+    },
+    [chatUserId, ensureSymbolChatState, resolveChatModel],
+  );
+
+  const setChatModelMenuOpen = useCallback(
+    (activeChatKey: string, open: boolean) => {
+      if (activeChatKey === "__NONE__") return;
+      if (open && shouldBlockModelMenuOpen()) return;
+
+      setChatBySymbol((prev) => {
+        const existing = prev[activeChatKey];
+        if (existing?.modelMenuOpen === open) return prev;
+
+        const nextState: SymbolChatState = existing
+          ? { ...existing, modelMenuOpen: open }
+          : ensureSymbolChatState(activeChatKey, { modelMenuOpen: open });
+
+        return {
+          ...prev,
+          [activeChatKey]: nextState,
+        };
+      });
+    },
+    [ensureSymbolChatState],
+  );
+
+  const closeAllChatModelMenus = useCallback(() => {
+    markModelMenuDismissed();
+    setChatBySymbol((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      for (const [key, state] of Object.entries(next)) {
+        if (!state?.modelMenuOpen) continue;
+        next[key] = { ...state, modelMenuOpen: false };
+        changed = true;
+      }
+
+      return changed ? next : prev;
+    });
+  }, []);
 
   useEffect(() => {
     if (!chatUserId) {
-      chatHydratedRef.current = false;
+      chatHydratedUserRef.current = null;
       return;
     }
 
-    chatHydratedRef.current = false;
+    if (chatHydratedUserRef.current === chatUserId) return;
 
     const loaded = loadPersistedChat(chatUserId);
     if (Object.keys(loaded).length === 0) {
-      chatHydratedRef.current = true;
+      chatHydratedUserRef.current = chatUserId;
       return;
     }
 
     setChatBySymbol((prev) => {
       const merged = { ...prev };
       for (const [key, saved] of Object.entries(loaded)) {
-        merged[key] = ensureSymbolChatState(key, saved);
+        merged[key] = ensureSymbolChatState(key, {
+          ...merged[key],
+          ...saved,
+        });
       }
       return merged;
     });
-    chatHydratedRef.current = true;
+    chatHydratedUserRef.current = chatUserId;
   }, [chatUserId, ensureSymbolChatState]);
 
   useEffect(() => {
-    if (!chatUserId || !chatHydratedRef.current) return;
+    if (!chatUserId || chatHydratedUserRef.current !== chatUserId) return;
 
     if (persistTimeoutRef.current) {
       clearTimeout(persistTimeoutRef.current);
@@ -446,7 +543,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     if (!chatUserId) return;
 
     const flushPersist = () => {
-      if (!chatHydratedRef.current) return;
+      if (chatHydratedUserRef.current !== chatUserId) return;
       persistChatState(chatUserId, chatBySymbolRef.current);
     };
 
@@ -1072,6 +1169,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       chatBySymbol,
       setChatBySymbol,
       ensureSymbolChatState,
+      setChatModel,
+      setChatModelMenuOpen,
+      closeAllChatModelMenus,
       sendPrompt,
       sendQuickAction,
       hydrateChatFromServer,
@@ -1102,6 +1202,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       positionsForSelectedSymbol,
       chatBySymbol,
       ensureSymbolChatState,
+      setChatModel,
+      setChatModelMenuOpen,
+      closeAllChatModelMenus,
       sendPrompt,
       sendQuickAction,
       hydrateChatFromServer,

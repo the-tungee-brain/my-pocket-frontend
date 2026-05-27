@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronUp, Menu, Search, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ChatSessionHistory } from "@/components/ChatSessionHistory";
 import { ChatBox } from "@/components/ChatBox";
@@ -41,6 +41,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     chatBySymbol,
     setChatBySymbol,
     ensureSymbolChatState,
+    setChatModel,
+    setChatModelMenuOpen,
     sendPrompt,
     sendQuickAction,
     hydrateChatFromServer,
@@ -156,39 +158,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setInputRows(nextRows);
   };
 
-  const handleModelChange = (model: string) => {
-    if (activeChatKey === "__NONE__") return;
-    setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(
-        activeChatKey,
-        prev[activeChatKey],
-      );
-      return {
-        ...prev,
-        [activeChatKey]: {
-          ...prevState,
-          model,
-        },
-      };
-    });
-  };
+  const handleModelChange = useCallback(
+    (model: string) => {
+      if (activeChatKey === "__NONE__") return;
+      setChatModel(activeChatKey, model);
+    },
+    [activeChatKey, setChatModel],
+  );
 
-  const toggleModelMenu = () => {
+  const openModelMenu = useCallback(() => {
     if (activeChatKey === "__NONE__") return;
-    setChatBySymbol((prev) => {
-      const prevState = ensureSymbolChatState(
-        activeChatKey,
-        prev[activeChatKey],
-      );
-      return {
-        ...prev,
-        [activeChatKey]: {
-          ...prevState,
-          modelMenuOpen: !prevState.modelMenuOpen,
-        },
-      };
-    });
-  };
+    setChatModelMenuOpen(activeChatKey, true);
+  }, [activeChatKey, setChatModelMenuOpen]);
+
+  const closeModelMenu = useCallback(() => {
+    if (activeChatKey === "__NONE__") return;
+    setChatModelMenuOpen(activeChatKey, false);
+  }, [activeChatKey, setChatModelMenuOpen]);
 
   const resolveChatContext = () => {
     if (selectedView === "research" && researchSymbol) {
@@ -357,7 +343,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     onChangeInput: handleChatInputChange,
     onSendPrompt: () => void handleSendMessage(),
     onSendQuickAction: (id: string) => void handleQuickAction(id),
-    onToggleModelMenu: toggleModelMenu,
+    onOpenModelMenu: openModelMenu,
+    onCloseModelMenu: closeModelMenu,
     onModelChange: handleModelChange,
     contextLabel: chatContextLabel,
   };

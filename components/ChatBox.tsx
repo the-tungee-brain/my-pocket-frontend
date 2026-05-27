@@ -2,6 +2,7 @@
 
 import { ChevronDown, SendHorizontal, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { flushSync } from "react-dom";
 import type { ChatMessage } from "@/components/ConversationPane";
 import { ModelPicker } from "@/components/ModelPicker";
 import { QuickAnalysisBar } from "@/components/QuickAnalysisBar";
@@ -12,6 +13,11 @@ import { cn } from "@/lib/utils";
 import { pageShellClass } from "@/lib/pageLayout";
 import { ASSISTANT_CHAT_INPUT_CLASS } from "@/lib/scrollToChat";
 import { DEFAULT_CHAT_MODEL, getModelButtonLabel } from "@/lib/chatModels";
+import {
+  lockMainContentWhileModelMenuOpen,
+  markModelMenuDismissed,
+  registerModelMenuDismissListener,
+} from "@/lib/chatModelMenu";
 
 export { DEFAULT_CHAT_MODEL };
 
@@ -33,7 +39,8 @@ interface ChatBoxProps {
   onChangeInput: (value: string) => void;
   onSendPrompt: () => void;
   onSendQuickAction: (actionId: string) => void;
-  onToggleModelMenu: () => void;
+  onOpenModelMenu: () => void;
+  onCloseModelMenu: () => void;
   onModelChange: (model: string) => void;
   onCollapse?: () => void;
   contextLabel?: string;
@@ -49,7 +56,8 @@ export function ChatBox({
   onChangeInput,
   onSendPrompt,
   onSendQuickAction,
-  onToggleModelMenu,
+  onOpenModelMenu,
+  onCloseModelMenu,
   onModelChange,
   onCollapse,
   contextLabel,
@@ -70,28 +78,41 @@ export function ChatBox({
   const modelMenuOpen = !!currentChat?.modelMenuOpen;
   const modelButtonLabel = getModelButtonLabel(selectedModel);
   const modelMenuRef = useRef<HTMLDivElement>(null);
+  const onCloseModelMenuRef = useRef(onCloseModelMenu);
+
+  onCloseModelMenuRef.current = onCloseModelMenu;
+
+  const dismissModelMenu = () => {
+    markModelMenuDismissed();
+    flushSync(() => {
+      onCloseModelMenuRef.current();
+    });
+  };
 
   useEffect(() => {
-    if (!modelMenuOpen) return;
+    if (!modelMenuOpen || !modelMenuRef.current) return;
 
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!modelMenuRef.current?.contains(event.target as Node)) {
-        onToggleModelMenu();
-      }
-    };
+    const root = modelMenuRef.current;
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onToggleModelMenu();
+      if (event.key === "Escape") dismissModelMenu();
     };
 
-    document.addEventListener("mousedown", handlePointerDown);
+    const unregisterDismiss = registerModelMenuDismissListener(root, () => {
+      flushSync(() => {
+        onCloseModelMenuRef.current();
+      });
+    });
+    const unlockMainContent = lockMainContentWhileModelMenuOpen();
+
     document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
+      unlockMainContent();
+      unregisterDismiss();
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [modelMenuOpen, onToggleModelMenu]);
+  }, [modelMenuOpen]);
 
   return (
     <div className="bg-linear-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
@@ -177,6 +198,7 @@ export function ChatBox({
 
             <div
               ref={modelMenuRef}
+              data-model-menu-root
               className="relative flex items-center gap-2"
             >
               <button
@@ -185,7 +207,15 @@ export function ChatBox({
                 aria-expanded={modelMenuOpen}
                 aria-haspopup="listbox"
                 aria-label={`Model: ${modelButtonLabel}`}
-                onClick={onToggleModelMenu}
+                onPointerDown={(event) => {
+                  if (!modelMenuOpen) return;
+                  event.preventDefault();
+                  dismissModelMenu();
+                }}
+                onClick={() => {
+                  if (modelMenuOpen) return;
+                  onOpenModelMenu();
+                }}
                 className={cn(
                   "inline-flex max-w-44 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-muted transition-all duration-200 ease-out hover:bg-muted-bg hover:text-foreground sm:max-w-none",
                   "disabled:opacity-60",
@@ -206,7 +236,6 @@ export function ChatBox({
                 open={modelMenuOpen}
                 value={selectedModel}
                 onChange={onModelChange}
-                onClose={onToggleModelMenu}
               />
 
               <button

@@ -4,7 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { usePositionsContext } from "../Providers";
-import { usePortfolioSection } from "@/app/contexts/PortfolioSectionContext";
+import {
+  usePortfolioSection,
+  type PortfolioSectionId,
+} from "@/app/contexts/PortfolioSectionContext";
 import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { PortfolioAttentionSection, countAttentionItems } from "@/components/PortfolioAttentionSection";
@@ -63,6 +66,7 @@ export default function PortfolioPage() {
     sessionAccessToken,
     sendQuickAction,
     schwabReauth,
+    closeAllChatModelMenus,
   } = usePositionsContext();
   const { activeSection, setActiveSection } = usePortfolioSection();
   const searchParams = useSearchParams();
@@ -76,6 +80,14 @@ export default function PortfolioPage() {
   const [portfolioNavigation, setPortfolioNavigation] =
     useState<PortfolioNavigationRequest | null>(null);
   const pendingGoToAnalysisRef = useRef<{ forceAnalyze: boolean } | null>(null);
+
+  const handleSectionChange = useCallback(
+    (section: PortfolioSectionId) => {
+      closeAllChatModelMenus();
+      setActiveSection(section);
+    },
+    [closeAllChatModelMenus, setActiveSection],
+  );
 
   useEffect(() => {
     setStrategyDismissed(isStrategyOnboardingDismissed());
@@ -361,7 +373,7 @@ export default function PortfolioPage() {
         <div className="sticky top-14 z-10 mb-4 border-b border-border/60 bg-background/95 pb-3 pt-1 backdrop-blur-md">
           <PortfolioSectionTabBar
             activeSection={activeSection}
-            onChange={setActiveSection}
+            onChange={handleSectionChange}
             badges={{
               today: todayBadgeCount,
               activity: activityBadgeCount,

@@ -1,5 +1,6 @@
 import type { ChatMessage } from "@/components/ConversationPane";
 import { migrateChatKeyMap } from "@/lib/chatKeys";
+import { DEFAULT_CHAT_MODEL, isDefaultModel } from "@/lib/chatModels";
 
 type PersistedChatState = {
   input: string;
@@ -69,7 +70,10 @@ function parsePersistedChat(raw: string): PersistedChatMap {
       result[key] = trimThread({
         input: typeof entry.input === "string" ? entry.input : "",
         messages,
-        model: typeof entry.model === "string" ? entry.model : "",
+        model:
+          typeof entry.model === "string" && entry.model.trim()
+            ? entry.model
+            : DEFAULT_CHAT_MODEL,
       });
     }
 
@@ -126,7 +130,11 @@ export function persistChatState(
   const toSave: PersistedChatMap = {};
 
   for (const [key, state] of Object.entries(chatBySymbol)) {
-    if (!state.messages.length && !state.input.trim()) continue;
+    const hasThreadContent =
+      state.messages.length > 0 || state.input.trim().length > 0;
+    const hasModelPreference = !isDefaultModel(state.model);
+
+    if (!hasThreadContent && !hasModelPreference) continue;
 
     toSave[key] = trimThread({
       input: state.input,
