@@ -6,7 +6,7 @@ import type { ChatSessionSummary } from "@/app/types/chat";
 import type { ChatMessage } from "@/components/ConversationPane";
 import { listSessionsForChatKey, loadChatSessionById } from "@/lib/chatHistory";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
-import { Button } from "@/components/ui/Button";
+import { compactTextButtonClass } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -73,17 +73,16 @@ export function ChatSessionHistory({
 
   return (
     <div className={cn("relative", className)}>
-      <Button
+      <button
         type="button"
-        size="xs"
-        variant="ghost"
+        className={compactTextButtonClass}
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="listbox"
       >
         <Clock className="h-3.5 w-3.5" aria-hidden />
         History
-      </Button>
+      </button>
 
       {open && (
         <div className="absolute right-0 top-full z-30 mt-1 w-72 overflow-hidden rounded-xl border border-border bg-background shadow-lg">

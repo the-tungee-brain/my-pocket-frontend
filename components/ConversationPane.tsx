@@ -10,7 +10,7 @@ import {
   parseChatFollowUps,
   shouldShowFollowUpSuggestions,
 } from "@/lib/chatFollowUpSuggestions";
-import { Button } from "@/components/ui/Button";
+import { compactTextButtonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { pageShellClass } from "@/lib/pageLayout";
@@ -129,18 +129,17 @@ export function ConversationPane({
         <div className="text-xs font-medium uppercase tracking-wide text-muted">
           Conversation
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {historyControl}
           {canClear && (
-            <Button
-              size="xs"
-              variant="ghost"
-              className="text-muted hover:text-foreground"
+            <button
+              type="button"
+              className={compactTextButtonClass}
               onClick={onClear}
             >
-              <Trash2 className="h-3 w-3" aria-hidden="true" />
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               Clear
-            </Button>
+            </button>
           )}
         </div>
       </div>

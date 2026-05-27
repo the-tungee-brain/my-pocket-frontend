@@ -5,6 +5,9 @@ import { iconButtonTransitionClass } from "@/components/ui/IconButton";
 import { forwardRef, ButtonHTMLAttributes } from "react";
 import { Loader2 } from "lucide-react";
 
+export const compactTextButtonClass =
+  "inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-semibold text-muted transition hover:bg-muted-bg hover:text-foreground";
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline" | "ghost" | "destructive" | "icon";
   size?: "xs" | "sm" | "default" | "lg" | "icon";
