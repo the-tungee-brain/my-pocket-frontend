@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Clock3, Mail } from "lucide-react";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
-import { Button } from "@/components/ui/Button";
 
 export default function WaitlistPage() {
   return (
@@ -30,14 +29,17 @@ export default function WaitlistPage() {
             You&apos;re on the waitlist
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-muted">
-            Tomcrest is in a small private beta with room for five active users
+            Tomcrest is in a small private beta with room for 5 active users
             right now. We saved your Google account and will email you when a
             spot opens.
           </p>
 
           <div className="mt-6 space-y-3 rounded-xl border border-border/80 bg-background/50 px-4 py-3 text-sm text-muted">
             <div className="flex items-start gap-3">
-              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" aria-hidden="true" />
+              <Mail
+                className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong"
+                aria-hidden="true"
+              />
               <p>
                 No action needed. Try signing in again later — if a spot is
                 open, you&apos;ll go straight to the app.
@@ -46,9 +48,12 @@ export default function WaitlistPage() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild variant="secondary">
-              <Link href="/">Back to home</Link>
-            </Button>
+            <Link
+              href="/"
+              className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-sm font-semibold transition-colors hover:bg-muted-bg hover:text-foreground"
+            >
+              Back to home
+            </Link>
           </div>
         </div>
       </main>
