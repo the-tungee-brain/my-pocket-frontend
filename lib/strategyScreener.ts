@@ -66,7 +66,17 @@ export const MARKET_CAP_PRESETS = [
   { label: "$50B+", value: 50_000_000_000 },
 ] as const;
 
-export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_PAGE_SIZE = 30;
+
+export function expectedRowsForPage(
+  page: number,
+  pageSize: number,
+  totalCount: number,
+): number {
+  if (totalCount <= 0) return pageSize;
+  const remaining = totalCount - (page - 1) * pageSize;
+  return Math.min(pageSize, Math.max(0, remaining));
+}
 
 const SUPPORTED_STRATEGIES: InvestmentStrategy[] = [
   "wheel",

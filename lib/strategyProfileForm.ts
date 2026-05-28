@@ -129,6 +129,13 @@ export function profileToFormValues(
   };
 }
 
+export function formValuesEqual(
+  a: StrategyFormValues,
+  b: StrategyFormValues,
+): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 export function formValuesToUpdate(
   values: StrategyFormValues,
   options: { completeOnboarding?: boolean } = {},

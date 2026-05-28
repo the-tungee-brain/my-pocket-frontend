@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ChevronDown,
+  ChevronUp,
   CircleDollarSign,
   Layers,
   RefreshCw,
@@ -24,6 +26,7 @@ import { cn } from "@/lib/utils";
 import {
   DEFAULT_STRATEGY_FORM,
   deltaBandForRisk,
+  formValuesEqual,
   formValuesToUpdate,
   isStrategyFormValid,
   isWheelLikeStrategy,
@@ -42,6 +45,7 @@ type Props = {
   onSave: (values: StrategyFormValues) => Promise<void>;
   submitLabel?: string;
   showStrategyChangeWarning?: boolean;
+  variant?: "default" | "settings";
 };
 
 const STRATEGY_ICONS: Record<InvestmentStrategy, typeof RefreshCw> = {
@@ -59,7 +63,9 @@ export function StrategyProfileEditor({
   onSave,
   submitLabel = "Save changes",
   showStrategyChangeWarning = true,
+  variant = "default",
 }: Props) {
+  const isSettings = variant === "settings";
   const [values, setValues] = useState<StrategyFormValues>(() =>
     profileToFormValues(profile),
   );
@@ -67,9 +73,21 @@ export function StrategyProfileEditor({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [screenerExpanded, setScreenerExpanded] = useState(!isSettings);
+
+  useEffect(() => {
+    setScreenerExpanded(!isSettings);
+  }, [isSettings, values.primaryStrategy]);
+
+  const savedBaseline = useMemo(() => profileToFormValues(profile), [profile]);
+  const isDirty = useMemo(
+    () => !formValuesEqual(values, savedBaseline),
+    [values, savedBaseline],
+  );
 
   useEffect(() => {
     setValues(profileToFormValues(profile));
+    setSaved(false);
   }, [profile]);
 
   const strategyChanged =
@@ -116,7 +134,7 @@ export function StrategyProfileEditor({
   } = useStrategyStockScreener({
     accessToken,
     strategy: values.primaryStrategy,
-    enabled: showSymbolScreener,
+    enabled: showSymbolScreener && (!isSettings || screenerExpanded),
     filters: screenerFilters,
     autoRun: true,
     prepareProfile: prepareScreenerProfile,
@@ -157,15 +175,80 @@ export function StrategyProfileEditor({
     }
   };
 
+  const sectionClass = cn(
+    "space-y-4 rounded-xl border p-4",
+    isSettings
+      ? "border-border/80 bg-secondary/30"
+      : "border-border bg-background/40",
+  );
+
+  const screenerPanel =
+    values.primaryStrategy === "etf-core" ? (
+      <StrategyStockScreenerPanel
+        strategy={values.primaryStrategy ?? "etf-core"}
+        preset={screenerResult?.preset}
+        quotes={screenerResult?.quotes ?? []}
+        sections={screenerResult?.sections}
+        summary={screenerResult?.summary}
+        filters={screenerFilters}
+        onFiltersChange={setScreenerFilters}
+        loading={screenerLoading}
+        initialLoading={screenerInitialLoading}
+        isFetching={screenerIsFetching}
+        error={screenerError}
+        stale={screenerStale}
+        hasRun={screenerHasRun}
+        page={screenerPage}
+        pageSize={screenerPageSize}
+        totalPages={screenerResult?.totalPages ?? 1}
+        totalCount={screenerResult?.totalCount ?? 0}
+        onPageChange={setScreenerPage}
+        onRun={() => void runScreen({ force: true, syncProfile: true })}
+        onAddSymbol={(symbol) => patch({ etfPrimary: symbol.toUpperCase() })}
+        selectedSymbols={[values.etfPrimary, values.etfBond].filter(Boolean)}
+        compact={isSettings}
+      />
+    ) : (
+      <StrategyStockScreenerPanel
+        strategy={values.primaryStrategy ?? "wheel"}
+        preset={screenerResult?.preset}
+        quotes={screenerResult?.quotes ?? []}
+        sections={screenerResult?.sections}
+        summary={screenerResult?.summary}
+        filters={screenerFilters}
+        onFiltersChange={setScreenerFilters}
+        loading={screenerLoading}
+        initialLoading={screenerInitialLoading}
+        isFetching={screenerIsFetching}
+        error={screenerError}
+        stale={screenerStale}
+        hasRun={screenerHasRun}
+        page={screenerPage}
+        pageSize={screenerPageSize}
+        totalPages={screenerResult?.totalPages ?? 1}
+        totalCount={screenerResult?.totalCount ?? 0}
+        onPageChange={setScreenerPage}
+        onRun={() => void runScreen({ force: true, syncProfile: true })}
+        onAddSymbol={addSymbol}
+        selectedSymbols={values.symbols}
+        compact={isSettings}
+      />
+    );
+
   return (
-    <div className="space-y-6">
-      <section className="space-y-3">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">Strategy</h3>
-          <p className="mt-1 text-xs text-muted">
-            Changing strategy resets your guided checklist for the new path.
-          </p>
-        </div>
+    <div className={cn("space-y-6", isSettings && isDirty && "pb-4")}>
+      <section className={cn("space-y-3", isSettings && sectionClass)}>
+        {!isSettings && (
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Strategy</h3>
+            <p className="mt-1 text-xs text-muted">
+              Changing strategy resets your guided checklist for the new path.
+            </p>
+          </div>
+        )}
+        {isSettings && (
+          <h3 className="text-sm font-semibold text-foreground">Strategy type</h3>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           {catalog.map((item) => {
             const Icon = STRATEGY_ICONS[item.id];
@@ -205,7 +288,7 @@ export function StrategyProfileEditor({
 
       {values.primaryStrategy && (
         <>
-          <section className="space-y-4 rounded-xl border border-border bg-background/40 p-4">
+          <section className={sectionClass}>
             <h3 className="text-sm font-semibold text-foreground">Preferences</h3>
             <FieldGroup label="Risk tolerance">
               {(["conservative", "moderate", "aggressive"] as RiskTolerance[]).map(
@@ -260,63 +343,37 @@ export function StrategyProfileEditor({
             )}
           </section>
 
-          <section className="space-y-4 rounded-xl border border-border bg-background/40 p-4">
-            <h3 className="text-sm font-semibold text-foreground">
-              {selectedCatalogItem?.title ?? "Plan"} details
-            </h3>
+          <section className={sectionClass}>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                {isSettings ? "Watchlist & allocation" : `${selectedCatalogItem?.title ?? "Plan"} details`}
+              </h3>
+              {isSettings && (
+                <p className="mt-1 text-xs text-muted">
+                  Update symbols and strategy-specific parameters. Use the screener
+                  below to browse ideas.
+                </p>
+              )}
+            </div>
 
             {values.primaryStrategy === "etf-core" ? (
               <>
-                <StrategyStockScreenerPanel
-                  strategy={values.primaryStrategy ?? "etf-core"}
-                  preset={screenerResult?.preset}
-                  quotes={screenerResult?.quotes ?? []}
-                  sections={screenerResult?.sections}
-                  summary={screenerResult?.summary}
-                  filters={screenerFilters}
-                  onFiltersChange={setScreenerFilters}
-                  loading={screenerLoading}
-                  initialLoading={screenerInitialLoading}
-                  isFetching={screenerIsFetching}
-                  error={screenerError}
-                  stale={screenerStale}
-                  hasRun={screenerHasRun}
-                  page={screenerPage}
-                  pageSize={screenerPageSize}
-                  totalPages={screenerResult?.totalPages ?? 1}
-                  totalCount={screenerResult?.totalCount ?? 0}
-                  onPageChange={setScreenerPage}
-                  onRun={() => void runScreen({ force: true, syncProfile: true })}
-                  onAddSymbol={(symbol) => patch({ etfPrimary: symbol.toUpperCase() })}
-                  selectedSymbols={[values.etfPrimary, values.etfBond].filter(Boolean)}
-                />
                 <EtfConfig values={values} onChange={patch} />
+                {isSettings ? (
+                  <CollapsibleSection
+                    title="Browse ETF ideas"
+                    description="Optional screener for core portfolio ETFs"
+                    expanded={screenerExpanded}
+                    onToggle={() => setScreenerExpanded((open) => !open)}
+                  >
+                    {screenerPanel}
+                  </CollapsibleSection>
+                ) : (
+                  screenerPanel
+                )}
               </>
             ) : (
               <>
-                <StrategyStockScreenerPanel
-                  strategy={values.primaryStrategy ?? "wheel"}
-                  preset={screenerResult?.preset}
-                  quotes={screenerResult?.quotes ?? []}
-                  sections={screenerResult?.sections}
-                  summary={screenerResult?.summary}
-                  filters={screenerFilters}
-                  onFiltersChange={setScreenerFilters}
-                  loading={screenerLoading}
-                  initialLoading={screenerInitialLoading}
-                  isFetching={screenerIsFetching}
-                  error={screenerError}
-                  stale={screenerStale}
-                  hasRun={screenerHasRun}
-                  page={screenerPage}
-                  pageSize={screenerPageSize}
-                  totalPages={screenerResult?.totalPages ?? 1}
-                  totalCount={screenerResult?.totalCount ?? 0}
-                  onPageChange={setScreenerPage}
-                  onRun={() => void runScreen({ force: true, syncProfile: true })}
-                  onAddSymbol={addSymbol}
-                  selectedSymbols={values.symbols}
-                />
                 <SymbolConfig
                   accessToken={accessToken}
                   values={values}
@@ -325,6 +382,18 @@ export function StrategyProfileEditor({
                   onAddSymbol={addSymbol}
                   onRemoveSymbol={removeSymbol}
                 />
+                {isSettings ? (
+                  <CollapsibleSection
+                    title="Browse symbol ideas"
+                    description="Optional screener filtered for your strategy"
+                    expanded={screenerExpanded}
+                    onToggle={() => setScreenerExpanded((open) => !open)}
+                  >
+                    {screenerPanel}
+                  </CollapsibleSection>
+                ) : (
+                  screenerPanel
+                )}
               </>
             )}
 
@@ -347,19 +416,90 @@ export function StrategyProfileEditor({
       )}
 
       {error && <p className="text-sm text-danger">{error}</p>}
-      {saved && !error && (
+      {saved && !error && !isDirty && (
         <p className="text-sm text-accent-strong">Strategy settings saved.</p>
       )}
 
-      <div className="flex justify-end">
-        <Button
-          onClick={() => void handleSubmit()}
-          isLoading={submitting}
-          disabled={!isStrategyFormValid(values)}
-        >
-          {submitLabel}
-        </Button>
-      </div>
+      {isSettings && isDirty && (
+        <div className="sticky bottom-16 z-30 rounded-xl border border-border bg-background/95 p-3 shadow-lg backdrop-blur-md md:bottom-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-muted">You have unsaved changes</p>
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => {
+                  setValues(savedBaseline);
+                  setSaved(false);
+                  setError(null);
+                }}
+              >
+                Discard
+              </Button>
+              <Button
+                onClick={() => void handleSubmit()}
+                isLoading={submitting}
+                disabled={!isStrategyFormValid(values)}
+                size="sm"
+              >
+                {submitLabel}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isSettings && (
+        <div className="flex justify-end">
+          <Button
+            onClick={() => void handleSubmit()}
+            isLoading={submitting}
+            disabled={!isStrategyFormValid(values)}
+          >
+            {submitLabel}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CollapsibleSection({
+  title,
+  description,
+  expanded,
+  onToggle,
+  children,
+}: {
+  title: string;
+  description?: string;
+  expanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border border-border/70 bg-background/30">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-start justify-between gap-3 px-3 py-3 text-left"
+      >
+        <div>
+          <p className="text-xs font-semibold text-foreground">{title}</p>
+          {description && (
+            <p className="mt-0.5 text-[11px] text-muted">{description}</p>
+          )}
+        </div>
+        {expanded ? (
+          <ChevronUp className="mt-0.5 h-4 w-4 shrink-0 text-muted" />
+        ) : (
+          <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted" />
+        )}
+      </button>
+      {expanded && (
+        <div className="border-t border-border/60 px-3 py-3">{children}</div>
+      )}
     </div>
   );
 }
@@ -437,7 +577,13 @@ function SymbolConfig({
   onRemoveSymbol: (symbol: string) => void;
 }) {
   return (
-    <>
+    <div className="space-y-3">
+      <div>
+        <p className="text-xs font-semibold text-foreground">Your symbols</p>
+        <p className="mt-0.5 text-[11px] text-muted">
+          Up to 5 tickers for this strategy ({values.symbols.length}/5)
+        </p>
+      </div>
       <SymbolSearchField
         accessToken={accessToken}
         value={symbolInput}
@@ -456,7 +602,7 @@ function SymbolConfig({
           </button>
         ))}
       </div>
-    </>
+    </div>
   );
 }
 

@@ -560,7 +560,7 @@ export async function fetchStrategyStockScreener(
   strategy: InvestmentStrategy,
   filters: StrategyScreenerFilters,
   page = 1,
-  pageSize = 20,
+  pageSize = 30,
 ): Promise<StrategyStockScreenerResult> {
   const params = new URLSearchParams({
     page: String(page),

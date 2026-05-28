@@ -22,6 +22,7 @@ import {
   ALL_SCREENER_SECTORS,
   DEFAULT_PAGE_SIZE,
   defaultScreenerFiltersForStrategy,
+  expectedRowsForPage,
   filterSummaryChips,
   formatMarketCap,
   formatPercent,
@@ -62,6 +63,11 @@ type Props = {
   className?: string;
   compact?: boolean;
 };
+
+type QuoteTableRowData =
+  | { kind: "quote"; quote: StrategyScreenerQuote }
+  | { kind: "spacer" }
+  | { kind: "skeleton" };
 
 export function StrategyStockScreenerPanel({
   strategy,
@@ -112,13 +118,42 @@ export function StrategyStockScreenerPanel({
     });
   }, [quotes, search]);
 
-  const paddedRows = useMemo(() => {
-    const rows: Array<StrategyScreenerQuote | null> = [...visibleQuotes];
-    while (rows.length < pageSize) {
-      rows.push(null);
+  const showResults = hasRun && !error;
+  const tableBusy = isFetching || (loading && hasRun);
+
+  const tableRows = useMemo((): QuoteTableRowData[] => {
+    const isLocalSearch = search.trim().length > 0;
+    const targetRowCount = isLocalSearch
+      ? visibleQuotes.length
+      : expectedRowsForPage(page, pageSize, totalCount);
+
+    if (tableBusy && visibleQuotes.length === 0) {
+      return Array.from({ length: targetRowCount || pageSize }, () => ({
+        kind: "skeleton" as const,
+      }));
     }
-    return rows.slice(0, pageSize);
-  }, [visibleQuotes, pageSize]);
+
+    const rows: QuoteTableRowData[] = visibleQuotes.map((quote) => ({
+      kind: "quote",
+      quote,
+    }));
+
+    if (!isLocalSearch) {
+      while (rows.length < targetRowCount) {
+        rows.push({ kind: "spacer" });
+      }
+      return rows.slice(0, targetRowCount);
+    }
+
+    return rows;
+  }, [
+    visibleQuotes,
+    pageSize,
+    page,
+    totalCount,
+    search,
+    tableBusy,
+  ]);
 
   function resetFilters() {
     onFiltersChange(defaultScreenerFiltersForStrategy(strategy));
@@ -157,9 +192,6 @@ export function StrategyStockScreenerPanel({
       sectors: [...current],
     });
   }
-
-  const showResults = hasRun && !error;
-  const tableBusy = isFetching || (loading && hasRun);
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -343,11 +375,10 @@ export function StrategyStockScreenerPanel({
             )}
           >
             <QuoteTable
-              rows={paddedRows}
+              rows={tableRows}
               selected={selected}
               onAddSymbol={onAddSymbol}
               compact={compact}
-              loading={tableBusy && visibleQuotes.length === 0}
             />
           </div>
 
@@ -376,11 +407,13 @@ export function StrategyStockScreenerPanel({
                 <p className="text-[11px] text-muted">{section.preset.description}</p>
               </div>
               <QuoteTable
-                rows={section.quotes.map((quote) => quote as StrategyScreenerQuote | null)}
+                rows={section.quotes.map((quote) => ({
+                  kind: "quote" as const,
+                  quote,
+                }))}
                 selected={selected}
                 onAddSymbol={onAddSymbol}
                 compact={compact}
-                loading={false}
               />
               {section.quotes.length === 0 && (
                 <p className="text-xs text-muted">No ETF matches right now.</p>
@@ -398,15 +431,13 @@ function QuoteTable({
   selected,
   onAddSymbol,
   compact,
-  loading,
 }: {
-  rows: Array<StrategyScreenerQuote | null>;
+  rows: QuoteTableRowData[];
   selected: Set<string>;
   onAddSymbol: (symbol: string) => void;
   compact?: boolean;
-  loading?: boolean;
 }) {
-  if (rows.length === 0 && !loading) {
+  if (rows.length === 0) {
     return null;
   }
 
@@ -424,14 +455,17 @@ function QuoteTable({
         </tr>
       </thead>
       <tbody>
-        {rows.map((quote, index) => (
+        {rows.map((row, index) => (
           <QuoteTableRow
-            key={quote?.symbol ?? `placeholder-${index}`}
-            quote={quote}
+            key={
+              row.kind === "quote"
+                ? row.quote.symbol
+                : `${row.kind}-${index}`
+            }
+            row={row}
             selected={selected}
             onAddSymbol={onAddSymbol}
             compact={compact}
-            loading={loading && quote === null}
           />
         ))}
       </tbody>
@@ -440,19 +474,27 @@ function QuoteTable({
 }
 
 function QuoteTableRow({
-  quote,
+  row,
   selected,
   onAddSymbol,
   compact,
-  loading,
 }: {
-  quote: StrategyScreenerQuote | null;
+  row: QuoteTableRowData;
   selected: Set<string>;
   onAddSymbol: (symbol: string) => void;
   compact?: boolean;
-  loading?: boolean;
 }) {
-  if (loading || quote === null) {
+  if (row.kind === "spacer") {
+    return (
+      <tr className="h-11 border-b border-border/40" aria-hidden="true">
+        <td colSpan={compact ? 6 : 7} className="py-2">
+          {"\u00a0"}
+        </td>
+      </tr>
+    );
+  }
+
+  if (row.kind === "skeleton") {
     return (
       <tr className="h-11 border-b border-border/40">
         <td colSpan={compact ? 6 : 7} className="py-2">
@@ -462,6 +504,7 @@ function QuoteTableRow({
     );
   }
 
+  const quote = row.quote;
   const added = selected.has(quote.symbol.toUpperCase());
 
   return (
