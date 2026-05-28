@@ -126,7 +126,6 @@ export function StrategyProfileEditor({
     isFetching: screenerIsFetching,
     error: screenerError,
     runScreen,
-    stale: screenerStale,
     hasRun: screenerHasRun,
     page: screenerPage,
     pageSize: screenerPageSize,
@@ -196,9 +195,8 @@ export function StrategyProfileEditor({
         loading={screenerLoading}
         initialLoading={screenerInitialLoading}
         isFetching={screenerIsFetching}
-        error={screenerError}
-        stale={screenerStale}
-        hasRun={screenerHasRun}
+                  error={screenerError}
+                  hasRun={screenerHasRun}
         page={screenerPage}
         pageSize={screenerPageSize}
         totalPages={screenerResult?.totalPages ?? 1}
@@ -222,9 +220,8 @@ export function StrategyProfileEditor({
         loading={screenerLoading}
         initialLoading={screenerInitialLoading}
         isFetching={screenerIsFetching}
-        error={screenerError}
-        stale={screenerStale}
-        hasRun={screenerHasRun}
+                  error={screenerError}
+                  hasRun={screenerHasRun}
         page={screenerPage}
         pageSize={screenerPageSize}
         totalPages={screenerResult?.totalPages ?? 1}

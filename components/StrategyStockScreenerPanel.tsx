@@ -51,7 +51,6 @@ type Props = {
   initialLoading?: boolean;
   isFetching?: boolean;
   error?: string | null;
-  stale?: boolean;
   hasRun?: boolean;
   page?: number;
   pageSize?: number;
@@ -83,7 +82,6 @@ export function StrategyStockScreenerPanel({
   initialLoading = false,
   isFetching = false,
   error = null,
-  stale = false,
   hasRun = false,
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE,
@@ -342,12 +340,6 @@ export function StrategyStockScreenerPanel({
         </div>
       )}
 
-      {stale && !tableBusy && !error && hasRun && (
-        <p className="text-xs text-muted">
-          Filters changed — refresh to update.
-        </p>
-      )}
-
       {initialLoading && !hasRun && (
         <p className="text-xs text-muted">Loading candidates…</p>
       )}
@@ -447,16 +439,16 @@ function QuoteTable({
   }
 
   return (
-    <table className="w-full min-w-[520px] table-fixed text-sm">
+    <table className="w-full min-w-130 table-fixed text-sm">
       <thead>
         <tr className="border-b border-border/60 text-left text-[10px] font-semibold uppercase tracking-wide text-muted">
-          <th className="w-[88px] pb-2 pr-3">Symbol</th>
+          <th className="w-22 pb-2 pr-3">Symbol</th>
           {!compact && <th className="pb-2 pr-3">Company</th>}
-          <th className="w-[88px] pb-2 pr-3">Market cap</th>
-          <th className="w-[64px] pb-2 pr-3">P/E</th>
-          <th className="w-[72px] pb-2 pr-3">Yield</th>
-          <th className="w-[72px] pb-2 pr-3">Price</th>
-          <th className="w-[72px] pb-2 text-right">Action</th>
+          <th className="w-22 pb-2 pr-3">Market cap</th>
+          <th className="w-16 pb-2 pr-3">P/E</th>
+          <th className="w-18 pb-2 pr-3">Yield</th>
+          <th className="w-18 pb-2 pr-3">Price</th>
+          <th className="w-18 pb-2 text-right">Action</th>
         </tr>
       </thead>
       <tbody>

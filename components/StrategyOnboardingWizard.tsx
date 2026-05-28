@@ -130,7 +130,6 @@ export function StrategyOnboardingWizard({
     isFetching: screenerIsFetching,
     error: screenerError,
     runScreen,
-    stale: screenerStale,
     hasRun: screenerHasRun,
     page: screenerPage,
     pageSize: screenerPageSize,
@@ -412,7 +411,6 @@ export function StrategyOnboardingWizard({
                     initialLoading={screenerInitialLoading}
                     isFetching={screenerIsFetching}
                     error={screenerError}
-                    stale={screenerStale}
                     hasRun={screenerHasRun}
                     page={screenerPage}
                     pageSize={screenerPageSize}
@@ -479,7 +477,6 @@ export function StrategyOnboardingWizard({
                     initialLoading={screenerInitialLoading}
                     isFetching={screenerIsFetching}
                     error={screenerError}
-                    stale={screenerStale}
                     hasRun={screenerHasRun}
                     page={screenerPage}
                     pageSize={screenerPageSize}
@@ -603,7 +600,6 @@ export function StrategyOnboardingWizard({
                       initialLoading={screenerInitialLoading}
                       isFetching={screenerIsFetching}
                       error={screenerError}
-                      stale={screenerStale}
                       hasRun={screenerHasRun}
                       page={screenerPage}
                       pageSize={screenerPageSize}
