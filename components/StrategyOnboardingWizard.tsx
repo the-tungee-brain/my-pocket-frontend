@@ -8,6 +8,7 @@ import {
   CircleDollarSign,
   Layers,
   RefreshCw,
+  Sparkles,
   TrendingUp,
 } from "lucide-react";
 import { useStrategyStockScreener } from "@/app/hooks/useStrategyStockScreener";

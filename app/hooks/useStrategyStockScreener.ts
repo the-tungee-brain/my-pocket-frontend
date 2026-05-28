@@ -47,6 +47,7 @@ export function useStrategyStockScreener({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasRun, setHasRun] = useState(false);
+  const [fetchedFilterKey, setFetchedFilterKey] = useState<string | null>(null);
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
   const prepareRef = useRef(prepareProfile);
@@ -63,6 +64,7 @@ export function useStrategyStockScreener({
         const cached = cache.get(cacheKey);
         if (cached) {
           setResult(cached);
+          setFetchedFilterKey(screenerFiltersFingerprint(activeFilters));
           setHasRun(true);
           setError(null);
           return;
@@ -84,9 +86,11 @@ export function useStrategyStockScreener({
         );
         cache.set(cacheKey, data);
         setResult(data);
+        setFetchedFilterKey(screenerFiltersFingerprint(activeFilters));
         setHasRun(true);
       } catch (err) {
         setResult(null);
+        setFetchedFilterKey(null);
         setError(
           err instanceof Error ? err.message : "Could not run stock screener.",
         );
@@ -100,6 +104,7 @@ export function useStrategyStockScreener({
   useEffect(() => {
     if (!accessToken || !strategy || !enabled || !autoRun) {
       setResult(null);
+      setFetchedFilterKey(null);
       setHasRun(false);
       setError(null);
       return;
@@ -109,12 +114,9 @@ export function useStrategyStockScreener({
   }, [accessToken, strategy, enabled, autoRun, prepareOnAutoFetch, runScreen, filters, limit]);
 
   const stale = useMemo(() => {
-    if (!result) return false;
-    return (
-      screenerFiltersFingerprint(result.filters) !==
-      screenerFiltersFingerprint(filters)
-    );
-  }, [result, filters]);
+    if (fetchedFilterKey === null) return false;
+    return fetchedFilterKey !== screenerFiltersFingerprint(filters);
+  }, [fetchedFilterKey, filters]);
 
   return {
     result,
