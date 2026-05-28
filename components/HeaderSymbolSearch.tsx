@@ -70,7 +70,7 @@ export function HeaderSymbolSearch({
   }, [showPanel]);
 
   const navigateToSymbol = useCallback(
-    (item: TickerSymbolItem | { symbol: string; assetType?: string }) => {
+    (item: TickerSymbolItem | { symbol: string }) => {
       const upper = item.symbol.toUpperCase();
       if ("assetType" in item && item.assetType) {
         rememberAssetType(upper, item.assetType);
