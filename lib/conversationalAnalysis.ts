@@ -94,3 +94,13 @@ export function stripPlainEnglishLabels(content: string): string {
     .replace(/\bin plain English\b(?=\s*[—:\-])/gi, "")
     .replace(/ {2,}/g, " ");
 }
+
+/** Strip playbook meta scaffolding like "(what)" / "(why ...)" from model output. */
+export function stripPlaybookMetaLabels(content: string): string {
+  return content
+    .replace(/\s*\(what\s*(?:→|->)\s*why[^)]*\)/gi, "")
+    .replace(/\s*\(what\)/gi, "")
+    .replace(/\s*\(why[^)]*\)/gi, "")
+    .replace(/\s*\(gap[^)]*\)/gi, "")
+    .replace(/ {2,}/g, " ");
+}
