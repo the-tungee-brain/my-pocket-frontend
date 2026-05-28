@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, FileSpreadsheet, Landmark, Target } from "lucide-react";
+import { BarChart3, FileSpreadsheet, Landmark, Target, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useFundamentals } from "@/app/hooks/useFundamentals";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
@@ -15,6 +15,10 @@ import {
   FundamentalOverviewSkeleton,
 } from "./FundamentalOverviewSection";
 import { StreetAnalysisSection } from "./StreetAnalysisSection";
+import {
+  hasStreetOwnership,
+  StreetOwnershipSection,
+} from "./StreetOwnershipSection";
 
 type FundamentalsPageContentProps = {
   symbol: string;
@@ -102,6 +106,18 @@ export function FundamentalsPageContent({
                   isLoading={isLoading}
                 />
               </ResearchSectionCard>
+              {(isLoading || hasStreetOwnership(fundamentals?.streetAnalysis)) && (
+                <ResearchSectionCard
+                  title="Ownership & insiders"
+                  description="Institutional holders and recent insider activity"
+                  icon={Users}
+                >
+                  <StreetOwnershipSection
+                    ownership={fundamentals?.streetAnalysis?.ownership}
+                    isLoading={isLoading}
+                  />
+                </ResearchSectionCard>
+              )}
               <ResearchSectionCard
                 title="SEC company profile"
                 description="Official registrant details from EDGAR"

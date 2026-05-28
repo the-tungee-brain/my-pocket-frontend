@@ -1,15 +1,20 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { Target } from "lucide-react";
 import type {
   AnalystRatingAction,
+  EstimatePeriodKey,
+  PeriodEstimate,
   StreetAnalysisSnapshot,
 } from "@/app/hooks/streetAnalysisTypes";
+import { ESTIMATE_PERIOD_KEYS } from "@/app/hooks/streetAnalysisTypes";
 import {
   ANALYST_DATA_ATTRIBUTION,
   formatEstimateGrowth,
   formatEstimateRange,
   formatRatingActionDate,
+  estimateForPeriod,
   formatRatingActionLine,
   formatStreetPrice,
   formatStreetUpside,
@@ -62,6 +67,48 @@ function RecommendationBar({
             ),
         )}
       </div>
+    </div>
+  );
+}
+
+function EstimatePeriodChips({
+  periods,
+  selected,
+  onSelect,
+}: {
+  periods: EstimatePeriodKey[];
+  selected: EstimatePeriodKey;
+  onSelect: (key: EstimatePeriodKey) => void;
+}) {
+  if (periods.length <= 1) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {periods.map((key) => {
+        const label =
+          key === "0q"
+            ? "This Q"
+            : key === "+1q"
+              ? "Next Q"
+              : key === "0y"
+                ? "This FY"
+                : "Next FY";
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onSelect(key)}
+            className={cn(
+              "rounded-full border px-2 py-0.5 text-[10px] font-semibold transition",
+              selected === key
+                ? "border-accent/40 bg-accent-muted text-accent-strong"
+                : "border-border bg-background/60 text-muted hover:text-foreground",
+            )}
+          >
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -207,11 +254,42 @@ export function StreetAnalysisSection({
         <EstimateInsight headline={street.estimateRevisionHeadline} />
       ) : null}
 
+      {!compact && street.growthContextHeadline ? (
+        <EstimateInsight headline={street.growthContextHeadline} />
+      ) : null}
+
       {!compact && street.recentRatingActions?.length ? (
         <RecentRatingActions actions={street.recentRatingActions} />
       ) : null}
 
       <p className="text-[11px] text-muted">{ANALYST_DATA_ATTRIBUTION}</p>
+    </div>
+  );
+}
+
+function EstimateMetricCard({
+  title,
+  estimate,
+}: {
+  title: string;
+  estimate: PeriodEstimate;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-background/60 px-3 py-2.5">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
+        {title}
+      </p>
+      <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
+        {formatEstimateRange(estimate)}
+      </p>
+      <p className="mt-1 text-[11px] text-muted">
+        {estimate.analystCount != null
+          ? `${estimate.analystCount} analysts`
+          : "Analyst count n/a"}
+        {formatEstimateGrowth(estimate.growthPct)
+          ? ` · ${formatEstimateGrowth(estimate.growthPct)}`
+          : ""}
+      </p>
     </div>
   );
 }
@@ -223,16 +301,38 @@ export function StreetEarningsEstimates({
   street: StreetAnalysisSnapshot | null | undefined;
   embedded?: boolean;
 }) {
+  const availablePeriods = useMemo(() => {
+    if (!street) return [] as EstimatePeriodKey[];
+    return ESTIMATE_PERIOD_KEYS.filter(
+      (key) =>
+        estimateForPeriod(street.epsEstimates, key)?.avg != null ||
+        estimateForPeriod(street.revenueEstimates, key)?.avg != null,
+    );
+  }, [street]);
+
+  const [period, setPeriod] = useState<EstimatePeriodKey>("+1q");
+
+  const activePeriod = availablePeriods.includes(period)
+    ? period
+    : (availablePeriods[0] ?? "+1q");
+
   if (!hasStreetAnalysis(street)) return null;
 
-  const eps = street.nextQuarterEps;
-  const revenue = street.nextQuarterRevenue;
+  const eps =
+    estimateForPeriod(street.epsEstimates, activePeriod) ??
+    (activePeriod === "+1q" ? street.nextQuarterEps : null);
+  const revenue =
+    estimateForPeriod(street.revenueEstimates, activePeriod) ??
+    (activePeriod === "+1q" ? street.nextQuarterRevenue : null);
   const hasEstimates = eps?.avg != null || revenue?.avg != null;
+  const periodLabel =
+    eps?.label ?? revenue?.label ?? "Selected period";
 
   if (
     !hasEstimates &&
     !street.estimateRevisionHeadline &&
-    !street.estimateDriftHeadline
+    !street.estimateDriftHeadline &&
+    !street.growthContextHeadline
   ) {
     return null;
   }
@@ -244,9 +344,20 @@ export function StreetEarningsEstimates({
         embedded && "border-t border-border pt-4",
       )}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-        Analyst estimates (next quarter)
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+          Analyst estimates
+        </p>
+        <EstimatePeriodChips
+          periods={availablePeriods}
+          selected={activePeriod}
+          onSelect={setPeriod}
+        />
+      </div>
+
+      {hasEstimates ? (
+        <p className="text-[11px] text-muted">{periodLabel}</p>
+      ) : null}
 
       {street.estimateDriftHeadline ? (
         <EstimateInsight headline={street.estimateDriftHeadline} />
@@ -256,41 +367,17 @@ export function StreetEarningsEstimates({
         <EstimateInsight headline={street.estimateRevisionHeadline} />
       ) : null}
 
+      {street.growthContextHeadline ? (
+        <EstimateInsight headline={street.growthContextHeadline} />
+      ) : null}
+
       {hasEstimates ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {eps?.avg != null ? (
-            <div className="rounded-lg border border-border bg-background/60 px-3 py-2.5">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
-                EPS consensus
-              </p>
-              <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
-                {formatEstimateRange(eps)}
-              </p>
-              <p className="mt-1 text-[11px] text-muted">
-                {eps.analystCount != null ? `${eps.analystCount} analysts` : "Analyst count n/a"}
-                {formatEstimateGrowth(eps.growthPct)
-                  ? ` · ${formatEstimateGrowth(eps.growthPct)}`
-                  : ""}
-              </p>
-            </div>
+            <EstimateMetricCard title="EPS consensus" estimate={eps} />
           ) : null}
           {revenue?.avg != null ? (
-            <div className="rounded-lg border border-border bg-background/60 px-3 py-2.5">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
-                Revenue consensus
-              </p>
-              <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
-                {formatEstimateRange(revenue)}
-              </p>
-              <p className="mt-1 text-[11px] text-muted">
-                {revenue.analystCount != null
-                  ? `${revenue.analystCount} analysts`
-                  : "Analyst count n/a"}
-                {formatEstimateGrowth(revenue.growthPct)
-                  ? ` · ${formatEstimateGrowth(revenue.growthPct)}`
-                  : ""}
-              </p>
-            </div>
+            <EstimateMetricCard title="Revenue consensus" estimate={revenue} />
           ) : null}
         </div>
       ) : null}

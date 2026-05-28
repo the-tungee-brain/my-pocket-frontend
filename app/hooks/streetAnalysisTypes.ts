@@ -33,13 +33,43 @@ export type AnalystRatingAction = {
   action?: string | null;
 };
 
+export type InstitutionalHolder = {
+  holder: string;
+  pctHeld?: number | null;
+  shares?: number | null;
+  value?: number | null;
+};
+
+export type InsiderTransactionRow = {
+  date: string;
+  insider: string;
+  transaction?: string | null;
+  shares?: number | null;
+  value?: number | null;
+};
+
+export type OwnershipSnapshot = {
+  insidersPctHeld?: number | null;
+  institutionsPctHeld?: number | null;
+  topInstitutional?: InstitutionalHolder[];
+  recentInsiderTransactions?: InsiderTransactionRow[];
+};
+
 export type StreetAnalysisSnapshot = {
   priceTargets?: AnalystPriceTargets | null;
   recommendation?: RecommendationBreakdown | null;
   consensusLabel?: string | null;
   nextQuarterEps?: PeriodEstimate | null;
   nextQuarterRevenue?: PeriodEstimate | null;
+  epsEstimates?: PeriodEstimate[];
+  revenueEstimates?: PeriodEstimate[];
   estimateRevisionHeadline?: string | null;
   estimateDriftHeadline?: string | null;
+  growthContextHeadline?: string | null;
   recentRatingActions?: AnalystRatingAction[];
+  ownership?: OwnershipSnapshot | null;
 };
+
+export const ESTIMATE_PERIOD_KEYS = ["0q", "+1q", "0y", "+1y"] as const;
+
+export type EstimatePeriodKey = (typeof ESTIMATE_PERIOD_KEYS)[number];

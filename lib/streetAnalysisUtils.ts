@@ -1,4 +1,5 @@
 import type {
+  EstimatePeriodKey,
   PeriodEstimate,
   StreetAnalysisSnapshot,
 } from "@/app/hooks/streetAnalysisTypes";
@@ -53,10 +54,45 @@ export function hasStreetAnalysis(
       street.recommendation ||
       street.nextQuarterEps ||
       street.nextQuarterRevenue ||
+      (street.epsEstimates?.length ?? 0) > 0 ||
+      (street.revenueEstimates?.length ?? 0) > 0 ||
       street.estimateRevisionHeadline ||
       street.estimateDriftHeadline ||
-      (street.recentRatingActions?.length ?? 0) > 0,
+      street.growthContextHeadline ||
+      (street.recentRatingActions?.length ?? 0) > 0 ||
+      hasOwnership(street.ownership),
   );
+}
+
+export function hasOwnership(
+  ownership: StreetAnalysisSnapshot["ownership"],
+): boolean {
+  if (!ownership) return false;
+  return Boolean(
+    ownership.insidersPctHeld != null ||
+      ownership.institutionsPctHeld != null ||
+      (ownership.topInstitutional?.length ?? 0) > 0 ||
+      (ownership.recentInsiderTransactions?.length ?? 0) > 0,
+  );
+}
+
+export function estimateForPeriod(
+  estimates: PeriodEstimate[] | undefined,
+  periodKey: EstimatePeriodKey,
+): PeriodEstimate | null {
+  return estimates?.find((row) => row.periodKey === periodKey) ?? null;
+}
+
+export function formatPctHeld(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${value.toFixed(2)}%`;
+}
+
+export function formatHolderShares(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "";
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M sh`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K sh`;
+  return `${value.toLocaleString()} sh`;
 }
 
 export function formatRatingActionDate(isoDate: string): string {

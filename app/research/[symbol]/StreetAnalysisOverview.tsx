@@ -126,6 +126,12 @@ export function StreetAnalysisOverview({
           </p>
         ) : null}
 
+        {street.growthContextHeadline ? (
+          <p className="text-sm leading-relaxed text-muted">
+            {street.growthContextHeadline}
+          </p>
+        ) : null}
+
         {street.estimateRevisionHeadline ? (
           <p className="text-sm leading-relaxed text-muted">
             {street.estimateRevisionHeadline}
