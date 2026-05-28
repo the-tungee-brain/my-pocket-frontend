@@ -13,8 +13,10 @@ import {
   CircleDollarSign,
   LineChart,
   Loader2,
-  MessageSquareText,
+  PieChart,
   RefreshCw,
+  Route,
+  Scale,
   Search,
   ShieldCheck,
   Sparkles,
@@ -120,10 +122,11 @@ export default function AuthPage() {
           signInError={signInError}
         />
 
-        <FeaturesSection />
+        <TopFeaturesSection />
         <HowItWorksSection />
         <ProductShowcase />
         <StrategySection />
+        <AlsoIncludedSection />
         <FinalCTASection
           onSignIn={() => void handleSignIn()}
           signingIn={signingIn}
@@ -154,7 +157,8 @@ function LandingHeader({
         >
           <LandingNavLink href="#features">Features</LandingNavLink>
           <LandingNavLink href="#how-it-works">How it works</LandingNavLink>
-          <LandingNavLink href="#product">Product</LandingNavLink>
+          <LandingNavLink href="#product">See it in action</LandingNavLink>
+          <LandingNavLink href="#strategies">Strategies</LandingNavLink>
         </nav>
 
         <SignInWithGoogleButton
@@ -190,19 +194,18 @@ function HeroSection({
               className="h-3.5 w-3.5 text-accent-strong"
               aria-hidden="true"
             />
-            AI portfolio intelligence for Schwab investors
+            Built for Charles Schwab investors
           </div>
 
           <h1 className="max-w-xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.25rem]">
-            Your portfolio,{" "}
-            <span className="text-accent-strong">understood by AI</span>
+            AI that reads{" "}
+            <span className="text-accent-strong">your Schwab portfolio</span>
           </h1>
 
           <p className="mt-5 max-w-lg text-base leading-relaxed text-muted sm:text-lg">
-            Tomcrest connects to your Charles Schwab account and turns live
-            holdings, market data, and fundamentals into actionable insights —
-            from morning briefs and dividend projections to per-symbol research
-            and strategy guidance.
+            Connect Schwab once. Tomcrest brings your live account — holdings,
+            balances, and options — together with market data, news, and
+            fundamentals, then tells you what changed and what to do next.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -211,8 +214,8 @@ function HeroSection({
               signingIn={signingIn}
               size="lg"
             />
-            <p className="text-xs text-muted sm:max-w-48">
-              Free to start. Connect Schwab after sign-in.
+            <p className="text-xs text-muted sm:max-w-52">
+              Free to start · read-only Schwab OAuth · no card required
             </p>
           </div>
 
@@ -225,8 +228,9 @@ function HeroSection({
           )}
 
           <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted">
-            <TrustBadge icon={ShieldCheck} label="Secure OAuth connection" />
-            <TrustBadge icon={Zap} label="Real-time Schwab sync" />
+            <TrustBadge icon={ShieldCheck} label="Read-only Schwab OAuth" />
+            <TrustBadge icon={Zap} label="Live account & market data" />
+            <TrustBadge icon={Target} label="Clear next-step guidance" />
             <TrustBadge icon={BrainCircuit} label="Context-aware AI chat" />
           </div>
         </motion.div>
@@ -276,52 +280,83 @@ function LandingNavLink({
   );
 }
 
-function FeaturesSection() {
-  const features = [
-    {
-      icon: BriefcaseBusiness,
-      title: "Live portfolio snapshot",
-      description:
-        "See holdings, allocation, cash reserves, and options exposure pulled directly from Schwab.",
-    },
-    {
-      icon: BellRing,
-      title: "Morning brief & alerts",
-      description:
-        "Start each day with portfolio intelligence, proactive alerts, and items that need attention.",
-    },
-    {
-      icon: BrainCircuit,
-      title: "AI analysis on your book",
-      description:
-        "Streaming portfolio and position analysis with buy, hold, and reduce signals grounded in your data.",
-    },
-    {
-      icon: MessageSquareText,
-      title: "Always-on AI chat",
-      description:
-        "Ask follow-up questions from anywhere — the assistant knows your positions and research context.",
-    },
-    {
-      icon: Search,
-      title: "Deep symbol research",
-      description:
-        "Fundamentals, earnings, dividends, ETF composition, news, SEC filings, and charts — with a watchlist to track names you care about.",
-    },
-    {
-      icon: CircleDollarSign,
-      title: "Dividend snowball",
-      description:
-        "Project income forward with historic payout growth, DRIP scenarios, and portfolio value estimates using price and dividend CAGR.",
-    },
-    {
-      icon: Target,
-      title: "Strategy-guided investing",
-      description:
-        "Follow guided journeys for the wheel, CSP income, covered calls, dividends, and ETF core.",
-    },
-  ];
+const TOP_FEATURES = [
+  {
+    icon: BrainCircuit,
+    tag: "Core",
+    title: "AI that ends with a next step",
+    description:
+      "Analyze portfolio or any symbol with streaming answers that cite your weights, options legs, and available buying power — then a ranked recommendation, not a wall of metrics.",
+    bullets: [
+      "One-click Analyze with a primary move",
+      "Deploy, trim, hold, and roll guidance",
+      "Follow-up chat with smart chips",
+    ],
+  },
+  {
+    icon: BellRing,
+    tag: "Daily habit",
+    title: "Morning brief & alerts",
+    description:
+      "Start the day knowing what moved, what needs attention, and the one thing worth doing first.",
+    bullets: [
+      "Assignment & DTE warnings on short options",
+      "Wash-sale and earnings reminders",
+      "Attention items ranked by urgency",
+    ],
+  },
+  {
+    icon: Route,
+    tag: "Options",
+    title: "Options-aware decisions",
+    description:
+      "Built for wheelers and income traders: compare hold vs roll vs close, see premium math, and get playbook verdicts before selling a put.",
+    bullets: ["Compare paths on open short puts/calls", "Strategy playbook with Ask AI", "Roll suggestions with cash picture"],
+  },
+  {
+    icon: Search,
+    tag: "Research",
+    title: "Research without tab-hopping",
+    description:
+      "Everything for a ticker in one workspace — fundamentals, SEC filings, dividends, news, and ETF composition.",
+    bullets: ["AI summaries on overview & business", "Dividend snowball with DRIP scenarios", "Street targets & watchlist"],
+  },
+] as const;
 
+const ALSO_INCLUDED = [
+  {
+    icon: Target,
+    title: "Strategy screener",
+    description: "Preset screens aligned to wheel, dividend, and ETF core playbooks.",
+  },
+  {
+    icon: PieChart,
+    title: "Allocation & deploy plans",
+    description: "Trim and deploy suggestions ranked by diversification impact.",
+  },
+  {
+    icon: Scale,
+    title: "Tax-aware prompts",
+    description: "Wash-sale windows, lot context, and harvest angles in chat.",
+  },
+  {
+    icon: Bookmark,
+    title: "Watchlist & snapshots",
+    description: "Track symbols and jump into research from anywhere.",
+  },
+  {
+    icon: LineChart,
+    title: "SEC + market data",
+    description: "Filed financials, ratios, and live quotes alongside AI context.",
+  },
+  {
+    icon: RefreshCw,
+    title: "Guided strategy journeys",
+    description: "Onboarding flows for wheel, CSP, covered call, dividend, and ETF core.",
+  },
+] as const;
+
+function TopFeaturesSection() {
   return (
     <section
       id="features"
@@ -329,21 +364,90 @@ function FeaturesSection() {
     >
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeading
-          eyebrow="Everything in one workspace"
-          title="Built for investors who want clarity, not noise"
-          description="Tomcrest combines brokerage data, market research, and AI so you spend less time tab-hopping and more time making informed decisions."
+          eyebrow="Why investors sign up"
+          title="Four things you can't get from a generic chatbot"
+          description="Tomcrest is opinionated for Schwab: your positions feed every insight — and every reply points toward a decision."
         />
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => (
+        <div className="mt-10 grid gap-4 lg:grid-cols-2">
+          {TOP_FEATURES.map((feature, index) => (
             <motion.div
               key={feature.title}
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.35, delay: index * 0.05 }}
+              transition={{ duration: 0.35, delay: index * 0.06 }}
             >
-              <FeatureCard {...feature} />
+              <TopFeatureCard {...feature} />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TopFeatureCard({
+  icon: Icon,
+  tag,
+  title,
+  description,
+  bullets,
+}: {
+  icon: typeof BrainCircuit;
+  tag: string;
+  title: string;
+  description: string;
+  bullets: readonly string[];
+}) {
+  return (
+    <div className="h-full rounded-2xl border border-border bg-background/50 p-6 transition-colors hover:border-accent/30 hover:bg-background/70">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-muted text-accent-strong">
+          <Icon className="h-5 w-5" aria-hidden="true" />
+        </div>
+        <span className="rounded-full border border-border bg-secondary/80 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+          {tag}
+        </span>
+      </div>
+      <h3 className="mt-4 text-base font-semibold tracking-tight">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{description}</p>
+      <ul className="mt-4 space-y-1.5">
+        {bullets.map((bullet) => (
+          <li
+            key={bullet}
+            className="flex items-start gap-2 text-xs leading-relaxed text-muted"
+          >
+            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
+            {bullet}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function AlsoIncludedSection() {
+  return (
+    <section className="scroll-mt-20 border-t border-border py-14 lg:py-16">
+      <div className="mx-auto max-w-6xl px-6">
+        <SectionHeading
+          eyebrow="Also included"
+          title="The full workspace, not a single feature"
+          description="Everything below ships today — same account, same Schwab connection."
+          centered
+        />
+
+        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {ALSO_INCLUDED.map((item, index) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.3, delay: index * 0.04 }}
+            >
+              <FeatureCard {...item} />
             </motion.div>
           ))}
         </div>
@@ -434,31 +538,24 @@ function ProductShowcase() {
   const highlights = [
     {
       icon: TrendingUp,
-      label: "Portfolio Today",
-      title: "Know what changed overnight",
+      label: "Portfolio · Today",
+      title: "Wake up to what matters",
       description:
-        "The Today tab surfaces allocation shifts, attention items, assignment risk for options, and tax-aware alerts like wash-sale warnings.",
+        "The Today view combines your morning brief, allocation snapshot, and attention items — assignment risk on short options, earnings dates, wash-sale windows, and concentration flags.",
     },
     {
-      icon: LineChart,
-      label: "Research hub",
-      title: "Go deep on any symbol",
+      icon: Route,
+      label: "Options · Compare paths",
+      title: "Hold, roll, or close — with numbers",
       description:
-        "Overview, fundamentals, earnings, dividends, ETF composition, news, and SEC financials — with AI intelligence tailored to each ticker.",
+        "For open short puts and calls, see side-by-side outcomes: keep premium, roll for credit, or buy to close — with strike, DTE, and cash impact spelled out.",
     },
     {
-      icon: CircleDollarSign,
-      label: "Dividend snowball",
-      title: "Model income years ahead",
+      icon: Target,
+      label: "Strategy · Playbook",
+      title: "Ask AI before your next wheel step",
       description:
-        "Use historic payout growth and optional DRIP to project annual cash, share count, and portfolio value with automatic price CAGR.",
-    },
-    {
-      icon: MessageSquareText,
-      label: "AI sidebar",
-      title: "Ask questions in context",
-      description:
-        "Quick actions like “analyze portfolio” or “review NVDA” kick off streaming analysis. Follow up naturally in the same conversation.",
+        "Pick wheel, CSP, dividend, or ETF core — get a guided journey, stock screener presets, and one-click Ask AI verdicts like “Would I hold this if assigned on a put?”",
     },
   ];
 
@@ -469,9 +566,9 @@ function ProductShowcase() {
     >
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeading
-          eyebrow="Inside the workspace"
-          title="Portfolio, research, and AI — side by side"
-          description="The same layout you will use every day: navigate holdings, drill into symbols, and chat with AI without losing context."
+          eyebrow="See it in action"
+          title="From morning brief to your next move"
+          description="Not just dashboards — Tomcrest ranks what matters and suggests what to do, whether that's rolling a put or trimming concentration."
         />
 
         <div className="mt-10 space-y-6">
@@ -510,14 +607,26 @@ function ProductShowcase() {
 
 function StrategySection() {
   const strategies = [
-    { name: "The Wheel", detail: "CSP → assignment → covered call cycles" },
-    { name: "CSP Income", detail: "Cash-secured puts with risk guardrails" },
-    { name: "Covered Calls", detail: "Income on existing share positions" },
+    {
+      name: "The Wheel",
+      detail: "CSP → assignment → covered call — with playbook Ask AI",
+    },
+    {
+      name: "CSP Income",
+      detail: "Cash-secured puts with assignment comfort checks",
+    },
+    {
+      name: "Covered Calls",
+      detail: "Premium on shares you already own",
+    },
     {
       name: "Dividend Growth",
-      detail: "Snowball projections, yield, and payout history",
+      detail: "Snowball projections, payout ratio, and FCF coverage",
     },
-    { name: "ETF Core", detail: "Long-term diversified core holdings" },
+    {
+      name: "ETF Core",
+      detail: "Long-term core targets with screener presets",
+    },
   ];
 
   return (
@@ -526,8 +635,8 @@ function StrategySection() {
         <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
           <SectionHeading
             eyebrow="Investment strategies"
-            title="Guidance that matches how you invest"
-            description="Choose a primary strategy during onboarding and get a guided journey with recommendations aligned to your goals — whether you run the wheel or build a dividend portfolio."
+            title="Playbooks for how you actually invest"
+            description="Choose a primary strategy at onboarding — Tomcrest tailors screener presets, journey steps, and Ask AI prompts to wheel income, dividends, or ETF core building."
           />
 
           <div className="space-y-2">
@@ -579,11 +688,11 @@ function FinalCTASection({
 
           <div className="relative">
             <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Ready to understand your portfolio?
+              Start with the portfolio you already have
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted sm:text-base">
-              Join Tomcrest with Google, connect Schwab, and start getting
-              AI-powered insights on the holdings you already own.
+              Sign in with Google, connect Schwab read-only, and get your first
+              morning brief and AI analysis in minutes.
             </p>
 
             <div className="mt-8 flex flex-col items-center gap-3">
@@ -776,33 +885,29 @@ function ShowcasePanel({
   if (variant === 1) {
     return (
       <div className="rounded-xl border border-border bg-secondary/80 p-4">
-        <div className="mb-3 flex flex-wrap gap-2">
-          {["Overview", "Dividends", "Fundamentals", "News"].map((tab, i) => (
-            <span
-              key={tab}
-              className={cn(
-                "rounded-md px-2 py-1 text-[10px] font-medium",
-                i === 1 ? "bg-accent-muted text-accent-strong" : "text-muted",
-              )}
-            >
-              {tab}
-            </span>
-          ))}
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Icon className="h-4 w-4 text-accent-strong" aria-hidden="true" />
+            <span className="text-xs font-semibold">AAPL · Mar 21 $225 put</span>
+          </div>
+          <span className="rounded-full bg-accent-muted px-2 py-0.5 text-[9px] font-medium text-accent-strong">
+            12 DTE
+          </span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <MetricTile label="Dividend streak" value="14 yrs" accent />
-          <MetricTile label="Current yield" value="3.4%" />
-          <MetricTile label="5Y dividend CAGR" value="9.2%" />
-          <MetricTile label="Expense ratio" value="0.06%" />
-        </div>
-        <div className="mt-3 flex items-end gap-0.5">
-          {[40, 55, 48, 62, 58, 72, 68, 80, 75, 88].map((h, i) => (
-            <div
-              key={i}
-              className="flex-1 rounded-sm bg-accent/30"
-              style={{ height: `${h * 0.4}px` }}
-            />
-          ))}
+        <div className="space-y-2">
+          <ComparePathRow
+            label="Hold to expiry"
+            detail="Keep ~$420 premium if AAPL stays above $225"
+            active
+          />
+          <ComparePathRow
+            label="Roll out & down"
+            detail="Apr $220 put · est. +$180 net credit"
+          />
+          <ComparePathRow
+            label="Buy to close"
+            detail="~$95 debit · free capital now"
+          />
         </div>
       </div>
     );
@@ -813,48 +918,18 @@ function ShowcasePanel({
       <div className="rounded-xl border border-border bg-secondary/80 p-4">
         <div className="mb-3 flex items-center gap-2">
           <Icon className="h-4 w-4 text-accent-strong" aria-hidden="true" />
-          <span className="text-xs font-semibold">Income snowball · SCHD</span>
+          <span className="text-xs font-semibold">Wheel playbook · SBUX</span>
         </div>
-        <div className="mb-3 grid grid-cols-3 gap-2">
-          <MetricTile label="5Y dividend CAGR" value="9.2%" accent />
-          <MetricTile label="5Y price growth" value="8.8%" />
-          <MetricTile label="10-yr total" value="$18.4k" />
+        <div className="rounded-lg border border-border bg-background/50 px-3 py-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-accent-strong">
+            Verdict
+          </p>
+          <p className="mt-1 text-[11px] leading-relaxed text-foreground">
+            Cautious — comfortable on business, but premium is thin vs assignment risk.
+          </p>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-lg border border-border bg-background/50 px-3 py-2">
-            <p className="text-[9px] uppercase tracking-wide text-muted">
-              Est. annual dividend · 2036
-            </p>
-            <p className="mt-1 text-sm font-semibold text-accent-strong">
-              $768
-            </p>
-          </div>
-          <div className="rounded-lg border border-border bg-background/50 px-3 py-2">
-            <p className="text-[9px] uppercase tracking-wide text-muted">
-              Portfolio value
-            </p>
-            <p className="mt-1 text-sm font-semibold">$31,999</p>
-            <p className="mt-0.5 text-[9px] text-muted">After DRIP + growth</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-xl border border-border bg-secondary/80 p-4">
-      <div className="mb-3 flex items-center gap-2">
-        <Icon className="h-4 w-4 text-accent-strong" aria-hidden="true" />
-        <span className="text-xs font-semibold">AI chat</span>
-      </div>
-      <div className="space-y-2.5">
-        <ChatBubble role="user" text="Analyze my portfolio risk exposure" />
-        <ChatBubble
-          role="assistant"
-          text="Tech is 62% of your portfolio. NVDA and MSFT drive most of the concentration. Consider…"
-        />
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {["Analyze NVDA", "Review options", "Tax lots"].map((chip) => (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {["Review risks", "Suggest put zone", "Check FCF"].map((chip) => (
             <span
               key={chip}
               className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[10px] text-muted"
@@ -863,7 +938,40 @@ function ShowcasePanel({
             </span>
           ))}
         </div>
+        <button
+          type="button"
+          className="mt-3 w-full rounded-lg bg-accent-muted px-3 py-2 text-[10px] font-semibold text-accent-strong"
+          tabIndex={-1}
+        >
+          Ask AI · Research before selling a put
+        </button>
       </div>
+    );
+  }
+
+  return null;
+}
+
+function ComparePathRow({
+  label,
+  detail,
+  active,
+}: {
+  label: string;
+  detail: string;
+  active?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border px-3 py-2",
+        active
+          ? "border-accent/40 bg-accent-muted/30"
+          : "border-border bg-background/50",
+      )}
+    >
+      <p className="text-[11px] font-semibold">{label}</p>
+      <p className="mt-0.5 text-[10px] leading-relaxed text-muted">{detail}</p>
     </div>
   );
 }
@@ -878,51 +986,6 @@ function BriefLine({ label, accent }: { label: string; accent?: boolean }) {
         )}
       />
       <p className="text-[11px] leading-relaxed text-muted">{label}</p>
-    </div>
-  );
-}
-
-function MetricTile({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-background/50 px-3 py-2">
-      <p className="text-[9px] text-muted">{label}</p>
-      <p
-        className={cn(
-          "mt-0.5 text-xs font-semibold",
-          accent && "text-accent-strong",
-        )}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function ChatBubble({
-  role,
-  text,
-}: {
-  role: "user" | "assistant";
-  text: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-lg px-3 py-2 text-[11px] leading-relaxed",
-        role === "user"
-          ? "ml-6 bg-muted-bg text-foreground"
-          : "mr-4 border border-border bg-background/60 text-muted",
-      )}
-    >
-      {text}
     </div>
   );
 }
@@ -965,44 +1028,37 @@ function AppPreview() {
 
         <div className="min-w-0 flex-1">
           <div className="border-b border-border bg-surface-elevated/50 px-4 py-3">
-            <p className="text-xs font-semibold">Portfolio</p>
-            <p className="text-[10px] text-muted">Morning brief · 3 symbols</p>
+            <p className="text-xs font-semibold">Portfolio · Today</p>
+            <p className="text-[10px] text-muted">Morning brief · 3 attention items</p>
           </div>
 
           <div className="space-y-3 p-4">
             <div className="overflow-hidden rounded-xl border border-border bg-secondary/80">
               <div className="flex items-center gap-2 border-b border-border bg-surface-elevated/50 px-3 py-2">
                 <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent-muted text-accent-strong">
-                  <Sparkles className="h-3 w-3" aria-hidden="true" />
+                  <BellRing className="h-3 w-3" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold">
-                    Portfolio insights
-                  </p>
-                  <p className="text-[9px] text-muted">AI-generated analysis</p>
+                  <p className="text-[11px] font-semibold">Morning brief</p>
+                  <p className="text-[9px] text-muted">Updated pre-market</p>
                 </div>
               </div>
-              <div className="space-y-2 px-3 py-3">
-                <div className="h-2 w-full rounded-full bg-muted-bg" />
-                <div className="h-2 w-4/5 rounded-full bg-muted-bg" />
-                <div className="h-2 w-3/5 rounded-full bg-muted-bg" />
+              <div className="space-y-1.5 px-3 py-3">
+                <BriefLine label="Next: review NVDA size before Thu earnings" accent />
+                <BriefLine label="AAPL CSP expires Fri · 12 DTE" />
+                <BriefLine label="Portfolio +0.8% pre-market · tech-led" />
               </div>
             </div>
 
             <PortfolioRow
               symbol="NVDA"
-              action="BUY"
-              summary="Strong AI growth momentum and positive earnings outlook."
+              tag="32% weight"
+              summary="Largest position — concentration above 20% target."
             />
             <PortfolioRow
               symbol="AAPL"
-              action="HOLD"
-              summary="Stable cash flow with moderate upside potential."
-            />
-            <PortfolioRow
-              symbol="TSLA"
-              action="REDUCE"
-              summary="High volatility and elevated valuation risk detected."
+              tag="Short put"
+              summary="Mar $225 put · assignment risk low at current price."
             />
           </div>
         </div>
@@ -1055,11 +1111,11 @@ function PreviewNavItem({
 
 function PortfolioRow({
   symbol,
-  action,
+  tag,
   summary,
 }: {
   symbol: string;
-  action: "BUY" | "HOLD" | "REDUCE";
+  tag: string;
   summary: string;
 }) {
   return (
@@ -1071,15 +1127,8 @@ function PortfolioRow({
             {summary}
           </p>
         </div>
-        <span
-          className={cn(
-            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
-            action === "BUY" && "bg-accent-muted text-accent-strong",
-            action === "HOLD" && "bg-muted-bg text-muted",
-            action === "REDUCE" && "bg-danger/10 text-danger",
-          )}
-        >
-          {action}
+        <span className="shrink-0 rounded-full bg-muted-bg px-2 py-0.5 text-[10px] font-medium text-muted">
+          {tag}
         </span>
       </div>
     </div>
