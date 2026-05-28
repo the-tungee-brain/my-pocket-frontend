@@ -69,6 +69,7 @@ export type StreetAnalysisSnapshot = {
   ratingTrendHeadline?: string | null;
   recentRatingActions?: AnalystRatingAction[];
   ownership?: OwnershipSnapshot | null;
+  dataAsOf?: string | null;
 };
 
 export const ESTIMATE_PERIOD_KEYS = ["0q", "+1q", "0y", "+1y"] as const;

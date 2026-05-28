@@ -16,6 +16,7 @@ import { PerformanceSnapshot } from "./PerformanceSnapshot";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
+import { EtfFundsOverview } from "./EtfFundsOverview";
 import { StreetAnalysisOverview } from "./StreetAnalysisOverview";
 
 type Props = {
@@ -82,11 +83,14 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
       aside={
         <>
           {isEtf ? (
-            <EtfHoldingsOverviewPreview
-              symbol={symbol}
-              stacked
-              className={pageSectionClass}
-            />
+            <>
+              <EtfFundsOverview symbol={symbol} className={pageSectionClass} />
+              <EtfHoldingsOverviewPreview
+                symbol={symbol}
+                stacked
+                className={pageSectionClass}
+              />
+            </>
           ) : null}
           {!isEtf ? (
             <StreetAnalysisOverview symbol={symbol} className={pageSectionClass} />

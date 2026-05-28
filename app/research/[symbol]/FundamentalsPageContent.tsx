@@ -128,6 +128,7 @@ export function FundamentalsPageContent({
                 >
                   <StreetOwnershipSection
                     ownership={fundamentals?.streetAnalysis?.ownership}
+                    dataAsOf={fundamentals?.streetAnalysis?.dataAsOf}
                     isLoading={isLoading}
                   />
                 </ResearchSectionCard>

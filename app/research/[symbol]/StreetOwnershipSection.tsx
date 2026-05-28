@@ -3,8 +3,8 @@
 import { Users } from "lucide-react";
 import type { OwnershipSnapshot, StreetAnalysisSnapshot } from "@/app/hooks/streetAnalysisTypes";
 import {
-  ANALYST_DATA_ATTRIBUTION,
   formatHolderShares,
+  yahooEstimatesAttribution,
   formatPctHeld,
   formatRatingActionDate,
   hasOwnership,
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 type StreetOwnershipSectionProps = {
   ownership: OwnershipSnapshot | null | undefined;
+  dataAsOf?: string | null;
   isLoading?: boolean;
 };
 
@@ -27,6 +28,7 @@ export function StreetOwnershipSkeleton() {
 
 export function StreetOwnershipSection({
   ownership,
+  dataAsOf,
   isLoading,
 }: StreetOwnershipSectionProps) {
   if (isLoading) {
@@ -124,7 +126,9 @@ export function StreetOwnershipSection({
         </div>
       ) : null}
 
-      <p className="text-[11px] text-muted">{ANALYST_DATA_ATTRIBUTION}</p>
+      <p className="text-[11px] text-muted">
+        {yahooEstimatesAttribution(dataAsOf)}
+      </p>
     </div>
   );
 }

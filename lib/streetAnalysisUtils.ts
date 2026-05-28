@@ -4,8 +4,38 @@ import type {
   StreetAnalysisSnapshot,
 } from "@/app/hooks/streetAnalysisTypes";
 
-/** Footnote for analyst consensus blocks. */
+/** Footnote for analyst consensus blocks (no as-of date). */
 export const ANALYST_DATA_ATTRIBUTION = "Estimates from Yahoo Finance";
+
+export function formatYahooDataAsOf(
+  iso: string | null | undefined,
+): string | null {
+  if (!iso) return null;
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export function yahooEstimatesAttribution(
+  dataAsOf?: string | null,
+): string {
+  const asOf = formatYahooDataAsOf(dataAsOf);
+  return asOf
+    ? `${ANALYST_DATA_ATTRIBUTION} · as of ${asOf}`
+    : ANALYST_DATA_ATTRIBUTION;
+}
+
+export function yahooFundProfileAttribution(
+  dataAsOf?: string | null,
+): string {
+  const base = "Fund profile from Yahoo Finance";
+  const asOf = formatYahooDataAsOf(dataAsOf);
+  return asOf ? `${base} · as of ${asOf}` : base;
+}
 
 export function formatStreetPrice(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";

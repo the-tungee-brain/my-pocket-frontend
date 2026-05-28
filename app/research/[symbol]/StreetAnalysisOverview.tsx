@@ -9,8 +9,8 @@ import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import {
-  ANALYST_DATA_ATTRIBUTION,
   formatStreetPrice,
+  yahooEstimatesAttribution,
   formatStreetUpside,
   hasStreetAnalysis,
 } from "@/lib/streetAnalysisUtils";
@@ -156,7 +156,9 @@ export function StreetAnalysisOverview({
           </p>
         ) : null}
 
-        <p className="text-[11px] text-muted">{ANALYST_DATA_ATTRIBUTION}</p>
+        <p className="text-[11px] text-muted">
+          {yahooEstimatesAttribution(street.dataAsOf)}
+        </p>
       </div>
     </ResearchSectionCard>
   );

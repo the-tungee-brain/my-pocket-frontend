@@ -10,8 +10,8 @@ import type {
 } from "@/app/hooks/streetAnalysisTypes";
 import { ESTIMATE_PERIOD_KEYS } from "@/app/hooks/streetAnalysisTypes";
 import {
-  ANALYST_DATA_ATTRIBUTION,
   formatEstimateGrowth,
+  yahooEstimatesAttribution,
   formatEstimateRange,
   formatRatingActionDate,
   estimateForPeriod,
@@ -266,7 +266,9 @@ export function StreetAnalysisSection({
         <RecentRatingActions actions={street.recentRatingActions} />
       ) : null}
 
-      <p className="text-[11px] text-muted">{ANALYST_DATA_ATTRIBUTION}</p>
+      <p className="text-[11px] text-muted">
+        {yahooEstimatesAttribution(street.dataAsOf)}
+      </p>
     </div>
   );
 }

@@ -22,4 +22,5 @@ export type EtfFundsSnapshot = {
   sectorWeightings?: FundWeighting[];
   bondRatings?: FundWeighting[];
   topHoldings?: FundTopHolding[];
+  dataAsOf?: string | null;
 };

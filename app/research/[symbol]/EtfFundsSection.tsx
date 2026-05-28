@@ -3,10 +3,11 @@
 import Link from "next/link";
 import type { EtfFundsSnapshot, FundWeighting } from "@/app/hooks/etfFundsTypes";
 import { formatExpenseRatio } from "@/lib/etfHoldings";
-import { formatCompactNumber } from "@/lib/streetAnalysisUtils";
+import {
+  formatCompactNumber,
+  yahooFundProfileAttribution,
+} from "@/lib/streetAnalysisUtils";
 import { symbolHubPath } from "@/lib/symbolRoutes";
-
-const YAHOO_FUNDS_ATTRIBUTION = "Fund profile from Yahoo Finance";
 
 type EtfFundsSectionProps = {
   funds: EtfFundsSnapshot | null | undefined;
@@ -202,7 +203,9 @@ export function EtfFundsSection({ funds, isLoading }: EtfFundsSectionProps) {
         </div>
       ) : null}
 
-      <p className="text-[11px] text-muted">{YAHOO_FUNDS_ATTRIBUTION}</p>
+      <p className="text-[11px] text-muted">
+        {yahooFundProfileAttribution(funds.dataAsOf)}
+      </p>
     </div>
   );
 }
