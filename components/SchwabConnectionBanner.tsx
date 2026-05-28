@@ -74,7 +74,7 @@ export function SchwabConnectionBanner({
           className={cn("h-3.5 w-3.5", connecting && "animate-spin")}
           aria-hidden
         />
-        {connecting ? "Connecting…" : "Reconnect Schwab"}
+        {connecting ? "Connecting…" : "Connect Schwab"}
       </Button>
     </div>
   );
