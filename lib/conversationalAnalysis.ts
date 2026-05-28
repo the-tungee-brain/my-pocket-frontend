@@ -104,3 +104,19 @@ export function stripPlaybookMetaLabels(content: string): string {
     .replace(/\s*\(gap[^)]*\)/gi, "")
     .replace(/ {2,}/g, " ");
 }
+
+/** Remove data-source callouts the model sometimes echoes in playbook replies. */
+export function stripPlaybookSourceLabels(content: string): string {
+  return content
+    .replace(
+      /(?:yfinance\/SEC metrics|SEC filing metrics|Filings|Per filings)\s+show/gi,
+      "The numbers show",
+    )
+    .replace(/\b(?:yfinance\/SEC|SEC\/yfinance)\b/gi, "")
+    .replace(/\bper filings\b/gi, "")
+    .replace(/\bfrom (?:SEC |EDGAR )?filings?\b/gi, "")
+    .replace(/\bin our dataset\b/gi, "")
+    .replace(/\bnot (?:provided|available) in (?:our )?dataset\b/gi, "isn't clear")
+    .replace(/ {2,}/g, " ")
+    .replace(/\s+([,.])/g, "$1");
+}

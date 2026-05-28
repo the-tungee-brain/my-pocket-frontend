@@ -1,4 +1,4 @@
-import { stripLeadResponseLabels, stripPlainEnglishLabels, stripPlaybookMetaLabels, stripStreamingStatusPrefix } from "@/lib/conversationalAnalysis";
+import { stripLeadResponseLabels, stripPlainEnglishLabels, stripPlaybookMetaLabels, stripPlaybookSourceLabels, stripStreamingStatusPrefix } from "@/lib/conversationalAnalysis";
 
 export type ChatFollowUpSuggestion = {
   id: string;
@@ -42,8 +42,10 @@ export function getVisibleAssistantContent(
     ? content
     : stripStreamingStatusPrefix(content);
   return stripFollowUpBlock(
-    stripPlaybookMetaLabels(
-      stripPlainEnglishLabels(stripLeadResponseLabels(withoutStatus)),
+    stripPlaybookSourceLabels(
+      stripPlaybookMetaLabels(
+        stripPlainEnglishLabels(stripLeadResponseLabels(withoutStatus)),
+      ),
     ),
     isStreaming,
   );
