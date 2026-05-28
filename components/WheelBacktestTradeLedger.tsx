@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { WheelBacktestTrade } from "@/app/types/wheelBacktest";
+import { formatDateMMDDYYYY } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 
 function formatUsd(value: number, fraction = 0) {
@@ -63,7 +64,7 @@ function buildCycleGroups(trades: WheelBacktestTrade[]): {
       const kind = hasStock ? "full wheel" : "CSP only (expired OTM)";
       return {
         key: String(cycleId),
-        title: `Cycle ${cycleId} · ${month} · ~${dte ?? 30} DTE · ${start} → ${end} · ${kind}`,
+        title: `Cycle ${cycleId} · ${month} · ~${dte ?? 30} DTE · ${formatDateMMDDYYYY(start)} → ${formatDateMMDDYYYY(end)} · ${kind}`,
         trades: sorted,
       };
     });
@@ -167,7 +168,7 @@ function TradeTable({ title, trades }: { title: string; trades: WheelBacktestTra
                 className="border-b border-border/40 text-foreground"
               >
                 <td className="whitespace-nowrap px-2 py-1.5 text-muted">
-                  {trade.date}
+                  {formatDateMMDDYYYY(trade.date)}
                 </td>
                 <td className="max-w-[12rem] px-2 py-1.5">
                   <span className="font-medium">{trade.label ?? trade.action}</span>
@@ -212,7 +213,9 @@ function TradeTable({ title, trades }: { title: string; trades: WheelBacktestTra
                   {trade.dteDays ?? "—"}
                 </td>
                 <td className="whitespace-nowrap px-2 py-1.5 text-muted">
-                  {trade.expirationDate ?? "—"}
+                  {trade.expirationDate
+                    ? formatDateMMDDYYYY(trade.expirationDate)
+                    : "—"}
                 </td>
                 <td
                   className={cn(

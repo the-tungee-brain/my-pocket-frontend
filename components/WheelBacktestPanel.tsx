@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { BarChart3, Loader2 } from "lucide-react";
 import type { WheelBacktestResult, WheelBacktestYears } from "@/app/types/wheelBacktest";
+import { formatDateMMDDYYYY } from "@/lib/dateUtils";
 import { fetchWheelBacktest } from "@/lib/wheelBacktest";
 import { WheelBacktestTradeLedger } from "@/components/WheelBacktestTradeLedger";
 import { Button } from "@/components/ui/Button";
@@ -200,7 +201,7 @@ export function WheelBacktestPanel({
                     ${result.initialStockPriceUsd.toFixed(2)}/sh
                   </p>
                   <p className="mt-0.5 text-[10px] text-muted">
-                    {result.startDate} (split-adjusted)
+                    {formatDateMMDDYYYY(result.startDate)} (split-adjusted)
                   </p>
                 </div>
                 <div>
@@ -227,16 +228,13 @@ export function WheelBacktestPanel({
                     {formatUsd(result.endingEquityUsd)}
                   </p>
                   <p className="mt-0.5 text-[10px] text-muted">
-                    Cash + stock mark at {result.endDate}
+                    Cash + stock mark at {formatDateMMDDYYYY(result.endDate)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted">Total P/L</p>
-                  <p className="text-[10px] leading-snug text-muted">
-                    Ending equity − starting wallet
-                    {(result.capitalTopUpsUsd ?? 0) > 0
-                      ? " (vs all deposits incl. top-ups)"
-                      : ""}
+                  <p className="text-[10px] text-muted">
+                    Total P/L ({formatDateMMDDYYYY(result.startDate)} –{" "}
+                    {formatDateMMDDYYYY(result.endDate)})
                   </p>
                   <p
                     className={cn(
@@ -281,8 +279,10 @@ export function WheelBacktestPanel({
             <div className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5 text-xs">
               <p className="font-medium text-foreground">Stock price (underlying)</p>
               <p className="mt-1 text-muted">
-                {result.startDate}: ${result.spotPriceAtStart.toFixed(2)} →{" "}
-                {result.endDate}: ${result.spotPriceAtEnd.toFixed(2)}
+                {formatDateMMDDYYYY(result.startDate)}: $
+                {result.spotPriceAtStart.toFixed(2)} →{" "}
+                {formatDateMMDDYYYY(result.endDate)}: $
+                {result.spotPriceAtEnd.toFixed(2)}
               </p>
               <p className="mt-1 text-[10px] text-muted">
                 Buy & hold with same {formatUsd(result.startingCashUsd)} start:{" "}
@@ -326,7 +326,9 @@ export function WheelBacktestPanel({
                           >
                             <td className="px-2 py-1.5">{cycle.cycle}</td>
                             <td className="px-2 py-1.5 text-muted">
-                              {cycle.stockEntryDate ?? "—"}
+                              {cycle.stockEntryDate
+                                ? formatDateMMDDYYYY(cycle.stockEntryDate)
+                                : "—"}
                               {cycle.effectiveEntryPrice != null && (
                                 <span className="block text-[10px]">
                                   eff. ${cycle.effectiveEntryPrice.toFixed(2)}/sh
@@ -339,8 +341,8 @@ export function WheelBacktestPanel({
                                 : "—"}
                             </td>
                             <td className="px-2 py-1.5 text-right text-muted">
-                              {cycle.completed
-                                ? cycle.stockExitDate
+                              {cycle.completed && cycle.stockExitDate
+                                ? formatDateMMDDYYYY(cycle.stockExitDate)
                                 : "Open / incomplete"}
                             </td>
                             <td className="px-2 py-1.5 text-right tabular-nums">
@@ -393,7 +395,8 @@ export function WheelBacktestPanel({
             </div>
 
             <p className="text-[10px] text-muted">
-              {result.startDate} → {result.endDate} · {result.tradingDays} trading days
+              {formatDateMMDDYYYY(result.startDate)} →{" "}
+              {formatDateMMDDYYYY(result.endDate)} · {result.tradingDays} trading days
             </p>
 
             {result.annualSummary.length > 0 && (

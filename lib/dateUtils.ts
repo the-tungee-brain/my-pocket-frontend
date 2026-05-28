@@ -1,3 +1,17 @@
+/** ISO calendar date (YYYY-MM-DD) → MM-DD-YYYY for tables and labels. */
+export function formatDateMMDDYYYY(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (match) {
+    return `${match[2]}-${match[3]}-${match[1]}`;
+  }
+  const date = parseDateInput(value);
+  if (!date) return value;
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  return `${mm}-${dd}-${yyyy}`;
+}
+
 export function parseDateInput(value: string): Date | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
