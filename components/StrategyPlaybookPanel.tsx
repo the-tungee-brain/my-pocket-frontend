@@ -37,10 +37,16 @@ import {
 import { IconButton } from "@/components/ui/IconButton";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { WheelBacktestPanel } from "@/components/WheelBacktestPanel";
 import { cn } from "@/lib/utils";
 
 type Props = {
   strategy: InvestmentStrategy;
+  accessToken?: string;
+  wheelSymbols?: string[];
+  wheelTargetDeltaMin?: number;
+  wheelTargetDeltaMax?: number;
+  wheelDteDays?: number;
   recommendations: StrategyRecommendations | null;
   catalogItem?: StrategyCatalogItem | null;
   loading?: boolean;
@@ -64,6 +70,11 @@ const STRATEGY_ICONS: Record<InvestmentStrategy, typeof RefreshCw> = {
 
 export function StrategyPlaybookPanel({
   strategy,
+  accessToken,
+  wheelSymbols = [],
+  wheelTargetDeltaMin,
+  wheelTargetDeltaMax,
+  wheelDteDays,
   recommendations,
   catalogItem,
   loading = false,
@@ -106,6 +117,11 @@ export function StrategyPlaybookPanel({
   const symbolStatuses = recommendations?.symbolStatuses ?? [];
   const topAction = primaryPlaybookAction(recommendations);
   const showWheelStepper = isWheelLikeStrategy(strategy);
+  const showWheelBacktest =
+    strategy === "wheel" && !!accessToken && wheelSymbols.length > 0;
+  const playbookSymbols = wheelSymbols.length
+    ? wheelSymbols
+    : (recommendations?.symbolStatuses ?? []).map((s) => s.symbol);
 
   if (loading) {
     return (
@@ -282,6 +298,16 @@ export function StrategyPlaybookPanel({
                   Add symbols
                 </Link>
               </div>
+            )}
+
+            {showWheelBacktest && accessToken && (
+              <WheelBacktestPanel
+                accessToken={accessToken}
+                symbols={playbookSymbols}
+                targetDeltaMin={wheelTargetDeltaMin}
+                targetDeltaMax={wheelTargetDeltaMax}
+                dteDays={wheelDteDays}
+              />
             )}
 
             <div>

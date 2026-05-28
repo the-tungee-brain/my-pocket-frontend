@@ -391,6 +391,11 @@ export default function PortfolioPage() {
         <StrategyPlaybookPanel
           className={cn(pageSectionClass, "mb-6")}
           strategy={strategyProfile.primaryStrategy}
+          accessToken={sessionAccessToken}
+          wheelSymbols={strategyProfile.wheel?.wheelSymbols ?? []}
+          wheelTargetDeltaMin={strategyProfile.wheel?.targetDeltaMin}
+          wheelTargetDeltaMax={strategyProfile.wheel?.targetDeltaMax}
+          wheelDteDays={strategyProfile.wheel?.preferredDteDays}
           recommendations={strategyRecommendations}
           loading={strategyLoading}
           refreshing={refreshingPlaybook}
