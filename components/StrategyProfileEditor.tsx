@@ -7,7 +7,7 @@ import {
   RefreshCw,
   TrendingUp,
 } from "lucide-react";
-import { useStrategyStockSuggestions } from "@/app/hooks/useStrategyStockSuggestions";
+import { useStrategyStockScreener } from "@/app/hooks/useStrategyStockScreener";
 import type {
   IncomeVsGrowth,
   InvestmentStrategy,
@@ -16,7 +16,7 @@ import type {
   StrategyCatalogItem,
   UserInvestmentProfile,
 } from "@/app/types/strategy";
-import { StrategyStockSuggestionsPanel } from "@/components/StrategyStockSuggestionsPanel";
+import { StrategyStockScreenerPanel } from "@/components/StrategyStockScreenerPanel";
 import { SymbolSearchField } from "@/components/SymbolSearchField";
 import { Button } from "@/components/ui/Button";
 import { updateInvestmentProfile } from "@/lib/apiClient";
@@ -30,7 +30,10 @@ import {
   profileToFormValues,
   type StrategyFormValues,
 } from "@/lib/strategyProfileForm";
-import { supportsStrategyStockSuggestions } from "@/lib/strategyStockSuggestions";
+import {
+  defaultWheelScreenerFilters,
+  supportsStrategyStockScreener,
+} from "@/lib/strategyScreener";
 
 type Props = {
   accessToken: string;
@@ -79,34 +82,30 @@ export function StrategyProfileEditor({
     [catalog, values.primaryStrategy],
   );
 
-  const showSymbolSuggestions = supportsStrategyStockSuggestions(
-    values.primaryStrategy,
-  );
+  const [screenerFilters, setScreenerFilters] = useState(defaultWheelScreenerFilters());
 
-  const prepareSuggestionsProfile = useCallback(async () => {
+  const showSymbolScreener = supportsStrategyStockScreener(values.primaryStrategy);
+
+  const prepareScreenerProfile = useCallback(async () => {
     if (!values.primaryStrategy) return;
     await updateInvestmentProfile(accessToken, formValuesToUpdate(values));
   }, [accessToken, values]);
 
   const {
-    suggestions,
-    loading: suggestionsLoading,
-    error: suggestionsError,
-    refetch: refetchSuggestions,
-    stale: suggestionsStale,
-  } = useStrategyStockSuggestions({
+    result: screenerResult,
+    loading: screenerLoading,
+    error: screenerError,
+    runScreen,
+    stale: screenerStale,
+    hasRun: screenerHasRun,
+  } = useStrategyStockScreener({
     accessToken,
     strategy: values.primaryStrategy,
-    enabled: showSymbolSuggestions,
-    prepareProfile: prepareSuggestionsProfile,
-    contextKey: [
-      values.primaryStrategy,
-      values.symbols.join(","),
-      values.etfPrimary,
-      values.etfBond,
-      values.riskTolerance,
-      values.incomeVsGrowth,
-    ].join("|"),
+    enabled: showSymbolScreener,
+    filters: screenerFilters,
+    autoRun: true,
+    prepareProfile: prepareScreenerProfile,
+    prepareOnAutoFetch: true,
   });
 
   const patch = (partial: Partial<StrategyFormValues>) => {
@@ -253,13 +252,18 @@ export function StrategyProfileEditor({
 
             {values.primaryStrategy === "etf-core" ? (
               <>
-                <StrategyStockSuggestionsPanel
-                  picks={suggestions?.picks ?? []}
-                  summary={suggestions?.summary}
-                  loading={suggestionsLoading}
-                  error={suggestionsError}
-                  stale={suggestionsStale}
-                  onRefresh={() => void refetchSuggestions()}
+                <StrategyStockScreenerPanel
+                  strategy={values.primaryStrategy ?? "etf-core"}
+                  preset={screenerResult?.preset}
+                  quotes={screenerResult?.quotes ?? []}
+                  summary={screenerResult?.summary}
+                  filters={screenerFilters}
+                  onFiltersChange={setScreenerFilters}
+                  loading={screenerLoading}
+                  error={screenerError}
+                  stale={screenerStale}
+                  hasRun={screenerHasRun}
+                  onRun={() => void runScreen({ force: true, syncProfile: true })}
                   onAddSymbol={(symbol) => patch({ etfPrimary: symbol.toUpperCase() })}
                   selectedSymbols={[values.etfPrimary, values.etfBond].filter(Boolean)}
                 />
@@ -267,13 +271,18 @@ export function StrategyProfileEditor({
               </>
             ) : (
               <>
-                <StrategyStockSuggestionsPanel
-                  picks={suggestions?.picks ?? []}
-                  summary={suggestions?.summary}
-                  loading={suggestionsLoading}
-                  error={suggestionsError}
-                  stale={suggestionsStale}
-                  onRefresh={() => void refetchSuggestions()}
+                <StrategyStockScreenerPanel
+                  strategy={values.primaryStrategy ?? "wheel"}
+                  preset={screenerResult?.preset}
+                  quotes={screenerResult?.quotes ?? []}
+                  summary={screenerResult?.summary}
+                  filters={screenerFilters}
+                  onFiltersChange={setScreenerFilters}
+                  loading={screenerLoading}
+                  error={screenerError}
+                  stale={screenerStale}
+                  hasRun={screenerHasRun}
+                  onRun={() => void runScreen({ force: true, syncProfile: true })}
                   onAddSymbol={addSymbol}
                   selectedSymbols={values.symbols}
                 />

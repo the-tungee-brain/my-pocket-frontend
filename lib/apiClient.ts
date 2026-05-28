@@ -15,7 +15,8 @@ import type {
   SelectStrategyResponse,
   StrategyCatalogItem,
   StrategyRecommendations,
-  StrategyStockSuggestions,
+  StrategyScreenerFilters,
+  StrategyStockScreenerResult,
   UserInvestmentProfile,
   UserInvestmentProfileUpdate,
   UserStrategyJourney,
@@ -554,19 +555,35 @@ export async function fetchStrategyRecommendations(
   return res.json() as Promise<StrategyRecommendations>;
 }
 
-export async function fetchStrategyStockSuggestions(
+export async function fetchStrategyStockScreener(
   accessToken: string,
   strategy: InvestmentStrategy,
-  limit = 5,
-): Promise<StrategyStockSuggestions> {
+  filters: StrategyScreenerFilters,
+  limit = 50,
+): Promise<StrategyStockScreenerResult> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    minMarketCap: String(filters.minMarketCap),
+    requireDividend: String(filters.requireDividend),
+  });
+  if (filters.maxPe != null) {
+    params.set("maxPe", String(filters.maxPe));
+  }
+  if (filters.minDividendYield != null) {
+    params.set("minDividendYield", String(filters.minDividendYield));
+  }
+  for (const sector of filters.sectors ?? []) {
+    params.append("sectors", sector);
+  }
+
   const res = await apiFetch(
-    `/strategies/${strategy}/stock-suggestions${buildQuery({ limit })}`,
+    `/strategies/${strategy}/stock-screener?${params.toString()}`,
     { method: "GET", accessToken },
   );
   if (!res.ok) {
-    throw new Error(`Failed to load stock suggestions (${res.status})`);
+    throw new Error(`Failed to run stock screener (${res.status})`);
   }
-  return res.json() as Promise<StrategyStockSuggestions>;
+  return res.json() as Promise<StrategyStockScreenerResult>;
 }
 
 

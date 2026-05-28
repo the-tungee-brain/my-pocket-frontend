@@ -122,19 +122,41 @@ export type StrategyNextAction = {
   metadata?: Record<string, unknown>;
 };
 
-export type StrategyStockPick = {
-  symbol: string;
-  companyName?: string | null;
-  rationale: string;
-  fitScore: number;
-  tags?: string[];
+export type StrategyScreenerFilters = {
+  minMarketCap: number;
+  maxPe?: number | null;
+  requireDividend: boolean;
+  minDividendYield?: number | null;
+  sectors?: string[] | null;
+  exchanges: string[];
 };
 
-export type StrategyStockSuggestions = {
+export type ScreenerPresetSummary = {
+  id: string;
+  label: string;
+  description: string;
+  postFilters: Record<string, unknown>;
+  postFilterStatus: string;
+};
+
+export type StrategyScreenerQuote = {
+  symbol: string;
+  companyName?: string | null;
+  sector?: string | null;
+  marketCap?: number | null;
+  peRatio?: number | null;
+  dividendYield?: number | null;
+  price?: number | null;
+};
+
+export type StrategyStockScreenerResult = {
   strategy: InvestmentStrategy;
-  picks: StrategyStockPick[];
+  preset: ScreenerPresetSummary;
+  quotes: StrategyScreenerQuote[];
+  totalCount: number;
   summary: string;
   generatedAt?: string | null;
+  filters?: StrategyScreenerFilters | null;
 };
 
 export type StrategyRecommendations = {
@@ -144,8 +166,9 @@ export type StrategyRecommendations = {
   readiness: StrategyReadiness;
   symbol?: string | null;
   nextActions: StrategyNextAction[];
-  suggestedStocks?: StrategyStockPick[];
-  stockSuggestionsSummary?: string | null;
+  screenedStocks?: StrategyScreenerQuote[];
+  screenerSummary?: string | null;
+  screenerPreset?: ScreenerPresetSummary | null;
 };
 
 export type SelectStrategyResponse = {

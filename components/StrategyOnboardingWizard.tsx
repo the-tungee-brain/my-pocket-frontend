@@ -8,10 +8,9 @@ import {
   CircleDollarSign,
   Layers,
   RefreshCw,
-  Sparkles,
   TrendingUp,
 } from "lucide-react";
-import { useStrategyStockSuggestions } from "@/app/hooks/useStrategyStockSuggestions";
+import { useStrategyStockScreener } from "@/app/hooks/useStrategyStockScreener";
 import type {
   IncomeVsGrowth,
   InvestmentStrategy,
@@ -20,10 +19,15 @@ import type {
   StrategyCatalogItem,
   UserInvestmentProfileUpdate,
 } from "@/app/types/strategy";
-import { StrategyStockSuggestionsPanel } from "@/components/StrategyStockSuggestionsPanel";
+import { StrategyStockScreenerPanel } from "@/components/StrategyStockScreenerPanel";
 import { SymbolSearchField } from "@/components/SymbolSearchField";
 import { Button } from "@/components/ui/Button";
-import { buildPreferencesDraftUpdate, supportsStrategyStockSuggestions } from "@/lib/strategyStockSuggestions";
+import { buildPreferencesDraftUpdate } from "@/lib/strategyStockSuggestions";
+import {
+  defaultWheelScreenerFilters,
+  formatMarketCap,
+  supportsStrategyStockScreener,
+} from "@/lib/strategyScreener";
 import { deltaBandDescription, deltaBandForRisk } from "@/lib/strategyProfileForm";
 import { cn } from "@/lib/utils";
 
@@ -80,11 +84,13 @@ export function StrategyOnboardingWizard({
     [catalog, selectedStrategy],
   );
 
-  const showSymbolSuggestions =
-    (step === "configure" || step === "review") &&
-    supportsStrategyStockSuggestions(selectedStrategy);
+  const [screenerFilters, setScreenerFilters] = useState(defaultWheelScreenerFilters());
 
-  const prepareSuggestionsProfile = useCallback(async () => {
+  const showSymbolScreener =
+    (step === "configure" || step === "review") &&
+    supportsStrategyStockScreener(selectedStrategy);
+
+  const prepareScreenerProfile = useCallback(async () => {
     if (!onSaveDraft || !selectedStrategy) return;
     await onSaveDraft(
       buildPreferencesDraftUpdate(
@@ -107,28 +113,23 @@ export function StrategyOnboardingWizard({
   ]);
 
   const {
-    suggestions,
-    loading: suggestionsLoading,
-    error: suggestionsError,
-    refetch: refetchSuggestions,
-    stale: suggestionsStale,
-  } = useStrategyStockSuggestions({
+    result: screenerResult,
+    loading: screenerLoading,
+    error: screenerError,
+    runScreen,
+    stale: screenerStale,
+    hasRun: screenerHasRun,
+  } = useStrategyStockScreener({
     accessToken,
     strategy: selectedStrategy,
-    enabled: showSymbolSuggestions && !!onSaveDraft,
-    prepareProfile: prepareSuggestionsProfile,
+    enabled: showSymbolScreener && !!onSaveDraft,
+    filters: screenerFilters,
+    autoRun: true,
+    prepareProfile: prepareScreenerProfile,
     prepareOnAutoFetch: true,
-    contextKey: [
-      selectedStrategy,
-      symbols.join(","),
-      etfPrimary,
-      etfBond,
-      riskTolerance,
-      incomeVsGrowth,
-    ].join("|"),
   });
 
-  const topPick = suggestions?.picks?.[0] ?? null;
+  const topScreenMatch = screenerResult?.quotes?.[0] ?? null;
 
   const addSymbol = (symbol: string) => {
     const upper = symbol.toUpperCase();
@@ -382,13 +383,18 @@ export function StrategyOnboardingWizard({
                     Set a simple two-fund core allocation. You can adjust this
                     later.
                   </p>
-                  <StrategyStockSuggestionsPanel
-                    picks={suggestions?.picks ?? []}
-                    summary={suggestions?.summary}
-                    loading={suggestionsLoading}
-                    error={suggestionsError}
-                    stale={suggestionsStale}
-                    onRefresh={() => void refetchSuggestions()}
+                  <StrategyStockScreenerPanel
+                    strategy={selectedStrategy ?? "etf-core"}
+                    preset={screenerResult?.preset}
+                    quotes={screenerResult?.quotes ?? []}
+                    summary={screenerResult?.summary}
+                    filters={screenerFilters}
+                    onFiltersChange={setScreenerFilters}
+                    loading={screenerLoading}
+                    error={screenerError}
+                    stale={screenerStale}
+                    hasRun={screenerHasRun}
+                    onRun={() => void runScreen({ force: true, syncProfile: true })}
                     onAddSymbol={(symbol) => setEtfPrimary(symbol.toUpperCase())}
                     selectedSymbols={[etfPrimary, etfBond].filter(Boolean)}
                   />
@@ -435,13 +441,18 @@ export function StrategyOnboardingWizard({
                       ? "Add 1–5 dividend names you want to research and hold."
                       : "Add 1–3 symbols you'd be happy to own if assigned on a put."}
                   </p>
-                  <StrategyStockSuggestionsPanel
-                    picks={suggestions?.picks ?? []}
-                    summary={suggestions?.summary}
-                    loading={suggestionsLoading}
-                    error={suggestionsError}
-                    stale={suggestionsStale}
-                    onRefresh={() => void refetchSuggestions()}
+                  <StrategyStockScreenerPanel
+                    strategy={selectedStrategy ?? "wheel"}
+                    preset={screenerResult?.preset}
+                    quotes={screenerResult?.quotes ?? []}
+                    summary={screenerResult?.summary}
+                    filters={screenerFilters}
+                    onFiltersChange={setScreenerFilters}
+                    loading={screenerLoading}
+                    error={screenerError}
+                    stale={screenerStale}
+                    hasRun={screenerHasRun}
+                    onRun={() => void runScreen({ force: true, syncProfile: true })}
                     onAddSymbol={addSymbol}
                     selectedSymbols={symbols}
                   />
@@ -485,43 +496,49 @@ export function StrategyOnboardingWizard({
                 <div className="rounded-xl bg-accent-muted/15 p-3">
                   {symbols.length === 0 && (
                     <>
-                      {suggestionsLoading && (
+                      {screenerLoading && (
                         <p className="text-xs text-muted">
-                          Loading your top symbol suggestion…
+                          Running your strategy screener…
                         </p>
                       )}
-                      {!suggestionsLoading && topPick && (
+                      {!screenerLoading && topScreenMatch && (
                         <>
-                          <div className="flex items-start gap-2">
-                            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" />
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-foreground">
-                                Use our top pick for your strategy?
-                              </p>
-                              <p className="mt-1 text-xs leading-relaxed text-muted">
-                                {topPick.companyName
-                                  ? `${topPick.symbol} · ${topPick.companyName}`
-                                  : topPick.symbol}
-                                {topPick.fitScore > 0
-                                  ? ` · ${Math.round(topPick.fitScore * 100)}% fit`
-                                  : ""}
-                              </p>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-foreground">
+                              Start with the top screener match?
+                            </p>
+                            <p className="mt-1 text-xs leading-relaxed text-muted">
+                              {topScreenMatch.companyName
+                                ? `${topScreenMatch.symbol} · ${topScreenMatch.companyName}`
+                                : topScreenMatch.symbol}
+                              {topScreenMatch.marketCap
+                                ? ` · ${formatMarketCap(topScreenMatch.marketCap)}`
+                                : ""}
+                            </p>
+                            {screenerResult?.summary && (
                               <p className="mt-2 text-xs leading-relaxed text-muted">
-                                {topPick.rationale}
+                                {screenerResult.summary}
                               </p>
-                            </div>
+                            )}
                           </div>
                           <div className="mt-3 flex flex-wrap gap-2">
-                            <Button size="sm" onClick={() => addSymbol(topPick.symbol)}>
-                              Use top pick · {topPick.symbol}
+                            <Button
+                              size="sm"
+                              onClick={() => addSymbol(topScreenMatch.symbol)}
+                            >
+                              Add {topScreenMatch.symbol}
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => setStep("configure")}>
-                              Choose manually
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setStep("configure")}
+                            >
+                              Browse screener
                             </Button>
                           </div>
                         </>
                       )}
-                      {!suggestionsLoading && !topPick && (
+                      {!screenerLoading && !topScreenMatch && (
                         <>
                           <p className="text-xs text-muted">
                             Pick at least one symbol before starting your journey.
@@ -539,13 +556,18 @@ export function StrategyOnboardingWizard({
                     </>
                   )}
                   {symbols.length > 0 && (
-                    <StrategyStockSuggestionsPanel
-                      picks={suggestions?.picks ?? []}
-                      summary={suggestions?.summary}
-                      loading={suggestionsLoading}
-                      error={suggestionsError}
-                      stale={suggestionsStale}
-                      onRefresh={() => void refetchSuggestions()}
+                    <StrategyStockScreenerPanel
+                      strategy={selectedStrategy ?? "wheel"}
+                      preset={screenerResult?.preset}
+                      quotes={screenerResult?.quotes ?? []}
+                      summary={screenerResult?.summary}
+                      filters={screenerFilters}
+                      onFiltersChange={setScreenerFilters}
+                      loading={screenerLoading}
+                      error={screenerError}
+                      stale={screenerStale}
+                      hasRun={screenerHasRun}
+                      onRun={() => void runScreen({ force: true, syncProfile: true })}
                       onAddSymbol={addSymbol}
                       selectedSymbols={symbols}
                       compact

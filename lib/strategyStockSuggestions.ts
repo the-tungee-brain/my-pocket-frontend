@@ -14,7 +14,7 @@ const SUPPORTED_STRATEGIES: InvestmentStrategy[] = [
   "etf-core",
 ];
 
-export function supportsStrategyStockSuggestions(
+export function supportsStrategySymbolPicker(
   strategy: InvestmentStrategy | null,
 ): strategy is InvestmentStrategy {
   return strategy !== null && SUPPORTED_STRATEGIES.includes(strategy);
