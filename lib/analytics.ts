@@ -1,36 +1,29 @@
-import { getPostHogClient } from "@/lib/posthogClient";
+import posthog from "posthog-js";
 
 export type AnalyticsProperties = Record<
   string,
   string | number | boolean | null | undefined
 >;
 
-function withPostHog(
-  run: (client: NonNullable<ReturnType<typeof getPostHogClient>>) => void,
+function captureWhenReady(
+  run: (client: typeof posthog) => void,
 ) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !posthog.__loaded) {
+    return;
+  }
 
-  const schedule =
-    typeof window.requestIdleCallback === "function"
-      ? (task: () => void) =>
-          window.requestIdleCallback(() => task(), { timeout: 2000 })
-      : (task: () => void) => window.setTimeout(task, 0);
-
-  schedule(() => {
-    const client = getPostHogClient();
-    if (client) run(client);
-  });
+  run(posthog);
 }
 
 export function identify(userId: string, traits?: AnalyticsProperties) {
   if (!userId) return;
-  withPostHog((client) => {
+  captureWhenReady((client) => {
     client.identify(userId, traits);
   });
 }
 
 export function track(event: string, properties?: AnalyticsProperties) {
-  withPostHog((client) => {
+  captureWhenReady((client) => {
     client.capture(event, properties);
   });
 }
