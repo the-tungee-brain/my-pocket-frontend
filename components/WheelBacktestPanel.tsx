@@ -17,10 +17,21 @@ function formatUsd(value: number, opts?: Intl.NumberFormatOptions) {
   }).format(value);
 }
 
-function formatPct(value: number | null | undefined) {
+function formatPct(value: number | null | undefined, digits = 1) {
   if (value === null || value === undefined) return "—";
   const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(1)}%`;
+  return `${sign}${value.toFixed(digits)}%`;
+}
+
+function formatSignedUsd(value: number) {
+  const sign = value > 0 ? "+" : value < 0 ? "−" : "";
+  return `${sign}${formatUsd(Math.abs(value))}`;
+}
+
+function plTone(value: number) {
+  if (value > 0) return "text-emerald-600 dark:text-emerald-400";
+  if (value < 0) return "text-red-600 dark:text-red-400";
+  return "text-foreground";
 }
 
 type Props = {
@@ -176,63 +187,243 @@ export function WheelBacktestPanel({
 
         {result && (
           <div className="space-y-3">
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-accent/25 bg-accent-muted/20 px-3 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                Capital (1 contract)
+              </p>
+              <div className="mt-2 grid gap-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-[10px] text-muted">Starting cash</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {formatUsd(result.startingCashUsd)}
+                  </p>
+                  <p className="mt-0.5 text-[10px] leading-relaxed text-muted">
+                    CSP collateral at first trade + 5% buffer
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted">Ending equity</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {formatUsd(result.endingEquityUsd)}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-muted">
+                    Cash + stock mark at {result.endDate}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted">
+                    Total P/L
+                    {(result.capitalTopUpsUsd ?? 0) > 0
+                      ? " (incl. top-ups)"
+                      : ""}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-sm font-semibold",
+                      plTone(result.totalPlUsd ?? result.endingEquityUsd - result.startingCashUsd),
+                    )}
+                  >
+                    {formatSignedUsd(
+                      result.totalPlUsd ??
+                        result.endingEquityUsd - result.startingCashUsd,
+                    )}{" "}
+                    <span className="text-xs font-medium">
+                      ({formatPct(result.totalReturnPct, 2)})
+                    </span>
+                  </p>
+                  {result.cagrPct != null && (
+                    <p className="mt-0.5 text-[10px] text-muted">
+                      CAGR {formatPct(result.cagrPct)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {(result.capitalTopUpsUsd ?? 0) > 0 && (
+              <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-[11px] leading-relaxed text-foreground">
+                SPY rose faster than idle cash — the model added{" "}
+                {formatUsd(result.capitalTopUpsUsd)} in top-ups to keep selling one
+                CSP (see assumptions). Years with $0 premium had no new option trades.
+              </p>
+            )}
+
+            <div className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5 text-xs">
+              <p className="font-medium text-foreground">Stock price (underlying)</p>
+              <p className="mt-1 text-muted">
+                {result.startDate}: ${result.spotPriceAtStart.toFixed(2)} →{" "}
+                {result.endDate}: ${result.spotPriceAtEnd.toFixed(2)}
+              </p>
+              <p className="mt-1 text-[10px] text-muted">
+                Buy & hold with same {formatUsd(result.startingCashUsd)} start:{" "}
+                {formatUsd(result.buyAndHoldEndingUsd)} ending (
+                {formatPct(result.buyAndHoldReturnPct, 2)})
+              </p>
+            </div>
+
+            {result.wheelCycles.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Stock entry & exit (assigned cycles)
+                </p>
+                <div className="overflow-x-auto rounded-lg border border-border/60">
+                  <table className="w-full min-w-[520px] text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border/60 text-muted">
+                        <th className="px-2 py-1.5 font-medium">#</th>
+                        <th className="px-2 py-1.5 font-medium">Entry</th>
+                        <th className="px-2 py-1.5 font-medium text-right">
+                          Entry $
+                        </th>
+                        <th className="px-2 py-1.5 font-medium text-right">
+                          Exit
+                        </th>
+                        <th className="px-2 py-1.5 font-medium text-right">
+                          Exit $
+                        </th>
+                        <th className="px-2 py-1.5 font-medium text-right">
+                          Stock P/L
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.wheelCycles.map((cycle) => {
+                        const stockPl = cycle.stockRoundTripPlUsd;
+                        return (
+                          <tr
+                            key={cycle.cycle}
+                            className="border-b border-border/40 text-foreground"
+                          >
+                            <td className="px-2 py-1.5">{cycle.cycle}</td>
+                            <td className="px-2 py-1.5 text-muted">
+                              {cycle.stockEntryDate ?? "—"}
+                              {cycle.effectiveEntryPrice != null && (
+                                <span className="block text-[10px]">
+                                  eff. ${cycle.effectiveEntryPrice.toFixed(2)}/sh
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-2 py-1.5 text-right tabular-nums">
+                              {cycle.stockEntryClose != null
+                                ? `$${cycle.stockEntryClose.toFixed(2)}`
+                                : "—"}
+                            </td>
+                            <td className="px-2 py-1.5 text-right text-muted">
+                              {cycle.completed
+                                ? cycle.stockExitDate
+                                : "Open / incomplete"}
+                            </td>
+                            <td className="px-2 py-1.5 text-right tabular-nums">
+                              {cycle.stockExitClose != null
+                                ? `$${cycle.stockExitClose.toFixed(2)}`
+                                : "—"}
+                              {cycle.effectiveExitPrice != null && (
+                                <span className="block text-[10px] text-muted">
+                                  call ${cycle.effectiveExitPrice.toFixed(2)}
+                                </span>
+                              )}
+                            </td>
+                            <td
+                              className={cn(
+                                "px-2 py-1.5 text-right font-medium tabular-nums",
+                                stockPl != null && plTone(stockPl),
+                              )}
+                            >
+                              {stockPl != null ? formatSignedUsd(stockPl) : "—"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Metric
-                label="Wheel return"
-                value={formatPct(result.totalReturnPct)}
-                sub={result.cagrPct != null ? `CAGR ${formatPct(result.cagrPct)}` : undefined}
-              />
-              <Metric
-                label="Buy & hold"
-                value={formatPct(result.buyAndHoldReturnPct)}
+                label="Buy & hold (same $ start)"
+                value={formatPct(result.buyAndHoldReturnPct, 2)}
                 sub={
                   result.buyAndHoldCagrPct != null
-                    ? `CAGR ${formatPct(result.buyAndHoldCagrPct)}`
-                    : undefined
+                    ? `CAGR ${formatPct(result.buyAndHoldCagrPct)} · ${formatUsd(result.buyAndHoldEndingUsd)} end`
+                    : formatUsd(result.buyAndHoldEndingUsd)
                 }
               />
               <Metric
                 label="Premium collected"
                 value={formatUsd(result.totalPremiumCollectedUsd)}
-                sub={`Fees ${formatUsd(result.totalFeesUsd)}`}
+                sub={`Fees ${formatUsd(result.totalFeesUsd)} · Div ${formatUsd(result.totalDividendsUsd)}`}
               />
               <Metric
-                label="Cycles completed"
+                label="Wheel cycles"
                 value={String(result.completedWheelCycles)}
                 sub={`${result.putAssignments} put assigns · ${result.callsAssigned} call assigns`}
               />
             </div>
 
-            <div className="grid gap-2 text-xs text-muted sm:grid-cols-3">
-              <span>Ending equity {formatUsd(result.endingEquityUsd)}</span>
-              <span>Dividends {formatUsd(result.totalDividendsUsd)}</span>
-              <span>
-                {result.startDate} → {result.endDate}
-              </span>
-            </div>
+            <p className="text-[10px] text-muted">
+              {result.startDate} → {result.endDate} · {result.tradingDays} trading days
+            </p>
 
             {result.annualSummary.length > 0 && (
-              <div className="overflow-x-auto rounded-lg border border-border/60">
-                <table className="w-full min-w-[320px] text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-border/60 text-muted">
-                      <th className="px-2 py-1.5 font-medium">Year</th>
-                      <th className="px-2 py-1.5 font-medium">Return</th>
-                      <th className="px-2 py-1.5 font-medium">Premium</th>
-                      <th className="px-2 py-1.5 font-medium">End equity</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.annualSummary.map((row) => (
-                      <tr key={row.year} className="border-b border-border/40 text-foreground">
-                        <td className="px-2 py-1.5">{row.year}</td>
-                        <td className="px-2 py-1.5">{formatPct(row.returnPct)}</td>
-                        <td className="px-2 py-1.5">{formatUsd(row.premiumUsd)}</td>
-                        <td className="px-2 py-1.5">{formatUsd(row.endEquityUsd)}</td>
+              <div>
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Year by year
+                </p>
+                <div className="overflow-x-auto rounded-lg border border-border/60">
+                  <table className="w-full min-w-[480px] text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border/60 text-muted">
+                        <th className="px-2 py-1.5 font-medium">Year</th>
+                        <th className="px-2 py-1.5 font-medium text-right">Start</th>
+                        <th className="px-2 py-1.5 font-medium text-right">End</th>
+                        <th className="px-2 py-1.5 font-medium text-right">P/L $</th>
+                        <th className="px-2 py-1.5 font-medium text-right">P/L %</th>
+                        <th className="px-2 py-1.5 font-medium text-right">Premium</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {result.annualSummary.map((row) => {
+                        const pl =
+                          row.plUsd ?? row.endEquityUsd - row.startEquityUsd;
+                        return (
+                          <tr
+                            key={row.year}
+                            className="border-b border-border/40 text-foreground"
+                          >
+                            <td className="px-2 py-1.5 font-medium">{row.year}</td>
+                            <td className="px-2 py-1.5 text-right tabular-nums">
+                              {formatUsd(row.startEquityUsd)}
+                            </td>
+                            <td className="px-2 py-1.5 text-right tabular-nums">
+                              {formatUsd(row.endEquityUsd)}
+                            </td>
+                            <td
+                              className={cn(
+                                "px-2 py-1.5 text-right font-medium tabular-nums",
+                                plTone(pl),
+                              )}
+                            >
+                              {formatSignedUsd(pl)}
+                            </td>
+                            <td
+                              className={cn(
+                                "px-2 py-1.5 text-right font-medium tabular-nums",
+                                plTone(row.returnPct),
+                              )}
+                            >
+                              {formatPct(row.returnPct, 2)}
+                            </td>
+                            <td className="px-2 py-1.5 text-right tabular-nums text-muted">
+                              {formatUsd(row.premiumUsd)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 

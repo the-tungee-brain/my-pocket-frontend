@@ -8,7 +8,24 @@ export type WheelBacktestTrade = {
   premiumUsd: number;
   feesUsd: number;
   close: number;
+  stockPrice?: number | null;
+  effectiveEntryPrice?: number | null;
+  effectiveExitPrice?: number | null;
   note?: string | null;
+};
+
+export type WheelBacktestCycle = {
+  cycle: number;
+  putStrike?: number | null;
+  stockEntryDate?: string | null;
+  stockEntryClose?: number | null;
+  effectiveEntryPrice?: number | null;
+  callStrike?: number | null;
+  stockExitDate?: string | null;
+  stockExitClose?: number | null;
+  effectiveExitPrice?: number | null;
+  stockRoundTripPlUsd?: number | null;
+  completed?: boolean;
 };
 
 export type WheelBacktestEquityPoint = {
@@ -23,6 +40,7 @@ export type WheelBacktestAnnualRow = {
   year: number;
   startEquityUsd: number;
   endEquityUsd: number;
+  plUsd: number;
   returnPct: number;
   premiumUsd: number;
   feesUsd: number;
@@ -38,10 +56,16 @@ export type WheelBacktestResult = {
   assumptions: string[];
   startingCashUsd: number;
   endingEquityUsd: number;
+  totalPlUsd: number;
   totalReturnPct: number;
   cagrPct: number | null;
   buyAndHoldReturnPct: number;
   buyAndHoldCagrPct: number | null;
+  buyAndHoldEndingUsd: number;
+  capitalTopUpsUsd: number;
+  spotPriceAtStart: number;
+  spotPriceAtEnd: number;
+  wheelCycles: WheelBacktestCycle[];
   totalPremiumCollectedUsd: number;
   totalFeesUsd: number;
   totalDividendsUsd: number;
