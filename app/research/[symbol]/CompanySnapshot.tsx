@@ -18,7 +18,7 @@ import { WatchlistButton } from "@/components/WatchlistButton";
 import { WatchlistHint } from "@/components/WatchlistHint";
 import { iconButtonClass } from "@/components/ui/IconButton";
 import { usePositionsContext } from "@/app/Providers";
-import { resolveResearchLogoUrl } from "@/lib/logoUrl";
+import { CompanyLogo } from "@/components/CompanyLogo";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { AssetTypeBadge } from "@/components/AssetTypeBadge";
@@ -93,7 +93,6 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
     );
   }
 
-  const logoSrc = resolveResearchLogoUrl(snapshot.symbol, snapshot.logo);
   const positiveChange = snapshot.changePct >= 0;
   const dayPL = userPositions?.reduce(
     (sum, p) => sum + p.currentDayProfitLoss,
@@ -113,19 +112,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
-          <div className="h-7 w-7 shrink-0 overflow-hidden rounded-md border border-border bg-white">
-            <img
-              src={logoSrc}
-              alt=""
-              className="h-full w-full object-contain p-1"
-              onError={(event) => {
-                const fallback = resolveResearchLogoUrl(snapshot.symbol);
-                if (!event.currentTarget.src.includes("finnhubimage/stock_logo")) {
-                  event.currentTarget.src = fallback;
-                }
-              }}
-            />
-          </div>
+          <CompanyLogo symbol={snapshot.symbol} logo={snapshot.logo} size="sm" />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">
               {snapshot.symbol}
@@ -188,19 +175,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           {researchLabel}
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-border bg-white">
-            <img
-              src={logoSrc}
-              alt={`${snapshot.name} logo`}
-              className="h-full w-full object-contain p-1.5"
-              onError={(event) => {
-                const fallback = resolveResearchLogoUrl(snapshot.symbol);
-                if (!event.currentTarget.src.includes("finnhubimage/stock_logo")) {
-                  event.currentTarget.src = fallback;
-                }
-              }}
-            />
-          </div>
+          <CompanyLogo symbol={snapshot.symbol} logo={snapshot.logo} size="md" />
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {snapshot.symbol} · {snapshot.name}
           </h1>

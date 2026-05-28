@@ -1,4 +1,3 @@
-import { SummarySection } from "../SummarySection";
 import { ResearchOverviewTopSection } from "../ResearchOverviewTopSection";
 
 type PageProps = {
@@ -8,10 +7,5 @@ type PageProps = {
 export default async function OverviewPage({ params }: PageProps) {
   const { symbol } = await params;
 
-  return (
-    <>
-      <ResearchOverviewTopSection symbol={symbol} />
-      <SummarySection symbol={symbol} />
-    </>
-  );
+  return <ResearchOverviewTopSection symbol={symbol} />;
 }

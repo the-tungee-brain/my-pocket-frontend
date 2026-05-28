@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch, streamGet } from "@/lib/apiClient";
+import { apiFetch } from "@/lib/apiClient";
 import { isAbortError } from "@/lib/isAbortError";
 
 export type Sentiment = "Bullish" | "Neutral" | "Bearish";
@@ -28,8 +28,6 @@ export function useStockSummary(
   { accessToken }: UseStockSummaryOptions = {},
 ) {
   const [summary, setSummary] = useState<StockSummary | null>(null);
-  const [streamMarkdown, setStreamMarkdown] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(!!symbol);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,8 +36,6 @@ export function useStockSummary(
 
     if (!key) {
       setSummary(null);
-      setStreamMarkdown("");
-      setIsStreaming(false);
       setIsLoading(false);
       setError(null);
       return;
@@ -49,8 +45,6 @@ export function useStockSummary(
 
     if (!accessToken) {
       setSummary(null);
-      setStreamMarkdown("");
-      setIsStreaming(false);
       setIsLoading(false);
       setError("Missing access token");
       return;
@@ -59,8 +53,6 @@ export function useStockSummary(
     const cached = stockSummaryCache.get(symbolKey);
     if (cached) {
       setSummary(cached);
-      setStreamMarkdown("");
-      setIsStreaming(false);
       setIsLoading(false);
       setError(null);
       return;
@@ -70,7 +62,7 @@ export function useStockSummary(
     const { signal } = controller;
     const token = accessToken;
 
-    async function loadJson() {
+    async function load() {
       try {
         const res = await apiFetch(
           `/research/summary?symbol=${encodeURIComponent(symbolKey)}`,
@@ -90,63 +82,29 @@ export function useStockSummary(
 
         stockSummaryCache.set(symbolKey, data);
         setSummary(data);
-        setStreamMarkdown("");
         setError(null);
       } catch (e: unknown) {
         if (signal.aborted || isAbortError(e)) return;
         const message =
           e instanceof Error ? e.message : "Error fetching stock summary";
-        setError((prev) => prev ?? message);
+        setError(message);
+        setSummary(null);
       } finally {
         if (!signal.aborted) {
           setIsLoading(false);
-          setIsStreaming(false);
-        }
-      }
-    }
-
-    async function loadStream() {
-      setIsStreaming(true);
-      let buffer = "";
-
-      try {
-        await streamGet(
-          `/research/summary?symbol=${encodeURIComponent(symbolKey)}&stream=true`,
-          token,
-          (chunk) => {
-            if (signal.aborted) return;
-            buffer += chunk;
-            setStreamMarkdown(buffer);
-          },
-          { signal },
-        );
-        if (signal.aborted) return;
-        setError(null);
-      } catch (e: unknown) {
-        if (signal.aborted || isAbortError(e)) return;
-        const message =
-          e instanceof Error ? e.message : "Error streaming stock summary";
-        setError((prev) => prev ?? message);
-      } finally {
-        if (!signal.aborted) {
-          setIsStreaming(false);
-          setIsLoading((loading) => loading && !stockSummaryCache.has(symbolKey));
         }
       }
     }
 
     setSummary(null);
-    setStreamMarkdown("");
     setIsLoading(true);
     setError(null);
-
-    void loadStream();
-    void loadJson();
+    void load();
 
     return () => {
       controller.abort();
     };
   }, [symbol, accessToken]);
 
-  return { summary, streamMarkdown, isStreaming, isLoading, error };
+  return { summary, isLoading, error };
 }

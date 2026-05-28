@@ -18,6 +18,7 @@ import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
 import { EtfFundsOverview } from "./EtfFundsOverview";
 import { StreetAnalysisOverview } from "./StreetAnalysisOverview";
+import { SummarySection } from "./SummarySection";
 
 type Props = {
   symbol: string;
@@ -78,6 +79,7 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             hideRecentEvents
             className={pageSectionClass}
           />
+          <SummarySection symbol={symbol} className={pageSectionClass} />
         </>
       }
       aside={
