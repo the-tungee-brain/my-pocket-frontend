@@ -79,6 +79,68 @@ function resolveDisplayPaths(
   return sortComparePaths(paths, recommendedPath);
 }
 
+const CONTRACT_MULTIPLIER = 100;
+
+function hasCashPictureContent(picture: RollCashPicture): boolean {
+  return (
+    picture.entryPremiumPerContract != null ||
+    picture.closeCostPerContract != null ||
+    picture.openCollectPerContract != null ||
+    picture.rollNetPerContract != null ||
+    picture.netCashAfterRollPerContract != null
+  );
+}
+
+function resolveRollCashPicture(
+  outcome: HeldOptionOutcomes,
+  roll?: RollPathOutcome | null,
+  suggestion?: OptionRollSuggestion,
+): RollCashPicture | null {
+  const existing = outcome.rollCashPicture ?? roll?.cashPicture ?? null;
+  if (existing && hasCashPictureContent(existing)) {
+    return existing;
+  }
+
+  const entryPremium = outcome.drivers.entryPremiumPerContract ?? null;
+  const closeCost =
+    roll?.closeLeg.cashPerContract ??
+    outcome.currentLeg.cashPerContract ??
+    outcome.close.costPerContract ??
+    null;
+
+  let openCollect = roll?.openLeg.cashPerContract ?? null;
+  let rollNet = roll?.netCreditPerContract ?? null;
+
+  if (
+    openCollect == null &&
+    closeCost != null &&
+    suggestion?.estimatedCredit != null
+  ) {
+    rollNet = Math.round(suggestion.estimatedCredit * CONTRACT_MULTIPLIER * 100) / 100;
+    openCollect = Math.round((closeCost + rollNet) * 100) / 100;
+  } else if (rollNet == null && suggestion?.estimatedCredit != null) {
+    rollNet = Math.round(suggestion.estimatedCredit * CONTRACT_MULTIPLIER * 100) / 100;
+  }
+
+  let netCashAfterRoll = null;
+  if (entryPremium != null && closeCost != null && openCollect != null) {
+    netCashAfterRoll =
+      Math.round((entryPremium - closeCost + openCollect) * 100) / 100;
+  } else if (entryPremium != null && rollNet != null) {
+    netCashAfterRoll = Math.round((entryPremium + rollNet) * 100) / 100;
+  }
+
+  const built: RollCashPicture = {
+    entryPremiumPerContract: entryPremium,
+    closeCostPerContract: closeCost,
+    openCollectPerContract: openCollect,
+    rollNetPerContract: rollNet,
+    netCashAfterRollPerContract: netCashAfterRoll,
+  };
+
+  return hasCashPictureContent(built) ? built : null;
+}
+
 function MetricChip({ label, value }: { label: string; value: string }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-md border border-border/80 bg-background/80 px-1.5 py-0.5 text-[10px] text-muted">
@@ -149,7 +211,7 @@ function RollNetCashSummary({ picture }: { picture: RollCashPicture }) {
   const showFullPicture =
     entryPremium != null && closeCost != null && openCollect != null;
 
-  if (!showFullPicture && rollNet == null) return null;
+  if (!hasCashPictureContent(picture)) return null;
 
   return (
     <div className="space-y-2 rounded-lg border border-border/80 bg-background/40 px-2.5 py-2.5">
@@ -165,7 +227,7 @@ function RollNetCashSummary({ picture }: { picture: RollCashPicture }) {
           />
           <CashLedgerLine label="Pay to close (step 1)" amount={-closeCost} />
           <CashLedgerLine
-            label="Collect on new put (step 2)"
+            label="Collect on new leg (step 2)"
             amount={openCollect}
           />
           {netCashAfterRoll != null && (
@@ -176,20 +238,44 @@ function RollNetCashSummary({ picture }: { picture: RollCashPicture }) {
             />
           )}
         </div>
-      ) : rollNet != null ? (
-        <div className="space-y-1 text-xs">
-          <CashLedgerLine
-            label={`Roll ${rollNet >= 0 ? "credit" : "debit"} today`}
-            amount={rollNet}
-            emphasize
-          />
+      ) : (
+        <div className="space-y-1.5 text-xs">
+          {entryPremium != null && (
+            <CashLedgerLine
+              label="Original premium collected"
+              amount={entryPremium}
+            />
+          )}
+          {closeCost != null && (
+            <CashLedgerLine label="Pay to close (step 1)" amount={-closeCost} />
+          )}
+          {openCollect != null && (
+            <CashLedgerLine
+              label="Collect on new leg (step 2)"
+              amount={openCollect}
+            />
+          )}
+          {rollNet != null && (
+            <CashLedgerLine
+              label={`Roll ${rollNet >= 0 ? "credit" : "debit"} today`}
+              amount={rollNet}
+              emphasize={netCashAfterRoll == null}
+            />
+          )}
+          {netCashAfterRoll != null && (
+            <CashLedgerLine
+              label="Net cash after roll"
+              amount={netCashAfterRoll}
+              emphasize
+            />
+          )}
           {entryPremium == null && (
             <p className="text-[11px] leading-relaxed text-muted">
               Original premium not available — totals may be incomplete.
             </p>
           )}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -515,7 +601,13 @@ function RollSuggestionView({
   currentLeg: HeldOptionOutcomes["currentLeg"];
   recommended: boolean;
 }) {
-  const closeCost = currentLeg.cashPerContract ?? null;
+  const closeCost = currentLeg.cashPerContract ?? cashPicture?.closeCostPerContract ?? null;
+  const openCollect =
+    cashPicture?.openCollectPerContract ??
+    (closeCost != null && suggestion.estimatedCredit != null
+      ? Math.round((closeCost + suggestion.estimatedCredit * CONTRACT_MULTIPLIER) * 100) /
+        100
+      : null);
 
   return (
     <PathShell
@@ -559,10 +651,10 @@ function RollSuggestionView({
             {formatUsd(suggestion.suggestedStrike, { maximumFractionDigits: 2 })}{" "}
             {suggestion.side}
           </p>
-          {cashPicture?.openCollectPerContract != null && (
+          {openCollect != null && (
             <p className="text-muted">
               Collect{" "}
-              {formatUsd(cashPicture.openCollectPerContract, {
+              {formatUsd(openCollect, {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
               })}
@@ -572,7 +664,9 @@ function RollSuggestionView({
             <p className="text-muted">Delta {suggestion.suggestedDelta.toFixed(2)}</p>
           )}
         </div>
-        {cashPicture && <RollNetCashSummary picture={cashPicture} />}
+        {cashPicture && hasCashPictureContent(cashPicture) && (
+          <RollNetCashSummary picture={cashPicture} />
+        )}
       </div>
     </PathShell>
   );
@@ -647,7 +741,9 @@ function RollPathView({
           )}
         </div>
 
-        {picture && <RollNetCashSummary picture={picture} />}
+        {picture && hasCashPictureContent(picture) && (
+          <RollNetCashSummary picture={picture} />
+        )}
       </div>
     </PathShell>
   );
@@ -715,7 +811,7 @@ function PathCard({
     return <ClosePathView outcome={outcome} recommended={recommended} />;
   }
   if (path.path === "roll") {
-    const cashPicture = outcome.rollCashPicture ?? outcome.roll?.cashPicture ?? null;
+    const cashPicture = resolveRollCashPicture(outcome, roll, rollSuggestion);
     if (roll) {
       return (
         <RollPathView
