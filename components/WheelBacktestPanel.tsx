@@ -121,8 +121,9 @@ export function WheelBacktestPanel({
               Wheel backtest
             </p>
             <p className="mt-0.5 text-xs leading-relaxed text-muted">
-              Simulated CSP → assignment → covered call cycles on daily history.
-              Model-based premiums — not live historical option quotes.
+              One contract: fund the first CSP, run the wheel for the horizon, report
+              ending equity vs that starting wallet (no extra deposits unless you enable
+              maintain-one-lot). Model premiums — not historical option quotes.
             </p>
           </div>
         </div>
@@ -230,10 +231,11 @@ export function WheelBacktestPanel({
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted">
-                    Total P/L
+                  <p className="text-[10px] text-muted">Total P/L</p>
+                  <p className="text-[10px] leading-snug text-muted">
+                    Ending equity − starting wallet
                     {(result.capitalTopUpsUsd ?? 0) > 0
-                      ? " (incl. top-ups)"
+                      ? " (vs all deposits incl. top-ups)"
                       : ""}
                   </p>
                   <p
@@ -259,11 +261,20 @@ export function WheelBacktestPanel({
               </div>
             </div>
 
+            {(result.capitalTopUpsUsd ?? 0) === 0 &&
+              (result.skippedTradesInsufficientCash ?? 0) > 0 && (
+                <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-[11px] leading-relaxed text-foreground">
+                  Fixed starting wallet only — could not open a new CSP on{" "}
+                  {result.skippedTradesInsufficientCash} days when collateral exceeded
+                  cash (premiums and stock P/L still compound in the account).
+                </p>
+              )}
+
             {(result.capitalTopUpsUsd ?? 0) > 0 && (
               <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-[11px] leading-relaxed text-foreground">
-                As the stock price rose, collateral for the next 100-share CSP exceeded
-                idle cash — the model added {formatUsd(result.capitalTopUpsUsd)} in
-                top-ups so one-lot wheel could continue (see assumptions).
+                Maintain-one-lot mode added {formatUsd(result.capitalTopUpsUsd)} beyond
+                the starting wallet so CSPs could continue as the stock rose. Total P/L
+                is vs that full amount deposited, not the initial wallet alone.
               </p>
             )}
 
