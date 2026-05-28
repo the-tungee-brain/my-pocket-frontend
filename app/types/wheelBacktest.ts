@@ -17,6 +17,8 @@ export type WheelBacktestTrade = {
   expirationDate?: string | null;
   ivPercent?: number | null;
   wheelCycle?: number | null;
+  cycleMonth?: string | null;
+  collateralReservedUsd?: number | null;
   cashFlowUsd?: number | null;
   note?: string | null;
 };
@@ -72,6 +74,9 @@ export type WheelBacktestResult = {
   capitalTopUpsUsd: number;
   spotPriceAtStart: number;
   spotPriceAtEnd: number;
+  initialStockPriceUsd: number;
+  initialPutStrikeUsd: number;
+  initialCollateralUsd: number;
   wheelCycles: WheelBacktestCycle[];
   totalPremiumCollectedUsd: number;
   totalFeesUsd: number;

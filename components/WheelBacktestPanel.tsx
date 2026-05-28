@@ -190,16 +190,34 @@ export function WheelBacktestPanel({
           <div className="space-y-3">
             <div className="rounded-lg border border-accent/25 bg-accent-muted/20 px-3 py-3">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                Capital (1 contract)
+                Capital (1 contract = 100 shares)
               </p>
-              <div className="mt-2 grid gap-3 sm:grid-cols-3">
+              <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <p className="text-[10px] text-muted">Starting cash</p>
+                  <p className="text-[10px] text-muted">Stock at first trade</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    ${result.initialStockPriceUsd.toFixed(2)}/sh
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-muted">
+                    {result.startDate} (split-adjusted)
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted">Cash secured (CSP)</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {formatUsd(result.initialCollateralUsd)}
+                  </p>
+                  <p className="mt-0.5 text-[10px] leading-relaxed text-muted">
+                    Put strike ${result.initialPutStrikeUsd.toFixed(2)} × 100 sh
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted">Starting wallet</p>
                   <p className="text-sm font-semibold text-foreground">
                     {formatUsd(result.startingCashUsd)}
                   </p>
                   <p className="mt-0.5 text-[10px] leading-relaxed text-muted">
-                    CSP collateral at first trade + 5% buffer
+                    Collateral + 5% buffer (premium adds on top)
                   </p>
                 </div>
                 <div>
@@ -243,9 +261,9 @@ export function WheelBacktestPanel({
 
             {(result.capitalTopUpsUsd ?? 0) > 0 && (
               <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-[11px] leading-relaxed text-foreground">
-                SPY rose faster than idle cash — the model added{" "}
-                {formatUsd(result.capitalTopUpsUsd)} in top-ups to keep selling one
-                CSP (see assumptions). Years with $0 premium had no new option trades.
+                As the stock price rose, collateral for the next 100-share CSP exceeded
+                idle cash — the model added {formatUsd(result.capitalTopUpsUsd)} in
+                top-ups so one-lot wheel could continue (see assumptions).
               </p>
             )}
 
