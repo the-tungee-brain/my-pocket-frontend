@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
-import posthog from "posthog-js";
+import { capturePageView } from "@/lib/posthogClient";
 
 export function PostHogPageView() {
   const pathname = usePathname();
@@ -10,7 +10,7 @@ export function PostHogPageView() {
   const lastUrl = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!pathname || !posthog.__loaded) {
+    if (!pathname) {
       return;
     }
 
@@ -24,7 +24,7 @@ export function PostHogPageView() {
     }
 
     lastUrl.current = url;
-    posthog.capture("$pageview", { $current_url: url });
+    capturePageView(url);
   }, [pathname, searchParams]);
 
   return null;

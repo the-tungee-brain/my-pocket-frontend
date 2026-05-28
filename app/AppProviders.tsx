@@ -3,6 +3,7 @@
 
 import { Suspense } from "react";
 import { SessionProvider } from "next-auth/react";
+import { PostHogInit } from "@/components/PostHogInit";
 import { PostHogPageView } from "@/components/PostHogPageView";
 import { ProductAnalytics } from "@/components/ProductAnalytics";
 import { PositionsProvider } from "./Providers";
@@ -12,6 +13,7 @@ import { StrategyProvider } from "./contexts/StrategyContext";
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
+      <PostHogInit />
       <Suspense fallback={null}>
         <PostHogPageView />
       </Suspense>
