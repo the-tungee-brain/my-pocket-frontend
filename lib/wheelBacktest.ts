@@ -8,6 +8,7 @@ export type FetchWheelBacktestOptions = {
   targetDeltaMax?: number;
   dteDays?: number;
   contracts?: number;
+  maintainOneLot?: boolean;
 };
 
 export async function fetchWheelBacktest(
@@ -29,6 +30,9 @@ export async function fetchWheelBacktest(
   }
   if (options.contracts !== undefined) {
     params.set("contracts", String(options.contracts));
+  }
+  if (options.maintainOneLot !== undefined) {
+    params.set("maintainOneLot", String(options.maintainOneLot));
   }
 
   const res = await apiFetch(`/strategy/wheel-backtest?${params.toString()}`, {

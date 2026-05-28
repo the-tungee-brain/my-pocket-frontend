@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { BarChart3, Loader2 } from "lucide-react";
+import { useCallback, useMemo, useState, type ChangeEvent } from "react";
+import { BarChart3, ChevronDown, Loader2 } from "lucide-react";
 import type { WheelBacktestResult, WheelBacktestYears } from "@/app/types/wheelBacktest";
 import { formatDateMMDDYYYY } from "@/lib/dateUtils";
 import { fetchWheelBacktest } from "@/lib/wheelBacktest";
@@ -47,6 +47,9 @@ type Props = {
 
 const YEAR_OPTIONS: WheelBacktestYears[] = [5, 10, 15];
 
+const selectControlClass =
+  "h-9 w-full appearance-none rounded-lg border border-border bg-background py-0 pl-3 pr-9 text-sm text-foreground shadow-none transition-colors hover:border-accent/35 focus:border-accent/50 focus:outline-none";
+
 export function WheelBacktestPanel({
   accessToken,
   symbols,
@@ -61,6 +64,7 @@ export function WheelBacktestPanel({
   );
   const [symbol, setSymbol] = useState(choices[0] ?? "");
   const [years, setYears] = useState<WheelBacktestYears>(5);
+  const [maintainOneLot, setMaintainOneLot] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<WheelBacktestResult | null>(null);
@@ -80,6 +84,7 @@ export function WheelBacktestPanel({
         targetDeltaMax,
         dteDays,
         contracts: 1,
+        maintainOneLot,
       });
       setResult(data);
     } catch (err) {
@@ -95,6 +100,7 @@ export function WheelBacktestPanel({
     targetDeltaMin,
     targetDeltaMax,
     dteDays,
+    maintainOneLot,
   ]);
 
   if (choices.length === 0) {
@@ -122,60 +128,80 @@ export function WheelBacktestPanel({
               Wheel backtest
             </p>
             <p className="mt-0.5 text-xs leading-relaxed text-muted">
-              One contract: fund the first CSP, run the wheel for the horizon, report
-              ending equity vs that starting wallet (no extra deposits unless you enable
-              maintain-one-lot). Model premiums — not historical option quotes.
+              One contract: fund the first CSP, then keep selling one CSP at a time. If
+              the stock rises and your wallet cannot cover strike × 100, you can
+              simulate adding more cash (see below). Model premiums — not historical
+              option quotes.
             </p>
           </div>
         </div>
       </div>
 
       <div className="space-y-3 px-3 py-3">
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="flex min-w-[7rem] flex-col gap-1 text-[11px] font-medium text-muted">
-            Symbol
-            <select
+        <div className="rounded-lg border border-border/80 bg-muted-bg/40 p-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <WheelSelect
+              id="wheel-backtest-symbol"
+              label="Symbol"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value)}
-              className="h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground"
+              wrapperClassName="min-w-[7rem]"
             >
               {choices.map((ticker) => (
                 <option key={ticker} value={ticker}>
                   {ticker}
                 </option>
               ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-[11px] font-medium text-muted">
-            Horizon
-            <select
-              value={years}
-              onChange={(e) => setYears(Number(e.target.value) as WheelBacktestYears)}
-              className="h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground"
+            </WheelSelect>
+
+            <WheelSelect
+              id="wheel-backtest-years"
+              label="Horizon"
+              value={String(years)}
+              onChange={(e) =>
+                setYears(Number(e.target.value) as WheelBacktestYears)
+              }
+              wrapperClassName="min-w-[6.5rem]"
             >
               {YEAR_OPTIONS.map((y) => (
                 <option key={y} value={y}>
                   {y} years
                 </option>
               ))}
-            </select>
-          </label>
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => void run()}
-            disabled={loading || !symbol}
-            className="h-9"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                Running…
-              </>
-            ) : (
-              "Run backtest"
-            )}
-          </Button>
+            </WheelSelect>
+
+            <label
+              className="flex h-9 cursor-pointer items-center gap-2 text-[11px] text-muted"
+              title="When the next CSP needs more cash secured than you have, add the difference so the wheel can continue"
+            >
+              <input
+                type="checkbox"
+                checked={maintainOneLot}
+                onChange={(e) => setMaintainOneLot(e.target.checked)}
+                className="h-4 w-4 shrink-0 rounded border-border accent-[var(--accent)]"
+              />
+              <span className="leading-tight text-foreground">
+                Add cash if CSP needs more
+              </span>
+            </label>
+
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void run()}
+              disabled={loading || !symbol}
+              className="h-9 shrink-0 px-4"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                  Running…
+                </>
+              ) : (
+                "Run backtest"
+              )}
+            </Button>
+          </div>
         </div>
 
         <p className="text-[10px] leading-relaxed text-muted">
@@ -223,6 +249,20 @@ export function WheelBacktestPanel({
                     Collateral + 5% buffer (premium adds on top)
                   </p>
                 </div>
+                {(result.capitalTopUpsUsd ?? 0) > 0 && (
+                  <div>
+                    <p className="text-[10px] text-muted">Extra cash added later</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {formatUsd(result.capitalTopUpsUsd)}
+                    </p>
+                    <p className="mt-0.5 text-[10px] leading-relaxed text-muted">
+                      All money you put in{" "}
+                      {formatUsd(
+                        result.startingCashUsd + (result.capitalTopUpsUsd ?? 0),
+                      )}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <p className="text-[10px] text-muted">Ending equity</p>
                   <p className="text-sm font-semibold text-foreground">
@@ -254,6 +294,9 @@ export function WheelBacktestPanel({
                   {result.cagrPct != null && (
                     <p className="mt-0.5 text-[10px] text-muted">
                       CAGR {formatPct(result.cagrPct)}
+                      {(result.capitalTopUpsUsd ?? 0) > 0
+                        ? " on all money put in"
+                        : ""}
                     </p>
                   )}
                 </div>
@@ -268,18 +311,23 @@ export function WheelBacktestPanel({
                   Only {result.cspRounds} CSP round
                   {result.cspRounds === 1 ? "" : "s"} in {result.lookbackYears} years.
                   Last trade {formatDateMMDDYYYY(result.lastTradeDate)} — wallet{" "}
-                  {formatUsd(result.endingEquityUsd)} could not secure the next put
+                  {formatUsd(result.endingEquityUsd)} could not secure the next CSP
                   (cash secured ≈ strike × 100; SPY rose faster than this fixed
-                  account). {result.skippedTradesInsufficientCash} blocked period
-                  {result.skippedTradesInsufficientCash === 1 ? "" : "s"} after that.
+                  account). Turn on &quot;Add cash if CSP needs more&quot; to simulate
+                  depositing when collateral rises.
                 </p>
               )}
 
             {(result.capitalTopUpsUsd ?? 0) > 0 && (
-              <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-[11px] leading-relaxed text-foreground">
-                Maintain-one-lot mode added {formatUsd(result.capitalTopUpsUsd)} beyond
-                the starting wallet so CSPs could continue as the stock rose. Total P/L
-                is vs that full amount deposited, not the initial wallet alone.
+              <p className="rounded-md border border-border/60 bg-secondary/30 px-2.5 py-2 text-[11px] leading-relaxed text-foreground">
+                The stock outgrew your starting wallet — each new CSP needed more than{" "}
+                {formatUsd(result.startingCashUsd)} cash secured (strike × 100). The
+                run added {formatUsd(result.capitalTopUpsUsd)} in extra deposits so you
+                could keep one CSP on. Return % is on{" "}
+                {formatUsd(
+                  result.startingCashUsd + (result.capitalTopUpsUsd ?? 0),
+                )}{" "}
+                total put in, not the first deposit alone.
               </p>
             )}
 
@@ -487,6 +535,42 @@ export function WheelBacktestPanel({
         )}
       </div>
     </div>
+  );
+}
+
+function WheelSelect({
+  id,
+  label,
+  value,
+  onChange,
+  children,
+  wrapperClassName,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
+  children: React.ReactNode;
+  wrapperClassName?: string;
+}) {
+  return (
+    <label htmlFor={id} className={cn("flex flex-col gap-1.5", wrapperClassName)}>
+      <span className="text-[11px] font-medium text-muted">{label}</span>
+      <div className="relative">
+        <select
+          id={id}
+          value={value}
+          onChange={onChange}
+          className={selectControlClass}
+        >
+          {children}
+        </select>
+        <ChevronDown
+          className="pointer-events-none absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-muted"
+          aria-hidden
+        />
+      </div>
+    </label>
   );
 }
 
