@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
+import type { EtfFundsSnapshot } from "@/app/hooks/etfFundsTypes";
 import type { StreetAnalysisSnapshot } from "@/app/hooks/streetAnalysisTypes";
 
 export type FundamentalMetric = {
@@ -49,6 +50,7 @@ export type FundamentalsBlock = {
   annualFinancials?: YFinanceFinancialStatements | null;
   strength?: FinancialStrength | null;
   streetAnalysis?: StreetAnalysisSnapshot | null;
+  etfFunds?: EtfFundsSnapshot | null;
 };
 
 const fundamentalsCache = new Map<string, FundamentalsBlock>();

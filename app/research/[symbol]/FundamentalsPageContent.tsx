@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, FileSpreadsheet, Landmark, Target, Users } from "lucide-react";
+import { BarChart3, FileSpreadsheet, Landmark, PieChart, Target, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useFundamentals } from "@/app/hooks/useFundamentals";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
@@ -19,6 +19,7 @@ import {
   hasStreetOwnership,
   StreetOwnershipSection,
 } from "./StreetOwnershipSection";
+import { EtfFundsSection, hasEtfFunds } from "./EtfFundsSection";
 
 type FundamentalsPageContentProps = {
   symbol: string;
@@ -94,7 +95,20 @@ export function FundamentalsPageContent({
           </>
         }
         aside={
-          isEtf ? null : (
+          isEtf ? (
+            (isLoading || hasEtfFunds(fundamentals?.etfFunds)) && (
+              <ResearchSectionCard
+                title="Fund profile"
+                description="Composition, sectors, and cost from Yahoo Finance"
+                icon={PieChart}
+              >
+                <EtfFundsSection
+                  funds={fundamentals?.etfFunds}
+                  isLoading={isLoading}
+                />
+              </ResearchSectionCard>
+            )
+          ) : (
             <>
               <ResearchSectionCard
                 title="Wall Street analysis"
