@@ -25,7 +25,7 @@ import {
   Zap,
 } from "lucide-react";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
-import { TomcrestMark } from "@/components/brand/TomcrestMark";
+import { PublicMarketingFooter } from "@/components/PublicMarketingChrome";
 import { LandingPricingSection } from "@/components/AccountPlanCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -722,32 +722,7 @@ function FinalCTASection({
 }
 
 function LandingFooter() {
-  return (
-    <footer className="border-t border-border py-8">
-      <div className={cn(pageShellStandaloneClass, "flex flex-col items-center justify-between gap-6 sm:flex-row sm:items-start")}>
-        <div className="flex items-center gap-2.5 text-sm text-muted">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent-muted text-accent-strong">
-            <TomcrestMark className="h-3.5 w-3.5" />
-          </div>
-          <span>Tomcrest — AI portfolio intelligence</span>
-        </div>
-        <div className="max-w-md text-center sm:text-right">
-          <p className="text-xs text-muted">
-            Insights and recommendations only. Not financial advice.
-          </p>
-          <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
-            Read-only Schwab access via OAuth.{" "}
-            <a
-              href="/security"
-              className="font-medium text-accent-strong hover:underline"
-            >
-              Security & privacy
-            </a>
-          </p>
-        </div>
-      </div>
-    </footer>
-  );
+  return <PublicMarketingFooter />;
 }
 
 function SectionHeading({

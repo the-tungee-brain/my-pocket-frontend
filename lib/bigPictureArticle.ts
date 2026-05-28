@@ -37,22 +37,19 @@ export function splitIntoParagraphs(
   return paragraphs;
 }
 
+/** Thesis snapshot only — strengths/risks have dedicated sections below. */
 export function buildKeyTakeaways(summary: StockSummary): string[] {
-  const fromShort = splitIntoParagraphs(summary.short, 1).slice(0, 3);
+  const fromShort = splitIntoParagraphs(summary.short, 1).slice(0, 2);
   const points = [...fromShort];
 
-  if (summary.keyStrengths[0] && points.length < 4) {
-    points.push(summary.keyStrengths[0]);
-  }
-  if (summary.keyRisks[0] && points.length < 5) {
-    points.push(summary.keyRisks[0]);
+  if (points.length === 0) {
+    const thesisLead = splitIntoParagraphs(summary.investmentThesis, 1)[0];
+    if (thesisLead) points.push(thesisLead);
   }
 
-  if (points.length < 5) {
-    points.push(`Overall view: ${summary.sentiment}`);
-  }
+  points.push(`Overall view: ${summary.sentiment}`);
 
-  return points.slice(0, 5);
+  return points.slice(0, 3);
 }
 
 export function buildBigPictureSections(summary: StockSummary): BigPictureSection[] {
@@ -82,7 +79,6 @@ export function buildBigPictureSections(summary: StockSummary): BigPictureSectio
       id: "valuation",
       title: "Valuation context",
       paragraphs: valuationParagraphs,
-      callout: `AI sentiment: ${summary.sentiment}`,
     });
   }
 

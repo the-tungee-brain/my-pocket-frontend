@@ -22,6 +22,9 @@ export const pageContentClass = "mx-auto w-full max-w-lg";
 /** Prose-width centered copy inside a section. */
 export const pageProseClass = "mx-auto w-full max-w-2xl";
 
+/** Long-form research articles (overview big picture, business tab). */
+export const pageArticleClass = "mx-auto w-full max-w-3xl";
+
 /** Drop per-card max-width when a section sits inside {@link pageShellClass}. */
 export const pageSectionClass = "mx-0 w-full max-w-none";
 

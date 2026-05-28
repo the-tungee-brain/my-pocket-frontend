@@ -11,7 +11,7 @@ import {
 import { PageSplit } from "@/components/PageShell";
 import type { IntelligenceSignal } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
-import { pageSectionClass } from "@/lib/pageLayout";
+import { pageArticleClass, pageSectionClass } from "@/lib/pageLayout";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
@@ -62,50 +62,52 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
   }, [chatKey, symbolUpper, sendQuickAction, positionMap]);
 
   return (
-    <PageSplit
-      main={
-        <>
-          <ResearchStockChart symbol={symbol} />
-          <SymbolIntelligencePanel
-            intelligence={intelligence}
-            loading={loading}
-            error={error}
-            onRefresh={refetch}
-            onRunSignal={handleRunSignal}
-            onGoDeeper={handleGoDeeper}
-            actionContext="research"
-            researchBasePath="/research"
-            isEtf={isEtf}
-            hideRecentEvents
-            className={pageSectionClass}
-          />
-          <SummarySection symbol={symbol} className={pageSectionClass} />
-        </>
-      }
-      aside={
-        <>
-          {isEtf ? (
-            <>
-              <EtfFundsOverview symbol={symbol} className={pageSectionClass} />
-              <EtfHoldingsOverviewPreview
-                symbol={symbol}
-                stacked
-                className={pageSectionClass}
-              />
-            </>
-          ) : null}
-          {!isEtf ? (
-            <StreetAnalysisOverview symbol={symbol} className={pageSectionClass} />
-          ) : null}
-          <PerformanceSnapshot symbol={symbol} className={pageSectionClass} />
-          <IntelligenceRecentEventsPanel
-            className={pageSectionClass}
-            timeline={intelligence?.eventTimeline ?? []}
-            loading={loading}
-            limit={6}
-          />
-        </>
-      }
-    />
+    <div className="space-y-6">
+      <PageSplit
+        main={
+          <>
+            <ResearchStockChart symbol={symbol} />
+            <SymbolIntelligencePanel
+              intelligence={intelligence}
+              loading={loading}
+              error={error}
+              onRefresh={refetch}
+              onRunSignal={handleRunSignal}
+              onGoDeeper={handleGoDeeper}
+              actionContext="research"
+              researchBasePath="/research"
+              isEtf={isEtf}
+              hideRecentEvents
+              className={pageSectionClass}
+            />
+          </>
+        }
+        aside={
+          <>
+            {isEtf ? (
+              <>
+                <EtfFundsOverview symbol={symbol} className={pageSectionClass} />
+                <EtfHoldingsOverviewPreview
+                  symbol={symbol}
+                  stacked
+                  className={pageSectionClass}
+                />
+              </>
+            ) : null}
+            {!isEtf ? (
+              <StreetAnalysisOverview symbol={symbol} className={pageSectionClass} />
+            ) : null}
+            <PerformanceSnapshot symbol={symbol} className={pageSectionClass} />
+            <IntelligenceRecentEventsPanel
+              className={pageSectionClass}
+              timeline={intelligence?.eventTimeline ?? []}
+              loading={loading}
+              limit={6}
+            />
+          </>
+        }
+      />
+      <SummarySection symbol={symbol} className={pageArticleClass} />
+    </div>
   );
 }

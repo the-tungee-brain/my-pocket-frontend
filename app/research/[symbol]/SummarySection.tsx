@@ -8,7 +8,7 @@ import { BigPictureArticle } from "@/components/BigPictureArticle";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { pageSectionClass } from "@/lib/pageLayout";
+import { pageArticleClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 
 type SummarySectionProps = {
@@ -28,7 +28,7 @@ function BigPictureShell({
 
 export function SummarySection({
   symbol,
-  className = pageSectionClass,
+  className = pageArticleClass,
 }: SummarySectionProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;

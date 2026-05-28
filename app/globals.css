@@ -133,10 +133,9 @@ body {
   color: var(--muted);
 }
 
-/* Research → Overview “Big picture” (same column width as intelligence) */
+/* Research → Overview “Big picture” (article width via pageArticleClass) */
 .big-picture-article {
   width: 100%;
-  max-width: none;
   text-align: left;
 }
 
@@ -462,6 +461,149 @@ body {
 
 .business-tab__details-summary::-webkit-details-marker {
   display: none;
+}
+
+.business-tab__block {
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--secondary) 80%, transparent);
+  padding: 0.85rem 1rem;
+}
+
+.business-tab__block-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.business-tab__at-a-glance-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.business-tab__at-a-glance-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.business-tab__at-a-glance-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--foreground);
+}
+
+.business-tab__at-a-glance-dot {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.business-tab__outlook {
+  scroll-margin-top: 7rem;
+}
+
+.business-tab__segments-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.business-tab__segments {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.business-tab__segment-chip {
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--secondary) 85%, transparent);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--foreground);
+}
+
+.business-tab__p {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--foreground);
+}
+
+.business-tab__p:last-child {
+  margin-bottom: 0;
+}
+
+.business-tab__expand-btn {
+  margin-top: 0.35rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+  cursor: pointer;
+}
+
+.business-tab__expand-btn:hover {
+  text-decoration: underline;
+}
+
+.business-tab__chapter {
+  scroll-margin-top: 7rem;
+}
+
+.business-tab__chapter-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+.business-tab__chapter-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.business-tab__callout {
+  margin-top: 0.15rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--border));
+  border-left-width: 4px;
+  border-left-color: var(--accent);
+  background: color-mix(in oklab, var(--accent-muted) 40%, transparent);
+  padding: 0.85rem 1rem;
+}
+
+.business-tab__callout-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent-strong);
 }
 
 .scrollbar-dark {

@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { Clock3, Mail } from "lucide-react";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
+import { PublicMarketingFooter } from "@/components/PublicMarketingChrome";
 import { pageContentClass, pageShellStandaloneClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 
 export default function WaitlistPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/2 h-130 w-180 -translate-x-1/2 rounded-full bg-accent/8 blur-3xl" />
       </div>
@@ -66,6 +67,7 @@ export default function WaitlistPage() {
           </div>
         </div>
       </main>
+      <PublicMarketingFooter />
     </div>
   );
 }
