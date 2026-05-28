@@ -66,7 +66,18 @@ export const MARKET_CAP_PRESETS = [
   { label: "$50B+", value: 50_000_000_000 },
 ] as const;
 
-export const DEFAULT_PAGE_SIZE = 30;
+export const PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25] as const;
+
+export type PageSizeOption = (typeof PAGE_SIZE_OPTIONS)[number];
+
+export const DEFAULT_PAGE_SIZE: PageSizeOption = 10;
+
+export function normalizePageSize(value: number): PageSizeOption {
+  if (PAGE_SIZE_OPTIONS.includes(value as PageSizeOption)) {
+    return value as PageSizeOption;
+  }
+  return DEFAULT_PAGE_SIZE;
+}
 
 export function expectedRowsForPage(
   page: number,

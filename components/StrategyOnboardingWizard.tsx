@@ -135,6 +135,7 @@ export function StrategyOnboardingWizard({
     page: screenerPage,
     pageSize: screenerPageSize,
     setPage: setScreenerPage,
+    setPageSize: setScreenerPageSize,
   } = useStrategyStockScreener({
     accessToken,
     strategy: selectedStrategy,
@@ -418,6 +419,7 @@ export function StrategyOnboardingWizard({
                     totalPages={screenerResult?.totalPages ?? 1}
                     totalCount={screenerResult?.totalCount ?? 0}
                     onPageChange={setScreenerPage}
+                    onPageSizeChange={setScreenerPageSize}
                     onRun={() => void runScreen({ force: true, syncProfile: true })}
                     onAddSymbol={(symbol) => setEtfPrimary(symbol.toUpperCase())}
                     selectedSymbols={[etfPrimary, etfBond].filter(Boolean)}
@@ -484,6 +486,7 @@ export function StrategyOnboardingWizard({
                     totalPages={screenerResult?.totalPages ?? 1}
                     totalCount={screenerResult?.totalCount ?? 0}
                     onPageChange={setScreenerPage}
+                    onPageSizeChange={setScreenerPageSize}
                     onRun={() => void runScreen({ force: true, syncProfile: true })}
                     onAddSymbol={addSymbol}
                     selectedSymbols={symbols}
@@ -607,6 +610,7 @@ export function StrategyOnboardingWizard({
                       totalPages={screenerResult?.totalPages ?? 1}
                       totalCount={screenerResult?.totalCount ?? 0}
                       onPageChange={setScreenerPage}
+                    onPageSizeChange={setScreenerPageSize}
                       onRun={() => void runScreen({ force: true, syncProfile: true })}
                       onAddSymbol={addSymbol}
                       selectedSymbols={symbols}

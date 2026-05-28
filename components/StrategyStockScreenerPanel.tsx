@@ -20,6 +20,7 @@ import type {
 import { Button } from "@/components/ui/Button";
 import {
   ALL_SCREENER_SECTORS,
+  PAGE_SIZE_OPTIONS,
   DEFAULT_PAGE_SIZE,
   defaultScreenerFiltersForStrategy,
   expectedRowsForPage,
@@ -57,6 +58,7 @@ type Props = {
   totalPages?: number;
   totalCount?: number;
   onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   onRun: () => void;
   onAddSymbol: (symbol: string) => void;
   selectedSymbols?: string[];
@@ -88,6 +90,7 @@ export function StrategyStockScreenerPanel({
   totalPages = 1,
   totalCount = 0,
   onPageChange,
+  onPageSizeChange,
   onRun,
   onAddSymbol,
   selectedSymbols = [],
@@ -388,12 +391,14 @@ export function StrategyStockScreenerPanel({
             </p>
           )}
 
-          {totalPages > 1 && onPageChange && (
+          {(onPageSizeChange || (totalPages > 1 && onPageChange)) && (
             <Pagination
               page={page}
+              pageSize={pageSize}
               totalPages={totalPages}
               totalCount={totalCount}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
               disabled={tableBusy}
             />
           )}
@@ -549,18 +554,23 @@ function QuoteTableRow({
 
 function Pagination({
   page,
+  pageSize,
   totalPages,
   totalCount,
   onPageChange,
+  onPageSizeChange,
   disabled,
 }: {
   page: number;
+  pageSize: number;
   totalPages: number;
   totalCount: number;
-  onPageChange: (page: number) => void;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   disabled?: boolean;
 }) {
   const pages = useMemo(() => {
+    if (totalPages <= 1) return [1];
     const windowSize = 5;
     let start = Math.max(1, page - Math.floor(windowSize / 2));
     const end = Math.min(totalPages, start + windowSize - 1);
@@ -569,46 +579,74 @@ function Pagination({
   }, [page, totalPages]);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
-      <p className="text-[11px] text-muted">
-        Page {page} of {totalPages}
-        {totalCount > 0 ? ` · ${totalCount.toLocaleString()} matches` : ""}
-      </p>
-      <div className="flex items-center gap-1">
-        <Button
-          size="xs"
-          variant="outline"
-          disabled={disabled || page <= 1}
-          onClick={() => onPageChange(page - 1)}
-        >
-          <ChevronLeft className="h-3 w-3" />
-        </Button>
-        {pages.map((pageNumber) => (
-          <button
-            key={pageNumber}
-            type="button"
-            disabled={disabled}
-            onClick={() => onPageChange(pageNumber)}
-            className={cn(
-              "min-w-7 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
-              pageNumber === page
-                ? "bg-accent-muted/50 text-accent-strong"
-                : "text-muted hover:bg-muted-bg/60 hover:text-foreground",
-              disabled && "cursor-not-allowed opacity-60",
-            )}
-          >
-            {pageNumber}
-          </button>
-        ))}
-        <Button
-          size="xs"
-          variant="outline"
-          disabled={disabled || page >= totalPages}
-          onClick={() => onPageChange(page + 1)}
-        >
-          <ChevronRight className="h-3 w-3" />
-        </Button>
+    <div className="flex flex-col gap-3 border-t border-border/60 pt-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        {onPageSizeChange && (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted">Rows</span>
+            <div className="flex items-center gap-1">
+              {PAGE_SIZE_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onPageSizeChange(option)}
+                  className={cn(
+                    "min-w-7 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                    option === pageSize
+                      ? "bg-accent-muted/50 text-accent-strong"
+                      : "text-muted hover:bg-muted-bg/60 hover:text-foreground",
+                    disabled && "cursor-not-allowed opacity-60",
+                  )}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <p className="text-[11px] text-muted">
+          Page {page} of {totalPages}
+          {totalCount > 0 ? ` · ${totalCount.toLocaleString()} matches` : ""}
+        </p>
       </div>
+      {totalPages > 1 && onPageChange && (
+        <div className="flex items-center gap-1">
+          <Button
+            size="xs"
+            variant="outline"
+            disabled={disabled || page <= 1}
+            onClick={() => onPageChange(page - 1)}
+          >
+            <ChevronLeft className="h-3 w-3" />
+          </Button>
+          {pages.map((pageNumber) => (
+            <button
+              key={pageNumber}
+              type="button"
+              disabled={disabled}
+              onClick={() => onPageChange(pageNumber)}
+              className={cn(
+                "min-w-7 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                pageNumber === page
+                  ? "bg-accent-muted/50 text-accent-strong"
+                  : "text-muted hover:bg-muted-bg/60 hover:text-foreground",
+                disabled && "cursor-not-allowed opacity-60",
+              )}
+            >
+              {pageNumber}
+            </button>
+          ))}
+          <Button
+            size="xs"
+            variant="outline"
+            disabled={disabled || page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+          >
+            <ChevronRight className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -131,6 +131,7 @@ export function StrategyProfileEditor({
     page: screenerPage,
     pageSize: screenerPageSize,
     setPage: setScreenerPage,
+    setPageSize: setScreenerPageSize,
   } = useStrategyStockScreener({
     accessToken,
     strategy: values.primaryStrategy,
@@ -203,6 +204,7 @@ export function StrategyProfileEditor({
         totalPages={screenerResult?.totalPages ?? 1}
         totalCount={screenerResult?.totalCount ?? 0}
         onPageChange={setScreenerPage}
+        onPageSizeChange={setScreenerPageSize}
         onRun={() => void runScreen({ force: true, syncProfile: true })}
         onAddSymbol={(symbol) => patch({ etfPrimary: symbol.toUpperCase() })}
         selectedSymbols={[values.etfPrimary, values.etfBond].filter(Boolean)}
@@ -228,6 +230,7 @@ export function StrategyProfileEditor({
         totalPages={screenerResult?.totalPages ?? 1}
         totalCount={screenerResult?.totalCount ?? 0}
         onPageChange={setScreenerPage}
+        onPageSizeChange={setScreenerPageSize}
         onRun={() => void runScreen({ force: true, syncProfile: true })}
         onAddSymbol={addSymbol}
         selectedSymbols={values.symbols}

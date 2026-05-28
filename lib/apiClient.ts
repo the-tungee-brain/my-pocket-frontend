@@ -21,6 +21,7 @@ import type {
   UserInvestmentProfileUpdate,
   UserStrategyJourney,
 } from "@/app/types/strategy";
+import { DEFAULT_PAGE_SIZE } from "@/lib/strategyScreener";
 import type {
   ChatSessionMessagesResponse,
   ChatSessionsResponse,
@@ -560,7 +561,7 @@ export async function fetchStrategyStockScreener(
   strategy: InvestmentStrategy,
   filters: StrategyScreenerFilters,
   page = 1,
-  pageSize = 30,
+  pageSize = DEFAULT_PAGE_SIZE,
 ): Promise<StrategyStockScreenerResult> {
   const params = new URLSearchParams({
     page: String(page),

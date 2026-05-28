@@ -10,6 +10,7 @@ import type {
 } from "@/app/types/strategy";
 import {
   DEFAULT_PAGE_SIZE,
+  normalizePageSize,
   screenerFiltersFingerprint,
 } from "@/lib/strategyScreener";
 
@@ -18,7 +19,7 @@ type UseStrategyStockScreenerOptions = {
   strategy: InvestmentStrategy | null;
   enabled?: boolean;
   filters?: StrategyScreenerFilters;
-  pageSize?: number;
+  initialPageSize?: number;
   autoRun?: boolean;
   prepareProfile?: () => Promise<void>;
   prepareOnAutoFetch?: boolean;
@@ -47,7 +48,7 @@ export function useStrategyStockScreener({
   strategy,
   enabled = true,
   filters,
-  pageSize = DEFAULT_PAGE_SIZE,
+  initialPageSize = DEFAULT_PAGE_SIZE,
   autoRun = true,
   prepareProfile,
   prepareOnAutoFetch = false,
@@ -58,6 +59,9 @@ export function useStrategyStockScreener({
   const [error, setError] = useState<string | null>(null);
   const [hasRun, setHasRun] = useState(false);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(() =>
+    normalizePageSize(initialPageSize),
+  );
   const [fetchedFilterKey, setFetchedFilterKey] = useState<string | null>(null);
 
   const debouncedFilters = useDebouncedValue(filters, 400);
@@ -66,6 +70,9 @@ export function useStrategyStockScreener({
 
   const pageRef = useRef(page);
   pageRef.current = page;
+
+  const pageSizeRef = useRef(pageSize);
+  pageSizeRef.current = pageSize;
 
   const prepareRef = useRef(prepareProfile);
   prepareRef.current = prepareProfile;
@@ -82,7 +89,13 @@ export function useStrategyStockScreener({
 
       const activeFilters = filtersRef.current;
       const activePage = opts?.page ?? pageRef.current;
-      const cacheKey = getCacheKey(strategy, activeFilters, activePage, pageSize);
+      const activePageSize = pageSizeRef.current;
+      const cacheKey = getCacheKey(
+        strategy,
+        activeFilters,
+        activePage,
+        activePageSize,
+      );
       const requestSeq = ++requestSeqRef.current;
 
       if (!opts?.force) {
@@ -115,7 +128,7 @@ export function useStrategyStockScreener({
           strategy,
           activeFilters,
           activePage,
-          pageSize,
+          activePageSize,
         );
 
         if (requestSeq !== requestSeqRef.current) {
@@ -145,12 +158,12 @@ export function useStrategyStockScreener({
         }
       }
     },
-    [accessToken, strategy, enabled, pageSize],
+    [accessToken, strategy, enabled],
   );
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedFilters, strategy]);
+  }, [debouncedFilters, strategy, pageSize]);
 
   useEffect(() => {
     if (!accessToken || !strategy || !enabled || !autoRun || !debouncedFilters) {
@@ -214,6 +227,11 @@ export function useStrategyStockScreener({
     setPage(nextPage);
   }, []);
 
+  const setPageSize = useCallback((nextPageSize: number) => {
+    setPageSizeState(normalizePageSize(nextPageSize));
+    setPage(1);
+  }, []);
+
   return {
     result,
     loading: initialLoading || isFetching,
@@ -225,6 +243,7 @@ export function useStrategyStockScreener({
     page,
     pageSize,
     setPage: setPageAndFetch,
+    setPageSize,
     runScreen,
   };
 }
