@@ -66,6 +66,7 @@ export type StreetAnalysisSnapshot = {
   estimateRevisionHeadline?: string | null;
   estimateDriftHeadline?: string | null;
   growthContextHeadline?: string | null;
+  ratingTrendHeadline?: string | null;
   recentRatingActions?: AnalystRatingAction[];
   ownership?: OwnershipSnapshot | null;
 };

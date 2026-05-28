@@ -410,7 +410,11 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
           <BeatBadge label="pending" />
         </div>
         <MetricsGrid event={data.upcoming} />
-        <StreetEarningsEstimates street={data.streetAnalysis} embedded />
+        <StreetEarningsEstimates
+          street={data.streetAnalysis}
+          embedded
+          defaultEstimatePeriod="0q"
+        />
       </div>
     </ResearchSectionCard>
   ) : data.streetAnalysis ? (

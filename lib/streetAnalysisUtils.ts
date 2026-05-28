@@ -59,6 +59,7 @@ export function hasStreetAnalysis(
       street.estimateRevisionHeadline ||
       street.estimateDriftHeadline ||
       street.growthContextHeadline ||
+      street.ratingTrendHeadline ||
       (street.recentRatingActions?.length ?? 0) > 0 ||
       hasOwnership(street.ownership),
   );

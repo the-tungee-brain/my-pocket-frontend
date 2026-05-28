@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Target } from "lucide-react";
 import type {
   AnalystRatingAction,
@@ -258,6 +258,10 @@ export function StreetAnalysisSection({
         <EstimateInsight headline={street.growthContextHeadline} />
       ) : null}
 
+      {!compact && street.ratingTrendHeadline ? (
+        <EstimateInsight headline={street.ratingTrendHeadline} />
+      ) : null}
+
       {!compact && street.recentRatingActions?.length ? (
         <RecentRatingActions actions={street.recentRatingActions} />
       ) : null}
@@ -297,9 +301,12 @@ function EstimateMetricCard({
 export function StreetEarningsEstimates({
   street,
   embedded = true,
+  defaultEstimatePeriod,
 }: {
   street: StreetAnalysisSnapshot | null | undefined;
   embedded?: boolean;
+  /** Prefer 0q when viewing upcoming earnings for the current quarter. */
+  defaultEstimatePeriod?: EstimatePeriodKey;
 }) {
   const availablePeriods = useMemo(() => {
     if (!street) return [] as EstimatePeriodKey[];
@@ -310,11 +317,27 @@ export function StreetEarningsEstimates({
     );
   }, [street]);
 
-  const [period, setPeriod] = useState<EstimatePeriodKey>("+1q");
+  const resolvedDefault = useMemo(() => {
+    if (
+      defaultEstimatePeriod &&
+      availablePeriods.includes(defaultEstimatePeriod)
+    ) {
+      return defaultEstimatePeriod;
+    }
+    if (availablePeriods.includes("0q")) return "0q" as EstimatePeriodKey;
+    if (availablePeriods.includes("+1q")) return "+1q" as EstimatePeriodKey;
+    return availablePeriods[0] ?? ("+1q" as EstimatePeriodKey);
+  }, [availablePeriods, defaultEstimatePeriod]);
+
+  const [period, setPeriod] = useState<EstimatePeriodKey>(resolvedDefault);
+
+  useEffect(() => {
+    setPeriod(resolvedDefault);
+  }, [resolvedDefault]);
 
   const activePeriod = availablePeriods.includes(period)
     ? period
-    : (availablePeriods[0] ?? "+1q");
+    : resolvedDefault;
 
   if (!hasStreetAnalysis(street)) return null;
 
@@ -332,10 +355,16 @@ export function StreetEarningsEstimates({
     !hasEstimates &&
     !street.estimateRevisionHeadline &&
     !street.estimateDriftHeadline &&
-    !street.growthContextHeadline
+    !street.growthContextHeadline &&
+    !street.ratingTrendHeadline
   ) {
     return null;
   }
+
+  const estimatePeriodHint =
+    defaultEstimatePeriod === "0q" && activePeriod === "0q"
+      ? "Estimates for the upcoming report quarter"
+      : null;
 
   return (
     <div
@@ -356,7 +385,13 @@ export function StreetEarningsEstimates({
       </div>
 
       {hasEstimates ? (
-        <p className="text-[11px] text-muted">{periodLabel}</p>
+        <p className="text-[11px] text-muted">
+          {estimatePeriodHint ?? periodLabel}
+        </p>
+      ) : null}
+
+      {street.ratingTrendHeadline ? (
+        <EstimateInsight headline={street.ratingTrendHeadline} />
       ) : null}
 
       {street.estimateDriftHeadline ? (

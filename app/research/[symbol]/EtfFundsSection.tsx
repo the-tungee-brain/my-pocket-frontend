@@ -1,9 +1,10 @@
 "use client";
 
-import { PieChart } from "lucide-react";
+import Link from "next/link";
 import type { EtfFundsSnapshot, FundWeighting } from "@/app/hooks/etfFundsTypes";
 import { formatExpenseRatio } from "@/lib/etfHoldings";
 import { formatCompactNumber } from "@/lib/streetAnalysisUtils";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 
 const YAHOO_FUNDS_ATTRIBUTION = "Fund profile from Yahoo Finance";
 
@@ -179,7 +180,12 @@ export function EtfFundsSection({ funds, isLoading }: EtfFundsSectionProps) {
               >
                 <span className="min-w-0 truncate text-foreground">
                   {row.symbol ? (
-                    <span className="font-mono font-semibold">{row.symbol}</span>
+                    <Link
+                      href={symbolHubPath(row.symbol, "overview")}
+                      className="font-mono font-semibold text-accent-strong transition hover:underline"
+                    >
+                      {row.symbol}
+                    </Link>
                   ) : null}
                   {row.symbol ? (
                     <span className="text-muted"> · {row.name}</span>
