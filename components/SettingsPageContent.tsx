@@ -14,6 +14,7 @@ import {
   LogOut,
   RefreshCw,
   Shield,
+  Trash2,
   TrendingUp,
 } from "lucide-react";
 import { SchwabConnectionSettings } from "@/components/SchwabConnectionSettings";
@@ -25,6 +26,7 @@ import {
 import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { useAccountPlan } from "@/app/hooks/useAccountPlan";
+import { useDeleteAccount } from "@/app/hooks/useDeleteAccount";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -83,6 +85,13 @@ export function SettingsPageContent() {
 
   const { authorized, loading: schwabLoading } = useSchwabStatus();
   const { plan, loading: planLoading } = useAccountPlan(accessToken);
+  const {
+    deleteAccount,
+    deleting: deletingAccount,
+    deleteError,
+    clearDeleteError,
+  } = useDeleteAccount();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     const tab = parseSettingsTab(searchParams.get("tab"));
@@ -278,6 +287,69 @@ export function SettingsPageContent() {
                 Log out
               </Button>
             </div>
+            </CardBody>
+          </Card>
+
+          <Card surface="subtle" className="mx-0 border-destructive/30">
+            <CardBody className="p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    Delete account
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted">
+                    Permanently remove your Tomcrest account, Schwab connection,
+                    chat history, strategy settings, and portfolio data we store.
+                    This cannot be undone.
+                  </p>
+
+                  {deleteError && (
+                    <p className="mt-3 text-sm text-destructive">{deleteError}</p>
+                  )}
+
+                  {!confirmDelete ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="mt-4"
+                      onClick={() => {
+                        clearDeleteError();
+                        setConfirmDelete(true);
+                      }}
+                    >
+                      Delete account
+                    </Button>
+                  ) : (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        disabled={deletingAccount}
+                        onClick={() => void deleteAccount()}
+                      >
+                        {deletingAccount ? "Deleting…" : "Yes, delete my account"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={deletingAccount}
+                        onClick={() => {
+                          clearDeleteError();
+                          setConfirmDelete(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </CardBody>
           </Card>
         </section>

@@ -624,4 +624,13 @@ export async function fetchAccountPlan(
   return res.json() as Promise<AccountPlan>;
 }
 
+export async function deleteAccount(accessToken: string): Promise<void> {
+  const res = await apiFetch("/account", {
+    method: "DELETE",
+    accessToken,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to delete account (${res.status})`);
+  }
+}
 
