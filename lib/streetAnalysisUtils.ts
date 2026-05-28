@@ -170,11 +170,66 @@ export function formatPctHeld(value: number | null | undefined): string {
   return `${value.toFixed(2)}%`;
 }
 
-export function formatHolderShares(value: number | null | undefined): string {
+function trimTrailingDecimalZeros(formatted: string): string {
+  if (!formatted.includes(".")) return formatted;
+  let result = formatted.replace(/0+$/, "");
+  if (result.endsWith(".")) {
+    result = result.slice(0, -1);
+  }
+  return result;
+}
+
+function formatShareMagnitude(
+  abs: number,
+  divisor: number,
+  suffix: string,
+  sign: string,
+  unit: string,
+): string {
+  return `${sign}${trimTrailingDecimalZeros((abs / divisor).toFixed(2))}${suffix}${unit}`;
+}
+
+/** Share counts with up to 2 decimal places; T/B/M/K abbreviations below 1,000 use grouping. */
+export function formatShareCount(
+  value: number | null | undefined,
+  options?: { unit?: string },
+): string {
   if (value == null || Number.isNaN(value)) return "";
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M sh`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K sh`;
-  return `${value.toLocaleString()} sh`;
+
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  const unit = options?.unit ? ` ${options.unit}` : "";
+
+  if (abs >= 1_000_000_000_000) {
+    return formatShareMagnitude(abs, 1_000_000_000_000, "T", sign, unit);
+  }
+  if (abs >= 1_000_000_000) {
+    return formatShareMagnitude(abs, 1_000_000_000, "B", sign, unit);
+  }
+  if (abs >= 1_000_000) {
+    return formatShareMagnitude(abs, 1_000_000, "M", sign, unit);
+  }
+  if (abs >= 1_000) {
+    return formatShareMagnitude(abs, 1_000, "K", sign, unit);
+  }
+
+  const localized = trimTrailingDecimalZeros(
+    abs.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }),
+  );
+  return `${sign}${localized}${unit}`;
+}
+
+export function formatHolderShares(value: number | null | undefined): string {
+  return formatShareCount(value);
+}
+
+export function formatInstitutionalHolderShares(
+  value: number | null | undefined,
+): string {
+  return formatShareCount(value, { unit: "shares" });
 }
 
 export function formatRatingActionDate(isoDate: string): string {

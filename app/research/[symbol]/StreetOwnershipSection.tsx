@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Users } from "lucide-react";
 import type { OwnershipSnapshot, StreetAnalysisSnapshot } from "@/app/hooks/streetAnalysisTypes";
 import {
   formatHolderShares,
+  formatInstitutionalHolderShares,
   yahooEstimatesAttribution,
   formatCompactNumber,
   formatPctHeld,
@@ -11,6 +13,12 @@ import {
   hasOwnership,
 } from "@/lib/streetAnalysisUtils";
 import { cn } from "@/lib/utils";
+
+const INSIDER_TRANSACTION_PREVIEW = 5;
+
+/** Fixed columns: date · insider · transaction · shares · value */
+const INSIDER_TX_GRID =
+  "grid grid-cols-[6.25rem_minmax(0,1fr)_minmax(0,1.15fr)_4.25rem_4.75rem] items-start gap-x-2 gap-y-0.5";
 
 type StreetOwnershipSectionProps = {
   ownership: OwnershipSnapshot | null | undefined;
@@ -46,6 +54,12 @@ export function StreetOwnershipSection({
 
   const holders = ownership?.topInstitutional ?? [];
   const insiders = ownership?.recentInsiderTransactions ?? [];
+  const [showAllInsiderTx, setShowAllInsiderTx] = useState(false);
+  const hasMoreInsiderTx = insiders.length > INSIDER_TRANSACTION_PREVIEW;
+  const visibleInsiderTx =
+    showAllInsiderTx || !hasMoreInsiderTx
+      ? insiders
+      : insiders.slice(0, INSIDER_TRANSACTION_PREVIEW);
 
   return (
     <div className="space-y-4">
@@ -86,7 +100,7 @@ export function StreetOwnershipSection({
                 <span className="shrink-0 tabular-nums text-muted">
                   {row.pctHeld != null ? formatPctHeld(row.pctHeld) : ""}
                   {row.shares != null
-                    ? ` · ${formatHolderShares(row.shares)}`
+                    ? ` · ${formatInstitutionalHolderShares(row.shares)}`
                     : ""}
                 </span>
               </li>
@@ -100,41 +114,62 @@ export function StreetOwnershipSection({
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
             Insider transactions ({insiders.length})
           </p>
-          <ul
+          <div
             className={cn(
-              "space-y-1.5",
-              insiders.length > 12 && "max-h-80 overflow-y-auto pr-1",
+              "space-y-1.5 text-xs leading-snug",
+              showAllInsiderTx &&
+                insiders.length > 12 &&
+                "max-h-80 overflow-y-auto pr-1",
             )}
           >
-            {insiders.map((row, index) => (
-              <li
-                key={`${row.date}-${row.insider}-${row.transaction ?? ""}-${index}`}
-                className="flex gap-2 text-xs leading-snug"
+              <div
+                className={cn(
+                  INSIDER_TX_GRID,
+                  "border-b border-border pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted",
+                )}
               >
-                <span className="shrink-0 tabular-nums text-muted">
-                  {formatRatingActionDate(row.date)}
-                </span>
-                <span className="min-w-0 text-foreground">
-                  <span className="font-medium">{row.insider}</span>
-                  {row.transaction ? (
-                    <span className={cn("text-muted")}> · {row.transaction}</span>
-                  ) : null}
-                  {row.shares != null ? (
-                    <span className="text-muted">
-                      {" "}
-                      · {formatHolderShares(row.shares)}
+                <span>Date</span>
+                <span>Insider</span>
+                <span>Transaction</span>
+                <span className="text-right">Shares</span>
+                <span className="text-right">Value</span>
+              </div>
+              <ul className="space-y-1.5">
+                {visibleInsiderTx.map((row, index) => (
+                  <li
+                    key={`${row.date}-${row.insider}-${row.transaction ?? ""}-${index}`}
+                    className={INSIDER_TX_GRID}
+                  >
+                    <span className="shrink-0 tabular-nums text-muted">
+                      {formatRatingActionDate(row.date)}
                     </span>
-                  ) : null}
-                  {row.value != null ? (
-                    <span className="text-muted">
-                      {" "}
-                      · {formatCompactNumber(row.value)}
+                    <span className="min-w-0 break-words font-medium text-foreground">
+                      {row.insider}
                     </span>
-                  ) : null}
-                </span>
-              </li>
-            ))}
-          </ul>
+                    <span className="min-w-0 break-words text-muted">
+                      {row.transaction ?? "—"}
+                    </span>
+                    <span className="text-right tabular-nums text-muted">
+                      {row.shares != null ? formatHolderShares(row.shares) : "—"}
+                    </span>
+                    <span className="text-right tabular-nums text-muted">
+                      {row.value != null ? formatCompactNumber(row.value) : "—"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+          </div>
+          {hasMoreInsiderTx ? (
+            <button
+              type="button"
+              onClick={() => setShowAllInsiderTx((open) => !open)}
+              className="text-[11px] font-medium text-accent-strong transition hover:underline"
+            >
+              {showAllInsiderTx
+                ? "Show fewer"
+                : `View all ${insiders.length} transactions`}
+            </button>
+          ) : null}
         </div>
       ) : null}
 

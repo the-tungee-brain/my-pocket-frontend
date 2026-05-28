@@ -34,6 +34,47 @@ export function FundamentalsPageContent({
     accessToken: session?.accessToken,
   });
 
+  const keyMetricsCard = (
+    <ResearchSectionCard
+      title={isEtf ? "Fund metrics" : "Key metrics"}
+      description={
+        isEtf
+          ? "Expense ratio, dividend yield, and other ETF-specific metrics"
+          : "Valuation, profitability, and balance sheet highlights"
+      }
+      icon={BarChart3}
+    >
+      {isLoading ? (
+        <KeyMetricsGridSkeleton />
+      ) : fundamentals ? (
+        <KeyMetricsGrid metrics={fundamentals.metrics} />
+      ) : (
+        <EmptyState
+          icon={BarChart3}
+          title="Metrics unavailable"
+          description="Fundamental metrics aren't available for this symbol right now."
+          variant="solid"
+          className="py-4"
+        />
+      )}
+    </ResearchSectionCard>
+  );
+
+  const ownershipCard =
+    isLoading || hasStreetOwnership(fundamentals?.streetAnalysis) ? (
+      <ResearchSectionCard
+        title="Ownership & insiders"
+        description="Institutional holders and insider transaction history"
+        icon={Users}
+      >
+        <StreetOwnershipSection
+          ownership={fundamentals?.streetAnalysis?.ownership}
+          dataAsOf={fundamentals?.streetAnalysis?.dataAsOf}
+          isLoading={isLoading}
+        />
+      </ResearchSectionCard>
+    ) : null;
+
   return (
     <div className="space-y-4">
       {error && <ErrorBanner message={error} />}
@@ -69,29 +110,7 @@ export function FundamentalsPageContent({
               )}
             </ResearchSectionCard>
 
-            <ResearchSectionCard
-              title={isEtf ? "Fund metrics" : "Key metrics"}
-              description={
-                isEtf
-                  ? "Expense ratio, dividend yield, and other ETF-specific metrics"
-                  : "Valuation, profitability, and balance sheet highlights"
-              }
-              icon={BarChart3}
-            >
-              {isLoading ? (
-                <KeyMetricsGridSkeleton />
-              ) : fundamentals ? (
-                <KeyMetricsGrid metrics={fundamentals.metrics} />
-              ) : (
-                <EmptyState
-                  icon={BarChart3}
-                  title="Metrics unavailable"
-                  description="Fundamental metrics aren't available for this symbol right now."
-                  variant="solid"
-                  className="py-4"
-                />
-              )}
-            </ResearchSectionCard>
+            {isEtf ? keyMetricsCard : ownershipCard}
           </>
         }
         aside={
@@ -120,19 +139,7 @@ export function FundamentalsPageContent({
                   isLoading={isLoading}
                 />
               </ResearchSectionCard>
-              {(isLoading || hasStreetOwnership(fundamentals?.streetAnalysis)) && (
-                <ResearchSectionCard
-                  title="Ownership & insiders"
-                  description="Institutional holders and insider transaction history"
-                  icon={Users}
-                >
-                  <StreetOwnershipSection
-                    ownership={fundamentals?.streetAnalysis?.ownership}
-                    dataAsOf={fundamentals?.streetAnalysis?.dataAsOf}
-                    isLoading={isLoading}
-                  />
-                </ResearchSectionCard>
-              )}
+              {keyMetricsCard}
               <ResearchSectionCard
                 title="SEC company profile"
                 description="Official registrant details from EDGAR"

@@ -162,9 +162,9 @@ function RecentRatingActions({ actions }: { actions: AnalystRatingAction[] }) {
   );
 }
 
-export function StreetAnalysisSkeleton({ compact = false }: { compact?: boolean }) {
+export function StreetAnalysisSkeleton() {
   return (
-    <div className={cn("space-y-3", compact ? "" : "rounded-xl border border-border bg-secondary/40 p-4")}>
+    <div className="space-y-3">
       <div className="h-4 w-32 animate-pulse rounded bg-muted-bg" />
       <div className="h-16 animate-pulse rounded-lg bg-muted-bg" />
       <div className="h-10 animate-pulse rounded-lg bg-muted-bg" />
@@ -178,7 +178,7 @@ export function StreetAnalysisSection({
   compact = false,
 }: StreetAnalysisSectionProps) {
   if (isLoading) {
-    return <StreetAnalysisSkeleton compact={compact} />;
+    return <StreetAnalysisSkeleton />;
   }
 
   if (!hasStreetAnalysis(street)) {

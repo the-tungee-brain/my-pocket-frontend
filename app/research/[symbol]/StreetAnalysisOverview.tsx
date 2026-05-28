@@ -58,7 +58,7 @@ export function StreetAnalysisOverview({
         icon={Target}
         className={className}
       >
-        <StreetAnalysisSkeleton compact />
+        <StreetAnalysisSkeleton />
       </ResearchSectionCard>
     );
   }
