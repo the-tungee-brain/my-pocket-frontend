@@ -24,12 +24,15 @@ export type PlaybookVerdictContent = {
 };
 
 const SECTION_PATTERNS = {
-  verdict: /\*\*Verdict:\*\*\s*([\s\S]+?)(?=\n\s*\*\*|$)/i,
+  verdict: /\*\*Verdict:\*\*\s*([^\n]+(?:\n(?!\s*[-*•]|\*\*)[^\n]+)*)/i,
   drivers:
-    /\*\*(?:What drives this|Key factors):\*\*\s*([\s\S]+?)(?=\n\s*\*\*|$)/i,
+    /(?:^|\n)\s*(?:#{1,3}\s*)?\*\*(?:What drives this|Key factors):?\*\*\s*\n([\s\S]+?)(?=\n\s*\*\*|$)/i,
   changeMind: /\*\*What would change my mind:\*\*\s*([\s\S]+?)(?=\n\s*\*\*|$)/i,
   putZone: /\*\*Put zone:\*\*\s*([\s\S]+?)(?=\n\s*\*\*|$)/i,
 };
+
+const FACTOR_LINE_RE =
+  /^[-*•]?\s*(?:\*\*(Business|Financials|News|Strategy fit):\*\*|(?:Business|Financials|News|Strategy fit):)\s*(.+)$/i;
 
 const FACTOR_LABELS: Record<PlaybookFactorCategory, string> = {
   business: "Business",
@@ -59,32 +62,43 @@ function categoryFromLabel(label: string): PlaybookFactorCategory {
   return "other";
 }
 
-function parseFactorLine(line: string): PlaybookFactor {
-  const labeled = line.match(/^\*\*(Business|Financials|News|Strategy fit):\*\*\s*(.+)$/i);
+function parseFactorLine(line: string): PlaybookFactor | null {
+  const labeled = line.match(FACTOR_LINE_RE);
   if (labeled) {
     const category = categoryFromLabel(labeled[1]);
+    const text = cleanLine(labeled[2]);
+    if (!text) return null;
     return {
       category,
       label: FACTOR_LABELS[category],
-      text: cleanLine(labeled[2]),
+      text,
     };
   }
 
-  const inline = line.match(/^(Business|Financials|News|Strategy fit):\s*(.+)$/i);
-  if (inline) {
-    const category = categoryFromLabel(inline[1]);
-    return {
-      category,
-      label: FACTOR_LABELS[category],
-      text: cleanLine(inline[2]),
-    };
-  }
+  const trimmed = cleanLine(line);
+  if (!trimmed) return null;
 
   return {
     category: "other",
     label: FACTOR_LABELS.other,
-    text: cleanLine(line),
+    text: trimmed,
   };
+}
+
+function extractFactorsFromContent(content: string): PlaybookFactor[] {
+  const factors: PlaybookFactor[] = [];
+  const seen = new Set<string>();
+
+  for (const line of content.split("\n")) {
+    const factor = parseFactorLine(line.trim());
+    if (!factor || factor.category === "other") continue;
+    const key = `${factor.category}:${factor.text}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    factors.push(factor);
+  }
+
+  return factors;
 }
 
 export function verdictToneFromText(verdict: string): PlaybookVerdictTone {
@@ -122,16 +136,21 @@ export function parsePlaybookVerdict(content: string): PlaybookVerdictContent | 
   const verdict = cleanLine(verdictMatch[1]);
   const driversMatch = trimmed.match(SECTION_PATTERNS.drivers);
   const driverLines = driversMatch ? parseBulletLines(driversMatch[1]) : [];
-  const factors = driverLines.map(parseFactorLine);
+  let factors = driverLines
+    .map(parseFactorLine)
+    .filter((factor): factor is PlaybookFactor => factor !== null && factor.category !== "other");
+
+  if (factors.length === 0) {
+    factors = extractFactorsFromContent(trimmed);
+  }
+
   const changeMatch = trimmed.match(SECTION_PATTERNS.changeMind);
   const putMatch = trimmed.match(SECTION_PATTERNS.putZone);
 
   return {
     verdict,
     factors,
-    drivers: factors.map((factor) =>
-      factor.category === "other" ? factor.text : `${factor.label}: ${factor.text}`,
-    ),
+    drivers: factors.map((factor) => `${factor.label}: ${factor.text}`),
     changeMind: changeMatch ? cleanLine(changeMatch[1]) : undefined,
     putZone: putMatch ? cleanLine(putMatch[1]) : undefined,
     remainder: "",
