@@ -58,13 +58,13 @@ export function StrategySymbolPlaybookStrip({ symbol, className }: Props) {
   return (
     <section
       className={cn(
-        "rounded-xl border border-accent/25 bg-accent-muted/15 px-3 py-2.5",
+        "rounded-xl border border-border bg-muted-bg/40 px-3 py-2.5",
         className,
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-accent-strong">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
             On your playbook
           </p>
           <p className="mt-0.5 text-xs font-medium text-foreground">

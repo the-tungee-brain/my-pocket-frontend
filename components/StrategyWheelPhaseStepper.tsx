@@ -31,7 +31,7 @@ export function StrategyWheelPhaseStepper({ strategy, phase, className }: Props)
               <span
                 className={cn(
                   "h-px w-2",
-                  isPast || isActive ? "bg-accent/40" : "bg-border",
+                  isPast || isActive ? "bg-foreground/20" : "bg-border",
                 )}
                 aria-hidden
               />
@@ -40,9 +40,9 @@ export function StrategyWheelPhaseStepper({ strategy, phase, className }: Props)
               className={cn(
                 "rounded-full px-1.5 py-0.5 text-[9px] font-medium",
                 isActive
-                  ? "bg-accent-muted/70 text-accent-strong ring-1 ring-accent/30"
+                  ? "bg-accent-muted/60 text-accent-strong"
                   : isPast
-                    ? "bg-accent-muted/30 text-accent-strong/80"
+                    ? "bg-secondary text-foreground"
                     : "bg-muted-bg text-muted",
               )}
             >

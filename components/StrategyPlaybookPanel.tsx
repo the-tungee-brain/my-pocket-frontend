@@ -125,7 +125,7 @@ export function StrategyPlaybookPanel({
 
   if (loading) {
     return (
-      <Card surface="accent" className={className} aria-hidden>
+      <Card surface="subtle" className={className} aria-hidden>
         <CardHeader bordered={false}>
           <div className="flex items-start gap-3">
             <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
@@ -142,8 +142,8 @@ export function StrategyPlaybookPanel({
 
   return (
     <section className={cn("mx-auto w-full", className)}>
-      <Card surface="accent" className="mx-0">
-        <div className="flex items-start justify-between gap-3 px-4 py-3">
+      <Card surface="subtle" className="mx-0">
+        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
           <button
             type="button"
             aria-expanded={expanded}
@@ -151,17 +151,17 @@ export function StrategyPlaybookPanel({
             className="min-w-0 flex-1 text-left transition hover:opacity-90"
           >
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-accent-muted/70 text-accent-strong">
+              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-muted/50 text-accent-strong">
                 <StrategyIcon className="h-4 w-4" aria-hidden />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-accent-strong">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                   Strategy playbook
                 </p>
                 <h2 className="mt-0.5 text-sm font-semibold text-foreground">
                   {strategyTitle}
                 </h2>
-                <p className="mt-0.5 text-xs text-accent-strong/90">
+                <p className="mt-0.5 text-xs text-muted">
                   {strategySubtitle}
                 </p>
                 {!expanded && topAction && (
@@ -175,8 +175,8 @@ export function StrategyPlaybookPanel({
                       <span
                         key={status.symbol}
                         className={cn(
-                          "inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-foreground",
-                          symbolNeedsAttention(status) && "border-accent/40",
+                          "inline-flex items-center gap-1 rounded-full bg-muted-bg px-2 py-0.5 text-[10px] font-medium text-foreground",
+                          symbolNeedsAttention(status) && "bg-accent-muted/40",
                         )}
                       >
                         {symbolNeedsAttention(status) && (
@@ -207,7 +207,7 @@ export function StrategyPlaybookPanel({
                   onClick={onRefresh}
                   disabled={refreshing}
                   aria-label="Refresh playbook"
-                  className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-1 text-[11px] font-medium text-muted transition hover:border-accent/40 hover:text-foreground disabled:opacity-60"
+                  className="inline-flex items-center gap-1 rounded-full bg-muted-bg px-2 py-1 text-[11px] font-medium text-muted transition hover:bg-secondary hover:text-foreground disabled:opacity-60"
                 >
                   <RefreshCw
                     className={cn("h-3 w-3", refreshing && "animate-spin")}
@@ -217,7 +217,7 @@ export function StrategyPlaybookPanel({
               )}
               <Link
                 href="/settings?tab=strategy"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-foreground transition hover:border-accent/40 hover:text-accent-strong"
+                className="inline-flex items-center gap-1.5 rounded-full bg-muted-bg px-2.5 py-1 text-[11px] font-medium text-foreground transition hover:bg-secondary"
               >
                 <Settings2 className="h-3.5 w-3.5" aria-hidden />
                 Edit
@@ -240,10 +240,10 @@ export function StrategyPlaybookPanel({
         </div>
 
         {expanded && (
-          <div className="space-y-4 border-t border-accent/20 px-4 pb-4 pt-4">
+          <div className="space-y-4 px-4 pb-4 pt-4">
             {topAction && (
-              <div className="rounded-xl border border-accent/25 bg-background/70 px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-accent-strong">
+              <div className="rounded-xl bg-muted-bg/60 px-3 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                   Next up
                 </p>
                 <p className="mt-1 text-sm font-medium text-foreground">
@@ -283,7 +283,7 @@ export function StrategyPlaybookPanel({
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-border bg-background/50 px-3 py-4 text-center">
+              <div className="rounded-xl border border-dashed border-border/80 bg-muted-bg/30 px-3 py-4 text-center">
                 <p className="text-sm font-medium text-foreground">
                   No symbols on your playbook yet
                 </p>
@@ -293,7 +293,7 @@ export function StrategyPlaybookPanel({
                 </p>
                 <Link
                   href="/settings?tab=strategy"
-                  className="mt-3 inline-flex rounded-full border border-accent/30 bg-accent-muted/40 px-3 py-1 text-[11px] font-medium text-accent-strong transition hover:bg-accent-muted/60"
+                  className="mt-3 inline-flex rounded-full bg-accent-muted/50 px-3 py-1 text-[11px] font-medium text-accent-strong transition hover:bg-accent-muted/70"
                 >
                   Add symbols
                 </Link>
@@ -343,7 +343,7 @@ function PlaybookSymbolCard({
   const holdBadge = playbookHoldBadge(status);
 
   return (
-    <div className="rounded-xl border border-border/80 bg-background/60 px-3 py-2.5">
+    <div className="rounded-xl border border-border bg-muted-bg/30 px-3 py-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <Link
@@ -358,9 +358,9 @@ function PlaybookSymbolCard({
           className={cn(
             "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
             holdBadge === "Held"
-              ? "bg-accent-muted/50 text-accent-strong"
+              ? "bg-accent-muted/40 text-accent-strong"
               : holdBadge === "Partial"
-                ? "bg-amber-500/15 text-amber-800 dark:text-amber-200"
+                ? "bg-secondary text-foreground"
                 : "bg-muted-bg text-muted",
           )}
         >
@@ -383,9 +383,9 @@ function PlaybookSymbolCard({
       )}
 
       {status.nextAction && (
-        <div className="mt-2.5 space-y-2 border-t border-border/60 pt-2.5">
+        <div className="mt-2.5 space-y-2 border-t border-border pt-2.5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted">
+            <span className="rounded-full bg-muted-bg px-2 py-0.5 text-[10px] font-medium text-muted">
               {actionTypeLabel(status.nextAction.type)}
             </span>
           </div>

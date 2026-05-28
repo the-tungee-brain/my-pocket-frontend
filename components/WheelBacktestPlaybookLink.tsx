@@ -20,7 +20,7 @@ export function WheelBacktestPlaybookLink({ symbols, className }: Props) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-border/80 bg-background/60 px-3 py-3",
+        "rounded-xl border border-border bg-muted-bg/30 px-3 py-3",
         className,
       )}
     >
@@ -44,7 +44,7 @@ export function WheelBacktestPlaybookLink({ symbols, className }: Props) {
           <Link
             key={ticker}
             href={wheelBacktestPath(ticker, { years: 5, run: true })}
-            className="inline-flex h-8 items-center gap-1 rounded-lg border border-accent/30 bg-accent-muted/30 px-3 text-xs font-medium text-accent-strong transition hover:bg-accent-muted/50"
+            className="inline-flex h-8 items-center gap-1 rounded-lg bg-accent-muted/50 px-3 text-xs font-medium text-accent-strong transition hover:bg-accent-muted/70"
           >
             {choices.length === 1 ? "Open backtest" : `Backtest ${ticker}`}
             <ChevronRight className="h-3.5 w-3.5" aria-hidden />

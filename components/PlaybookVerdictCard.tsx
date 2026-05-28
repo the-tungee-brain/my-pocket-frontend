@@ -22,25 +22,21 @@ type Props = {
 const TONE_STYLES = {
   positive: {
     icon: CheckCircle2,
-    border: "border-success/30",
-    bg: "bg-success/10",
+    bg: "bg-muted-bg/60",
     label: "text-success",
   },
   cautious: {
     icon: AlertTriangle,
-    border: "border-amber-500/30",
-    bg: "bg-amber-500/10",
+    bg: "bg-muted-bg/60",
     label: "text-amber-800 dark:text-amber-200",
   },
   negative: {
     icon: XCircle,
-    border: "border-danger/30",
-    bg: "bg-danger/10",
+    bg: "bg-muted-bg/60",
     label: "text-danger",
   },
   neutral: {
     icon: CircleDot,
-    border: "border-border",
     bg: "bg-muted-bg/40",
     label: "text-foreground",
   },
@@ -54,24 +50,13 @@ const FACTOR_ICONS = {
   other: CircleDot,
 } as const;
 
-const FACTOR_STYLES = {
-  business: "border-border/80 bg-background/50",
-  financials: "border-border/80 bg-background/50",
-  news: "border-border/80 bg-background/50",
-  strategy: "border-accent/20 bg-accent-muted/10",
-  other: "border-border/80 bg-background/50",
-} as const;
+const FACTOR_STYLES = "border-border bg-muted-bg/30" as const;
 
 function FactorRow({ factor }: { factor: PlaybookFactor }) {
   const Icon = FACTOR_ICONS[factor.category];
 
   return (
-    <div
-      className={cn(
-        "rounded-lg border px-3 py-2.5",
-        FACTOR_STYLES[factor.category],
-      )}
-    >
+    <div className={cn("rounded-lg border px-3 py-2.5", FACTOR_STYLES)}>
       <div className="mb-1 flex items-center gap-1.5">
         <Icon className="h-3.5 w-3.5 text-muted" aria-hidden />
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
@@ -90,13 +75,7 @@ export function PlaybookVerdictCard({ verdict, className }: Props) {
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div
-        className={cn(
-          "rounded-xl border px-3.5 py-3",
-          tone.border,
-          tone.bg,
-        )}
-      >
+      <div className={cn("rounded-xl border border-border px-3.5 py-3", tone.bg)}>
         <div className="flex items-start gap-2.5">
           <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", tone.label)} aria-hidden />
           <div className="min-w-0">
@@ -122,7 +101,7 @@ export function PlaybookVerdictCard({ verdict, className }: Props) {
           </div>
         </div>
       ) : verdict.drivers.length > 0 ? (
-        <div className="rounded-xl border border-border/80 bg-background/50 px-3.5 py-3">
+        <div className="rounded-xl border border-border bg-muted-bg/30 px-3.5 py-3">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
             What drives this
           </p>
@@ -155,8 +134,8 @@ export function PlaybookVerdictCard({ verdict, className }: Props) {
       )}
 
       {verdict.putZone && (
-        <div className="rounded-xl border border-accent/25 bg-accent-muted/15 px-3.5 py-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-accent-strong">
+        <div className="rounded-xl border border-border bg-muted-bg/30 px-3.5 py-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
             Put zone
           </p>
           <p className="mt-1 text-[14px] leading-snug text-foreground">

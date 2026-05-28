@@ -18,7 +18,7 @@ type Props = {
 };
 
 const buttonClass =
-  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition";
+  "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition";
 
 export function PlaybookActionButtons({
   action,
@@ -41,7 +41,7 @@ export function PlaybookActionButtons({
           onClick={() => onRunAction(action)}
           className={cn(
             buttonClass,
-            "border-accent/30 bg-accent-muted/40 text-accent-strong hover:bg-accent-muted/60",
+            "bg-accent-muted/50 text-accent-strong hover:bg-accent-muted/70",
             compact && "px-2 py-0.5 text-[10px]",
           )}
         >
@@ -56,7 +56,7 @@ export function PlaybookActionButtons({
           disabled={connectingSchwab}
           className={cn(
             buttonClass,
-            "border-accent/30 bg-accent-muted/40 text-accent-strong hover:bg-accent-muted/60 disabled:opacity-60",
+            "bg-accent-muted/50 text-accent-strong hover:bg-accent-muted/70 disabled:opacity-60",
             compact && "px-2 py-0.5 text-[10px]",
           )}
         >
@@ -69,7 +69,7 @@ export function PlaybookActionButtons({
           href="/settings?tab=strategy"
           className={cn(
             buttonClass,
-            "border-border bg-background text-foreground hover:border-accent/40",
+            "bg-muted-bg text-foreground hover:bg-secondary",
             compact && "px-2 py-0.5 text-[10px]",
           )}
         >
@@ -82,7 +82,7 @@ export function PlaybookActionButtons({
           href={secondary.href}
           className={cn(
             buttonClass,
-            "border-border bg-background text-foreground hover:border-accent/40",
+            "bg-muted-bg text-foreground hover:bg-secondary",
             compact && "px-2 py-0.5 text-[10px]",
           )}
         >

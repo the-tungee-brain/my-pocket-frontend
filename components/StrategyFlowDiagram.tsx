@@ -140,9 +140,9 @@ function getDownArrowAlign(
 
 function FlowNodeCard({ node, index }: PlacedNode) {
   return (
-    <div className="h-full rounded-xl border border-border bg-background/70 px-3 py-2.5 shadow-sm">
+    <div className="h-full rounded-xl border border-border bg-muted-bg/30 px-3 py-2.5">
       <div className="flex items-start gap-2">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent-muted/60 text-[10px] font-semibold text-accent-strong">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-muted/50 text-[10px] font-semibold text-accent-strong">
           {index + 1}
         </span>
         <div className="min-w-0">
