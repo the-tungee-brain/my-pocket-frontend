@@ -3,6 +3,7 @@ export type WheelBacktestYears = 5 | 10 | 15;
 export type WheelBacktestTrade = {
   date: string;
   action: string;
+  label: string;
   putCall?: string | null;
   strike?: number | null;
   premiumUsd: number;
@@ -11,6 +12,12 @@ export type WheelBacktestTrade = {
   stockPrice?: number | null;
   effectiveEntryPrice?: number | null;
   effectiveExitPrice?: number | null;
+  premiumPerShare?: number | null;
+  dteDays?: number | null;
+  expirationDate?: string | null;
+  ivPercent?: number | null;
+  wheelCycle?: number | null;
+  cashFlowUsd?: number | null;
   note?: string | null;
 };
 

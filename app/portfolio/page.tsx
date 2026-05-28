@@ -395,7 +395,7 @@ export default function PortfolioPage() {
           wheelSymbols={strategyProfile.wheel?.wheelSymbols ?? []}
           wheelTargetDeltaMin={strategyProfile.wheel?.targetDeltaMin}
           wheelTargetDeltaMax={strategyProfile.wheel?.targetDeltaMax}
-          wheelDteDays={strategyProfile.wheel?.preferredDteDays}
+          wheelDteDays={30}
           recommendations={strategyRecommendations}
           loading={strategyLoading}
           refreshing={refreshingPlaybook}

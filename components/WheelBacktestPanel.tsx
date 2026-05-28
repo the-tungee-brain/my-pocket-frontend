@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { BarChart3, Loader2 } from "lucide-react";
 import type { WheelBacktestResult, WheelBacktestYears } from "@/app/types/wheelBacktest";
 import { fetchWheelBacktest } from "@/lib/wheelBacktest";
+import { WheelBacktestTradeLedger } from "@/components/WheelBacktestTradeLedger";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
@@ -50,7 +51,7 @@ export function WheelBacktestPanel({
   symbols,
   targetDeltaMin = 0.2,
   targetDeltaMax = 0.3,
-  dteDays = 7,
+  dteDays = 30,
   className,
 }: Props) {
   const choices = useMemo(
@@ -177,8 +178,8 @@ export function WheelBacktestPanel({
 
         <p className="text-[10px] leading-relaxed text-muted">
           Uses your wheel delta band ({targetDeltaMin.toFixed(2)}–
-          {targetDeltaMax.toFixed(2)}) and {dteDays}-day DTE steps. European
-          expiration at daily close; 95% of Black-Scholes premium (realized vol).
+          {targetDeltaMax.toFixed(2)}) and ~{dteDays} trading-day DTE (~1 month).
+          European expiration at daily close; model premiums (realized vol).
         </p>
 
         {error && (
@@ -425,6 +426,10 @@ export function WheelBacktestPanel({
                   </table>
                 </div>
               </div>
+            )}
+
+            {result.trades.length > 0 && (
+              <WheelBacktestTradeLedger trades={result.trades} />
             )}
 
             <details className="text-xs text-muted">
