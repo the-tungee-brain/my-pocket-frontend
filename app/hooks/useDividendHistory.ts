@@ -30,6 +30,7 @@ export function useDividendHistory(
     shares,
     projectYears,
     dividendCagrPct,
+    annualContributionUsd,
   } = options;
 
   const fetchParams = useMemo<DividendFetchParams>(
@@ -41,6 +42,7 @@ export function useDividendHistory(
       shares,
       projectYears,
       dividendCagrPct,
+      annualContributionUsd,
     }),
     [
       investmentUsd,
@@ -50,6 +52,7 @@ export function useDividendHistory(
       shares,
       projectYears,
       dividendCagrPct,
+      annualContributionUsd,
     ],
   );
 

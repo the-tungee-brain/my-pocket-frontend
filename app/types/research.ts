@@ -55,6 +55,7 @@ export type DividendAdvancedSnowballScenario = {
   annualIncomeLatestDrip: number;
   portfolioValueLatest: number;
   totalDividendsReinvested: number;
+  totalAnnualContributionsUsd?: number;
 };
 
 export type DividendHistoricalBacktest = {
@@ -89,6 +90,8 @@ export type DividendScenarioParams = {
   dividendCagrPct?: number | null;
   reinvestDividends?: boolean;
   priceCagrPct?: number | null;
+  /** New cash added at the start of each year after the first (projection). */
+  annualContributionUsd?: number | null;
 };
 
 export type DividendHistoryContext = {

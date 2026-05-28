@@ -51,6 +51,7 @@ function roundSnowball(value: number): number {
 type SnowballNumericInputProps = {
   value: number | null | undefined;
   onCommit: (value: number) => void;
+  onClear?: () => void;
   min?: number;
   max?: number;
   step?: number;
@@ -60,6 +61,7 @@ type SnowballNumericInputProps = {
 function SnowballNumericInput({
   value,
   onCommit,
+  onClear,
   min,
   max,
   step,
@@ -85,9 +87,8 @@ function SnowballNumericInput({
         setIsFocused(false);
         const trimmed = text.trim();
         if (trimmed === "") {
-          setText(
-            value != null && value > 0 ? String(roundSnowball(value)) : "",
-          );
+          onClear?.();
+          setText("");
           return;
         }
         const next = Number(trimmed);
@@ -126,6 +127,7 @@ function buildScenarioParams(
     dividendCagrPct?: number | null;
     reinvestDividends?: boolean;
     priceCagrPct?: number | null;
+    annualContributionUsd?: number | null;
   },
 ): DividendScenarioParams {
   const sharePrice = values.sharePrice ?? base?.sharePrice ?? null;
@@ -135,6 +137,8 @@ function buildScenarioParams(
   const projectYears = values.projectYears ?? base?.projectYears ?? 10;
   const dividendCagrPct =
     values.dividendCagrPct ?? base?.dividendCagrPct ?? null;
+  const annualContributionUsd =
+    values.annualContributionUsd ?? base?.annualContributionUsd ?? null;
 
   if (sharePrice != null && sharePrice > 0) {
     if (source === "shares" && values.shares != null && values.shares > 0) {
@@ -147,6 +151,7 @@ function buildScenarioParams(
         dividendCagrPct,
         reinvestDividends,
         priceCagrPct,
+        annualContributionUsd,
       };
     }
 
@@ -160,6 +165,7 @@ function buildScenarioParams(
         dividendCagrPct,
         reinvestDividends,
         priceCagrPct,
+        annualContributionUsd,
       };
     }
   }
@@ -172,6 +178,7 @@ function buildScenarioParams(
     dividendCagrPct,
     reinvestDividends,
     priceCagrPct,
+    annualContributionUsd,
   };
 }
 
@@ -188,6 +195,8 @@ function mergeScenarioParams(
     reinvestDividends:
       next.reinvestDividends ?? base?.reinvestDividends ?? false,
     priceCagrPct: next.priceCagrPct ?? base?.priceCagrPct ?? null,
+    annualContributionUsd:
+      next.annualContributionUsd ?? base?.annualContributionUsd ?? null,
   };
 }
 
@@ -788,6 +797,11 @@ export function DividendSnowballScenarioCard({
         : sharePrice != null && sharePrice > 0 && shares > 0
           ? roundSnowball(shares * sharePrice)
           : null;
+  const annualContributionUsd =
+    scenarioParams?.annualContributionUsd != null &&
+    scenarioParams.annualContributionUsd >= 0
+      ? scenarioParams.annualContributionUsd
+      : 0;
   const advanced =
     advancedMetrics ??
     resolveSnowballAdvancedMetrics(history, {
@@ -799,6 +813,7 @@ export function DividendSnowballScenarioCard({
         history,
         scenarioParams?.priceCagrPct,
       ),
+      annualContributionUsd,
     });
   const endYearDividendGrowthPct =
     scenario.annualIncomeStart > 0
@@ -817,6 +832,7 @@ export function DividendSnowballScenarioCard({
       dividendCagrPct?: number | null;
       reinvestDividends?: boolean;
       priceCagrPct?: number | null;
+      annualContributionUsd?: number | null;
     },
   ) {
     if (!onScenarioChange) return;
@@ -841,13 +857,14 @@ export function DividendSnowballScenarioCard({
               ? ` and ${history.priceCagrPct.toFixed(1)}% price growth`
               : ""}
             . Enter investment or shares — the other is calculated from share
-            price.
+            price. Optional yearly contributions buy more shares at the modeled
+            price each year.
           </p>
         </div>
       </div>
 
       {onScenarioChange ? (
-        <div className="grid gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 sm:grid-cols-3">
+        <div className="grid gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="space-y-1 text-xs text-muted">
             Investment
             <SnowballNumericInput
@@ -862,6 +879,7 @@ export function DividendSnowballScenarioCard({
                   projectYears,
                   reinvestDividends,
                   priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                  annualContributionUsd,
                 });
               }}
               className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
@@ -883,6 +901,7 @@ export function DividendSnowballScenarioCard({
                     projectYears,
                     reinvestDividends,
                     priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                    annualContributionUsd,
                   });
                   return;
                 }
@@ -892,6 +911,7 @@ export function DividendSnowballScenarioCard({
                   projectYears,
                   reinvestDividends,
                   priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                  annualContributionUsd,
                 });
               }}
               className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
@@ -911,8 +931,23 @@ export function DividendSnowballScenarioCard({
                   projectYears,
                   reinvestDividends,
                   priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                  annualContributionUsd,
                 });
               }}
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+            />
+          </label>
+          <label className="space-y-1 text-xs text-muted">
+            New cash / year
+            <SnowballNumericInput
+              min={0}
+              max={100000000}
+              step={100}
+              value={annualContributionUsd > 0 ? annualContributionUsd : null}
+              onCommit={(next) => {
+                updateScenario({ annualContributionUsd: next });
+              }}
+              onClear={() => updateScenario({ annualContributionUsd: 0 })}
               className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
             />
           </label>
@@ -1057,7 +1092,10 @@ export function DividendSnowballScenarioCard({
           </div>
           <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
-              Reinvested
+              {advanced.totalAnnualContributionsUsd != null &&
+              advanced.totalAnnualContributionsUsd > 0
+                ? "Dividends reinvested"
+                : "Reinvested"}
             </p>
             <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
               {formatUsd(advanced.totalDividendsReinvested, {
@@ -1065,9 +1103,14 @@ export function DividendSnowballScenarioCard({
               })}
             </p>
             <p className="mt-1 text-[11px] text-muted">
-              {reinvestDividends
-                ? `${advanced.priceCagrPct.toFixed(1)}% avg price growth / yr`
-                : `${advanced.priceCagrPct.toFixed(1)}% avg price growth / yr · no reinvestment`}
+              {advanced.totalAnnualContributionsUsd != null &&
+              advanced.totalAnnualContributionsUsd > 0
+                ? `${formatUsd(advanced.totalAnnualContributionsUsd, {
+                    maximumFractionDigits: 0,
+                  })} new cash over ${projectYears} yrs`
+                : reinvestDividends
+                  ? `${advanced.priceCagrPct.toFixed(1)}% avg price growth / yr`
+                  : `${advanced.priceCagrPct.toFixed(1)}% avg price growth / yr · no reinvestment`}
             </p>
           </div>
         </div>
@@ -1081,6 +1124,11 @@ export function DividendSnowballScenarioCard({
               ? `${history.priceCagrPct.toFixed(1)}%`
               : "historic"
         } price growth over ${projectYears} years. `}
+        {annualContributionUsd > 0
+          ? `Adds ${formatUsd(annualContributionUsd, {
+              maximumFractionDigits: 0,
+            })} of new cash at the start of each year after ${currentYear} (buys shares at modeled price). `
+          : ""}
         {reinvestDividends && advanced
           ? `DRIP reinvests ${formatUsd(advanced.totalDividendsReinvested, {
               maximumFractionDigits: 0,

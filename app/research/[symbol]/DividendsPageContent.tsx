@@ -208,6 +208,7 @@ export function DividendsPageContent({ symbol }: Props) {
         history,
         displayScenarioParams.priceCagrPct,
       ),
+      annualContributionUsd: displayScenarioParams.annualContributionUsd ?? 0,
     });
   }, [history, displayScenarioParams, marketSharePrice]);
 

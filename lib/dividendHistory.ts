@@ -6,7 +6,7 @@ import type {
 } from "@/app/types/research";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const STORAGE_KEY = "powerpocket-dividend-history:v6";
+const STORAGE_KEY = "powerpocket-dividend-history:v7";
 const MAX_PERSISTENT_CACHE_ENTRIES = 40;
 const DEFAULT_SHARES = 100;
 
@@ -59,6 +59,9 @@ export function scenarioCacheKey(symbol: string, params: DividendFetchParams): s
       params.reinvestDividends ? "drip" : "cash",
       params.priceCagrPct != null ? `pcagr:${params.priceCagrPct}` : "pcagr:auto",
       params.dividendCagrPct != null ? `dcagr:${params.dividendCagrPct}` : "dcagr:auto",
+      params.annualContributionUsd != null && params.annualContributionUsd > 0
+        ? `contrib:${params.annualContributionUsd.toFixed(2)}`
+        : "contrib:0",
     ].join("|");
   }
 
@@ -69,6 +72,9 @@ export function scenarioCacheKey(symbol: string, params: DividendFetchParams): s
       `px:${params.sharePrice.toFixed(2)}`,
       `years:${params.projectYears ?? 10}`,
       params.reinvestDividends ? "drip" : "cash",
+      params.annualContributionUsd != null && params.annualContributionUsd > 0
+        ? `contrib:${params.annualContributionUsd.toFixed(2)}`
+        : "contrib:0",
     ].join("|");
   }
 
@@ -77,6 +83,9 @@ export function scenarioCacheKey(symbol: string, params: DividendFetchParams): s
     `shares:${shares}`,
     `years:${params.projectYears ?? 10}`,
     params.reinvestDividends ? "drip" : "cash",
+    params.annualContributionUsd != null && params.annualContributionUsd > 0
+      ? `contrib:${params.annualContributionUsd.toFixed(2)}`
+      : "contrib:0",
   ].join("|");
 }
 
@@ -176,6 +185,9 @@ function normalizeAdvancedScenario(
   const totalDividendsReinvested = readNumber(
     item.totalDividendsReinvested ?? item.total_dividends_reinvested,
   );
+  const totalAnnualContributionsUsd = readNumber(
+    item.totalAnnualContributionsUsd ?? item.total_annual_contributions_usd,
+  );
   if (
     initialShares == null ||
     finalShares == null ||
@@ -199,6 +211,7 @@ function normalizeAdvancedScenario(
     annualIncomeLatestDrip,
     portfolioValueLatest,
     totalDividendsReinvested,
+    totalAnnualContributionsUsd: totalAnnualContributionsUsd ?? 0,
   };
 }
 
@@ -349,6 +362,7 @@ export function resolveSnowballAdvancedMetrics(
     reinvestDividends?: boolean;
     projectYears?: number;
     priceCagrPct?: number | null;
+    annualContributionUsd?: number | null;
   },
 ): DividendAdvancedSnowballScenario | null {
   const sharePrice =
@@ -381,33 +395,23 @@ export function resolveSnowballAdvancedMetrics(
   const baseDps = scaledAnnualIncomeStart / shares;
   const divRate = dividendCagrPct / 100;
   const priceRate = priceCagrPct / 100;
-
-  if (!reinvestDividends) {
-    const finalPrice = sharePrice * (1 + priceRate) ** projectYears;
-    const finalDps = baseDps * (1 + divRate) ** projectYears;
-
-    return {
-      enabled: true,
-      initialShares: roundSnowballMetric(shares),
-      finalShares: roundSnowballMetric(shares),
-      sharePriceAtStart: roundSnowballMetric(sharePrice),
-      sharePriceLatest: roundSnowballMetric(finalPrice),
-      priceCagrPct: roundSnowballMetric(priceCagrPct),
-      annualIncomeLatestDrip: roundSnowballMetric(finalDps * shares),
-      portfolioValueLatest: roundSnowballMetric(shares * finalPrice),
-      totalDividendsReinvested: 0,
-    };
-  }
+  const contribution = Math.max(params.annualContributionUsd ?? 0, 0);
 
   let price = sharePrice;
   let shareCount = shares;
   let totalReinvested = 0;
+  let totalContributions = 0;
 
   for (let offset = 0; offset <= projectYears; offset += 1) {
+    if (offset > 0 && contribution > 0 && price > 0) {
+      shareCount += contribution / price;
+      totalContributions += contribution;
+    }
+
     const yearDps = baseDps * (1 + divRate) ** offset;
     const dividendCash = yearDps * shareCount;
 
-    if (offset < projectYears && price > 0) {
+    if (reinvestDividends && offset < projectYears && price > 0) {
       shareCount += dividendCash / price;
       totalReinvested += dividendCash;
     }
@@ -429,6 +433,7 @@ export function resolveSnowballAdvancedMetrics(
     annualIncomeLatestDrip: roundSnowballMetric(finalDps * shareCount),
     portfolioValueLatest: roundSnowballMetric(shareCount * price),
     totalDividendsReinvested: roundSnowballMetric(totalReinvested),
+    totalAnnualContributionsUsd: roundSnowballMetric(totalContributions),
   };
 }
 
@@ -616,6 +621,13 @@ function buildQueryParams(symbol: string, params: DividendFetchParams): URLSearc
   }
   if (params.dividendCagrPct != null && Number.isFinite(params.dividendCagrPct)) {
     query.set("dividend_cagr_pct", String(params.dividendCagrPct));
+  }
+  if (
+    params.annualContributionUsd != null &&
+    Number.isFinite(params.annualContributionUsd) &&
+    params.annualContributionUsd > 0
+  ) {
+    query.set("annual_contribution_usd", String(params.annualContributionUsd));
   }
 
   return query;
