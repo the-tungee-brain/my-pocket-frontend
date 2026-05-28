@@ -17,7 +17,7 @@ import type {
   StrategyScreenerFilters,
   StrategyScreenerQuote,
 } from "@/app/types/strategy";
-import { Button } from "@/components/ui/Button";
+import { Button, compactTextButtonClass } from "@/components/ui/Button";
 import {
   ALL_SCREENER_SECTORS,
   PAGE_SIZE_OPTIONS,
@@ -252,15 +252,17 @@ export function StrategyStockScreenerPanel({
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
               Adjust filters
             </p>
-            <Button
-              size="xs"
-              variant="ghost"
+            <button
+              type="button"
               onClick={resetFilters}
               disabled={filtersAtDefault}
-              className="h-7 px-2 text-[10px] text-muted"
+              className={cn(
+                compactTextButtonClass,
+                filtersAtDefault && "cursor-not-allowed opacity-50",
+              )}
             >
               Reset to defaults
-            </Button>
+            </button>
           </div>
 
           <FieldGroup label="Minimum market cap">
@@ -280,19 +282,17 @@ export function StrategyStockScreenerPanel({
 
           {filters.maxPe != null && (
             <FieldGroup label={`Max P/E (${filters.maxPe.toFixed(0)})`}>
-              <input
-                type="range"
+              <AccentRangeInput
                 min={10}
                 max={80}
                 step={5}
                 value={filters.maxPe}
-                onChange={(event) =>
+                onChange={(value) =>
                   onFiltersChange({
                     ...filters,
-                    maxPe: Number(event.target.value),
+                    maxPe: value,
                   })
                 }
-                className="w-full"
               />
             </FieldGroup>
           )}
@@ -342,9 +342,9 @@ export function StrategyStockScreenerPanel({
         </div>
       )}
 
-      {(stale || tableBusy) && !error && hasRun && (
+      {stale && !tableBusy && !error && hasRun && (
         <p className="text-xs text-muted">
-          {tableBusy ? "Loading page…" : "Filters changed — refresh to update."}
+          Filters changed — refresh to update.
         </p>
       )}
 
@@ -647,6 +647,42 @@ function Pagination({
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+function AccentRangeInput({
+  min,
+  max,
+  step,
+  value,
+  onChange,
+}: {
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const fillPercent = ((value - min) / (max - min)) * 100;
+
+  return (
+    <div className="relative w-full min-w-0 py-1">
+      <div className="range-accent-track" aria-hidden="true" />
+      <div
+        className="range-accent-fill"
+        style={{ width: `${fillPercent}%` }}
+        aria-hidden="true"
+      />
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="range-accent relative z-10"
+      />
     </div>
   );
 }
