@@ -1,5 +1,9 @@
 import { apiFetch } from "@/lib/apiClient";
-import type { WheelBacktestResult, WheelBacktestYears } from "@/app/types/wheelBacktest";
+import type {
+  WheelBacktestCallStrikeMode,
+  WheelBacktestResult,
+  WheelBacktestYears,
+} from "@/app/types/wheelBacktest";
 
 export type FetchWheelBacktestOptions = {
   symbol: string;
@@ -9,6 +13,7 @@ export type FetchWheelBacktestOptions = {
   dteDays?: number;
   contracts?: number;
   maintainOneLot?: boolean;
+  callStrikeMode?: WheelBacktestCallStrikeMode;
 };
 
 export async function fetchWheelBacktest(
@@ -33,6 +38,9 @@ export async function fetchWheelBacktest(
   }
   if (options.maintainOneLot !== undefined) {
     params.set("maintainOneLot", String(options.maintainOneLot));
+  }
+  if (options.callStrikeMode !== undefined) {
+    params.set("callStrikeMode", options.callStrikeMode);
   }
 
   const res = await apiFetch(`/strategy/wheel-backtest?${params.toString()}`, {

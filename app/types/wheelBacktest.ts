@@ -1,5 +1,8 @@
 export type WheelBacktestYears = 5 | 10 | 15;
 
+/** How covered-call strikes are chosen after put assignment. */
+export type WheelBacktestCallStrikeMode = "delta" | "at_or_above_assignment";
+
 export type WheelBacktestTrade = {
   date: string;
   action: string;
@@ -68,7 +71,7 @@ export type WheelBacktestResult = {
   cspRounds: number;
   endDate: string;
   tradingDays: number;
-  config: Record<string, number | boolean>;
+  config: Record<string, number | boolean | string>;
   assumptions: string[];
   startingCashUsd: number;
   endingEquityUsd: number;

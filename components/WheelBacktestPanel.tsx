@@ -9,7 +9,11 @@ import {
   type ChangeEvent,
 } from "react";
 import { BarChart3, ChevronDown, Download, Loader2 } from "lucide-react";
-import type { WheelBacktestResult, WheelBacktestYears } from "@/app/types/wheelBacktest";
+import type {
+  WheelBacktestCallStrikeMode,
+  WheelBacktestResult,
+  WheelBacktestYears,
+} from "@/app/types/wheelBacktest";
 import { formatDateMMDDYYYY } from "@/lib/dateUtils";
 import { downloadWheelBacktestResult } from "@/lib/wheelBacktestExport";
 import { fetchWheelBacktest } from "@/lib/wheelBacktest";
@@ -55,6 +59,7 @@ type Props = {
   dteDays?: number;
   defaultYears?: WheelBacktestYears;
   defaultMaintainOneLot?: boolean;
+  defaultCallStrikeMode?: WheelBacktestCallStrikeMode;
   /** Run once on load (e.g. from playbook deep link with ?run=1). */
   autoRun?: boolean;
   variant?: "embedded" | "research";
@@ -75,6 +80,7 @@ export function WheelBacktestPanel({
   dteDays = 30,
   defaultYears = 5,
   defaultMaintainOneLot = true,
+  defaultCallStrikeMode = "delta",
   autoRun = false,
   variant = "embedded",
   className,
@@ -87,6 +93,8 @@ export function WheelBacktestPanel({
   const [symbol, setSymbol] = useState((lockedSymbol || choices[0]) ?? "");
   const [years, setYears] = useState<WheelBacktestYears>(defaultYears);
   const [maintainOneLot, setMaintainOneLot] = useState(defaultMaintainOneLot);
+  const [callStrikeMode, setCallStrikeMode] =
+    useState<WheelBacktestCallStrikeMode>(defaultCallStrikeMode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<WheelBacktestResult | null>(null);
@@ -106,6 +114,10 @@ export function WheelBacktestPanel({
     setMaintainOneLot(defaultMaintainOneLot);
   }, [defaultMaintainOneLot]);
 
+  useEffect(() => {
+    setCallStrikeMode(defaultCallStrikeMode);
+  }, [defaultCallStrikeMode]);
+
   const run = useCallback(async () => {
     if (!symbol) {
       setError("Pick a symbol to backtest.");
@@ -122,6 +134,7 @@ export function WheelBacktestPanel({
         dteDays,
         contracts: 1,
         maintainOneLot,
+        callStrikeMode,
       });
       setResult(data);
     } catch (err) {
@@ -138,6 +151,7 @@ export function WheelBacktestPanel({
     targetDeltaMax,
     dteDays,
     maintainOneLot,
+    callStrikeMode,
   ]);
 
   useEffect(() => {
@@ -242,6 +256,25 @@ export function WheelBacktestPanel({
               </span>
             </label>
 
+            <label
+              className="flex h-9 cursor-pointer items-center gap-2 text-[11px] text-muted"
+              title="After put assignment, sell covered calls only at listed strikes at or above the assignment put strike"
+            >
+              <input
+                type="checkbox"
+                checked={callStrikeMode === "at_or_above_assignment"}
+                onChange={(e) =>
+                  setCallStrikeMode(
+                    e.target.checked ? "at_or_above_assignment" : "delta",
+                  )
+                }
+                className="h-4 w-4 shrink-0 rounded border-border accent-[var(--accent)]"
+              />
+              <span className="leading-tight text-foreground">
+                Calls at/above assign strike
+              </span>
+            </label>
+
             <Button
               type="button"
               size="sm"
@@ -287,6 +320,7 @@ export function WheelBacktestPanel({
                     targetDeltaMax,
                     dteDays,
                     maintainOneLot,
+                    callStrikeMode,
                   })
                 }
               >

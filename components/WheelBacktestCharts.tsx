@@ -7,6 +7,7 @@ import {
   LineSeries,
   LineStyle,
   type IChartApi,
+  type ISeriesApi,
   type Time,
 } from "lightweight-charts";
 import type {
@@ -28,7 +29,15 @@ import { formatDateMMDDYYYY } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 
 const CHART_HEIGHT = 440;
-const HOVER_PANEL_HEIGHT = 88;
+const HOVER_PANEL_HEIGHT = 96;
+
+type CrosshairNote = {
+  time: string;
+  detail: WheelChartHoverDetail | null;
+  stock: number | null;
+  putStrike: number | null;
+  callStrike: number | null;
+};
 
 function getCssVar(name: string, fallback: string) {
   if (typeof window === "undefined") return fallback;
@@ -84,7 +93,7 @@ export function WheelBacktestCharts({
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [zoom, setZoom] = useState<WheelZoomPreset>("full");
-  const [hover, setHover] = useState<WheelChartHoverDetail | null>(null);
+  const [note, setNote] = useState<CrosshairNote | null>(null);
 
   const bundle = useMemo(
     () => buildWheelChartBundle(equityCurve, trades, startDate, zoom),
@@ -104,13 +113,29 @@ export function WheelBacktestCharts({
     [annualSummary],
   );
 
-  const latestDetail = useMemo(() => {
+  const defaultNote = useMemo((): CrosshairNote | null => {
     const last = bundle.wheel[bundle.wheel.length - 1];
     if (!last) return null;
-    return bundle.hoverByTime.get(last.time) ?? null;
+    const detail = bundle.hoverByTime.get(last.time) ?? null;
+    return {
+      time: last.time,
+      detail,
+      stock:
+        bundle.stock.find((p) => p.time === last.time)?.value ??
+        detail?.stockCloseUsd ??
+        null,
+      putStrike:
+        bundle.putStrike.find((p) => p.time === last.time)?.value ??
+        detail?.putStrike ??
+        null,
+      callStrike:
+        bundle.callStrike.find((p) => p.time === last.time)?.value ??
+        detail?.callStrike ??
+        null,
+    };
   }, [bundle]);
 
-  const display = hover ?? latestDetail;
+  const displayNote = note ?? defaultNote;
 
   useEffect(() => {
     if (!containerRef.current || bundle.wheel.length === 0) return;
@@ -229,7 +254,7 @@ export function WheelBacktestCharts({
         color: "#f59e0b",
         lineWidth: 1,
         lineStyle: LineStyle.Dashed,
-        title: "Put K",
+        title: "Put strike",
         priceLineVisible: false,
         lastValueVisible: false,
       },
@@ -249,7 +274,7 @@ export function WheelBacktestCharts({
         color: "#a855f7",
         lineWidth: 1,
         lineStyle: LineStyle.Dashed,
-        title: "Call K",
+        title: "Call strike",
         priceLineVisible: false,
         lastValueVisible: false,
       },
@@ -265,11 +290,29 @@ export function WheelBacktestCharts({
 
     chart.subscribeCrosshairMove((param) => {
       if (!param.time) {
-        setHover(null);
+        setNote(null);
         return;
       }
       const key = chartTimeToKey(param.time);
-      setHover(key ? (bundle.hoverByTime.get(key) ?? null) : null);
+      if (!key) {
+        setNote(null);
+        return;
+      }
+
+      const readLine = (series: ISeriesApi<"Line">): number | null => {
+        const point = param.seriesData.get(series);
+        if (!point || !("value" in point)) return null;
+        const value = point.value;
+        return typeof value === "number" ? value : null;
+      };
+
+      setNote({
+        time: key,
+        detail: bundle.hoverByTime.get(key) ?? null,
+        stock: readLine(stockSeries),
+        putStrike: readLine(putSeries),
+        callStrike: readLine(callSeries),
+      });
     });
 
     chart.timeScale().fitContent();
@@ -328,78 +371,7 @@ export function WheelBacktestCharts({
           </div>
         </div>
 
-        <div
-          className="mb-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/30 px-2.5 py-2 text-[10px] sm:grid-cols-2 lg:grid-cols-4"
-          style={{ height: HOVER_PANEL_HEIGHT, minHeight: HOVER_PANEL_HEIGHT }}
-        >
-          {display ? (
-            <div className="grid h-full gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              <HoverStat
-                label="Date"
-                value={formatDateMMDDYYYY(display.date)}
-              />
-              <HoverStat
-                label="Phase"
-                value={phaseLabel(display.phase)}
-                accent={phaseColor(display.phase)}
-              />
-              <HoverStat
-                label="Wheel equity"
-                value={formatUsd(display.equityUsd)}
-              />
-              <HoverStat
-                label="Buy & hold"
-                value={formatUsd(display.buyAndHoldUsd)}
-              />
-              <HoverStat label="Cash" value={formatUsd(display.cashUsd)} />
-              <HoverStat
-                label="Collateral"
-                value={
-                  display.collateralUsd > 0
-                    ? formatUsd(display.collateralUsd)
-                    : "—"
-                }
-              />
-              <HoverStat
-                label="Shares held"
-                value={display.shares > 0 ? String(display.shares) : "—"}
-              />
-              <HoverStat
-                label="Drawdown"
-                value={`${display.drawdownPct.toFixed(1)}%`}
-                tone={
-                  display.drawdownPct < 0
-                    ? "text-red-600 dark:text-red-400"
-                    : undefined
-                }
-              />
-              <HoverStat
-                label="Stock"
-                value={
-                  display.stockCloseUsd != null
-                    ? formatUsd(display.stockCloseUsd, 2)
-                    : "—"
-                }
-              />
-              <HoverStat
-                label="Put strike"
-                value={
-                  display.putStrike != null
-                    ? formatUsd(display.putStrike, 2)
-                    : "—"
-                }
-              />
-              <HoverStat
-                label="Call strike"
-                value={
-                  display.callStrike != null
-                    ? formatUsd(display.callStrike, 2)
-                    : "—"
-                }
-              />
-            </div>
-          ) : null}
-        </div>
+        <CrosshairNoteBar note={displayNote} />
 
         <div
           ref={containerRef}
@@ -501,32 +473,116 @@ export function WheelBacktestCharts({
 
       <p className="text-[10px] leading-relaxed text-muted">
         Same {formatUsd(startingCashUsd, 0)} starting wallet as buy &amp; hold.
-        Hover or drag on the chart for daily detail. Zoom narrows the window;
+        Move the crosshair — the note above tracks stock and strike lines. Zoom
+        narrows the window;
         PDF export remains tables for print-friendly layout.
       </p>
     </div>
   );
 }
 
-function HoverStat({
+function CrosshairNoteBar({ note }: { note: CrosshairNote | null }) {
+  if (!note) {
+    return (
+      <div
+        className="mb-2 flex items-center rounded-lg border border-border/60 bg-secondary/30 px-3 py-2 text-[10px] text-muted"
+        style={{ minHeight: HOVER_PANEL_HEIGHT }}
+      >
+        Move the crosshair on the chart to see stock and strike prices.
+      </div>
+    );
+  }
+
+  const detail = note.detail;
+
+  return (
+    <div
+      className="mb-2 rounded-lg border border-border/60 bg-secondary/30 px-2.5 py-2"
+      style={{ minHeight: HOVER_PANEL_HEIGHT }}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-[10px]">
+        <span className="font-semibold text-foreground">
+          {formatDateMMDDYYYY(note.time)}
+        </span>
+        {detail && (
+          <span
+            className="font-medium"
+            style={{ color: phaseColor(detail.phase) }}
+          >
+            {phaseLabel(detail.phase)}
+          </span>
+        )}
+        {detail && (
+          <span className="text-muted">
+            Wheel {formatUsd(detail.equityUsd)} · B&amp;H{" "}
+            {formatUsd(detail.buyAndHoldUsd)} · DD{" "}
+            <span
+              className={cn(
+                detail.drawdownPct < 0 &&
+                  "text-red-600 dark:text-red-400",
+              )}
+            >
+              {detail.drawdownPct.toFixed(1)}%
+            </span>
+          </span>
+        )}
+      </div>
+
+      <div className="mt-2 flex flex-wrap gap-2">
+        <PriceNoteChip
+          label="Stock"
+          value={note.stock}
+          swatchColor="var(--color-foreground)"
+          solid
+        />
+        <PriceNoteChip
+          label="Put strike"
+          value={note.putStrike}
+          swatchColor="#f59e0b"
+          dashed
+        />
+        <PriceNoteChip
+          label="Call strike"
+          value={note.callStrike}
+          swatchColor="#a855f7"
+          dashed
+        />
+      </div>
+    </div>
+  );
+}
+
+function PriceNoteChip({
   label,
   value,
-  tone,
-  accent,
+  swatchColor,
+  solid,
+  dashed,
 }: {
   label: string;
-  value: string;
-  tone?: string;
-  accent?: string;
+  value: number | null;
+  swatchColor: string;
+  solid?: boolean;
+  dashed?: boolean;
 }) {
   return (
-    <div>
-      <p className="text-muted">{label}</p>
-      <p
-        className={cn("font-semibold tabular-nums text-foreground", tone)}
-        style={accent ? { color: accent } : undefined}
-      >
-        {value}
+    <div className="min-w-[6.5rem] flex-1 rounded-md border border-border/50 bg-background/50 px-2 py-1">
+      <p className="flex items-center gap-1 text-[10px] text-muted">
+        <span
+          className={cn(
+            "inline-block h-0.5 w-3 shrink-0 rounded-full",
+            dashed && "border border-dashed bg-transparent",
+          )}
+          style={
+            dashed
+              ? { borderColor: swatchColor }
+              : { background: swatchColor }
+          }
+        />
+        {label}
+      </p>
+      <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
+        {value != null ? formatUsd(value, 2) : "—"}
       </p>
     </div>
   );

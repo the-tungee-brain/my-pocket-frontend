@@ -83,6 +83,7 @@ export function WheelBacktestPageContent({ symbol }: Props) {
         dteDays={30}
         defaultYears={urlOptions.years ?? 5}
         defaultMaintainOneLot={urlOptions.maintainOneLot ?? true}
+        defaultCallStrikeMode={urlOptions.callStrikeMode ?? "delta"}
         autoRun={urlOptions.autoRun}
         variant="research"
       />

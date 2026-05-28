@@ -1,11 +1,15 @@
 import type { ResearchTabId } from "@/components/ResearchTabBar";
-import type { WheelBacktestYears } from "@/app/types/wheelBacktest";
+import type {
+  WheelBacktestCallStrikeMode,
+  WheelBacktestYears,
+} from "@/app/types/wheelBacktest";
 
 export const WHEEL_BACKTEST_TAB: ResearchTabId = "wheel-backtest";
 
 export type WheelBacktestUrlOptions = {
   years?: WheelBacktestYears;
   maintainOneLot?: boolean;
+  callStrikeMode?: WheelBacktestCallStrikeMode;
   /** Run the simulation as soon as the page loads. */
   run?: boolean;
 };
@@ -25,6 +29,9 @@ export function wheelBacktestPath(
   if (options.maintainOneLot != null) {
     params.set("maintain", options.maintainOneLot ? "1" : "0");
   }
+  if (options.callStrikeMode === "at_or_above_assignment") {
+    params.set("callFloor", "1");
+  }
   if (options.run) {
     params.set("run", "1");
   }
@@ -37,6 +44,7 @@ export function parseWheelBacktestSearchParams(
 ): {
   years: WheelBacktestYears | null;
   maintainOneLot: boolean | null;
+  callStrikeMode: WheelBacktestCallStrikeMode | null;
   autoRun: boolean;
 } {
   const yearsRaw = searchParams.get("years");
@@ -50,9 +58,13 @@ export function parseWheelBacktestSearchParams(
   const maintainOneLot =
     maintainRaw === "1" ? true : maintainRaw === "0" ? false : null;
 
+  const callStrikeMode: WheelBacktestCallStrikeMode | null =
+    searchParams.get("callFloor") === "1" ? "at_or_above_assignment" : null;
+
   return {
     years,
     maintainOneLot,
+    callStrikeMode,
     autoRun: searchParams.get("run") === "1",
   };
 }

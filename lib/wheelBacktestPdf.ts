@@ -219,6 +219,12 @@ export function downloadWheelBacktestPdf(
     ["DTE (trading days)", String(run.dteDays)],
     ["Add cash if CSP needs more", run.maintainOneLot ? "Yes" : "No"],
     [
+      "Covered calls after assign",
+      run.callStrikeMode === "at_or_above_assignment"
+        ? "Strike at or above assignment put"
+        : "Target delta only",
+    ],
+    [
       "History",
       `${fmtDate(result.historyStartDate ?? result.startDate)} → ${fmtDate(result.endDate)} (${result.tradingDays} bars)`,
     ],
