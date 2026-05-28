@@ -139,7 +139,6 @@ export function SymbolPositionContent({ symbol }: Props) {
               mode="symbol"
               symbol={symbolUpper}
               positions={positionsForSelectedSymbol}
-              hideComparePaths
               className={pageSectionClass}
               onAskFollowUp={handleAskFollowUp}
             />

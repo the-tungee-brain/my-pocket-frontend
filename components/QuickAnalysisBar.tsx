@@ -19,9 +19,13 @@ export function QuickAnalysisBar({
   loading,
   onRunAction,
 }: QuickAnalysisBarProps) {
-  const actions = getQuickActionsForMode(actionMode).filter(
-    (action) => !isStructuredAnalyzeAction(action.id),
-  );
+  const actions = getQuickActionsForMode(actionMode).filter((action) => {
+    // Portfolio analyze lives in the diversification panel; position Analyze scrolls there too.
+    if (actionMode !== "position" && isStructuredAnalyzeAction(action.id)) {
+      return false;
+    }
+    return true;
+  });
 
   if (actions.length === 0) return null;
 
