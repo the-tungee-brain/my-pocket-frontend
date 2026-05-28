@@ -1,7 +1,5 @@
+import posthog from "posthog-js";
 import type { PostHog } from "posthog-js";
-
-let client: PostHog | null = null;
-let initPromise: Promise<PostHog | null> | null = null;
 
 function envFlag(name: string, fallback = false): boolean {
   const value = process.env[name];
@@ -9,25 +7,40 @@ function envFlag(name: string, fallback = false): boolean {
   return value === "true" || value === "1";
 }
 
-function getHostConfig() {
-  const posthogHost =
-    process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
+export function getPostHogKey(): string | undefined {
+  const key = process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim();
+  return key || undefined;
+}
 
+function getDirectHost(): string {
+  return process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
+}
+
+function getUiHost(): string {
+  return getDirectHost().includes("eu.")
+    ? "https://eu.posthog.com"
+    : "https://us.posthog.com";
+}
+
+export function getPostHogRewriteTargets() {
+  const isEu = getDirectHost().includes("eu.");
   return {
-    api_host: posthogHost,
-    ui_host: posthogHost.includes("eu.")
-      ? "https://eu.posthog.com"
-      : "https://us.posthog.com",
+    ingest: isEu ? "https://eu.i.posthog.com" : "https://us.i.posthog.com",
+    assets: isEu
+      ? "https://eu-assets.i.posthog.com"
+      : "https://us-assets.i.posthog.com",
   };
 }
 
-function buildInitConfig() {
+export function buildInitConfig() {
+  const useProxy = envFlag("NEXT_PUBLIC_POSTHOG_USE_PROXY", true);
   const sessionReplay = envFlag("NEXT_PUBLIC_POSTHOG_SESSION_REPLAY", false);
   const autocapture = envFlag("NEXT_PUBLIC_POSTHOG_AUTOCAPTURE", false);
-  const captureExceptions = envFlag("NEXT_PUBLIC_POSTHOG_EXCEPTIONS", false);
+  const captureExceptions = envFlag("NEXT_PUBLIC_POSTHOG_EXCEPTIONS", true);
 
   return {
-    ...getHostConfig(),
+    api_host: useProxy ? "/ingest" : getDirectHost(),
+    ui_host: getUiHost(),
     defaults: "2026-01-30" as const,
     autocapture,
     disable_session_recording: !sessionReplay,
@@ -43,38 +56,35 @@ function buildInitConfig() {
   };
 }
 
-export function initPostHogClient(): Promise<PostHog | null> {
+export function initPostHogClient(): PostHog | null {
   if (typeof window === "undefined") {
-    return Promise.resolve(null);
+    return null;
   }
 
-  if (client) {
-    return Promise.resolve(client);
-  }
-
-  if (initPromise) {
-    return initPromise;
-  }
-
-  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  const posthogKey = getPostHogKey();
   if (!posthogKey) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[analytics] NEXT_PUBLIC_POSTHOG_KEY is missing — PostHog disabled.",
-      );
-    }
-    return Promise.resolve(null);
+    console.warn(
+      "[analytics] NEXT_PUBLIC_POSTHOG_KEY is missing — PostHog disabled. Set it in your host env vars and redeploy.",
+    );
+    return null;
   }
 
-  initPromise = import("posthog-js").then(({ default: posthog }) => {
-    posthog.init(posthogKey, buildInitConfig());
-    client = posthog;
+  if (posthog.__loaded) {
     return posthog;
-  });
+  }
 
-  return initPromise;
+  posthog.init(posthogKey, buildInitConfig());
+  return posthog;
 }
 
 export function getPostHogClient(): PostHog | null {
-  return client;
+  if (typeof window === "undefined" || !getPostHogKey()) {
+    return null;
+  }
+
+  if (!posthog.__loaded) {
+    return initPostHogClient();
+  }
+
+  return posthog;
 }

@@ -1,14 +1,13 @@
-import {
-  getPostHogClient,
-  initPostHogClient,
-} from "@/lib/posthogClient";
+import { getPostHogClient } from "@/lib/posthogClient";
 
 export type AnalyticsProperties = Record<
   string,
   string | number | boolean | null | undefined
 >;
 
-function withPostHog(run: (client: NonNullable<ReturnType<typeof getPostHogClient>>) => void) {
+function withPostHog(
+  run: (client: NonNullable<ReturnType<typeof getPostHogClient>>) => void,
+) {
   if (typeof window === "undefined") return;
 
   const schedule =
@@ -17,19 +16,10 @@ function withPostHog(run: (client: NonNullable<ReturnType<typeof getPostHogClien
           window.requestIdleCallback(() => task(), { timeout: 2000 })
       : (task: () => void) => window.setTimeout(task, 0);
 
-  const execute = () => {
-    const existing = getPostHogClient();
-    if (existing) {
-      run(existing);
-      return;
-    }
-
-    void initPostHogClient().then((client) => {
-      if (client) run(client);
-    });
-  };
-
-  schedule(execute);
+  schedule(() => {
+    const client = getPostHogClient();
+    if (client) run(client);
+  });
 }
 
 export function identify(userId: string, traits?: AnalyticsProperties) {
