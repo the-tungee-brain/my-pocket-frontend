@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch, streamGet } from "@/lib/apiClient";
+import { apiFetch } from "@/lib/apiClient";
 import { isAbortError } from "@/lib/isAbortError";
 
 export type BusinessBlock = {
@@ -26,8 +26,6 @@ export function useBusinessDetails(
   { accessToken }: UseBusinessDetailsOptions = {},
 ) {
   const [business, setBusiness] = useState<BusinessBlock | null>(null);
-  const [streamMarkdown, setStreamMarkdown] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(!!symbol);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,8 +34,6 @@ export function useBusinessDetails(
 
     if (!key) {
       setBusiness(null);
-      setStreamMarkdown("");
-      setIsStreaming(false);
       setIsLoading(false);
       setError(null);
       return;
@@ -47,8 +43,6 @@ export function useBusinessDetails(
 
     if (!accessToken) {
       setBusiness(null);
-      setStreamMarkdown("");
-      setIsStreaming(false);
       setIsLoading(false);
       setError("Missing access token");
       return;
@@ -57,8 +51,6 @@ export function useBusinessDetails(
     const cached = businessDetailsCache.get(symbolKey);
     if (cached) {
       setBusiness(cached);
-      setStreamMarkdown("");
-      setIsStreaming(false);
       setIsLoading(false);
       setError(null);
       return;
@@ -68,7 +60,7 @@ export function useBusinessDetails(
     const { signal } = controller;
     const token = accessToken;
 
-    async function loadJson() {
+    async function load() {
       try {
         const res = await apiFetch(
           `/research/business?symbol=${encodeURIComponent(symbolKey)}`,
@@ -88,63 +80,29 @@ export function useBusinessDetails(
 
         businessDetailsCache.set(symbolKey, data);
         setBusiness(data);
-        setStreamMarkdown("");
         setError(null);
       } catch (e: unknown) {
         if (signal.aborted || isAbortError(e)) return;
         const message =
           e instanceof Error ? e.message : "Error fetching business details";
-        setError((prev) => prev ?? message);
+        setError(message);
+        setBusiness(null);
       } finally {
         if (!signal.aborted) {
           setIsLoading(false);
-          setIsStreaming(false);
-        }
-      }
-    }
-
-    async function loadStream() {
-      setIsStreaming(true);
-      let buffer = "";
-
-      try {
-        await streamGet(
-          `/research/business?symbol=${encodeURIComponent(symbolKey)}&stream=true`,
-          token,
-          (chunk) => {
-            if (signal.aborted) return;
-            buffer += chunk;
-            setStreamMarkdown(buffer);
-          },
-          { signal },
-        );
-        if (signal.aborted) return;
-        setError(null);
-      } catch (e: unknown) {
-        if (signal.aborted || isAbortError(e)) return;
-        const message =
-          e instanceof Error ? e.message : "Error streaming business details";
-        setError((prev) => prev ?? message);
-      } finally {
-        if (!signal.aborted) {
-          setIsStreaming(false);
-          setIsLoading((loading) => loading && !businessDetailsCache.has(symbolKey));
         }
       }
     }
 
     setBusiness(null);
-    setStreamMarkdown("");
     setIsLoading(true);
     setError(null);
-
-    void loadStream();
-    void loadJson();
+    void load();
 
     return () => {
       controller.abort();
     };
   }, [symbol, accessToken]);
 
-  return { business, streamMarkdown, isStreaming, isLoading, error };
+  return { business, isLoading, error };
 }

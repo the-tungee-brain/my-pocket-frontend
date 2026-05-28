@@ -1,65 +1,68 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { BriefcaseBusiness } from "lucide-react";
 import { useBusinessDetails } from "@/app/hooks/useBusinessDetails";
 import { useSession } from "next-auth/react";
 import {
   ResearchBulletList,
-  ResearchTextBlock,
   ResearchAsideCard,
 } from "@/components/ResearchDetailBlocks";
 import { PageSplit } from "@/components/PageShell";
-import { StreamingResearchContent } from "@/components/StreamingResearchContent";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { pageSectionClass } from "@/lib/pageLayout";
+import { cn } from "@/lib/utils";
 
 type BusinessSectionProps = {
   symbol: string | null;
 };
 
+function BusinessCollapsible({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details className="business-tab__details" open={defaultOpen || undefined}>
+      <summary className="business-tab__details-summary">{title}</summary>
+      <div className="mt-2 text-sm leading-relaxed text-foreground">{children}</div>
+    </details>
+  );
+}
+
 export function BusinessSection({ symbol }: BusinessSectionProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
-  const { business, streamMarkdown, isStreaming, isLoading, error } =
-    useBusinessDetails(symbol, {
-      accessToken,
-    });
+  const { business, isLoading, error } = useBusinessDetails(symbol, {
+    accessToken,
+  });
 
-  if (isLoading && !business && !streamMarkdown) {
+  if (isLoading && !business) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-start gap-3">
-          <Skeleton className="h-10 w-10 rounded-xl" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-4 w-full" />
-          </div>
-        </div>
-        <Skeleton className="h-40 rounded-2xl" />
+      <div className={cn("business-tab space-y-4", pageSectionClass)} aria-hidden>
+        <Skeleton className="h-10 w-56" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-40 w-full" />
       </div>
     );
   }
 
-  if (error && !business && !streamMarkdown) {
-    return <ErrorBanner message={error} />;
-  }
-
-  if (!business && streamMarkdown) {
+  if (error && !business) {
     return (
-      <div className="space-y-4">
-        <BusinessPageHeader />
-        <StreamingResearchContent
-          markdown={streamMarkdown}
-          isStreaming={isStreaming}
-          statusLabel="Generating business overview…"
-        />
+      <div className={pageSectionClass}>
+        <ErrorBanner message={error} />
       </div>
     );
   }
 
   if (!business) {
     return (
-      <div className="space-y-4">
+      <div className={cn("business-tab space-y-4", pageSectionClass)}>
         <BusinessPageHeader />
         <p className="text-sm text-muted">Business details are not available.</p>
       </div>
@@ -70,11 +73,11 @@ export function BusinessSection({ symbol }: BusinessSectionProps) {
     business.segments.length > 0 || !!business.moatAndDifferentiators;
 
   return (
-    <div className="space-y-6">
+    <div className={cn("business-tab space-y-5", pageSectionClass)}>
       <BusinessPageHeader />
 
-      <div className="rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent-strong">
+      <div className="business-tab__hook" aria-labelledby="business-hook">
+        <h3 id="business-hook" className="business-tab__hook-title">
           What they do
         </h3>
         <p className="text-sm leading-relaxed text-foreground">
@@ -84,28 +87,28 @@ export function BusinessSection({ symbol }: BusinessSectionProps) {
 
       <PageSplit
         main={
-          <>
-            <ResearchTextBlock title="How they make money">
+          <div className="space-y-2">
+            <BusinessCollapsible title="How they make money" defaultOpen>
               <p>{business.revenueNotes}</p>
-            </ResearchTextBlock>
+            </BusinessCollapsible>
 
-            {business.customersAndMarkets && (
-              <ResearchTextBlock title="Customers & markets">
+            {business.customersAndMarkets ? (
+              <BusinessCollapsible title="Customers & markets">
                 <p>{business.customersAndMarkets}</p>
-              </ResearchTextBlock>
-            )}
+              </BusinessCollapsible>
+            ) : null}
 
-            {business.competitiveLandscape && (
-              <ResearchTextBlock title="Competitive landscape">
+            {business.competitiveLandscape ? (
+              <BusinessCollapsible title="Competitive landscape">
                 <p>{business.competitiveLandscape}</p>
-              </ResearchTextBlock>
-            )}
-          </>
+              </BusinessCollapsible>
+            ) : null}
+          </div>
         }
         aside={
           hasAside ? (
             <>
-              {business.segments.length > 0 && (
+              {business.segments.length > 0 ? (
                 <ResearchAsideCard title="Business segments">
                   <ul className="space-y-2">
                     {business.segments.map((seg) => (
@@ -118,15 +121,15 @@ export function BusinessSection({ symbol }: BusinessSectionProps) {
                     ))}
                   </ul>
                 </ResearchAsideCard>
-              )}
+              ) : null}
 
-              {business.moatAndDifferentiators && (
+              {business.moatAndDifferentiators ? (
                 <ResearchAsideCard title="Moat & differentiators" tone="accent">
                   <p className="text-sm leading-relaxed text-foreground">
                     {business.moatAndDifferentiators}
                   </p>
                 </ResearchAsideCard>
-              )}
+              ) : null}
             </>
           ) : undefined
         }
@@ -149,18 +152,18 @@ export function BusinessSection({ symbol }: BusinessSectionProps) {
 
 function BusinessPageHeader() {
   return (
-    <div className="flex items-start gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-accent-muted text-accent-strong">
-        <BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />
+    <header className="business-tab__header">
+      <div className="flex min-w-0 items-start gap-3">
+        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+          <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-foreground">Business</h2>
+          <p className="mt-0.5 text-xs text-muted">
+            Model, segments, competition, and growth drivers
+          </p>
+        </div>
       </div>
-      <div>
-        <h2 className="text-sm font-semibold text-foreground">
-          How this business makes money
-        </h2>
-        <p className="mt-0.5 text-[11px] text-muted">
-          Business model, segments, competition, and growth drivers
-        </p>
-      </div>
-    </div>
+    </header>
   );
 }
