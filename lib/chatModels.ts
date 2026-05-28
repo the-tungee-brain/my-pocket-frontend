@@ -7,7 +7,7 @@ export type ChatModelOption = {
   tier: ModelTierId;
 };
 
-export const DEFAULT_CHAT_MODEL = "gpt-5-mini";
+export const DEFAULT_CHAT_MODEL = "gpt-4.1-mini";
 
 export const CHAT_MODEL_TIERS: {
   id: ModelTierId;

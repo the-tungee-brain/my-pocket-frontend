@@ -66,7 +66,7 @@ export function useInsights(
     structuredAnalyze?: boolean;
     userDisplayMessage?: string | null;
   },
-  model: string = "gpt-5.4",
+  model: string = "gpt-4.1-mini",
 ): InsightState {
   const {
     label,
