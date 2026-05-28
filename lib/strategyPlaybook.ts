@@ -102,3 +102,61 @@ export function actionTypeLabel(type: StrategyNextAction["type"]): string {
       return "Action";
   }
 }
+
+export function playbookAskPrompt(action: StrategyNextAction): string {
+  const symbol = action.symbol?.trim().toUpperCase();
+  const title = action.title.trim();
+  const reason = action.reason.trim();
+
+  if (!symbol) {
+    return `${title} ${reason}`.trim();
+  }
+
+  switch (action.type) {
+    case "options": {
+      const lower = title.toLowerCase();
+      if (lower.includes("covered call")) {
+        return (
+          `I have ${symbol} on my strategy playbook. ${reason} ` +
+          "What covered call strike and expiration would you suggest, and what assignment risk should I plan for?"
+        );
+      }
+      if (lower.includes("csp") || lower.includes("put")) {
+        return (
+          `For ${symbol} on my strategy playbook: ${reason} ` +
+          "What cash-secured put strike and DTE fit my strategy, and would you sell the put here?"
+        );
+      }
+      return `For ${symbol}: ${title}. ${reason} What option trade would you consider next?`;
+    }
+    case "monitor":
+      return (
+        `Monitor my ${symbol} options position. ${reason} ` +
+        "What should I watch for, and when would you roll, close, or let it ride?"
+      );
+    case "research":
+      return (
+        `For ${symbol} on my strategy playbook: ${reason} ` +
+        "Help me decide the next step — fundamentals, timing, and fit with my strategy."
+      );
+    case "buy":
+      return (
+        `For ${symbol}: ${reason} ` +
+        "What's a sensible way to build the position without breaking my strategy rules?"
+      );
+    case "rebalance":
+      return (
+        `Review ${symbol} in my portfolio. ${reason} ` +
+        "Should I add, trim, or hold based on my strategy targets?"
+      );
+    default:
+      return `${symbol}: ${title}. ${reason}`;
+  }
+}
+
+export function playbookActionAskable(action: StrategyNextAction): boolean {
+  if (action.type === "connect" || action.type === "education") {
+    return false;
+  }
+  return true;
+}

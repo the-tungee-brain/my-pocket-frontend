@@ -22,6 +22,7 @@ import { StrategyFlowDiagram } from "@/components/StrategyFlowDiagram";
 import {
   actionTypeLabel,
   formatStrategyPlaybookTitle,
+  playbookActionAskable,
   primaryPlaybookAction,
 } from "@/lib/strategyPlaybook";
 import { getStrategyFlow } from "@/lib/strategyFlows";
@@ -187,13 +188,13 @@ export function StrategyPlaybookPanel({
                       <ArrowRight className="h-3 w-3" aria-hidden />
                     </Link>
                   )}
-                  {onRunAction && topAction.actionId && (
+                  {onRunAction && playbookActionAskable(topAction) && (
                     <button
                       type="button"
                       onClick={() => onRunAction(topAction)}
                       className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent-muted/40 px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:bg-accent-muted/60"
                     >
-                      Ask AI about this
+                      Ask AI{topAction.symbol ? ` about ${topAction.symbol}` : ""}
                     </button>
                   )}
                 </div>
@@ -263,7 +264,9 @@ function PlaybookSymbolCard({
           <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted">
             {actionTypeLabel(status.nextAction.type)}
           </span>
-          {onRunAction && status.nextAction.actionId && (
+          {onRunAction &&
+            status.nextAction &&
+            playbookActionAskable(status.nextAction) && (
             <button
               type="button"
               onClick={() => onRunAction(status.nextAction!)}

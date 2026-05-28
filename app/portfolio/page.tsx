@@ -44,6 +44,8 @@ import {
   PORTFOLIO_ANALYSIS_SECTION_ID,
   scrollToAnalysisSection,
 } from "@/lib/positionAnalysis";
+import type { StrategyNextAction } from "@/app/types/strategy";
+import { playbookAskPrompt, playbookActionAskable } from "@/lib/strategyPlaybook";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { PageShell, PageSplit } from "@/components/PageShell";
 import { cn } from "@/lib/utils";
@@ -65,6 +67,7 @@ export default function PortfolioPage() {
     refreshPositions,
     sessionAccessToken,
     sendQuickAction,
+    sendPrompt,
     schwabReauth,
     closeAllChatModelMenus,
   } = usePositionsContext();
@@ -173,6 +176,21 @@ export default function PortfolioPage() {
   const taxItems = collectTaxAlertItems(
     mergedAlerts,
     recentActivity?.suggestedActions ?? [],
+  );
+
+  const handlePlaybookAsk = useCallback(
+    (action: StrategyNextAction) => {
+      if (!playbookActionAskable(action)) return;
+      void sendPrompt({
+        activeChatKey: "__PORTFOLIO_CHAT__",
+        selectedView: "portfolio",
+        selectedSymbol: action.symbol?.trim().toUpperCase() ?? null,
+        positionsForSelectedSymbol: allPositions,
+        prompt: playbookAskPrompt(action),
+      });
+      scrollToChat();
+    },
+    [allPositions, sendPrompt],
   );
 
   const handleSuggestedAction = useCallback(
@@ -364,10 +382,7 @@ export default function PortfolioPage() {
             catalog.find((item) => item.id === strategyProfile.primaryStrategy) ??
             null
           }
-          onRunAction={(action) => {
-            if (!action.actionId) return;
-            handleSuggestedAction(action.actionId);
-          }}
+          onRunAction={handlePlaybookAsk}
         />
       )}
 

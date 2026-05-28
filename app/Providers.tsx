@@ -819,7 +819,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
 
       const symbolForApi =
         selectedView === "portfolio"
-          ? null
+          ? selectedSymbol
           : selectedView === "research"
             ? selectedSymbol
             : (selectedSymbol ?? "UNKNOWN");
