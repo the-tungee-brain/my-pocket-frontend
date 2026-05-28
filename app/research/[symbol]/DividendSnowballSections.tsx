@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 import type {
   AnnualDividendIncome,
   DividendAdvancedSnowballScenario,
@@ -46,6 +47,68 @@ function formatSnowballShares(value: number): string {
 
 function roundSnowball(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+function SnowballScenarioControlsPanel({
+  summary,
+  children,
+}: {
+  summary: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <div className="hidden space-y-3 md:block">{children}</div>
+      <div className="overflow-hidden rounded-xl border border-border bg-surface-elevated/30 md:hidden">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((current) => !current)}
+          className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+        >
+          <span className="min-w-0">
+            <span className="text-xs font-medium text-foreground">
+              Adjust projection
+            </span>
+            <span className="mt-0.5 block truncate text-[11px] text-muted">
+              {summary}
+            </span>
+          </span>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-muted transition-transform",
+              open && "rotate-180",
+            )}
+            aria-hidden
+          />
+        </button>
+        {open ? (
+          <div className="space-y-3 border-t border-border/70 p-3">{children}</div>
+        ) : null}
+      </div>
+    </>
+  );
+}
+
+function buildScenarioControlsSummary(options: {
+  projectYears: number;
+  investmentUsd: number | null;
+  reinvestDividends: boolean;
+  annualContributionUsd: number;
+}): string {
+  const parts: string[] = [`${options.projectYears}y`];
+  if (options.investmentUsd != null && options.investmentUsd > 0) {
+    parts.push(formatUsd(options.investmentUsd, { maximumFractionDigits: 0 }));
+  }
+  parts.push(options.reinvestDividends ? "DRIP on" : "DRIP off");
+  if (options.annualContributionUsd > 0) {
+    parts.push(
+      `+${formatUsd(options.annualContributionUsd, { maximumFractionDigits: 0 })}/yr`,
+    );
+  }
+  return parts.join(" · ");
 }
 
 type SnowballNumericInputProps = {
@@ -864,6 +927,14 @@ export function DividendSnowballScenarioCard({
       </div>
 
       {onScenarioChange ? (
+        <SnowballScenarioControlsPanel
+          summary={buildScenarioControlsSummary({
+            projectYears,
+            investmentUsd,
+            reinvestDividends,
+            annualContributionUsd,
+          })}
+        >
         <div className="grid gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="space-y-1 text-xs text-muted">
             Investment
@@ -952,9 +1023,7 @@ export function DividendSnowballScenarioCard({
             />
           </label>
         </div>
-      ) : null}
 
-      {onScenarioChange ? (
         <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
           <div>
             <p className="text-xs font-medium text-foreground">
@@ -998,9 +1067,7 @@ export function DividendSnowballScenarioCard({
             />
           </label>
         </div>
-      ) : null}
 
-      {onScenarioChange ? (
         <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
           <label className="flex items-start gap-3 text-sm text-foreground">
             <input
@@ -1020,6 +1087,7 @@ export function DividendSnowballScenarioCard({
             </span>
           </label>
         </div>
+        </SnowballScenarioControlsPanel>
       ) : null}
 
       <div className="grid gap-2 sm:grid-cols-2">

@@ -112,7 +112,12 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
-          <CompanyLogo symbol={snapshot.symbol} logo={snapshot.logo} size="sm" />
+          <CompanyLogo
+            symbol={snapshot.symbol}
+            logo={snapshot.logo}
+            size="sm"
+            isEtf={isEtf}
+          />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">
               {snapshot.symbol}
@@ -175,7 +180,12 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           {researchLabel}
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <CompanyLogo symbol={snapshot.symbol} logo={snapshot.logo} size="md" />
+          <CompanyLogo
+            symbol={snapshot.symbol}
+            logo={snapshot.logo}
+            size="md"
+            isEtf={isEtf}
+          />
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {snapshot.symbol} · {snapshot.name}
           </h1>

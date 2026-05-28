@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { ChevronDown } from "lucide-react";
 import { CompanySnapshot } from "./CompanySnapshot";
 import { StrategySymbolPlaybookStrip } from "@/components/StrategySymbolPlaybookStrip";
 import { ResearchTabBar, researchBreadcrumbLabel } from "@/components/ResearchTabBar";
@@ -34,8 +35,10 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
   const { positionMap } = usePositionsContext();
   const { profile } = useStrategyContext();
   const { assetType, isEtf } = useResearchAssetTypeContext();
-  const [collapsed, setCollapsed] = useState(false);
+  const [scrollCollapsed, setScrollCollapsed] = useState(false);
+  const [headerExpanded, setHeaderExpanded] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const collapsed = scrollCollapsed && !headerExpanded;
   const symbolUpper = symbol.toUpperCase();
   const activeTab = pathname.split("/")[3] ?? "overview";
   const hasPosition = (positionMap[symbolUpper]?.length ?? 0) > 0;
@@ -64,13 +67,19 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
     if (!root || !sentinel) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => setCollapsed(!entry.isIntersecting),
+      ([entry]) => setScrollCollapsed(!entry.isIntersecting),
       { root, threshold: 0 },
     );
 
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!scrollCollapsed) {
+      setHeaderExpanded(false);
+    }
+  }, [scrollCollapsed]);
 
   return (
     <div className={cn(pageShellClass, "min-w-0 pb-2")}>
@@ -110,6 +119,25 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
             showOptionsTab={showOptionsTab}
             showWheelBacktestTab={showWheelBacktestTab}
           />
+          {scrollCollapsed ? (
+            <button
+              type="button"
+              aria-expanded={headerExpanded}
+              onClick={() => setHeaderExpanded((current) => !current)}
+              className="flex w-full items-center justify-between gap-2 rounded-lg border border-border/80 bg-secondary/50 px-3 py-2 text-left md:hidden"
+            >
+              <span className="text-xs font-medium text-foreground">
+                {headerExpanded ? "Hide symbol details" : "Show symbol details"}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 shrink-0 text-muted transition-transform",
+                  headerExpanded && "rotate-180",
+                )}
+                aria-hidden
+              />
+            </button>
+          ) : null}
         </div>
       </div>
 
