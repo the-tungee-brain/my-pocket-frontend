@@ -279,6 +279,23 @@ export async function streamAnalysis(
   return streamPost("/analyze-positions-by-symbol", body, accessToken, onChunk);
 }
 
+export async function streamPlaybookAsk(
+  body: {
+    symbol: string;
+    actionType: string;
+    actionTitle: string;
+    actionReason?: string;
+    strategy: string;
+    model?: string;
+    chat_session_id?: string | null;
+    new_chat_session?: boolean;
+  },
+  accessToken: string,
+  onChunk: (text: string) => void,
+): Promise<{ chatSessionId: string | null }> {
+  return streamPost("/strategy/playbook/ask", body, accessToken, onChunk);
+}
+
 export async function streamResearchChat(
   body: {
     symbol: string;

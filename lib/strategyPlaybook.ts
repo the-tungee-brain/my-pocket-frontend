@@ -105,75 +105,45 @@ export function actionTypeLabel(type: StrategyNextAction["type"]): string {
   }
 }
 
-export function playbookAskPrompt(action: StrategyNextAction): string {
+export function playbookAskDisplayLabel(action: StrategyNextAction): string {
   const symbol = action.symbol?.trim().toUpperCase();
-  const title = action.title.trim();
-  const reason = action.reason.trim();
-  const titleLower = title.toLowerCase();
+  const titleLower = action.title.toLowerCase();
 
-  if (!symbol) {
-    return `${title} ${reason}`.trim();
-  }
-
-  switch (action.type) {
-    case "options": {
-      if (titleLower.includes("covered call")) {
-        return (
-          `I hold ${symbol} on my strategy playbook and I'm looking at writing a covered call. ` +
-          "What strike and expiration would you suggest, and what assignment risk should I plan for?"
-        );
-      }
-      if (titleLower.includes("csp") || titleLower.includes("put")) {
-        return (
-          `I'm considering a cash-secured put on ${symbol} for my strategy playbook. ` +
-          "What strike and DTE fit my approach, and would you sell the put here?"
-        );
-      }
-      return (
-        `For ${symbol}: ${title}. What option trade would you consider next, and why?`
-      );
-    }
-    case "monitor":
-      return (
-        `I have an open options position on ${symbol}. ${reason} ` +
-        "What should I watch for, and when would you roll, close, or let it ride?"
-      );
-    case "research": {
+  if (symbol) {
+    if (action.type === "research") {
       if (
         titleLower.includes("put") ||
         titleLower.includes("csp") ||
         titleLower.includes("wheel")
       ) {
-        return (
-          `I'm thinking about selling a cash-secured put on ${symbol} for my strategy playbook. ` +
-          "Would I be comfortable owning shares if assigned? " +
-          "Help me weigh fundamentals, timing, and a sensible strike range before I sell."
-        );
+        return `Long-term research on ${symbol} before selling a put`;
       }
       if (titleLower.includes("dividend")) {
-        return (
-          `I'm researching ${symbol} as a dividend name on my playbook. ` +
-          "Is the payout sustainable, and does it fit my strategy? What should I verify before buying?"
-        );
+        return `Dividend research on ${symbol}`;
       }
-      return (
-        `I'm researching ${symbol} for my strategy playbook. ` +
-        "What's the case for or against my next step — fundamentals, timing, and fit?"
-      );
+      return `Research ${symbol} for my playbook`;
     }
-    case "buy":
-      return (
-        `I want to build a position in ${symbol} for my strategy playbook. ` +
-        "What's a sensible way to size and enter without breaking my rules?"
-      );
-    case "rebalance":
-      return (
-        `Review ${symbol} in my portfolio for my strategy playbook. ` +
-        "Should I add, trim, or hold based on my targets?"
-      );
-    default:
-      return `${symbol}: ${title}. ${reason}`;
+    if (action.type === "options") {
+      if (titleLower.includes("covered call")) {
+        return `Covered call ideas for ${symbol}`;
+      }
+      if (titleLower.includes("csp") || titleLower.includes("put")) {
+        return `Long-term research on ${symbol} before selling a put`;
+      }
+      return `Options review for ${symbol}`;
+    }
+    if (action.type === "monitor") {
+      return `Monitor my ${symbol} options position`;
+    }
+    if (action.type === "buy") {
+      return `Build a position in ${symbol}`;
+    }
+    if (action.type === "rebalance") {
+      return `Review ${symbol} allocation`;
+    }
   }
+
+  return action.title.trim() || "Strategy playbook question";
 }
 
 export function playbookActionAskable(action: StrategyNextAction): boolean {

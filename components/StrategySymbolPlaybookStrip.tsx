@@ -11,7 +11,6 @@ import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import {
   formatStrategyPlaybookTitle,
   isOnStrategyPlaybook,
-  playbookAskPrompt,
   playbookActionAskable,
   playbookHoldBadge,
   symbolStatusForSymbol,
@@ -27,7 +26,7 @@ type Props = {
 
 export function StrategySymbolPlaybookStrip({ symbol, className }: Props) {
   const { profile, recommendations } = useStrategyContext();
-  const { positionMap, sendPrompt } = usePositionsContext();
+  const { sendPlaybookAsk } = usePositionsContext();
   const { connect, connecting } = useSchwabConnect();
 
   const upperSymbol = symbol.trim().toUpperCase();
@@ -35,18 +34,16 @@ export function StrategySymbolPlaybookStrip({ symbol, className }: Props) {
 
   const handleRunAction = useCallback(
     (action: StrategyNextAction) => {
-      if (!playbookActionAskable(action)) return;
+      if (!playbookActionAskable(action) || !profile?.primaryStrategy) return;
       const chatKey = symbolChatKey(upperSymbol) ?? upperSymbol;
-      void sendPrompt({
+      void sendPlaybookAsk({
         activeChatKey: chatKey,
-        selectedView: "research",
-        selectedSymbol: upperSymbol,
-        positionsForSelectedSymbol: positionMap[upperSymbol] ?? [],
-        prompt: playbookAskPrompt(action),
+        action,
+        strategy: profile.primaryStrategy,
       });
       scrollToChat();
     },
-    [upperSymbol, sendPrompt, positionMap],
+    [upperSymbol, sendPlaybookAsk, profile?.primaryStrategy],
   );
 
   if (!onPlaybook || !profile?.primaryStrategy) {

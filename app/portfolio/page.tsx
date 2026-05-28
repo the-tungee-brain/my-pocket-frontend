@@ -46,7 +46,9 @@ import {
   scrollToAnalysisSection,
 } from "@/lib/positionAnalysis";
 import type { StrategyNextAction } from "@/app/types/strategy";
-import { playbookAskPrompt, playbookActionAskable } from "@/lib/strategyPlaybook";
+import {
+  playbookActionAskable,
+} from "@/lib/strategyPlaybook";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { PageShell, PageSplit } from "@/components/PageShell";
 import { cn } from "@/lib/utils";
@@ -69,6 +71,7 @@ export default function PortfolioPage() {
     sessionAccessToken,
     sendQuickAction,
     sendPrompt,
+    sendPlaybookAsk,
     schwabReauth,
     closeAllChatModelMenus,
   } = usePositionsContext();
@@ -193,17 +196,15 @@ export default function PortfolioPage() {
 
   const handlePlaybookAsk = useCallback(
     (action: StrategyNextAction) => {
-      if (!playbookActionAskable(action)) return;
-      void sendPrompt({
+      if (!playbookActionAskable(action) || !strategyProfile?.primaryStrategy) return;
+      void sendPlaybookAsk({
         activeChatKey: "__PORTFOLIO_CHAT__",
-        selectedView: "portfolio",
-        selectedSymbol: action.symbol?.trim().toUpperCase() ?? null,
-        positionsForSelectedSymbol: allPositions,
-        prompt: playbookAskPrompt(action),
+        action,
+        strategy: strategyProfile.primaryStrategy,
       });
       scrollToChat();
     },
-    [allPositions, sendPrompt],
+    [sendPlaybookAsk, strategyProfile?.primaryStrategy],
   );
 
   const handleSuggestedAction = useCallback(

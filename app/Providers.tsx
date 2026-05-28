@@ -12,7 +12,9 @@ import {
 import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { track } from "@/lib/analytics";
-import { apiFetch, fetchAccountPositions, streamAnalysis, streamResearchChat } from "@/lib/apiClient";
+import type { InvestmentStrategy, StrategyNextAction } from "@/app/types/strategy";
+import { apiFetch, fetchAccountPositions, streamAnalysis, streamPlaybookAsk, streamResearchChat } from "@/lib/apiClient";
+import { playbookAskDisplayLabel, playbookActionAskable } from "@/lib/strategyPlaybook";
 import type { PositionMap } from "@/components/AccountPositionList";
 import type { ChatMessage } from "@/components/ConversationPane";
 import {
@@ -97,6 +99,11 @@ type PositionsContextValue = {
     selectedSymbol: string | null;
     positionsForSelectedSymbol: Position[] | null;
     prompt: string;
+  }) => Promise<void>;
+  sendPlaybookAsk: (opts: {
+    activeChatKey: string;
+    action: StrategyNextAction;
+    strategy: InvestmentStrategy | null;
   }) => Promise<void>;
   sendQuickAction: (opts: {
     activeChatKey: string;
@@ -947,6 +954,140 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     [accessToken, account, chatBySymbol, ensureSymbolChatState, hydrateChatFromServer],
   );
 
+  const sendPlaybookAsk: PositionsContextValue["sendPlaybookAsk"] = useCallback(
+    async ({ activeChatKey, action, strategy }) => {
+      if (!accessToken) return;
+      if (!playbookActionAskable(action)) return;
+      if (activeChatKey === "__NONE__") return;
+
+      const symbol = action.symbol?.trim().toUpperCase();
+      if (!symbol || !strategy) return;
+
+      const state =
+        chatBySymbol[activeChatKey] ?? ensureSymbolChatState(activeChatKey);
+      if (state.loading) return;
+
+      const displayMessage = playbookAskDisplayLabel(action);
+
+      setChatBySymbol((prev) => {
+        const prevState = ensureSymbolChatState(
+          activeChatKey,
+          prev[activeChatKey],
+        );
+        const userMessage: ChatMessage = {
+          id: `user-${activeChatKey}-${Date.now()}`,
+          role: "user",
+          content: displayMessage,
+        };
+
+        return {
+          ...prev,
+          [activeChatKey]: {
+            ...prevState,
+            messages: [...prevState.messages, userMessage],
+            input: "",
+            loading: true,
+          },
+        };
+      });
+      openAssistantChat();
+
+      const streamer = createStreamingAssistantUpdater(
+        activeChatKey,
+        setChatBySymbol,
+        ensureSymbolChatState,
+      );
+      streamer.beginAssistantMessage();
+
+      const chatSessionFields = chatSessionRequestFields(state);
+      let chatSessionId: string | null = null;
+
+      try {
+        ({ chatSessionId } = await streamPlaybookAsk(
+          {
+            symbol,
+            actionType: action.type,
+            actionTitle: action.title,
+            actionReason: action.reason,
+            strategy,
+            model: state.model,
+            ...chatSessionFields,
+          },
+          accessToken,
+          streamer.appendChunk,
+        ));
+
+        if (!streamer.assistantContent.current.trim()) {
+          streamer.appendChunk(
+            "Sorry, I didn't get a response back. Please try again or rephrase your question.",
+          );
+        }
+
+        streamer.flushNow();
+
+        if (chatSessionId) {
+          setChatBySymbol((prev) => {
+            const prevState = ensureSymbolChatState(
+              activeChatKey,
+              prev[activeChatKey],
+            );
+            return {
+              ...prev,
+              [activeChatKey]: {
+                ...prevState,
+                sessionId: chatSessionId,
+                pendingNewChatSession: false,
+                historyRevision: (prevState.historyRevision ?? 0) + 1,
+              },
+            };
+          });
+        }
+
+        await hydrateChatFromServer(activeChatKey, "research");
+      } catch (err) {
+        console.error("Playbook ask failed:", err);
+        setChatBySymbol((prev) => {
+          const prevState = ensureSymbolChatState(
+            activeChatKey,
+            prev[activeChatKey],
+          );
+          return {
+            ...prev,
+            [activeChatKey]: {
+              ...prevState,
+              loading: false,
+              messages: [
+                ...prevState.messages,
+                {
+                  id: `error-${activeChatKey}-${Date.now()}`,
+                  role: "assistant",
+                  content:
+                    "Sorry, I couldn't complete that playbook question. Please try again.",
+                },
+              ],
+            },
+          };
+        });
+        return;
+      }
+
+      setChatBySymbol((prev) => {
+        const prevState = ensureSymbolChatState(
+          activeChatKey,
+          prev[activeChatKey],
+        );
+        return {
+          ...prev,
+          [activeChatKey]: {
+            ...prevState,
+            loading: false,
+          },
+        };
+      });
+    },
+    [accessToken, chatBySymbol, ensureSymbolChatState, hydrateChatFromServer],
+  );
+
   const sendQuickAction: PositionsContextValue["sendQuickAction"] = useCallback(
     async ({
       activeChatKey,
@@ -1173,6 +1314,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       setChatModelMenuOpen,
       closeAllChatModelMenus,
       sendPrompt,
+      sendPlaybookAsk,
       sendQuickAction,
       hydrateChatFromServer,
       restoreChatSession,
@@ -1206,6 +1348,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       setChatModelMenuOpen,
       closeAllChatModelMenus,
       sendPrompt,
+      sendPlaybookAsk,
       sendQuickAction,
       hydrateChatFromServer,
       restoreChatSession,
