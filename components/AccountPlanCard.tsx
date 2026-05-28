@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { AccountPlan } from "@/app/types/account";
+import { pageProseClass, pageShellStandaloneClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 
 type AccountPlanCardProps = {
@@ -155,8 +156,8 @@ export function LandingPricingSection() {
       id="pricing"
       className="scroll-mt-20 border-t border-border py-16 lg:py-20"
     >
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="mx-auto max-w-2xl text-center">
+      <div className={pageShellStandaloneClass}>
+        <div className={cn(pageProseClass, "text-center")}>
           <p className="text-xs font-semibold uppercase tracking-wider text-accent-strong">
             Pricing
           </p>

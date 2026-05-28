@@ -70,7 +70,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
   }, []);
 
   return (
-    <div className={cn(pageShellClass, "pb-2")}>
+    <div className={cn(pageShellClass, "min-w-0 pb-2")}>
       <div
         ref={sentinelRef}
         className="pointer-events-none h-px"

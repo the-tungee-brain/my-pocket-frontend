@@ -32,7 +32,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { InvestmentStrategy } from "@/app/types/strategy";
 import type { StrategyFormValues } from "@/lib/strategyProfileForm";
-import { pageFormClass } from "@/lib/pageLayout";
+import { PageShell } from "@/components/PageShell";
 import { cn } from "@/lib/utils";
 
 const STRATEGY_ICONS: Record<InvestmentStrategy, typeof RefreshCw> = {
@@ -126,14 +126,14 @@ export function SettingsPageContent() {
 
   if (!accessToken) {
     return (
-      <div className={cn(pageFormClass, "max-w-3xl py-8")}>
+      <PageShell className="py-8">
         <SettingsEmptyState message="Sign in to manage your account settings." />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className={cn(pageFormClass, "max-w-3xl pb-24 md:pb-8")}>
+    <PageShell className="pb-24 md:pb-8">
       <div className="mb-6">
         <Link
           href="/portfolio"
@@ -354,7 +354,7 @@ export function SettingsPageContent() {
           </Card>
         </section>
       )}
-    </div>
+    </PageShell>
   );
 }
 

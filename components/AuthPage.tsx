@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
+import { pageProseClass, pageShellStandaloneClass } from "@/lib/pageLayout";
 import { track } from "@/lib/analytics";
 
 function getAuthErrorMessage(code: string | null): string | null {
@@ -151,7 +152,7 @@ function LandingHeader({
 }) {
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-6">
+      <div className={cn(pageShellStandaloneClass, "flex h-14 items-center justify-between gap-4")}>
         <TomcrestLogo size="sm" />
 
         <nav
@@ -186,7 +187,7 @@ function HeroSection({
   signInError: string | null;
 }) {
   return (
-    <section className="relative mx-auto max-w-6xl px-6 pb-16 pt-12 lg:pb-24 lg:pt-16">
+    <section className={cn(pageShellStandaloneClass, "relative pb-16 pt-12 lg:pb-24 lg:pt-16")}>
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -366,7 +367,7 @@ function TopFeaturesSection() {
       id="features"
       className="scroll-mt-20 border-t border-border bg-secondary/30 py-16 lg:py-20"
     >
-      <div className="mx-auto max-w-6xl px-6">
+      <div className={pageShellStandaloneClass}>
         <SectionHeading
           eyebrow="Why investors sign up"
           title="Four things you can't get from a generic chatbot"
@@ -434,7 +435,7 @@ function TopFeatureCard({
 function AlsoIncludedSection() {
   return (
     <section className="scroll-mt-20 border-t border-border py-14 lg:py-16">
-      <div className="mx-auto max-w-6xl px-6">
+      <div className={pageShellStandaloneClass}>
         <SectionHeading
           eyebrow="Also included"
           title="The full workspace, not a single feature"
@@ -487,7 +488,7 @@ function HowItWorksSection() {
 
   return (
     <section id="how-it-works" className="scroll-mt-20 py-16 lg:py-20">
-      <div className="mx-auto max-w-6xl px-6">
+      <div className={pageShellStandaloneClass}>
         <SectionHeading
           eyebrow="How it works"
           title="From sign-in to insights in minutes"
@@ -568,7 +569,7 @@ function ProductShowcase() {
       id="product"
       className="scroll-mt-20 border-t border-border bg-secondary/30 py-16 lg:py-20"
     >
-      <div className="mx-auto max-w-6xl px-6">
+      <div className={pageShellStandaloneClass}>
         <SectionHeading
           eyebrow="See it in action"
           title="From morning brief to your next move"
@@ -635,7 +636,7 @@ function StrategySection() {
 
   return (
     <section id="strategies" className="scroll-mt-20 py-16 lg:py-20">
-      <div className="mx-auto max-w-6xl px-6">
+      <div className={pageShellStandaloneClass}>
         <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
           <SectionHeading
             eyebrow="Investment strategies"
@@ -680,7 +681,7 @@ function FinalCTASection({
 }) {
   return (
     <section className="border-t border-border bg-secondary/30 py-16 lg:py-20">
-      <div className="mx-auto max-w-6xl px-6">
+      <div className={pageShellStandaloneClass}>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -723,7 +724,7 @@ function FinalCTASection({
 function LandingFooter() {
   return (
     <footer className="border-t border-border py-8">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 sm:flex-row sm:items-start">
+      <div className={cn(pageShellStandaloneClass, "flex flex-col items-center justify-between gap-6 sm:flex-row sm:items-start")}>
         <div className="flex items-center gap-2.5 text-sm text-muted">
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent-muted text-accent-strong">
             <TomcrestMark className="h-3.5 w-3.5" />
@@ -761,7 +762,7 @@ function SectionHeading({
   centered?: boolean;
 }) {
   return (
-    <div className={cn(centered && "mx-auto max-w-2xl text-center")}>
+    <div className={cn(centered && cn(pageProseClass, "text-center"))}>
       <p className="text-xs font-semibold uppercase tracking-wider text-accent-strong">
         {eyebrow}
       </p>
@@ -772,7 +773,7 @@ function SectionHeading({
         className={cn(
           "mt-3 text-sm leading-relaxed text-muted sm:text-base",
           centered && "mx-auto",
-          !centered && "max-w-2xl",
+          !centered && pageProseClass,
         )}
       >
         {description}

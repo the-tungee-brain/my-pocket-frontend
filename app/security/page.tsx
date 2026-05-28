@@ -2,6 +2,10 @@ import Link from "next/link";
 import { ArrowLeft, Lock, ShieldCheck, Unplug } from "lucide-react";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
 import { SCHWAB_READ_ONLY_LINE } from "@/lib/schwabTrustCopy";
+import {
+  pageNarrowStandaloneClass,
+} from "@/lib/pageLayout";
+import { cn } from "@/lib/utils";
 
 const sections = [
   {
@@ -25,7 +29,12 @@ export default function SecurityPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border/80 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-4 px-6">
+        <div
+          className={cn(
+            pageNarrowStandaloneClass,
+            "flex h-14 items-center justify-between gap-4",
+          )}
+        >
           <Link href="/" className="inline-flex">
             <TomcrestLogo size="sm" />
           </Link>
@@ -39,7 +48,7 @@ export default function SecurityPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-10 sm:py-14">
+      <main className={cn(pageNarrowStandaloneClass, "py-10 sm:py-14")}>
         <p className="text-[11px] font-semibold uppercase tracking-wide text-accent-strong">
           Security & privacy
         </p>

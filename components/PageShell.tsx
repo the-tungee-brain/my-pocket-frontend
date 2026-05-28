@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   pageAsideClass,
   pageMainClass,
+  pageNarrowClass,
   pageShellClass,
   pageSplitClass,
 } from "@/lib/pageLayout";
@@ -14,6 +15,10 @@ type ShellProps = {
 
 export function PageShell({ children, className }: ShellProps) {
   return <div className={cn(pageShellClass, className)}>{children}</div>;
+}
+
+export function PageNarrowShell({ children, className }: ShellProps) {
+  return <div className={cn(pageNarrowClass, className)}>{children}</div>;
 }
 
 type SplitProps = {

@@ -40,7 +40,7 @@ export function SettingsSectionTabBar({
             aria-selected={active}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "flex flex-1 items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition",
+              "flex flex-1 items-center justify-center rounded-lg px-2 py-1.5 text-xs font-medium transition sm:px-3 sm:py-2 sm:text-sm",
               active
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted hover:text-foreground",

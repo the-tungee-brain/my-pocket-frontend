@@ -444,7 +444,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div
               id="main-content"
               className={cn(
-                "min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pt-3 pb-2",
+                "min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pt-3 pb-2 sm:px-6",
                 "max-md:pb-20",
               )}
             >
