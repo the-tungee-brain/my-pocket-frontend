@@ -6,6 +6,7 @@ import type { WheelBacktestResult, WheelBacktestYears } from "@/app/types/wheelB
 import { formatDateMMDDYYYY } from "@/lib/dateUtils";
 import { downloadWheelBacktestResult } from "@/lib/wheelBacktestExport";
 import { fetchWheelBacktest } from "@/lib/wheelBacktest";
+import { WheelBacktestCharts } from "@/components/WheelBacktestCharts";
 import { WheelBacktestTradeLedger } from "@/components/WheelBacktestTradeLedger";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -368,6 +369,17 @@ export function WheelBacktestPanel({
                 {formatPct(result.buyAndHoldReturnPct, 2)})
               </p>
             </div>
+
+            {result.equityCurve.length > 0 && (
+              <WheelBacktestCharts
+                equityCurve={result.equityCurve}
+                trades={result.trades}
+                annualSummary={result.annualSummary}
+                startDate={result.startDate}
+                endDate={result.endDate}
+                startingCashUsd={result.startingCashUsd}
+              />
+            )}
 
             {result.wheelCycles.length > 0 && (
               <div>

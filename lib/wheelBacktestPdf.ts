@@ -371,6 +371,20 @@ export function downloadWheelBacktestPdf(
     );
   }
 
+  sectionTitle(ctx, "Charts");
+  ensureSpace(ctx, 12);
+  ctx.doc.setFontSize(9);
+  ctx.doc.setTextColor(...MUTED);
+  ctx.doc.text(
+    pdfAscii(
+      "Interactive charts in the app: equity vs buy & hold, drawdown, stock price with put/call strikes, and phase timeline.",
+    ),
+    MARGIN,
+    ctx.y,
+    { maxWidth: ctx.doc.internal.pageSize.getWidth() - MARGIN * 2 },
+  );
+  ctx.y += 10;
+
   if (result.assumptions.length > 0) {
     sectionTitle(ctx, "Model assumptions");
     ensureSpace(ctx, 8 + result.assumptions.length * 5);

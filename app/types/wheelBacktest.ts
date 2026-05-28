@@ -43,6 +43,9 @@ export type WheelBacktestEquityPoint = {
   cashUsd: number;
   shares: number;
   phase: string;
+  stockCloseUsd?: number | null;
+  buyAndHoldEquityUsd?: number | null;
+  collateralReservedUsd?: number | null;
 };
 
 export type WheelBacktestAnnualRow = {
