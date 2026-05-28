@@ -198,10 +198,11 @@ export function WheelBacktestPanel({
                 <div>
                   <p className="text-[10px] text-muted">Stock at first trade</p>
                   <p className="text-sm font-semibold text-foreground">
-                    ${result.initialStockPriceUsd.toFixed(2)}/sh
+                    ${result.spotPriceAtStart.toFixed(2)}/sh
                   </p>
                   <p className="mt-0.5 text-[10px] text-muted">
-                    {formatDateMMDDYYYY(result.startDate)} (split-adjusted)
+                    First CSP · {formatDateMMDDYYYY(result.startDate)} ·
+                    total-return adjusted
                   </p>
                 </div>
                 <div>
@@ -260,11 +261,17 @@ export function WheelBacktestPanel({
             </div>
 
             {(result.capitalTopUpsUsd ?? 0) === 0 &&
-              (result.skippedTradesInsufficientCash ?? 0) > 0 && (
+              (result.cspRounds ?? 0) > 0 &&
+              result.lastTradeDate &&
+              result.lastTradeDate < result.endDate && (
                 <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-[11px] leading-relaxed text-foreground">
-                  Fixed starting wallet only — could not open a new CSP on{" "}
-                  {result.skippedTradesInsufficientCash} days when collateral exceeded
-                  cash (premiums and stock P/L still compound in the account).
+                  Only {result.cspRounds} CSP round
+                  {result.cspRounds === 1 ? "" : "s"} in {result.lookbackYears} years.
+                  Last trade {formatDateMMDDYYYY(result.lastTradeDate)} — wallet{" "}
+                  {formatUsd(result.endingEquityUsd)} could not secure the next put
+                  (cash secured ≈ strike × 100; SPY rose faster than this fixed
+                  account). {result.skippedTradesInsufficientCash} blocked period
+                  {result.skippedTradesInsufficientCash === 1 ? "" : "s"} after that.
                 </p>
               )}
 
@@ -388,15 +395,17 @@ export function WheelBacktestPanel({
                 sub={`Fees ${formatUsd(result.totalFeesUsd)} · Div ${formatUsd(result.totalDividendsUsd)}`}
               />
               <Metric
-                label="Wheel cycles"
-                value={String(result.completedWheelCycles)}
-                sub={`${result.putAssignments} put assigns · ${result.callsAssigned} call assigns`}
+                label="CSP rounds"
+                value={String(result.cspRounds ?? 0)}
+                sub={`${result.completedWheelCycles} full wheels (assign → called away) · ${result.putAssignments} put / ${result.callsAssigned} call assigns`}
               />
             </div>
 
             <p className="text-[10px] text-muted">
-              {formatDateMMDDYYYY(result.startDate)} →{" "}
-              {formatDateMMDDYYYY(result.endDate)} · {result.tradingDays} trading days
+              History {formatDateMMDDYYYY(result.historyStartDate ?? result.startDate)}{" "}
+              → {formatDateMMDDYYYY(result.endDate)} ({result.tradingDays} bars) ·
+              trades {formatDateMMDDYYYY(result.startDate)} →{" "}
+              {formatDateMMDDYYYY(result.endDate)}
             </p>
 
             {result.annualSummary.length > 0 && (

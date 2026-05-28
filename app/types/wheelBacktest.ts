@@ -59,6 +59,10 @@ export type WheelBacktestResult = {
   symbol: string;
   lookbackYears: number;
   startDate: string;
+  historyStartDate: string;
+  firstTradeDate: string | null;
+  lastTradeDate: string | null;
+  cspRounds: number;
   endDate: string;
   tradingDays: number;
   config: Record<string, number>;
