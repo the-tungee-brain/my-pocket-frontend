@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   BellRing,
@@ -993,16 +993,16 @@ function BriefLine({
   return (
     <div
       className={cn(
-        "flex items-start gap-2 rounded-lg px-3 py-2",
+        "flex h-full w-full min-h-0 items-center gap-2 rounded-lg border px-3 py-2",
         accent
-          ? "border border-accent/25 bg-accent-muted/25"
-          : "bg-background/50",
+          ? "border-accent/25 bg-accent-muted/25"
+          : "border-transparent bg-background/50",
         muted && "opacity-60",
       )}
     >
       <span
         className={cn(
-          "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
+          "h-1.5 w-1.5 shrink-0 rounded-full",
           accent ? "bg-accent-strong" : "bg-muted",
         )}
       />
@@ -1020,12 +1020,9 @@ function BriefLine({
 
 function AppPreview() {
   const briefLines = [
-    {
-      label: "Next: review NVDA size before Thu earnings",
-      accent: true,
-    },
-    { label: "AAPL CSP expires Fri · 12 DTE", accent: false },
-    { label: "Portfolio +0.8% pre-market · tech-led", accent: false },
+    "Next: review NVDA size before Thu earnings",
+    "AAPL CSP expires Fri · 12 DTE",
+    "Portfolio +0.8% pre-market · tech-led",
   ] as const;
 
   const [activeBrief, setActiveBrief] = useState(0);
@@ -1043,7 +1040,7 @@ function AppPreview() {
       surface="subtle"
       className="shadow-2xl shadow-black/25"
     >
-      <div className="flex">
+      <div className="flex min-h-106">
         <div className="hidden w-44 shrink-0 border-r border-border bg-secondary p-3 sm:block">
           <div className="mb-3 rounded-xl border border-border bg-background/60 px-2.5 py-2">
             <TomcrestLogo size="sm" showSubtitle />
@@ -1093,26 +1090,21 @@ function AppPreview() {
                   <p className="text-[9px] text-muted">Updated pre-market</p>
                 </div>
               </div>
-              <div className="space-y-1.5 px-3 py-3">
-                <AnimatePresence mode="wait">
+              <div className="grid h-30 grid-rows-3 gap-1.5 px-3 py-3">
+                {briefLines.map((line, index) => (
                   <motion.div
-                    key={activeBrief}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
+                    key={line}
+                    className="flex h-full min-h-0 items-center"
+                    animate={{ opacity: index === activeBrief ? 1 : 0.65 }}
                     transition={{ duration: 0.28 }}
                   >
                     <BriefLine
-                      label={briefLines[activeBrief].label}
-                      accent={briefLines[activeBrief].accent}
+                      label={line}
+                      accent={index === activeBrief}
+                      muted={index !== activeBrief}
                     />
                   </motion.div>
-                </AnimatePresence>
-                {briefLines.map((line, index) =>
-                  index === activeBrief ? null : (
-                    <BriefLine key={line.label} label={line.label} muted />
-                  ),
-                )}
+                ))}
               </div>
             </div>
 
