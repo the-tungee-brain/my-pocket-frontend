@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
+import type { StreetAnalysisSnapshot } from "@/app/hooks/streetAnalysisTypes";
 import type { BeatLabel, EarningsTiming } from "@/lib/earningsUtils";
 
 export type EarningsEvent = {
@@ -26,6 +27,7 @@ export type EarningsListResponse = {
   symbol: string;
   upcoming: EarningsEvent | null;
   history: EarningsEvent[];
+  streetAnalysis?: StreetAnalysisSnapshot | null;
 };
 
 export type TranscriptSegment = {

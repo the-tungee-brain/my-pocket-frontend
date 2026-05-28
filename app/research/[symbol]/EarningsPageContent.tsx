@@ -24,6 +24,7 @@ import {
   timingLabel,
 } from "@/lib/earningsUtils";
 import { cn } from "@/lib/utils";
+import { StreetEarningsEstimates } from "./StreetAnalysisSection";
 
 type EarningsPageContentProps = {
   symbol: string;
@@ -402,7 +403,16 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
           <BeatBadge label="pending" />
         </div>
         <MetricsGrid event={data.upcoming} />
+        <StreetEarningsEstimates street={data.streetAnalysis} embedded />
       </div>
+    </ResearchSectionCard>
+  ) : data.streetAnalysis ? (
+    <ResearchSectionCard
+      title="Street estimates"
+      description="Next-quarter analyst consensus from Yahoo Finance"
+      icon={CalendarDays}
+    >
+      <StreetEarningsEstimates street={data.streetAnalysis} embedded={false} />
     </ResearchSectionCard>
   ) : null;
 

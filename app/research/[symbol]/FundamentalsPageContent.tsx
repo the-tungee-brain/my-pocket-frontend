@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, FileSpreadsheet, Landmark } from "lucide-react";
+import { BarChart3, FileSpreadsheet, Landmark, Target } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useFundamentals } from "@/app/hooks/useFundamentals";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
@@ -14,6 +14,7 @@ import {
   FundamentalOverviewSection,
   FundamentalOverviewSkeleton,
 } from "./FundamentalOverviewSection";
+import { StreetAnalysisSection } from "./StreetAnalysisSection";
 
 type FundamentalsPageContentProps = {
   symbol: string;
@@ -88,13 +89,25 @@ export function FundamentalsPageContent({ symbol }: FundamentalsPageContentProps
         }
         aside={
           isEtf ? null : (
-            <ResearchSectionCard
-              title="SEC company profile"
-              description="Official registrant details from EDGAR"
-              icon={Landmark}
-            >
-              <SecCompanyBadge symbol={symbol} />
-            </ResearchSectionCard>
+            <>
+              <ResearchSectionCard
+                title="Street consensus"
+                description="Analyst targets, ratings, and estimate revisions (Yahoo Finance)"
+                icon={Target}
+              >
+                <StreetAnalysisSection
+                  street={fundamentals?.streetAnalysis}
+                  isLoading={isLoading}
+                />
+              </ResearchSectionCard>
+              <ResearchSectionCard
+                title="SEC company profile"
+                description="Official registrant details from EDGAR"
+                icon={Landmark}
+              >
+                <SecCompanyBadge symbol={symbol} />
+              </ResearchSectionCard>
+            </>
           )
         }
       />
