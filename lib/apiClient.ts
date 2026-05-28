@@ -572,8 +572,8 @@ export async function fetchStrategyStockScreener(
   if (filters.minDividendYield != null) {
     params.set("minDividendYield", String(filters.minDividendYield));
   }
-  for (const sector of filters.sectors ?? []) {
-    params.append("sectors", sector);
+  if (filters.sectors != null) {
+    params.set("sectors", filters.sectors.join(","));
   }
 
   const res = await apiFetch(

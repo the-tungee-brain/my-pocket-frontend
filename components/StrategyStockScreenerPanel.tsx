@@ -277,14 +277,12 @@ export function StrategyStockScreenerPanel({
         </div>
       )}
 
-      {stale && !loading && (
-        <p className="mb-3 text-xs text-muted">
-          Filters changed — run the screen again to refresh results.
-        </p>
-      )}
-
       {loading && (
         <p className="text-xs text-muted">Querying Yahoo Finance screener…</p>
+      )}
+
+      {!loading && stale && !error && hasRun && (
+        <p className="mb-3 text-xs text-muted">Updating results for your filters…</p>
       )}
 
       {error && !loading && (

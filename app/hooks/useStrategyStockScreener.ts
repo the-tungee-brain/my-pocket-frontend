@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 import { fetchStrategyStockScreener } from "@/lib/apiClient";
 import type {
   InvestmentStrategy,
@@ -48,10 +49,16 @@ export function useStrategyStockScreener({
   const [error, setError] = useState<string | null>(null);
   const [hasRun, setHasRun] = useState(false);
   const [fetchedFilterKey, setFetchedFilterKey] = useState<string | null>(null);
-  const filtersRef = useRef(filters);
-  filtersRef.current = filters;
+
+  const debouncedFilters = useDebouncedValue(filters, 400);
+  const filtersRef = useRef(debouncedFilters);
+  filtersRef.current = debouncedFilters;
+
   const prepareRef = useRef(prepareProfile);
   prepareRef.current = prepareProfile;
+
+  const requestSeqRef = useRef(0);
+  const syncedStrategyRef = useRef<string | null>(null);
 
   const runScreen = useCallback(
     async (opts?: { force?: boolean; syncProfile?: boolean }) => {
@@ -59,6 +66,7 @@ export function useStrategyStockScreener({
 
       const activeFilters = filtersRef.current;
       const cacheKey = getCacheKey(strategy, activeFilters, limit);
+      const requestSeq = ++requestSeqRef.current;
 
       if (!opts?.force) {
         const cached = cache.get(cacheKey);
@@ -78,24 +86,35 @@ export function useStrategyStockScreener({
         if (opts?.syncProfile && prepareRef.current) {
           await prepareRef.current();
         }
+
         const data = await fetchStrategyStockScreener(
           accessToken,
           strategy,
           activeFilters,
           limit,
         );
+
+        if (requestSeq !== requestSeqRef.current) {
+          return;
+        }
+
         cache.set(cacheKey, data);
         setResult(data);
         setFetchedFilterKey(screenerFiltersFingerprint(activeFilters));
         setHasRun(true);
       } catch (err) {
+        if (requestSeq !== requestSeqRef.current) {
+          return;
+        }
         setResult(null);
         setFetchedFilterKey(null);
         setError(
           err instanceof Error ? err.message : "Could not run stock screener.",
         );
       } finally {
-        setLoading(false);
+        if (requestSeq === requestSeqRef.current) {
+          setLoading(false);
+        }
       }
     },
     [accessToken, strategy, enabled, limit],
@@ -103,15 +122,39 @@ export function useStrategyStockScreener({
 
   useEffect(() => {
     if (!accessToken || !strategy || !enabled || !autoRun) {
+      requestSeqRef.current += 1;
       setResult(null);
       setFetchedFilterKey(null);
       setHasRun(false);
       setError(null);
+      setLoading(false);
+      syncedStrategyRef.current = null;
       return;
     }
 
-    void runScreen({ syncProfile: prepareOnAutoFetch });
-  }, [accessToken, strategy, enabled, autoRun, prepareOnAutoFetch, runScreen, filters, limit]);
+    const shouldSyncProfile =
+      prepareOnAutoFetch &&
+      prepareRef.current != null &&
+      syncedStrategyRef.current !== strategy;
+
+    void runScreen({
+      force: true,
+      syncProfile: shouldSyncProfile,
+    }).then(() => {
+      if (shouldSyncProfile) {
+        syncedStrategyRef.current = strategy;
+      }
+    });
+  }, [
+    accessToken,
+    strategy,
+    enabled,
+    autoRun,
+    debouncedFilters,
+    limit,
+    prepareOnAutoFetch,
+    runScreen,
+  ]);
 
   const stale = useMemo(() => {
     if (fetchedFilterKey === null) return false;
