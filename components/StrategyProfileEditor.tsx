@@ -104,11 +104,14 @@ export function StrategyProfileEditor({
   const {
     result: screenerResult,
     loading: screenerLoading,
+    initialLoading: screenerInitialLoading,
+    isFetching: screenerIsFetching,
     error: screenerError,
     runScreen,
     stale: screenerStale,
     hasRun: screenerHasRun,
     page: screenerPage,
+    pageSize: screenerPageSize,
     setPage: setScreenerPage,
   } = useStrategyStockScreener({
     accessToken,
@@ -273,10 +276,13 @@ export function StrategyProfileEditor({
                   filters={screenerFilters}
                   onFiltersChange={setScreenerFilters}
                   loading={screenerLoading}
+                  initialLoading={screenerInitialLoading}
+                  isFetching={screenerIsFetching}
                   error={screenerError}
                   stale={screenerStale}
                   hasRun={screenerHasRun}
                   page={screenerPage}
+                  pageSize={screenerPageSize}
                   totalPages={screenerResult?.totalPages ?? 1}
                   totalCount={screenerResult?.totalCount ?? 0}
                   onPageChange={setScreenerPage}
@@ -297,10 +303,13 @@ export function StrategyProfileEditor({
                   filters={screenerFilters}
                   onFiltersChange={setScreenerFilters}
                   loading={screenerLoading}
+                  initialLoading={screenerInitialLoading}
+                  isFetching={screenerIsFetching}
                   error={screenerError}
                   stale={screenerStale}
                   hasRun={screenerHasRun}
                   page={screenerPage}
+                  pageSize={screenerPageSize}
                   totalPages={screenerResult?.totalPages ?? 1}
                   totalCount={screenerResult?.totalCount ?? 0}
                   onPageChange={setScreenerPage}

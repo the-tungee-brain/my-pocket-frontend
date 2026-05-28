@@ -35,6 +35,13 @@ function getCacheKey(
   return `${strategy}:${screenerFiltersFingerprint(filters, page)}:${pageSize}`;
 }
 
+function filtersOnlyKey(
+  strategy: InvestmentStrategy,
+  filters: StrategyScreenerFilters,
+) {
+  return `${strategy}:${screenerFiltersFingerprint(filters, 1)}`;
+}
+
 export function useStrategyStockScreener({
   accessToken,
   strategy,
@@ -46,7 +53,8 @@ export function useStrategyStockScreener({
   prepareOnAutoFetch = false,
 }: UseStrategyStockScreenerOptions) {
   const [result, setResult] = useState<StrategyStockScreenerResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasRun, setHasRun] = useState(false);
   const [page, setPage] = useState(1);
@@ -64,6 +72,9 @@ export function useStrategyStockScreener({
 
   const requestSeqRef = useRef(0);
   const syncedStrategyRef = useRef<string | null>(null);
+  const filtersKeyRef = useRef<string | null>(null);
+  const resultRef = useRef(result);
+  resultRef.current = result;
 
   const runScreen = useCallback(
     async (opts?: { force?: boolean; syncProfile?: boolean; page?: number }) => {
@@ -78,14 +89,20 @@ export function useStrategyStockScreener({
         const cached = cache.get(cacheKey);
         if (cached) {
           setResult(cached);
-          setFetchedFilterKey(screenerFiltersFingerprint(activeFilters, activePage));
+          setPage(cached.page);
+          setFetchedFilterKey(screenerFiltersFingerprint(activeFilters, cached.page));
           setHasRun(true);
           setError(null);
           return;
         }
       }
 
-      setLoading(true);
+      const showInitialLoader = resultRef.current === null;
+      if (showInitialLoader) {
+        setInitialLoading(true);
+      } else {
+        setIsFetching(true);
+      }
       setError(null);
 
       try {
@@ -114,14 +131,17 @@ export function useStrategyStockScreener({
         if (requestSeq !== requestSeqRef.current) {
           return;
         }
-        setResult(null);
-        setFetchedFilterKey(null);
+        if (showInitialLoader) {
+          setResult(null);
+          setFetchedFilterKey(null);
+        }
         setError(
           err instanceof Error ? err.message : "Could not run stock screener.",
         );
       } finally {
         if (requestSeq === requestSeqRef.current) {
-          setLoading(false);
+          setInitialLoading(false);
+          setIsFetching(false);
         }
       }
     },
@@ -139,9 +159,23 @@ export function useStrategyStockScreener({
       setFetchedFilterKey(null);
       setHasRun(false);
       setError(null);
-      setLoading(false);
+      setInitialLoading(false);
+      setIsFetching(false);
       setPage(1);
       syncedStrategyRef.current = null;
+      filtersKeyRef.current = null;
+      return;
+    }
+
+    const currentFiltersKey = filtersOnlyKey(strategy, debouncedFilters);
+    const filtersChanged = filtersKeyRef.current !== currentFiltersKey;
+    if (filtersChanged) {
+      filtersKeyRef.current = currentFiltersKey;
+    }
+
+    const targetPage = filtersChanged ? 1 : page;
+    if (filtersChanged && page !== 1) {
+      setPage(1);
       return;
     }
 
@@ -151,9 +185,9 @@ export function useStrategyStockScreener({
       syncedStrategyRef.current !== strategy;
 
     void runScreen({
-      force: true,
+      force: filtersChanged,
       syncProfile: shouldSyncProfile,
-      page,
+      page: targetPage,
     }).then(() => {
       if (shouldSyncProfile) {
         syncedStrategyRef.current = strategy;
@@ -182,7 +216,9 @@ export function useStrategyStockScreener({
 
   return {
     result,
-    loading,
+    loading: initialLoading || isFetching,
+    initialLoading,
+    isFetching,
     error,
     hasRun,
     stale,

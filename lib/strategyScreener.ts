@@ -1,5 +1,24 @@
 import type { InvestmentStrategy, StrategyScreenerFilters } from "@/app/types/strategy";
 
+/** All GICS sectors supported by Yahoo Finance equity screener. */
+export const ALL_SCREENER_SECTORS = [
+  "Basic Materials",
+  "Communication Services",
+  "Consumer Cyclical",
+  "Consumer Defensive",
+  "Energy",
+  "Financial Services",
+  "Healthcare",
+  "Industrials",
+  "Real Estate",
+  "Technology",
+  "Utilities",
+] as const;
+
+export const SECTOR_DISPLAY_LABELS: Record<string, string> = {
+  "Consumer Defensive": "Consumer Staples",
+};
+
 export const PRESET_SECTOR_ALLOWLISTS: Record<string, readonly string[]> = {
   wheel_stock: [
     "Technology",
@@ -71,9 +90,24 @@ export function supportsStrategyStockScreener(
   return strategy !== null && SUPPORTED_STRATEGIES.includes(strategy);
 }
 
-export function sectorsForStrategy(strategy: InvestmentStrategy): readonly string[] {
+export function formatSectorLabel(sector: string): string {
+  return SECTOR_DISPLAY_LABELS[sector] ?? sector;
+}
+
+export function allScreenerSectors(): readonly string[] {
+  return ALL_SCREENER_SECTORS;
+}
+
+export function recommendedSectorsForStrategy(
+  strategy: InvestmentStrategy,
+): readonly string[] {
   const key = STRATEGY_PRESET_KEY[strategy];
   return PRESET_SECTOR_ALLOWLISTS[key] ?? PRESET_SECTOR_ALLOWLISTS.wheel_stock;
+}
+
+/** @deprecated Use recommendedSectorsForStrategy or allScreenerSectors */
+export function sectorsForStrategy(strategy: InvestmentStrategy): readonly string[] {
+  return recommendedSectorsForStrategy(strategy);
 }
 
 export function screenerTitle(strategy: InvestmentStrategy): string {
@@ -96,7 +130,7 @@ export function screenerTitle(strategy: InvestmentStrategy): string {
 export function defaultScreenerFiltersForStrategy(
   strategy: InvestmentStrategy,
 ): StrategyScreenerFilters {
-  const sectors = [...sectorsForStrategy(strategy)];
+  const sectors = [...recommendedSectorsForStrategy(strategy)];
 
   if (strategy === "dividend") {
     return {
@@ -182,10 +216,39 @@ export function filterSummaryChips(filters: StrategyScreenerFilters): string[] {
   if (filters.maxPe != null) {
     chips.push(`P/E ≤ ${filters.maxPe.toFixed(0)}`);
   }
-  if (filters.sectors?.length) {
-    chips.push(`${filters.sectors.length} sectors`);
+  if (filters.sectors != null) {
+    if (filters.sectors.length === 0) {
+      chips.push("All sectors");
+    } else if (filters.sectors.length === ALL_SCREENER_SECTORS.length) {
+      chips.push("All sectors");
+    } else {
+      chips.push(`${filters.sectors.length} sectors`);
+    }
   }
   return chips;
+}
+
+export function screenerFiltersEqual(
+  a: StrategyScreenerFilters,
+  b: StrategyScreenerFilters,
+): boolean {
+  const normalizeSectors = (sectors: string[] | null | undefined) =>
+    sectors == null ? null : [...sectors].sort().join("|");
+
+  return (
+    a.minMarketCap === b.minMarketCap &&
+    a.maxPe === b.maxPe &&
+    a.requireDividend === b.requireDividend &&
+    a.minDividendYield === b.minDividendYield &&
+    normalizeSectors(a.sectors) === normalizeSectors(b.sectors)
+  );
+}
+
+export function isDefaultScreenerFilters(
+  strategy: InvestmentStrategy,
+  filters: StrategyScreenerFilters,
+): boolean {
+  return screenerFiltersEqual(filters, defaultScreenerFiltersForStrategy(strategy));
 }
 
 export function screenerFiltersFingerprint(

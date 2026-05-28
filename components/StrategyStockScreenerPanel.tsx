@@ -19,13 +19,18 @@ import type {
 } from "@/app/types/strategy";
 import { Button } from "@/components/ui/Button";
 import {
+  ALL_SCREENER_SECTORS,
+  DEFAULT_PAGE_SIZE,
+  defaultScreenerFiltersForStrategy,
   filterSummaryChips,
   formatMarketCap,
   formatPercent,
   formatPrice,
+  formatSectorLabel,
+  isDefaultScreenerFilters,
   MARKET_CAP_PRESETS,
+  recommendedSectorsForStrategy,
   screenerTitle,
-  sectorsForStrategy,
 } from "@/lib/strategyScreener";
 import { cn } from "@/lib/utils";
 
@@ -41,10 +46,13 @@ type Props = {
   filters: StrategyScreenerFilters;
   onFiltersChange: (filters: StrategyScreenerFilters) => void;
   loading?: boolean;
+  initialLoading?: boolean;
+  isFetching?: boolean;
   error?: string | null;
   stale?: boolean;
   hasRun?: boolean;
   page?: number;
+  pageSize?: number;
   totalPages?: number;
   totalCount?: number;
   onPageChange?: (page: number) => void;
@@ -64,10 +72,13 @@ export function StrategyStockScreenerPanel({
   filters,
   onFiltersChange,
   loading = false,
+  initialLoading = false,
+  isFetching = false,
   error = null,
   stale = false,
   hasRun = false,
   page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
   totalPages = 1,
   totalCount = 0,
   onPageChange,
@@ -85,8 +96,12 @@ export function StrategyStockScreenerPanel({
     [selectedSymbols],
   );
 
-  const sectorOptions = sectorsForStrategy(strategy);
+  const recommendedSectors = useMemo(
+    () => new Set(recommendedSectorsForStrategy(strategy)),
+    [strategy],
+  );
   const chips = filterSummaryChips(filters);
+  const filtersAtDefault = isDefaultScreenerFilters(strategy, filters);
 
   const visibleQuotes = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -96,6 +111,39 @@ export function StrategyStockScreenerPanel({
       return haystack.includes(query);
     });
   }, [quotes, search]);
+
+  const paddedRows = useMemo(() => {
+    const rows: Array<StrategyScreenerQuote | null> = [...visibleQuotes];
+    while (rows.length < pageSize) {
+      rows.push(null);
+    }
+    return rows.slice(0, pageSize);
+  }, [visibleQuotes, pageSize]);
+
+  function resetFilters() {
+    onFiltersChange(defaultScreenerFiltersForStrategy(strategy));
+  }
+
+  function selectRecommendedSectors() {
+    onFiltersChange({
+      ...filters,
+      sectors: [...recommendedSectorsForStrategy(strategy)],
+    });
+  }
+
+  function selectAllSectors() {
+    onFiltersChange({
+      ...filters,
+      sectors: [...ALL_SCREENER_SECTORS],
+    });
+  }
+
+  function clearSectors() {
+    onFiltersChange({
+      ...filters,
+      sectors: [],
+    });
+  }
 
   function toggleSector(sector: string) {
     const current = new Set(filters.sectors ?? []);
@@ -109,6 +157,9 @@ export function StrategyStockScreenerPanel({
       sectors: [...current],
     });
   }
+
+  const showResults = hasRun && !error;
+  const tableBusy = isFetching || (loading && hasRun);
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -162,6 +213,21 @@ export function StrategyStockScreenerPanel({
 
       {showFilters && strategy !== "etf-core" && (
         <div className="space-y-3 rounded-lg bg-muted-bg/25 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+              Adjust filters
+            </p>
+            <Button
+              size="xs"
+              variant="ghost"
+              onClick={resetFilters}
+              disabled={filtersAtDefault}
+              className="h-7 px-2 text-[10px] text-muted"
+            >
+              Reset to defaults
+            </Button>
+          </div>
+
           <FieldGroup label="Minimum market cap">
             <div className="flex flex-wrap gap-2">
               {MARKET_CAP_PRESETS.map((presetOption) => (
@@ -217,13 +283,22 @@ export function StrategyStockScreenerPanel({
             </FieldGroup>
           )}
 
-          <FieldGroup label="Sectors">
+          <FieldGroup
+            label="Sectors"
+            hint="Recommended sectors are pre-selected. Select any combination, or reset to defaults."
+          >
             <div className="flex flex-wrap gap-2">
-              {sectorOptions.map((sector) => (
+              <FilterActionChip label="Recommended" onClick={selectRecommendedSectors} />
+              <FilterActionChip label="All" onClick={selectAllSectors} />
+              <FilterActionChip label="None" onClick={clearSectors} />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {ALL_SCREENER_SECTORS.map((sector) => (
                 <ChoiceChip
                   key={sector}
-                  label={sector}
+                  label={formatSectorLabel(sector)}
                   selected={filters.sectors?.includes(sector) ?? false}
+                  recommended={recommendedSectors.has(sector)}
                   onClick={() => toggleSector(sector)}
                 />
               ))}
@@ -232,11 +307,13 @@ export function StrategyStockScreenerPanel({
         </div>
       )}
 
-      {(loading || stale) && !error && hasRun && (
-        <p className="text-xs text-muted">Updating results…</p>
+      {(stale || tableBusy) && !error && hasRun && (
+        <p className="text-xs text-muted">
+          {tableBusy ? "Loading page…" : "Filters changed — refresh to update."}
+        </p>
       )}
 
-      {loading && !hasRun && (
+      {initialLoading && !hasRun && (
         <p className="text-xs text-muted">Loading candidates…</p>
       )}
 
@@ -247,7 +324,7 @@ export function StrategyStockScreenerPanel({
         </p>
       )}
 
-      {!loading && !error && hasRun && (
+      {showResults && (
         <>
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-muted" />
@@ -259,13 +336,26 @@ export function StrategyStockScreenerPanel({
             />
           </div>
 
-          <QuoteList
-            quotes={visibleQuotes}
-            selected={selected}
-            onAddSymbol={onAddSymbol}
-            compact={compact}
-            emptyMessage="No matches on this page. Try different filters or another page."
-          />
+          <div
+            className={cn(
+              "overflow-x-auto transition-opacity duration-150",
+              tableBusy && "pointer-events-none opacity-50",
+            )}
+          >
+            <QuoteTable
+              rows={paddedRows}
+              selected={selected}
+              onAddSymbol={onAddSymbol}
+              compact={compact}
+              loading={tableBusy && visibleQuotes.length === 0}
+            />
+          </div>
+
+          {visibleQuotes.length === 0 && !tableBusy && (
+            <p className="text-xs text-muted">
+              No matches on this page. Try different filters or another page.
+            </p>
+          )}
 
           {totalPages > 1 && onPageChange && (
             <Pagination
@@ -273,7 +363,7 @@ export function StrategyStockScreenerPanel({
               totalPages={totalPages}
               totalCount={totalCount}
               onPageChange={onPageChange}
-              disabled={loading}
+              disabled={tableBusy}
             />
           )}
 
@@ -285,13 +375,16 @@ export function StrategyStockScreenerPanel({
                 </h5>
                 <p className="text-[11px] text-muted">{section.preset.description}</p>
               </div>
-              <QuoteList
-                quotes={section.quotes}
+              <QuoteTable
+                rows={section.quotes.map((quote) => quote as StrategyScreenerQuote | null)}
                 selected={selected}
                 onAddSymbol={onAddSymbol}
                 compact={compact}
-                emptyMessage="No ETF matches right now."
+                loading={false}
               />
+              {section.quotes.length === 0 && (
+                <p className="text-xs text-muted">No ETF matches right now.</p>
+              )}
             </div>
           ))}
         </>
@@ -300,76 +393,114 @@ export function StrategyStockScreenerPanel({
   );
 }
 
-function QuoteList({
-  quotes,
+function QuoteTable({
+  rows,
   selected,
   onAddSymbol,
   compact,
-  emptyMessage,
+  loading,
 }: {
-  quotes: StrategyScreenerQuote[];
+  rows: Array<StrategyScreenerQuote | null>;
   selected: Set<string>;
   onAddSymbol: (symbol: string) => void;
   compact?: boolean;
-  emptyMessage: string;
+  loading?: boolean;
 }) {
-  if (quotes.length === 0) {
-    return <p className="text-xs text-muted">{emptyMessage}</p>;
+  if (rows.length === 0 && !loading) {
+    return null;
   }
 
   return (
-    <ul className="divide-y divide-border/60">
-      {quotes.map((quote) => {
-        const added = selected.has(quote.symbol.toUpperCase());
-        return (
-          <li
-            key={quote.symbol}
-            className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+    <table className="w-full min-w-[520px] table-fixed text-sm">
+      <thead>
+        <tr className="border-b border-border/60 text-left text-[10px] font-semibold uppercase tracking-wide text-muted">
+          <th className="w-[88px] pb-2 pr-3">Symbol</th>
+          {!compact && <th className="pb-2 pr-3">Company</th>}
+          <th className="w-[88px] pb-2 pr-3">Market cap</th>
+          <th className="w-[64px] pb-2 pr-3">P/E</th>
+          <th className="w-[72px] pb-2 pr-3">Yield</th>
+          <th className="w-[72px] pb-2 pr-3">Price</th>
+          <th className="w-[72px] pb-2 text-right">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((quote, index) => (
+          <QuoteTableRow
+            key={quote?.symbol ?? `placeholder-${index}`}
+            quote={quote}
+            selected={selected}
+            onAddSymbol={onAddSymbol}
+            compact={compact}
+            loading={loading && quote === null}
+          />
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function QuoteTableRow({
+  quote,
+  selected,
+  onAddSymbol,
+  compact,
+  loading,
+}: {
+  quote: StrategyScreenerQuote | null;
+  selected: Set<string>;
+  onAddSymbol: (symbol: string) => void;
+  compact?: boolean;
+  loading?: boolean;
+}) {
+  if (loading || quote === null) {
+    return (
+      <tr className="h-11 border-b border-border/40">
+        <td colSpan={compact ? 6 : 7} className="py-2">
+          <div className="h-4 w-full max-w-md animate-pulse rounded bg-muted-bg/80" />
+        </td>
+      </tr>
+    );
+  }
+
+  const added = selected.has(quote.symbol.toUpperCase());
+
+  return (
+    <tr className="h-11 border-b border-border/40">
+      <td className="py-2 pr-3 font-semibold text-foreground">{quote.symbol}</td>
+      {!compact && (
+        <td className="truncate py-2 pr-3 text-xs text-muted">
+          {quote.companyName ?? "—"}
+        </td>
+      )}
+      <td className="py-2 pr-3 text-xs text-muted">
+        {formatMarketCap(quote.marketCap)}
+      </td>
+      <td className="py-2 pr-3 text-xs text-muted">
+        {quote.peRatio != null ? quote.peRatio.toFixed(1) : "—"}
+      </td>
+      <td className="py-2 pr-3 text-xs text-muted">
+        {quote.dividendYield != null ? formatPercent(quote.dividendYield) : "—"}
+      </td>
+      <td className="py-2 pr-3 text-xs text-muted">{formatPrice(quote.price)}</td>
+      <td className="py-2 text-right">
+        {added ? (
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-strong">
+            <Check className="h-3.5 w-3.5" />
+            Added
+          </span>
+        ) : (
+          <Button
+            size="xs"
+            variant="outline"
+            className="ml-auto"
+            onClick={() => onAddSymbol(quote.symbol)}
           >
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span className="text-sm font-semibold text-foreground">
-                  {quote.symbol}
-                </span>
-                {!compact && quote.companyName && (
-                  <span className="truncate text-xs text-muted">
-                    {quote.companyName}
-                  </span>
-                )}
-              </div>
-              <p className="mt-0.5 text-[11px] text-muted">
-                {[
-                  formatMarketCap(quote.marketCap),
-                  quote.peRatio != null ? `P/E ${quote.peRatio.toFixed(1)}` : null,
-                  quote.dividendYield != null
-                    ? `Yield ${formatPercent(quote.dividendYield)}`
-                    : null,
-                  formatPrice(quote.price),
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            </div>
-            {added ? (
-              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-accent-strong">
-                <Check className="h-3.5 w-3.5" />
-                Added
-              </span>
-            ) : (
-              <Button
-                size="xs"
-                variant="outline"
-                className="shrink-0"
-                onClick={() => onAddSymbol(quote.symbol)}
-              >
-                <Plus className="h-3 w-3" />
-                Add
-              </Button>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+            <Plus className="h-3 w-3" />
+            Add
+          </Button>
+        )}
+      </td>
+    </tr>
   );
 }
 
@@ -395,7 +526,7 @@ function Pagination({
   }, [page, totalPages]);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
       <p className="text-[11px] text-muted">
         Page {page} of {totalPages}
         {totalCount > 0 ? ` · ${totalCount.toLocaleString()} matches` : ""}
@@ -420,6 +551,7 @@ function Pagination({
               pageNumber === page
                 ? "bg-accent-muted/50 text-accent-strong"
                 : "text-muted hover:bg-muted-bg/60 hover:text-foreground",
+              disabled && "cursor-not-allowed opacity-60",
             )}
           >
             {pageNumber}
@@ -440,42 +572,73 @@ function Pagination({
 
 function FieldGroup({
   label,
+  hint,
   children,
 }: {
   label: string;
+  hint?: string;
   children: ReactNode;
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-        {label}
-      </p>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+          {label}
+        </p>
+        {hint && <p className="mt-0.5 text-[10px] leading-relaxed text-muted">{hint}</p>}
+      </div>
       {children}
     </div>
   );
 }
 
-function ChoiceChip({
+function FilterActionChip({
   label,
-  selected,
   onClick,
 }: {
   label: string;
-  selected: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      className="rounded-full border border-dashed border-border/80 px-2.5 py-1 text-[10px] font-medium text-muted transition-colors hover:border-accent/30 hover:text-foreground"
+    >
+      {label}
+    </button>
+  );
+}
+
+function ChoiceChip({
+  label,
+  selected,
+  recommended = false,
+  onClick,
+}: {
+  label: string;
+  selected: boolean;
+  recommended?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={recommended ? "Recommended for this strategy" : undefined}
       className={cn(
         "rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors",
         selected
           ? "border-accent/40 bg-accent-muted/40 text-accent-strong"
-          : "border-border/80 text-muted hover:border-accent/20 hover:text-foreground",
+          : recommended
+            ? "border-accent/20 bg-accent-muted/10 text-foreground hover:border-accent/30"
+            : "border-border/80 text-muted hover:border-accent/20 hover:text-foreground",
       )}
     >
       {label}
+      {recommended && !selected && (
+        <span className="ml-1 text-[9px] text-muted">· rec</span>
+      )}
     </button>
   );
 }
