@@ -520,6 +520,7 @@ export default function PortfolioPage() {
           className={pageSectionClass}
           accessToken={sessionAccessToken}
           summary={recentActivity}
+          showFullHistory
           onRefresh={() => refreshPositions(true)}
           onRunSuggestedAction={handleSuggestedAction}
           hideSuggestedActions

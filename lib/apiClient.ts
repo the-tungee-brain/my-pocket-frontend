@@ -30,6 +30,8 @@ import type {
 type RecentOrdersOptions = {
   symbol?: string | null;
   daysBack?: number;
+  limit?: number;
+  offset?: number;
   refresh?: boolean;
 };
 
@@ -179,6 +181,8 @@ export async function fetchRecentOrders(
     `/recent-orders${buildQuery({
       symbol: options.symbol ?? undefined,
       days_back: options.daysBack,
+      limit: options.limit,
+      offset: options.offset,
       refresh: options.refresh ? true : undefined,
     })}`,
     { method: "GET", accessToken },

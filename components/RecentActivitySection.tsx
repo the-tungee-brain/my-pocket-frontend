@@ -38,12 +38,17 @@ type Props = {
   accessToken: string;
   symbol?: string | null;
   summary?: RecentActivitySummary | null;
+  /** Load every fill from /recent-orders instead of the portfolio summary preview (5 rows). */
+  showFullHistory?: boolean;
   onRunSuggestedAction?: (actionId: string) => void;
   onRefresh?: () => void | Promise<void>;
   compact?: boolean;
   hideSuggestedActions?: boolean;
   className?: string;
 };
+
+const ACTIVITY_DAY_OPTIONS = [7, 30, 60] as const;
+const ACTIVITY_PAGE_SIZE = 25;
 
 function StrategyBadge({ label }: { label: string }) {
   return (
@@ -343,10 +348,158 @@ function SuggestedActionChips({
   );
 }
 
+function ActivityFilters({
+  daysBack,
+  onDaysBackChange,
+  symbolFilter,
+  onSymbolFilterChange,
+  activityBySymbol,
+  disabled,
+}: {
+  daysBack: number;
+  onDaysBackChange: (days: number) => void;
+  symbolFilter: string | null;
+  onSymbolFilterChange: (symbol: string | null) => void;
+  activityBySymbol: Record<string, number>;
+  disabled?: boolean;
+}) {
+  const symbolOptions = Object.entries(activityBySymbol).sort(
+    ([, a], [, b]) => b - a,
+  );
+
+  return (
+    <div className="space-y-3 border-b border-border px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+          Period
+        </span>
+        {ACTIVITY_DAY_OPTIONS.map((days) => {
+          const active = daysBack === days;
+          return (
+            <button
+              key={days}
+              type="button"
+              disabled={disabled}
+              onClick={() => onDaysBackChange(days)}
+              className={cn(
+                "rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
+                active
+                  ? "border-accent/40 bg-accent-muted text-accent-strong"
+                  : "border-border bg-background text-muted hover:border-accent/30 hover:text-foreground",
+                disabled && "opacity-60",
+              )}
+            >
+              {days}d
+            </button>
+          );
+        })}
+      </div>
+
+      {symbolOptions.length > 1 && (
+        <div className="flex items-center gap-2">
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Symbol
+          </span>
+          <div className="flex min-w-0 gap-1.5 overflow-x-auto pb-0.5 scrollbar-dark">
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onSymbolFilterChange(null)}
+              className={cn(
+                "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
+                symbolFilter == null
+                  ? "border-accent/40 bg-accent-muted text-accent-strong"
+                  : "border-border bg-background text-muted hover:border-accent/30 hover:text-foreground",
+              )}
+            >
+              All
+            </button>
+            {symbolOptions.map(([sym, count]) => {
+              const active = symbolFilter === sym;
+              return (
+                <button
+                  key={sym}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onSymbolFilterChange(sym)}
+                  className={cn(
+                    "inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
+                    active
+                      ? "border-accent/40 bg-accent-muted text-accent-strong"
+                      : "border-border bg-background text-muted hover:border-accent/30 hover:text-foreground",
+                  )}
+                >
+                  <span className="font-mono">{sym}</span>
+                  <span className="tabular-nums text-[10px] opacity-80">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActivityPagination({
+  page,
+  totalPages,
+  totalOrders,
+  offset,
+  pageCount,
+  onPageChange,
+  disabled,
+}: {
+  page: number;
+  totalPages: number;
+  totalOrders: number;
+  offset: number;
+  pageCount: number;
+  onPageChange: (page: number) => void;
+  disabled?: boolean;
+}) {
+  if (totalOrders <= 0) return null;
+
+  const rangeStart = totalOrders === 0 ? 0 : offset + 1;
+  const rangeEnd = offset + pageCount;
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-[11px] text-muted">
+        Showing {rangeStart}–{rangeEnd} of {totalOrders}
+      </p>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            size="xs"
+            variant="outline"
+            disabled={disabled || page <= 1}
+            onClick={() => onPageChange(page - 1)}
+          >
+            Previous
+          </Button>
+          <span className="min-w-24 text-center text-[11px] text-muted">
+            Page {page} of {totalPages}
+          </span>
+          <Button
+            size="xs"
+            variant="outline"
+            disabled={disabled || page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RecentActivitySection({
   accessToken,
   symbol = null,
   summary = null,
+  showFullHistory = false,
   onRunSuggestedAction,
   onRefresh,
   compact = false,
@@ -360,12 +513,25 @@ export function RecentActivitySection({
     summary?.suggestedActions ?? [],
   );
   const [daysBack, setDaysBack] = useState(summary?.daysBack ?? 30);
+  const [symbolFilter, setSymbolFilter] = useState<string | null>(null);
+  const [activityBySymbol, setActivityBySymbol] = useState<
+    Record<string, number>
+  >({});
   const [recentOrderCount, setRecentOrderCount] = useState(
     summary?.recentOrderCount ?? 0,
   );
+  const [totalOrders, setTotalOrders] = useState(summary?.totalOrders ?? 0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+
+  const usesPagination = Boolean(symbol || showFullHistory) && !compact;
+  const totalPages = Math.max(1, Math.ceil(totalOrders / ACTIVITY_PAGE_SIZE));
+
+  useEffect(() => {
+    setPage(1);
+  }, [daysBack, symbolFilter, symbol]);
 
   const load = useCallback(
     async (refresh = false) => {
@@ -376,20 +542,20 @@ export function RecentActivitySection({
 
       try {
         const data = await fetchRecentOrders(accessToken, {
-          symbol,
+          symbol: symbol ?? symbolFilter ?? undefined,
+          daysBack,
+          limit: usesPagination ? ACTIVITY_PAGE_SIZE : undefined,
+          offset: usesPagination ? (page - 1) * ACTIVITY_PAGE_SIZE : undefined,
           refresh,
         });
         setOrders(data.orders);
         setSuggestedActions(data.suggestedActions);
         setDaysBack(data.daysBack);
-        setRecentOrderCount(
-          data.orders.filter((order) => {
-            if (!order.fillTime) return false;
-            const fill = new Date(order.fillTime).getTime();
-            const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
-            return fill >= cutoff;
-          }).length,
-        );
+        setTotalOrders(data.totalOrders);
+        setRecentOrderCount(data.recentOrderCount);
+        if (!symbol && !symbolFilter) {
+          setActivityBySymbol(data.activityBySymbol ?? {});
+        }
         setLastUpdated(Date.now());
       } catch {
         setError("Could not load recent trade activity.");
@@ -397,11 +563,11 @@ export function RecentActivitySection({
         setLoading(false);
       }
     },
-    [accessToken, symbol],
+    [accessToken, symbol, symbolFilter, daysBack, page, usesPagination],
   );
 
   useEffect(() => {
-    if (symbol) {
+    if (symbol || showFullHistory) {
       void load(false);
       return;
     }
@@ -411,22 +577,50 @@ export function RecentActivitySection({
       setSuggestedActions(summary.suggestedActions);
       setDaysBack(summary.daysBack);
       setRecentOrderCount(summary.recentOrderCount);
+      setTotalOrders(summary.totalOrders);
+      setActivityBySymbol(
+        Object.fromEntries(
+          (summary.symbolsTraded ?? []).map((item) => [
+            item.symbol,
+            item.orderCount,
+          ]),
+        ),
+      );
     }
-  }, [symbol, summary, load]);
+  }, [symbol, showFullHistory, summary, load]);
 
-  const displayOrders = symbol
-    ? orders
-    : orders.slice(0, compact ? 5 : orders.length);
+  const displayOrders = compact ? orders.slice(0, 5) : orders;
 
   const title = symbol ? `${symbol} recent trades` : "Recent trade activity";
 
-  const subtitle = symbol
-    ? `${displayOrders.length} filled order${displayOrders.length === 1 ? "" : "s"} in the last ${daysBack} days`
-    : recentOrderCount > 0
-      ? `${recentOrderCount} fill${recentOrderCount === 1 ? "" : "s"} in the last 7 days · ${summary?.totalOrders ?? displayOrders.length} in ${daysBack} days`
-      : `${summary?.totalOrders ?? 0} filled orders in the last ${daysBack} days`;
+  const subtitle = (() => {
+    if (usesPagination) {
+      const scope = symbol
+        ? `${symbol} · `
+        : symbolFilter
+          ? `${symbolFilter} · `
+          : "";
+      if (recentOrderCount > 0 && daysBack > 7 && !symbol && !symbolFilter) {
+        return `${recentOrderCount} in the last 7 days · ${totalOrders} total · ${scope}last ${daysBack} days`;
+      }
+      return `${totalOrders} filled order${totalOrders === 1 ? "" : "s"} · ${scope}last ${daysBack} days`;
+    }
 
-  if (!symbol && !summary && !loading && !displayOrders.length) {
+    if (symbol) {
+      return `${displayOrders.length} filled order${displayOrders.length === 1 ? "" : "s"} in the last ${daysBack} days`;
+    }
+
+    const total = summary?.totalOrders ?? displayOrders.length;
+    if (total > displayOrders.length) {
+      return `${recentOrderCount > 0 ? `${recentOrderCount} in the last 7 days · ` : ""}${total} in ${daysBack} days · showing ${displayOrders.length}`;
+    }
+
+    return recentOrderCount > 0
+      ? `${recentOrderCount} in the last 7 days · ${totalOrders || displayOrders.length} in ${daysBack} days`
+      : `${totalOrders || displayOrders.length} filled orders · last ${daysBack} days`;
+  })();
+
+  if (!symbol && !summary && !showFullHistory && !loading && !displayOrders.length) {
     return null;
   }
 
@@ -454,13 +648,13 @@ export function RecentActivitySection({
           </div>
         </div>
 
-        {(symbol || onRefresh) && (
+        {(symbol || showFullHistory || onRefresh) && (
           <Button
             size="xs"
             variant="outline"
             disabled={loading}
             onClick={() => {
-              if (symbol) {
+              if (symbol || showFullHistory) {
                 void load(true);
                 return;
               }
@@ -477,6 +671,17 @@ export function RecentActivitySection({
         )}
       </div>
 
+      {showFullHistory && !symbol && (
+        <ActivityFilters
+          daysBack={daysBack}
+          onDaysBackChange={setDaysBack}
+          symbolFilter={symbolFilter}
+          onSymbolFilterChange={setSymbolFilter}
+          activityBySymbol={activityBySymbol}
+          disabled={loading}
+        />
+      )}
+
       {error && (
         <div className="px-4 pt-3">
           <ErrorBanner message={error} onRetry={() => void load(true)} />
@@ -492,8 +697,39 @@ export function RecentActivitySection({
             />
           ))}
         </div>
+      ) : displayOrders.length === 0 ? (
+        <div className="px-4 py-8 text-center">
+          <p className="text-sm font-medium text-foreground">No fills in this range</p>
+          <p className="mt-1 text-xs text-muted">
+            {symbolFilter
+              ? `No filled orders for ${symbolFilter} in the last ${daysBack} days.`
+              : `No filled orders in the last ${daysBack} days.`}
+          </p>
+          {symbolFilter && (
+            <button
+              type="button"
+              onClick={() => setSymbolFilter(null)}
+              className="mt-3 text-xs font-medium text-accent-strong hover:underline"
+            >
+              Clear symbol filter
+            </button>
+          )}
+        </div>
       ) : (
-        <OrderRows orders={displayOrders} compact={compact || !!symbol} />
+        <>
+          <OrderRows orders={displayOrders} compact={compact || !!symbol} />
+          {usesPagination && (
+            <ActivityPagination
+              page={page}
+              totalPages={totalPages}
+              totalOrders={totalOrders}
+              offset={(page - 1) * ACTIVITY_PAGE_SIZE}
+              pageCount={displayOrders.length}
+              onPageChange={setPage}
+              disabled={loading}
+            />
+          )}
+        </>
       )}
 
       <SuggestedActionChips

@@ -265,6 +265,10 @@ export type RecentOrdersResponse = {
   daysBack: number;
   symbol?: string | null;
   orders: RecentOrderEntry[];
+  totalOrders: number;
+  recentOrderCount: number;
+  limit: number;
+  offset: number;
   suggestedActions: SuggestedAnalysisAction[];
   activityBySymbol: Record<string, number>;
 };
