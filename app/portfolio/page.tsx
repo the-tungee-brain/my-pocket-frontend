@@ -8,7 +8,8 @@ import {
   usePortfolioSection,
   type PortfolioSectionId,
 } from "@/app/contexts/PortfolioSectionContext";
-import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
+import { useStrategyContext } from "@/app/contexts/StrategyContext";
+import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { PortfolioAttentionSection, countAttentionItems } from "@/components/PortfolioAttentionSection";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
@@ -137,7 +138,10 @@ export default function PortfolioPage() {
     chooseStrategy,
     completeOnboarding,
     saveProfile,
-  } = useStrategyJourney(sessionAccessToken ?? undefined);
+    refreshRecommendations,
+  } = useStrategyContext();
+  const { connect: connectSchwab, connecting: connectingSchwab } = useSchwabConnect();
+  const [refreshingPlaybook, setRefreshingPlaybook] = useState(false);
 
   const showStrategyWizard =
     !!sessionAccessToken &&
@@ -177,6 +181,15 @@ export default function PortfolioPage() {
     mergedAlerts,
     recentActivity?.suggestedActions ?? [],
   );
+
+  const handlePlaybookRefresh = useCallback(async () => {
+    setRefreshingPlaybook(true);
+    try {
+      await refreshRecommendations();
+    } finally {
+      setRefreshingPlaybook(false);
+    }
+  }, [refreshRecommendations]);
 
   const handlePlaybookAsk = useCallback(
     (action: StrategyNextAction) => {
@@ -378,11 +391,16 @@ export default function PortfolioPage() {
           className={cn(pageSectionClass, "mb-6")}
           strategy={strategyProfile.primaryStrategy}
           recommendations={strategyRecommendations}
+          loading={strategyLoading}
+          refreshing={refreshingPlaybook}
+          onRefresh={() => void handlePlaybookRefresh()}
           catalogItem={
             catalog.find((item) => item.id === strategyProfile.primaryStrategy) ??
             null
           }
           onRunAction={handlePlaybookAsk}
+          onConnectSchwab={() => void connectSchwab()}
+          connectingSchwab={connectingSchwab}
         />
       )}
 

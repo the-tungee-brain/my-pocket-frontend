@@ -21,7 +21,7 @@ import {
   SettingsSectionTabBar,
   type SettingsTabId,
 } from "@/components/SettingsSectionTabBar";
-import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
+import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { Button } from "@/components/ui/Button";
 import type { InvestmentStrategy } from "@/app/types/strategy";
@@ -71,7 +71,7 @@ export function SettingsPageContent() {
     loading,
     error,
     saveStrategySettings,
-  } = useStrategyJourney(accessToken, { enabled: !!accessToken });
+  } = useStrategyContext();
 
   const { authorized, loading: schwabLoading } = useSchwabStatus();
 

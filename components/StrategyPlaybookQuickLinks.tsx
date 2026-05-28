@@ -2,19 +2,17 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
+import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import {
   formatStrategyPlaybookTitle,
+  playbookHoldBadge,
+  symbolNeedsAttention,
   symbolsFromProfile,
 } from "@/lib/strategyPlaybook";
+import { cn } from "@/lib/utils";
 
 export function StrategyPlaybookQuickLinks() {
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken as string | undefined;
-  const { profile, recommendations, catalog } = useStrategyJourney(accessToken, {
-    enabled: !!accessToken,
-  });
+  const { profile, recommendations, catalog } = useStrategyContext();
 
   const symbols = symbolsFromProfile(profile);
   if (!profile?.primaryStrategy || symbols.length === 0) {
@@ -35,8 +33,8 @@ export function StrategyPlaybookQuickLinks() {
             {formatStrategyPlaybookTitle(profile.primaryStrategy, catalogItem)}
           </h2>
           <p className="mt-1 text-xs text-muted">
-            Jump to symbols on your playbook — held status and next steps live on
-            Portfolio.
+            Jump to a playbook symbol — status and next steps appear on each
+            research page.
           </p>
         </div>
         <Link
@@ -54,12 +52,23 @@ export function StrategyPlaybookQuickLinks() {
             <Link
               key={symbol}
               href={`/research/${encodeURIComponent(symbol)}/overview`}
-              className="inline-flex min-w-0 flex-col rounded-xl border border-border bg-background px-3 py-2 transition hover:border-accent/40"
+              className={cn(
+                "inline-flex min-w-0 flex-col rounded-xl border border-border bg-background px-3 py-2 transition hover:border-accent/40",
+                status && symbolNeedsAttention(status) && "border-accent/30",
+              )}
             >
-              <span className="text-sm font-semibold text-foreground">{symbol}</span>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                {status && symbolNeedsAttention(status) && (
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-accent-strong"
+                    aria-hidden
+                  />
+                )}
+                {symbol}
+              </span>
               <span className="text-[10px] text-muted">
                 {status?.statusLabel ?? "On playbook"}
-                {status ? ` · ${status.held ? "Held" : "Not held"}` : ""}
+                {status ? ` · ${playbookHoldBadge(status)}` : ""}
               </span>
             </Link>
           );

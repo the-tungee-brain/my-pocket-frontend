@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { CompanySnapshot } from "./CompanySnapshot";
+import { StrategySymbolPlaybookStrip } from "@/components/StrategySymbolPlaybookStrip";
 import { ResearchTabBar, researchBreadcrumbLabel } from "@/components/ResearchTabBar";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { track } from "@/lib/analytics";
@@ -98,6 +99,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
 
         <div className={cn("space-y-3", collapsed && "space-y-2")}>
           <CompanySnapshot symbol={symbol} compact={collapsed} />
+          {!collapsed && <StrategySymbolPlaybookStrip symbol={symbol} />}
           <ResearchTabBar
             symbol={symbol}
             assetType={assetType}

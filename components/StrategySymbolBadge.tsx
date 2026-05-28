@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { useSession } from "next-auth/react";
-import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
-import { isOnStrategyPlaybook } from "@/lib/strategyPlaybook";
+import { useStrategyContext } from "@/app/contexts/StrategyContext";
+import {
+  isOnStrategyPlaybook,
+  symbolStatusForSymbol,
+} from "@/lib/strategyPlaybook";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -12,18 +14,21 @@ type Props = {
 };
 
 export function StrategySymbolBadge({ symbol, className }: Props) {
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken as string | undefined;
-  const { profile } = useStrategyJourney(accessToken, {
-    enabled: !!accessToken,
-  });
+  const { profile, recommendations } = useStrategyContext();
 
+  const upperSymbol = symbol.toUpperCase();
   const onPlaybook = useMemo(
-    () => isOnStrategyPlaybook(profile, symbol),
-    [profile, symbol],
+    () => isOnStrategyPlaybook(profile, upperSymbol),
+    [profile, upperSymbol],
+  );
+  const status = useMemo(
+    () => symbolStatusForSymbol(recommendations, upperSymbol),
+    [recommendations, upperSymbol],
   );
 
   if (!onPlaybook || !profile?.primaryStrategy) return null;
+
+  const label = status?.statusLabel ?? "On your playbook";
 
   return (
     <span
@@ -32,7 +37,7 @@ export function StrategySymbolBadge({ symbol, className }: Props) {
         className,
       )}
     >
-      On your playbook
+      {label}
     </span>
   );
 }

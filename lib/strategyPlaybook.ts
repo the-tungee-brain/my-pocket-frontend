@@ -3,9 +3,11 @@ import type {
   StrategyCatalogItem,
   StrategyNextAction,
   StrategyRecommendations,
+  StrategySymbolStatus,
   UserInvestmentProfile,
   WheelPhase,
 } from "@/app/types/strategy";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 
 export const MAX_STRATEGY_SYMBOLS = 5;
 
@@ -159,4 +161,131 @@ export function playbookActionAskable(action: StrategyNextAction): boolean {
     return false;
   }
   return true;
+}
+
+export type PlaybookActionSecondary =
+  | { kind: "link"; href: string; label: string }
+  | { kind: "connect"; label: string }
+  | { kind: "settings"; label: string };
+
+export function playbookActionSecondary(
+  action: StrategyNextAction,
+): PlaybookActionSecondary | null {
+  const symbol = action.symbol?.trim().toUpperCase();
+
+  switch (action.type) {
+    case "connect":
+      return { kind: "connect", label: "Connect Schwab" };
+    case "education":
+      return { kind: "settings", label: "Edit playbook" };
+    case "options":
+      if (symbol) {
+        return { kind: "link", href: symbolHubPath(symbol, "options"), label: "View options" };
+      }
+      return null;
+    case "monitor":
+      if (symbol) {
+        return {
+          kind: "link",
+          href: symbolHubPath(symbol, "position"),
+          label: "View position",
+        };
+      }
+      return null;
+    case "research":
+    case "buy":
+      if (symbol) {
+        return {
+          kind: "link",
+          href: symbolHubPath(symbol, "overview"),
+          label: "Open research",
+        };
+      }
+      return null;
+    case "rebalance":
+      return { kind: "link", href: "/portfolio", label: "Review portfolio" };
+    default:
+      if (symbol) {
+        return {
+          kind: "link",
+          href: symbolHubPath(symbol, "overview"),
+          label: `Open ${symbol}`,
+        };
+      }
+      return null;
+  }
+}
+
+export function playbookHoldBadge(status: StrategySymbolStatus): string {
+  if (status.statusLabel.toLowerCase().includes("partial lot")) {
+    return "Partial";
+  }
+  return status.held ? "Held" : "Not held";
+}
+
+export function symbolNeedsAttention(status: StrategySymbolStatus): boolean {
+  return (status.priority ?? 50) <= 2;
+}
+
+export function symbolStatusForSymbol(
+  recommendations: StrategyRecommendations | null | undefined,
+  symbol: string,
+): StrategySymbolStatus | null {
+  const upper = symbol.trim().toUpperCase();
+  return (
+    recommendations?.symbolStatuses?.find((item) => item.symbol === upper) ?? null
+  );
+}
+
+const WHEEL_LIKE: InvestmentStrategy[] = ["wheel", "csp-income", "covered-call"];
+
+export function isWheelLikeStrategy(
+  strategy: InvestmentStrategy | null | undefined,
+): boolean {
+  return strategy != null && WHEEL_LIKE.includes(strategy);
+}
+
+export type WheelPhaseStep = {
+  id: WheelPhase;
+  label: string;
+};
+
+export function wheelPhaseStepsForStrategy(
+  strategy: InvestmentStrategy,
+): WheelPhaseStep[] {
+  switch (strategy) {
+    case "wheel":
+      return [
+        { id: "ready-for-csp", label: "CSP" },
+        { id: "short-put-open", label: "Put open" },
+        { id: "assigned-shares", label: "Shares" },
+        { id: "short-call-open", label: "Call" },
+      ];
+    case "csp-income":
+      return [
+        { id: "ready-for-csp", label: "CSP" },
+        { id: "short-put-open", label: "Put open" },
+        { id: "complete-cycle", label: "Redeploy" },
+      ];
+    case "covered-call":
+      return [
+        { id: "assigned-shares", label: "Shares" },
+        { id: "short-call-open", label: "Call open" },
+        { id: "complete-cycle", label: "Repeat" },
+      ];
+    default:
+      return [];
+  }
+}
+
+export function activeWheelPhaseIndex(
+  phase: WheelPhase | null | undefined,
+  steps: WheelPhaseStep[],
+): number {
+  if (!phase || steps.length === 0) return -1;
+  const index = steps.findIndex((step) => step.id === phase);
+  if (index >= 0) return index;
+  if (phase === "pick-symbol") return -1;
+  if (phase === "complete-cycle") return steps.length - 1;
+  return -1;
 }

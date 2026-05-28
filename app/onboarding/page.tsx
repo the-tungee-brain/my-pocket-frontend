@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { StrategyOnboardingWizard } from "@/components/StrategyOnboardingWizard";
-import { useStrategyJourney } from "@/app/hooks/useStrategyJourney";
+import { useStrategyContext } from "@/app/contexts/StrategyContext";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function OnboardingPage() {
     completeOnboarding,
     saveProfile,
     loading,
-  } = useStrategyJourney(accessToken, { enabled: !!accessToken });
+  } = useStrategyContext();
 
   if (!accessToken) {
     return (

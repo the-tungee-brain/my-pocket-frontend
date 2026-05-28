@@ -465,7 +465,7 @@ export function StrategyOnboardingWizard({
                   <p className="text-sm text-muted">
                     {selectedStrategy === "dividend"
                       ? "Add 1–5 dividend names you want to research and hold."
-                      : "Add 1–3 symbols you'd be happy to own if assigned on a put."}
+                      : `Add up to ${MAX_STRATEGY_SYMBOLS} symbols you'd be happy to own if assigned on a put.`}
                   </p>
                   <StrategyStockScreenerPanel
                     strategy={selectedStrategy ?? "wheel"}
