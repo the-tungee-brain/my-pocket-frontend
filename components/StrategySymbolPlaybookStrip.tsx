@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BarChart3 } from "lucide-react";
 import { usePositionsContext } from "@/app/Providers";
 import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import type { StrategyNextAction } from "@/app/types/strategy";
@@ -15,6 +15,7 @@ import {
   playbookHoldBadge,
   symbolStatusForSymbol,
 } from "@/lib/strategyPlaybook";
+import { wheelBacktestPath } from "@/lib/wheelBacktestRoutes";
 import { scrollToChat } from "@/lib/scrollToChat";
 import { symbolChatKey } from "@/lib/chatKeys";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,7 @@ export function StrategySymbolPlaybookStrip({ symbol, className }: Props) {
 
   const status = symbolStatusForSymbol(recommendations, upperSymbol);
   const nextAction = status?.nextAction ?? null;
+  const showBacktestLink = profile.primaryStrategy === "wheel";
 
   return (
     <section
@@ -101,6 +103,17 @@ export function StrategySymbolPlaybookStrip({ symbol, className }: Props) {
           {formatStrategyPlaybookTitle(profile.primaryStrategy)} — open Portfolio
           for next steps across all symbols.
         </p>
+      )}
+
+      {showBacktestLink && (
+        <Link
+          href={wheelBacktestPath(upperSymbol, { years: 5, run: true })}
+          className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-medium text-accent-strong hover:underline"
+        >
+          <BarChart3 className="h-3.5 w-3.5" aria-hidden />
+          Wheel backtest
+          <ArrowRight className="h-3 w-3" aria-hidden />
+        </Link>
       )}
     </section>
   );

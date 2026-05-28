@@ -15,6 +15,7 @@ import {
   Newspaper,
   Target,
   TrendingUp,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,8 @@ export type ResearchTabId =
   | "business"
   | "earnings"
   | "fundamentals"
-  | "financials";
+  | "financials"
+  | "wheel-backtest";
 
 type Tab = {
   id: ResearchTabId;
@@ -105,15 +107,23 @@ const allTabs: Tab[] = [
     icon: LineChart,
     assetTypes: ["STOCK", "ADR"],
   },
+  {
+    id: "wheel-backtest",
+    label: "Wheel backtest",
+    icon: BarChart3,
+    assetTypes: ["STOCK", "ADR", "ETF"],
+  },
 ];
 
 function tabsForAssetType(
   assetType: AssetType | null | undefined,
   isEtf = false,
   showOptionsTab = false,
+  showWheelBacktestTab = false,
 ): Tab[] {
   const resolved: AssetType = isEtf ? "ETF" : (assetType ?? "STOCK");
   const matched = allTabs.filter((tab) => {
+    if (tab.id === "wheel-backtest" && !showWheelBacktestTab) return false;
     if (tab.requiresOptions && !showOptionsTab) return false;
     if (tab.assetTypes === "all") return true;
     return tab.assetTypes?.includes(resolved);
@@ -211,6 +221,7 @@ type ResearchTabBarProps = {
   assetType?: AssetType | null;
   isEtf?: boolean;
   showOptionsTab?: boolean;
+  showWheelBacktestTab?: boolean;
   className?: string;
 };
 
@@ -219,6 +230,7 @@ export function ResearchTabBar({
   assetType,
   isEtf = false,
   showOptionsTab = false,
+  showWheelBacktestTab = false,
   className,
 }: ResearchTabBarProps) {
   const pathname = usePathname();
@@ -236,7 +248,12 @@ export function ResearchTabBar({
   const encoded = encodeURIComponent(symbol.toUpperCase());
   const activeTab =
     (pathname.split("/")[3] as ResearchTabId | undefined) ?? "overview";
-  const tabs = tabsForAssetType(assetType, isEtf, showOptionsTab);
+  const tabs = tabsForAssetType(
+    assetType,
+    isEtf,
+    showOptionsTab,
+    showWheelBacktestTab,
+  );
 
   const recalculateVisibleTabs = useCallback(() => {
     const container = containerRef.current;

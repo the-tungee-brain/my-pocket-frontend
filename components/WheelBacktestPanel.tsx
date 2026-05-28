@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useState, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { BarChart3, ChevronDown, Download, Loader2 } from "lucide-react";
 import type { WheelBacktestResult, WheelBacktestYears } from "@/app/types/wheelBacktest";
 import { formatDateMMDDYYYY } from "@/lib/dateUtils";
@@ -41,9 +48,16 @@ function plTone(value: number) {
 type Props = {
   accessToken: string;
   symbols: string[];
+  /** When set, symbol is fixed (research page) and the picker is hidden. */
+  fixedSymbol?: string;
   targetDeltaMin?: number;
   targetDeltaMax?: number;
   dteDays?: number;
+  defaultYears?: WheelBacktestYears;
+  defaultMaintainOneLot?: boolean;
+  /** Run once on load (e.g. from playbook deep link with ?run=1). */
+  autoRun?: boolean;
+  variant?: "embedded" | "research";
   className?: string;
 };
 
@@ -55,21 +69,42 @@ const selectControlClass =
 export function WheelBacktestPanel({
   accessToken,
   symbols,
+  fixedSymbol,
   targetDeltaMin = 0.2,
   targetDeltaMax = 0.3,
   dteDays = 30,
+  defaultYears = 5,
+  defaultMaintainOneLot = true,
+  autoRun = false,
+  variant = "embedded",
   className,
 }: Props) {
   const choices = useMemo(
     () => [...new Set(symbols.map((s) => s.trim().toUpperCase()).filter(Boolean))],
     [symbols],
   );
-  const [symbol, setSymbol] = useState(choices[0] ?? "");
-  const [years, setYears] = useState<WheelBacktestYears>(5);
-  const [maintainOneLot, setMaintainOneLot] = useState(true);
+  const lockedSymbol = fixedSymbol?.trim().toUpperCase() ?? "";
+  const [symbol, setSymbol] = useState((lockedSymbol || choices[0]) ?? "");
+  const [years, setYears] = useState<WheelBacktestYears>(defaultYears);
+  const [maintainOneLot, setMaintainOneLot] = useState(defaultMaintainOneLot);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<WheelBacktestResult | null>(null);
+  const autoRanRef = useRef(false);
+
+  useEffect(() => {
+    if (lockedSymbol) {
+      setSymbol(lockedSymbol);
+    }
+  }, [lockedSymbol]);
+
+  useEffect(() => {
+    setYears(defaultYears);
+  }, [defaultYears]);
+
+  useEffect(() => {
+    setMaintainOneLot(defaultMaintainOneLot);
+  }, [defaultMaintainOneLot]);
 
   const run = useCallback(async () => {
     if (!symbol) {
@@ -105,6 +140,14 @@ export function WheelBacktestPanel({
     maintainOneLot,
   ]);
 
+  useEffect(() => {
+    if (!autoRun || autoRanRef.current || !symbol) return;
+    autoRanRef.current = true;
+    void run();
+    // Intentionally run once when opened via ?run=1 from playbook.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run() is stable enough for one-shot autoRun
+  }, [autoRun, symbol]);
+
   if (choices.length === 0) {
     return (
       <div
@@ -118,43 +161,55 @@ export function WheelBacktestPanel({
     );
   }
 
+  const showSymbolPicker = !lockedSymbol && choices.length > 1;
+  const isResearch = variant === "research";
+
   return (
-    <div className={cn("rounded-xl border border-border/80 bg-background/60", className)}>
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/60 px-3 py-3">
-        <div className="flex items-start gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-            <BarChart3 className="h-4 w-4" aria-hidden />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-              Wheel backtest
-            </p>
-            <p className="mt-0.5 text-xs leading-relaxed text-muted">
-              One contract: fund the first CSP, then keep selling one CSP at a time. If
-              the stock rises and your wallet cannot cover strike × 100, you can
-              simulate adding more cash (see below). Model premiums — not historical
-              option quotes.
-            </p>
+    <div
+      className={cn(
+        isResearch ? "space-y-3" : "rounded-xl border border-border/80 bg-background/60",
+        className,
+      )}
+    >
+      {!isResearch && (
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/60 px-3 py-3">
+          <div className="flex items-start gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <BarChart3 className="h-4 w-4" aria-hidden />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                Wheel backtest
+              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted">
+                One contract: fund the first CSP, then keep selling one CSP at a time. If
+                the stock rises and your wallet cannot cover strike × 100, you can
+                simulate adding more cash (see below). Model premiums — not historical
+                option quotes.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="space-y-3 px-3 py-3">
+      <div className={cn("space-y-3", !isResearch && "px-3 py-3")}>
         <div className="rounded-lg border border-border/80 bg-muted-bg/40 p-3">
           <div className="flex flex-wrap items-end gap-3">
-            <WheelSelect
-              id="wheel-backtest-symbol"
-              label="Symbol"
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              wrapperClassName="min-w-[7rem]"
-            >
-              {choices.map((ticker) => (
-                <option key={ticker} value={ticker}>
-                  {ticker}
-                </option>
-              ))}
-            </WheelSelect>
+            {showSymbolPicker && (
+              <WheelSelect
+                id="wheel-backtest-symbol"
+                label="Symbol"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                wrapperClassName="min-w-[7rem]"
+              >
+                {choices.map((ticker) => (
+                  <option key={ticker} value={ticker}>
+                    {ticker}
+                  </option>
+                ))}
+              </WheelSelect>
+            )}
 
             <WheelSelect
               id="wheel-backtest-years"

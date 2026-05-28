@@ -37,7 +37,7 @@ import {
 import { IconButton } from "@/components/ui/IconButton";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { WheelBacktestPanel } from "@/components/WheelBacktestPanel";
+import { WheelBacktestPlaybookLink } from "@/components/WheelBacktestPlaybookLink";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -300,14 +300,8 @@ export function StrategyPlaybookPanel({
               </div>
             )}
 
-            {showWheelBacktest && accessToken && (
-              <WheelBacktestPanel
-                accessToken={accessToken}
-                symbols={playbookSymbols}
-                targetDeltaMin={wheelTargetDeltaMin}
-                targetDeltaMax={wheelTargetDeltaMax}
-                dteDays={wheelDteDays}
-              />
+            {showWheelBacktest && (
+              <WheelBacktestPlaybookLink symbols={playbookSymbols} />
             )}
 
             <div>

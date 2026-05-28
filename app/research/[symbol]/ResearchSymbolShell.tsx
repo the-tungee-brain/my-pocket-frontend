@@ -12,6 +12,7 @@ import { addRecentSymbol } from "@/lib/recentSymbols";
 import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { usePositionsContext } from "@/app/Providers";
+import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { shouldShowOptionsTab } from "@/lib/symbolOptions";
 import { pageShellClass } from "@/lib/pageLayout";
@@ -31,6 +32,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
   const { positionMap } = usePositionsContext();
+  const { profile } = useStrategyContext();
   const { assetType, isEtf } = useResearchAssetTypeContext();
   const [collapsed, setCollapsed] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -43,6 +45,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
     intelligence,
     activeTab,
   );
+  const showWheelBacktestTab = profile?.primaryStrategy === "wheel";
 
   useResearchSearchShortcut();
 
@@ -105,6 +108,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
             assetType={assetType}
             isEtf={isEtf}
             showOptionsTab={showOptionsTab}
+            showWheelBacktestTab={showWheelBacktestTab}
           />
         </div>
       </div>
