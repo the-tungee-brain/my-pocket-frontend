@@ -123,7 +123,7 @@ export function FundamentalsPageContent({
               {(isLoading || hasStreetOwnership(fundamentals?.streetAnalysis)) && (
                 <ResearchSectionCard
                   title="Ownership & insiders"
-                  description="Institutional holders and recent insider activity"
+                  description="Institutional holders and insider transaction history"
                   icon={Users}
                 >
                   <StreetOwnershipSection

@@ -5,6 +5,7 @@ import type { OwnershipSnapshot, StreetAnalysisSnapshot } from "@/app/hooks/stre
 import {
   formatHolderShares,
   yahooEstimatesAttribution,
+  formatCompactNumber,
   formatPctHeld,
   formatRatingActionDate,
   hasOwnership,
@@ -97,12 +98,17 @@ export function StreetOwnershipSection({
       {insiders.length > 0 ? (
         <div className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-            Recent insider transactions
+            Insider transactions ({insiders.length})
           </p>
-          <ul className="space-y-1.5">
-            {insiders.map((row) => (
+          <ul
+            className={cn(
+              "space-y-1.5",
+              insiders.length > 12 && "max-h-80 overflow-y-auto pr-1",
+            )}
+          >
+            {insiders.map((row, index) => (
               <li
-                key={`${row.date}-${row.insider}-${row.transaction}`}
+                key={`${row.date}-${row.insider}-${row.transaction ?? ""}-${index}`}
                 className="flex gap-2 text-xs leading-snug"
               >
                 <span className="shrink-0 tabular-nums text-muted">
@@ -117,6 +123,12 @@ export function StreetOwnershipSection({
                     <span className="text-muted">
                       {" "}
                       · {formatHolderShares(row.shares)}
+                    </span>
+                  ) : null}
+                  {row.value != null ? (
+                    <span className="text-muted">
+                      {" "}
+                      · {formatCompactNumber(row.value)}
                     </span>
                   ) : null}
                 </span>
