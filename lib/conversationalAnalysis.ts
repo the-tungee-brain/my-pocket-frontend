@@ -118,5 +118,7 @@ export function stripPlaybookSourceLabels(content: string): string {
     .replace(/\bin our dataset\b/gi, "")
     .replace(/\bnot (?:provided|available) in (?:our )?dataset\b/gi, "isn't clear")
     .replace(/ {2,}/g, " ")
+    .replace(/\bin the materials you provided\b/gi, "")
+    .replace(/\bmaterials you provided\b/gi, "")
     .replace(/\s+([,.])/g, "$1");
 }
