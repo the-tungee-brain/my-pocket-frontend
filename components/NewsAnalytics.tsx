@@ -321,13 +321,9 @@ export default function NewsAnalytics({
           </div>
         </div>
 
-        <p className="mt-3 text-sm leading-relaxed text-foreground">
-          {data ? (
-            data.summary
-          ) : (
-            <Skeleton className="inline-block h-4 w-3/4" />
-          )}
-        </p>
+        <div className="mt-3 text-sm leading-relaxed text-foreground">
+          {data ? data.summary : <Skeleton className="h-4 w-3/4" />}
+        </div>
       </Card>
 
       <PageSplit
