@@ -344,12 +344,11 @@ function NewsAnalysisAside({ data }: { data: StockNewsView }) {
       ) : null}
 
       {data.deepAnalysis ? (
-        <details className="news-tab__details">
-          <summary className="news-tab__details-summary">Deep analysis</summary>
-          <p className="mt-2 text-sm leading-relaxed text-foreground">
+        <ResearchAsideCard title="Deep analysis">
+          <p className="text-sm leading-relaxed text-foreground">
             {data.deepAnalysis}
           </p>
-        </details>
+        </ResearchAsideCard>
       ) : null}
     </>
   );
