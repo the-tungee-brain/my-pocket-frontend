@@ -46,6 +46,10 @@ function cleanLine(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function normalizeFactorText(text: string): string {
+  return cleanLine(text).replace(/^[,;:\s]+/, "");
+}
+
 function parseBulletLines(block: string): string[] {
   return block
     .split("\n")
@@ -66,7 +70,7 @@ function parseFactorLine(line: string): PlaybookFactor | null {
   const labeled = line.match(FACTOR_LINE_RE);
   if (labeled) {
     const category = categoryFromLabel(labeled[1]);
-    const text = cleanLine(labeled[2]);
+    const text = normalizeFactorText(labeled[2]);
     if (!text) return null;
     return {
       category,
@@ -75,7 +79,7 @@ function parseFactorLine(line: string): PlaybookFactor | null {
     };
   }
 
-  const trimmed = cleanLine(line);
+  const trimmed = normalizeFactorText(line);
   if (!trimmed) return null;
 
   return {
