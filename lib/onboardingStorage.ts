@@ -4,8 +4,6 @@ const WATCHLIST_HINT_KEY = "powerpocket-watchlist-hint-dismissed";
 const STRATEGY_ONBOARDING_DISMISSED_KEY = "powerpocket-strategy-onboarding-dismissed";
 
 const STRATEGY_JOURNEY_COLLAPSED_KEY = "powerpocket-strategy-journey-collapsed";
-const STRATEGY_FLOW_DIAGRAM_COLLAPSED_KEY =
-  "powerpocket-strategy-flow-diagram-collapsed";
 
 export function isStrategyJourneyCollapsed(): boolean {
   if (typeof window === "undefined") return true;
@@ -15,16 +13,6 @@ export function isStrategyJourneyCollapsed(): boolean {
 export function setStrategyJourneyCollapsed(collapsed: boolean): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(STRATEGY_JOURNEY_COLLAPSED_KEY, collapsed ? "1" : "0");
-}
-
-export function isStrategyFlowDiagramCollapsed(): boolean {
-  if (typeof window === "undefined") return true;
-  return localStorage.getItem(STRATEGY_FLOW_DIAGRAM_COLLAPSED_KEY) !== "0";
-}
-
-export function setStrategyFlowDiagramCollapsed(collapsed: boolean): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STRATEGY_FLOW_DIAGRAM_COLLAPSED_KEY, collapsed ? "1" : "0");
 }
 
 export function isStrategyOnboardingDismissed(): boolean {

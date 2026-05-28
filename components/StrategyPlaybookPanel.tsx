@@ -31,9 +31,7 @@ import {
 } from "@/lib/strategyPlaybook";
 import { getStrategyFlow } from "@/lib/strategyFlows";
 import {
-  isStrategyFlowDiagramCollapsed,
   isStrategyJourneyCollapsed,
-  setStrategyFlowDiagramCollapsed,
   setStrategyJourneyCollapsed,
 } from "@/lib/onboardingStorage";
 import { IconButton } from "@/components/ui/IconButton";
@@ -73,25 +71,15 @@ export function StrategyPlaybookPanel({
   className,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const [flowExpanded, setFlowExpanded] = useState(false);
 
   useEffect(() => {
     setExpanded(!isStrategyJourneyCollapsed());
-    setFlowExpanded(!isStrategyFlowDiagramCollapsed());
   }, []);
 
   const toggleExpanded = () => {
     setExpanded((open) => {
       const next = !open;
       setStrategyJourneyCollapsed(!next);
-      return next;
-    });
-  };
-
-  const toggleFlowExpanded = () => {
-    setFlowExpanded((open) => {
-      const next = !open;
-      setStrategyFlowDiagramCollapsed(!next);
       return next;
     });
   };
@@ -286,36 +274,18 @@ export function StrategyPlaybookPanel({
             )}
 
             <div>
-              <button
-                type="button"
-                aria-expanded={flowExpanded}
-                onClick={toggleFlowExpanded}
-                className="flex w-full items-center justify-between gap-2 text-left"
-              >
+              <div className="mb-3 flex items-center justify-between gap-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                   How it works
                 </p>
-                <div className="flex items-center gap-2">
-                  {flow.repeats && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted">
-                      <RefreshCw className="h-3 w-3" aria-hidden />
-                      Repeating cycle
-                    </span>
-                  )}
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 text-muted transition-transform",
-                      flowExpanded && "rotate-180",
-                    )}
-                    aria-hidden
-                  />
-                </div>
-              </button>
-              {flowExpanded && (
-                <div className="mt-3">
-                  <StrategyFlowDiagram flow={flow} />
-                </div>
-              )}
+                {flow.repeats && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted">
+                    <RefreshCw className="h-3 w-3" aria-hidden />
+                    Repeating cycle
+                  </span>
+                )}
+              </div>
+              <StrategyFlowDiagram flow={flow} />
             </div>
           </div>
         )}
