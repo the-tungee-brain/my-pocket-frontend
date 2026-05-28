@@ -417,15 +417,18 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
         />
       </div>
     </ResearchSectionCard>
-  ) : data.streetAnalysis ? (
+  ) : (
     <ResearchSectionCard
       title="Analyst estimates"
       description="Next-quarter Wall Street EPS and revenue consensus"
       icon={CalendarDays}
     >
-      <StreetEarningsEstimates street={data.streetAnalysis} embedded={false} />
+      <StreetEarningsEstimates
+        street={data.streetAnalysis ?? null}
+        embedded={false}
+      />
     </ResearchSectionCard>
-  ) : null;
+  );
 
   const historyCard = (
     <ResearchSectionCard

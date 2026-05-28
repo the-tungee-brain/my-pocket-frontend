@@ -16,6 +16,7 @@ import {
 } from "@/lib/streetAnalysisUtils";
 import { cn } from "@/lib/utils";
 import { StreetAnalysisSkeleton } from "./StreetAnalysisSection";
+import { StreetAnalysisEmptyState } from "./StreetAnalysisEmptyState";
 
 const WALL_STREET_ANALYSIS_SUBTITLE = "Analyst ratings, targets, and estimates";
 
@@ -76,7 +77,16 @@ export function StreetAnalysisOverview({
   }
 
   if (!hasStreetAnalysis(street)) {
-    return null;
+    return (
+      <ResearchSectionCard
+        title="Wall Street analysis"
+        description={WALL_STREET_ANALYSIS_SUBTITLE}
+        icon={Target}
+        className={className}
+      >
+        <StreetAnalysisEmptyState />
+      </ResearchSectionCard>
+    );
   }
 
   const targets = street.priceTargets;

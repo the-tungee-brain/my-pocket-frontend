@@ -19,8 +19,11 @@ import {
   formatStreetPrice,
   formatStreetUpside,
   hasStreetAnalysis,
+  hasStreetEarningsEstimates,
 } from "@/lib/streetAnalysisUtils";
 import { cn } from "@/lib/utils";
+import { StreetAnalysisEmptyState } from "./StreetAnalysisEmptyState";
+import { StreetEstimatesEmptyState } from "./StreetEstimatesEmptyState";
 
 type StreetAnalysisSectionProps = {
   street: StreetAnalysisSnapshot | null | undefined;
@@ -179,11 +182,7 @@ export function StreetAnalysisSection({
   }
 
   if (!hasStreetAnalysis(street)) {
-    return (
-      <p className="text-sm text-muted">
-        Analyst consensus isn&apos;t available for this symbol.
-      </p>
-    );
+    return <StreetAnalysisEmptyState />;
   }
 
   const targets = street.priceTargets;
@@ -341,7 +340,9 @@ export function StreetEarningsEstimates({
     ? period
     : resolvedDefault;
 
-  if (!hasStreetAnalysis(street)) return null;
+  if (!hasStreetEarningsEstimates(street)) {
+    return embedded ? null : <StreetEstimatesEmptyState />;
+  }
 
   const eps =
     estimateForPeriod(street.epsEstimates, activePeriod) ??
@@ -352,16 +353,6 @@ export function StreetEarningsEstimates({
   const hasEstimates = eps?.avg != null || revenue?.avg != null;
   const periodLabel =
     eps?.label ?? revenue?.label ?? "Selected period";
-
-  if (
-    !hasEstimates &&
-    !street.estimateRevisionHeadline &&
-    !street.estimateDriftHeadline &&
-    !street.growthContextHeadline &&
-    !street.ratingTrendHeadline
-  ) {
-    return null;
-  }
 
   const estimatePeriodHint =
     defaultEstimatePeriod === "0q" && activePeriod === "0q"

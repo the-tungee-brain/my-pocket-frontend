@@ -75,24 +75,75 @@ export function formatEstimateGrowth(pct: number | null | undefined): string | n
   return `${prefix}${pct.toFixed(1)}% YoY`;
 }
 
+function hasRecommendationBreakdown(
+  recommendation: StreetAnalysisSnapshot["recommendation"],
+): boolean {
+  if (!recommendation) return false;
+  const total =
+    (recommendation.strongBuy ?? 0) +
+    (recommendation.buy ?? 0) +
+    (recommendation.hold ?? 0) +
+    (recommendation.sell ?? 0) +
+    (recommendation.strongSell ?? 0);
+  return total > 0;
+}
+
+function hasPriceTargets(
+  targets: StreetAnalysisSnapshot["priceTargets"],
+): boolean {
+  if (!targets) return false;
+  return (
+    targets.mean != null ||
+    targets.low != null ||
+    targets.high != null ||
+    targets.median != null ||
+    targets.current != null ||
+    targets.upsideToMeanPct != null
+  );
+}
+
+function hasPeriodEstimates(estimates: PeriodEstimate[] | undefined): boolean {
+  return estimates?.some((row) => row.avg != null) ?? false;
+}
+
+/** True when Yahoo returned analyst consensus data (excludes ownership-only payloads). */
 export function hasStreetAnalysis(
   street: StreetAnalysisSnapshot | null | undefined,
 ): street is StreetAnalysisSnapshot {
   if (!street) return false;
   return Boolean(
-    street.priceTargets ||
-      street.recommendation ||
-      street.nextQuarterEps ||
-      street.nextQuarterRevenue ||
-      (street.epsEstimates?.length ?? 0) > 0 ||
-      (street.revenueEstimates?.length ?? 0) > 0 ||
-      street.estimateRevisionHeadline ||
-      street.estimateDriftHeadline ||
-      street.growthContextHeadline ||
-      street.ratingTrendHeadline ||
-      (street.recentRatingActions?.length ?? 0) > 0 ||
-      hasOwnership(street.ownership),
+    hasPriceTargets(street.priceTargets) ||
+      (street.consensusLabel?.trim()?.length ?? 0) > 0 ||
+      hasRecommendationBreakdown(street.recommendation) ||
+      street.nextQuarterEps?.avg != null ||
+      street.nextQuarterRevenue?.avg != null ||
+      hasPeriodEstimates(street.epsEstimates) ||
+      hasPeriodEstimates(street.revenueEstimates) ||
+      (street.estimateRevisionHeadline?.trim()?.length ?? 0) > 0 ||
+      (street.estimateDriftHeadline?.trim()?.length ?? 0) > 0 ||
+      (street.growthContextHeadline?.trim()?.length ?? 0) > 0 ||
+      (street.ratingTrendHeadline?.trim()?.length ?? 0) > 0 ||
+      (street.recentRatingActions?.length ?? 0) > 0,
   );
+}
+
+/** EPS/revenue consensus and estimate headlines shown on the Earnings tab. */
+export function hasStreetEarningsEstimates(
+  street: StreetAnalysisSnapshot | null | undefined,
+): street is StreetAnalysisSnapshot {
+  if (!street) return false;
+  const hasPeriodData =
+    street.nextQuarterEps?.avg != null ||
+    street.nextQuarterRevenue?.avg != null ||
+    hasPeriodEstimates(street.epsEstimates) ||
+    hasPeriodEstimates(street.revenueEstimates);
+  const hasHeadlines = Boolean(
+    street.estimateRevisionHeadline?.trim() ||
+      street.estimateDriftHeadline?.trim() ||
+      street.growthContextHeadline?.trim() ||
+      street.ratingTrendHeadline?.trim(),
+  );
+  return hasPeriodData || hasHeadlines;
 }
 
 export function hasOwnership(
