@@ -120,9 +120,27 @@ export function StreetAnalysisOverview({
           </p>
         ) : null}
 
-        {street.estimateRevisionHeadline ? (
+        {street.estimateDriftHeadline ? (
           <p className="text-sm leading-relaxed text-foreground">
+            {street.estimateDriftHeadline}
+          </p>
+        ) : null}
+
+        {street.estimateRevisionHeadline ? (
+          <p className="text-sm leading-relaxed text-muted">
             {street.estimateRevisionHeadline}
+          </p>
+        ) : null}
+
+        {street.recentRatingActions?.[0] ? (
+          <p className="text-sm text-muted">
+            Latest:{" "}
+            <span className="text-foreground">
+              {street.recentRatingActions[0].firm} —{" "}
+              {street.recentRatingActions[0].fromGrade
+                ? `${street.recentRatingActions[0].fromGrade} → ${street.recentRatingActions[0].toGrade}`
+                : street.recentRatingActions[0].toGrade}
+            </span>
           </p>
         ) : null}
 

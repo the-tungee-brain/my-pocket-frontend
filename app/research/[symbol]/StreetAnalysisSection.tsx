@@ -1,11 +1,16 @@
 "use client";
 
 import { Target } from "lucide-react";
-import type { StreetAnalysisSnapshot } from "@/app/hooks/streetAnalysisTypes";
+import type {
+  AnalystRatingAction,
+  StreetAnalysisSnapshot,
+} from "@/app/hooks/streetAnalysisTypes";
 import {
   ANALYST_DATA_ATTRIBUTION,
   formatEstimateGrowth,
   formatEstimateRange,
+  formatRatingActionDate,
+  formatRatingActionLine,
   formatStreetPrice,
   formatStreetUpside,
   hasStreetAnalysis,
@@ -57,6 +62,52 @@ function RecommendationBar({
             ),
         )}
       </div>
+    </div>
+  );
+}
+
+function EstimateInsight({ headline }: { headline: string }) {
+  return (
+    <p className="rounded-lg border border-accent/20 bg-accent-muted/30 px-3 py-2 text-xs leading-relaxed text-foreground">
+      {headline}
+    </p>
+  );
+}
+
+function ratingActionTone(action: AnalystRatingAction): string {
+  const token = `${action.action ?? ""} ${action.toGrade}`.toLowerCase();
+  if (token.includes("down") || token.includes("sell") || token.includes("under")) {
+    return "text-danger";
+  }
+  if (token.includes("up") || token.includes("buy") || token.includes("outperform")) {
+    return "text-success";
+  }
+  return "text-foreground";
+}
+
+function RecentRatingActions({ actions }: { actions: AnalystRatingAction[] }) {
+  if (actions.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+        Recent analyst actions
+      </p>
+      <ul className="space-y-1.5">
+        {actions.map((item) => (
+          <li
+            key={`${item.date}-${item.firm}-${item.toGrade}`}
+            className="flex gap-2 text-xs leading-snug"
+          >
+            <span className="shrink-0 tabular-nums text-muted">
+              {formatRatingActionDate(item.date)}
+            </span>
+            <span className={cn("min-w-0", ratingActionTone(item))}>
+              {formatRatingActionLine(item)}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -148,10 +199,16 @@ export function StreetAnalysisSection({
         </div>
       ) : null}
 
+      {!compact && street.estimateDriftHeadline ? (
+        <EstimateInsight headline={street.estimateDriftHeadline} />
+      ) : null}
+
       {!compact && street.estimateRevisionHeadline ? (
-        <p className="rounded-lg border border-accent/20 bg-accent-muted/30 px-3 py-2 text-xs leading-relaxed text-foreground">
-          {street.estimateRevisionHeadline}
-        </p>
+        <EstimateInsight headline={street.estimateRevisionHeadline} />
+      ) : null}
+
+      {!compact && street.recentRatingActions?.length ? (
+        <RecentRatingActions actions={street.recentRatingActions} />
       ) : null}
 
       <p className="text-[11px] text-muted">{ANALYST_DATA_ATTRIBUTION}</p>
@@ -172,7 +229,13 @@ export function StreetEarningsEstimates({
   const revenue = street.nextQuarterRevenue;
   const hasEstimates = eps?.avg != null || revenue?.avg != null;
 
-  if (!hasEstimates && !street.estimateRevisionHeadline) return null;
+  if (
+    !hasEstimates &&
+    !street.estimateRevisionHeadline &&
+    !street.estimateDriftHeadline
+  ) {
+    return null;
+  }
 
   return (
     <div
@@ -185,10 +248,12 @@ export function StreetEarningsEstimates({
         Analyst estimates (next quarter)
       </p>
 
+      {street.estimateDriftHeadline ? (
+        <EstimateInsight headline={street.estimateDriftHeadline} />
+      ) : null}
+
       {street.estimateRevisionHeadline ? (
-        <p className="rounded-lg border border-accent/20 bg-accent-muted/30 px-3 py-2 text-xs leading-relaxed text-foreground">
-          {street.estimateRevisionHeadline}
-        </p>
+        <EstimateInsight headline={street.estimateRevisionHeadline} />
       ) : null}
 
       {hasEstimates ? (

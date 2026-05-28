@@ -53,6 +53,31 @@ export function hasStreetAnalysis(
       street.recommendation ||
       street.nextQuarterEps ||
       street.nextQuarterRevenue ||
-      street.estimateRevisionHeadline,
+      street.estimateRevisionHeadline ||
+      street.estimateDriftHeadline ||
+      (street.recentRatingActions?.length ?? 0) > 0,
   );
+}
+
+export function formatRatingActionDate(isoDate: string): string {
+  const parsed = new Date(`${isoDate}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return isoDate;
+  return parsed.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export function formatRatingActionLine(action: {
+  firm: string;
+  toGrade: string;
+  fromGrade?: string | null;
+  action?: string | null;
+}): string {
+  const move =
+    action.fromGrade != null && action.fromGrade !== ""
+      ? `${action.fromGrade} → ${action.toGrade}`
+      : action.toGrade;
+  return `${action.firm}: ${move}`;
 }

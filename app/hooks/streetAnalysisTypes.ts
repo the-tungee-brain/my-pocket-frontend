@@ -25,6 +25,14 @@ export type PeriodEstimate = {
   growthPct?: number | null;
 };
 
+export type AnalystRatingAction = {
+  date: string;
+  firm: string;
+  toGrade: string;
+  fromGrade?: string | null;
+  action?: string | null;
+};
+
 export type StreetAnalysisSnapshot = {
   priceTargets?: AnalystPriceTargets | null;
   recommendation?: RecommendationBreakdown | null;
@@ -32,4 +40,6 @@ export type StreetAnalysisSnapshot = {
   nextQuarterEps?: PeriodEstimate | null;
   nextQuarterRevenue?: PeriodEstimate | null;
   estimateRevisionHeadline?: string | null;
+  estimateDriftHeadline?: string | null;
+  recentRatingActions?: AnalystRatingAction[];
 };
