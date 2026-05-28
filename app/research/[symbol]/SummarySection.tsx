@@ -14,7 +14,6 @@ import { pageAsideClass } from "@/lib/pageLayout";
 import { StreamingResearchContent } from "@/components/StreamingResearchContent";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { StreetAtAGlance } from "./StreetAtAGlance";
 
 type SummarySectionProps = {
   symbol: string;
@@ -124,8 +123,6 @@ export function SummarySection({ symbol }: SummarySectionProps) {
           {summary.long}
         </p>
       </div>
-
-      <StreetAtAGlance symbol={symbol} />
 
       {summary.valuationContext && asideContent ? (
         <PageSplit

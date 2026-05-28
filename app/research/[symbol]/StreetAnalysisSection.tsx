@@ -3,6 +3,7 @@
 import { Target } from "lucide-react";
 import type { StreetAnalysisSnapshot } from "@/app/hooks/streetAnalysisTypes";
 import {
+  ANALYST_DATA_ATTRIBUTION,
   formatEstimateGrowth,
   formatEstimateRange,
   formatStreetPrice,
@@ -82,7 +83,7 @@ export function StreetAnalysisSection({
   if (!hasStreetAnalysis(street)) {
     return (
       <p className="text-sm text-muted">
-        Street consensus data isn&apos;t available for this symbol.
+        Analyst consensus isn&apos;t available for this symbol.
       </p>
     );
   }
@@ -153,7 +154,7 @@ export function StreetAnalysisSection({
         </p>
       ) : null}
 
-      <p className="text-[10px] text-muted">Street estimates via Yahoo Finance.</p>
+      <p className="text-[11px] text-muted">{ANALYST_DATA_ATTRIBUTION}</p>
     </div>
   );
 }
@@ -181,7 +182,7 @@ export function StreetEarningsEstimates({
       )}
     >
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-        Street estimates (next quarter)
+        Analyst estimates (next quarter)
       </p>
 
       {street.estimateRevisionHeadline ? (

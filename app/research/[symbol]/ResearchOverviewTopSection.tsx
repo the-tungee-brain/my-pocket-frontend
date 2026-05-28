@@ -16,6 +16,7 @@ import { PerformanceSnapshot } from "./PerformanceSnapshot";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
+import { StreetAnalysisOverview } from "./StreetAnalysisOverview";
 
 type Props = {
   symbol: string;
@@ -86,6 +87,9 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
               stacked
               className={pageSectionClass}
             />
+          ) : null}
+          {!isEtf ? (
+            <StreetAnalysisOverview symbol={symbol} className={pageSectionClass} />
           ) : null}
           <PerformanceSnapshot symbol={symbol} className={pageSectionClass} />
           <IntelligenceRecentEventsPanel

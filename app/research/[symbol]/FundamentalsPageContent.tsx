@@ -93,8 +93,8 @@ export function FundamentalsPageContent({
           isEtf ? null : (
             <>
               <ResearchSectionCard
-                title="Street consensus"
-                description="Analyst targets, ratings, and estimate revisions"
+                title="Wall Street analysis"
+                description="Analyst ratings, targets, and estimates"
                 icon={Target}
               >
                 <StreetAnalysisSection

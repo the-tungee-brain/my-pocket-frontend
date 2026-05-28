@@ -415,8 +415,8 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
     </ResearchSectionCard>
   ) : data.streetAnalysis ? (
     <ResearchSectionCard
-      title="Street estimates"
-      description="Next-quarter analyst consensus"
+      title="Analyst estimates"
+      description="Next-quarter Wall Street EPS and revenue consensus"
       icon={CalendarDays}
     >
       <StreetEarningsEstimates street={data.streetAnalysis} embedded={false} />

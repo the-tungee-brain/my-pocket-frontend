@@ -28,7 +28,7 @@ export function ResearchSectionCard({
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
         <div className="flex items-center gap-2.5">
           {Icon && (
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
@@ -53,7 +53,9 @@ export function ResearchSectionCard({
             )}
           </div>
         </div>
-        {action}
+        {action ? (
+          <div className="flex shrink-0 items-center">{action}</div>
+        ) : null}
       </div>
       <div className="px-4 py-4">{children}</div>
     </section>

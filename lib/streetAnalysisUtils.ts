@@ -3,6 +3,9 @@ import type {
   StreetAnalysisSnapshot,
 } from "@/app/hooks/streetAnalysisTypes";
 
+/** Footnote for analyst consensus blocks. */
+export const ANALYST_DATA_ATTRIBUTION = "Estimates from Yahoo Finance";
+
 export function formatStreetPrice(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return `$${value.toLocaleString(undefined, {
