@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useMemo, useState, type ChangeEvent } from "react";
-import { BarChart3, ChevronDown, Loader2 } from "lucide-react";
+import { BarChart3, ChevronDown, Download, Loader2 } from "lucide-react";
 import type { WheelBacktestResult, WheelBacktestYears } from "@/app/types/wheelBacktest";
 import { formatDateMMDDYYYY } from "@/lib/dateUtils";
+import { downloadWheelBacktestResult } from "@/lib/wheelBacktestExport";
 import { fetchWheelBacktest } from "@/lib/wheelBacktest";
 import { WheelBacktestTradeLedger } from "@/components/WheelBacktestTradeLedger";
 import { Button } from "@/components/ui/Button";
@@ -216,6 +217,28 @@ export function WheelBacktestPanel({
 
         {result && (
           <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 px-3 text-[11px]"
+                onClick={() =>
+                  downloadWheelBacktestResult(result, {
+                    symbol,
+                    lookbackYears: years,
+                    targetDeltaMin,
+                    targetDeltaMax,
+                    dteDays,
+                    maintainOneLot,
+                  })
+                }
+              >
+                <Download className="h-3.5 w-3.5" aria-hidden />
+                Download report
+              </Button>
+            </div>
+
             <div className="rounded-lg border border-accent/25 bg-accent-muted/20 px-3 py-3">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                 Capital (1 contract = 100 shares)

@@ -65,7 +65,7 @@ export type WheelBacktestResult = {
   cspRounds: number;
   endDate: string;
   tradingDays: number;
-  config: Record<string, number>;
+  config: Record<string, number | boolean>;
   assumptions: string[];
   startingCashUsd: number;
   endingEquityUsd: number;
