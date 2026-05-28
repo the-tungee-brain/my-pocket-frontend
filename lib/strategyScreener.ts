@@ -1,18 +1,43 @@
 import type { InvestmentStrategy, StrategyScreenerFilters } from "@/app/types/strategy";
 
-export const SCREENER_SECTOR_OPTIONS = [
-  "Technology",
-  "Consumer Defensive",
-  "Healthcare",
-  "Utilities",
-  "Financial Services",
-  "Industrials",
-  "Communication Services",
-  "Energy",
-  "Basic Materials",
-  "Real Estate",
-  "Consumer Cyclical",
-] as const;
+export const PRESET_SECTOR_ALLOWLISTS: Record<string, readonly string[]> = {
+  wheel_stock: [
+    "Technology",
+    "Consumer Defensive",
+    "Consumer Cyclical",
+    "Healthcare",
+    "Financial Services",
+    "Industrials",
+    "Communication Services",
+  ],
+  csp_stock: [
+    "Technology",
+    "Consumer Defensive",
+    "Consumer Cyclical",
+    "Healthcare",
+    "Financial Services",
+    "Industrials",
+    "Communication Services",
+  ],
+  covered_call_stock: [
+    "Consumer Defensive",
+    "Healthcare",
+    "Utilities",
+    "Financial Services",
+    "Industrials",
+    "Technology",
+    "Communication Services",
+  ],
+  dividend_stock: [
+    "Consumer Defensive",
+    "Utilities",
+    "Healthcare",
+    "Financial Services",
+    "Real Estate",
+    "Energy",
+    "Industrials",
+  ],
+};
 
 export const MARKET_CAP_PRESETS = [
   { label: "$1B+", value: 1_000_000_000 },
@@ -22,6 +47,8 @@ export const MARKET_CAP_PRESETS = [
   { label: "$50B+", value: 50_000_000_000 },
 ] as const;
 
+export const DEFAULT_PAGE_SIZE = 20;
+
 const SUPPORTED_STRATEGIES: InvestmentStrategy[] = [
   "wheel",
   "csp-income",
@@ -30,44 +57,92 @@ const SUPPORTED_STRATEGIES: InvestmentStrategy[] = [
   "etf-core",
 ];
 
+const STRATEGY_PRESET_KEY: Record<InvestmentStrategy, string> = {
+  wheel: "wheel_stock",
+  "csp-income": "csp_stock",
+  "covered-call": "covered_call_stock",
+  dividend: "dividend_stock",
+  "etf-core": "core_etf",
+};
+
 export function supportsStrategyStockScreener(
   strategy: InvestmentStrategy | null,
 ): strategy is InvestmentStrategy {
   return strategy !== null && SUPPORTED_STRATEGIES.includes(strategy);
 }
 
+export function sectorsForStrategy(strategy: InvestmentStrategy): readonly string[] {
+  const key = STRATEGY_PRESET_KEY[strategy];
+  return PRESET_SECTOR_ALLOWLISTS[key] ?? PRESET_SECTOR_ALLOWLISTS.wheel_stock;
+}
+
 export function screenerTitle(strategy: InvestmentStrategy): string {
   switch (strategy) {
     case "wheel":
-      return "Wheel strategy screener";
+      return "Pick wheel candidates";
     case "csp-income":
-      return "CSP income screener";
+      return "Pick CSP candidates";
     case "covered-call":
-      return "Covered call screener";
+      return "Pick covered call candidates";
     case "dividend":
-      return "Dividend screener";
+      return "Pick dividend names";
     case "etf-core":
-      return "Core ETF screener";
+      return "Pick core ETFs";
     default:
-      return "Strategy screener";
+      return "Pick symbols";
   }
 }
 
-export function defaultWheelScreenerFilters(): StrategyScreenerFilters {
+export function defaultScreenerFiltersForStrategy(
+  strategy: InvestmentStrategy,
+): StrategyScreenerFilters {
+  const sectors = [...sectorsForStrategy(strategy)];
+
+  if (strategy === "dividend") {
+    return {
+      minMarketCap: 2_000_000_000,
+      maxPe: 25,
+      requireDividend: true,
+      minDividendYield: 0.02,
+      sectors,
+      exchanges: ["NMS", "NYQ"],
+    };
+  }
+
+  if (strategy === "covered-call") {
+    return {
+      minMarketCap: 5_000_000_000,
+      maxPe: 40,
+      requireDividend: false,
+      minDividendYield: null,
+      sectors,
+      exchanges: ["NMS", "NYQ"],
+    };
+  }
+
+  if (strategy === "etf-core") {
+    return {
+      minMarketCap: 5_000_000_000,
+      maxPe: null,
+      requireDividend: false,
+      minDividendYield: null,
+      sectors: null,
+      exchanges: ["NMS", "NYQ"],
+    };
+  }
+
   return {
     minMarketCap: 5_000_000_000,
-    maxPe: 50,
-    requireDividend: true,
+    maxPe: 40,
+    requireDividend: false,
     minDividendYield: null,
-    sectors: [
-      "Technology",
-      "Consumer Defensive",
-      "Healthcare",
-      "Utilities",
-      "Financial Services",
-    ],
+    sectors,
     exchanges: ["NMS", "NYQ"],
   };
+}
+
+export function defaultWheelScreenerFilters(): StrategyScreenerFilters {
+  return defaultScreenerFiltersForStrategy("wheel");
 }
 
 export function formatMarketCap(value: number | null | undefined): string {
@@ -113,6 +188,9 @@ export function filterSummaryChips(filters: StrategyScreenerFilters): string[] {
   return chips;
 }
 
-export function screenerFiltersFingerprint(filters: StrategyScreenerFilters): string {
-  return JSON.stringify(filters);
+export function screenerFiltersFingerprint(
+  filters: StrategyScreenerFilters,
+  page = 1,
+): string {
+  return JSON.stringify({ filters, page });
 }

@@ -9,7 +9,7 @@ import type {
   StrategyStockScreenerResult,
 } from "@/app/types/strategy";
 import {
-  defaultWheelScreenerFilters,
+  DEFAULT_PAGE_SIZE,
   screenerFiltersFingerprint,
 } from "@/lib/strategyScreener";
 
@@ -18,7 +18,7 @@ type UseStrategyStockScreenerOptions = {
   strategy: InvestmentStrategy | null;
   enabled?: boolean;
   filters?: StrategyScreenerFilters;
-  limit?: number;
+  pageSize?: number;
   autoRun?: boolean;
   prepareProfile?: () => Promise<void>;
   prepareOnAutoFetch?: boolean;
@@ -29,17 +29,18 @@ const cache = new Map<string, StrategyStockScreenerResult>();
 function getCacheKey(
   strategy: InvestmentStrategy,
   filters: StrategyScreenerFilters,
-  limit: number,
+  page: number,
+  pageSize: number,
 ) {
-  return `${strategy}:${screenerFiltersFingerprint(filters)}:${limit}`;
+  return `${strategy}:${screenerFiltersFingerprint(filters, page)}:${pageSize}`;
 }
 
 export function useStrategyStockScreener({
   accessToken,
   strategy,
   enabled = true,
-  filters = defaultWheelScreenerFilters(),
-  limit = 50,
+  filters,
+  pageSize = DEFAULT_PAGE_SIZE,
   autoRun = true,
   prepareProfile,
   prepareOnAutoFetch = false,
@@ -48,11 +49,15 @@ export function useStrategyStockScreener({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasRun, setHasRun] = useState(false);
+  const [page, setPage] = useState(1);
   const [fetchedFilterKey, setFetchedFilterKey] = useState<string | null>(null);
 
   const debouncedFilters = useDebouncedValue(filters, 400);
   const filtersRef = useRef(debouncedFilters);
   filtersRef.current = debouncedFilters;
+
+  const pageRef = useRef(page);
+  pageRef.current = page;
 
   const prepareRef = useRef(prepareProfile);
   prepareRef.current = prepareProfile;
@@ -61,18 +66,19 @@ export function useStrategyStockScreener({
   const syncedStrategyRef = useRef<string | null>(null);
 
   const runScreen = useCallback(
-    async (opts?: { force?: boolean; syncProfile?: boolean }) => {
-      if (!accessToken || !strategy || !enabled) return;
+    async (opts?: { force?: boolean; syncProfile?: boolean; page?: number }) => {
+      if (!accessToken || !strategy || !enabled || !filtersRef.current) return;
 
       const activeFilters = filtersRef.current;
-      const cacheKey = getCacheKey(strategy, activeFilters, limit);
+      const activePage = opts?.page ?? pageRef.current;
+      const cacheKey = getCacheKey(strategy, activeFilters, activePage, pageSize);
       const requestSeq = ++requestSeqRef.current;
 
       if (!opts?.force) {
         const cached = cache.get(cacheKey);
         if (cached) {
           setResult(cached);
-          setFetchedFilterKey(screenerFiltersFingerprint(activeFilters));
+          setFetchedFilterKey(screenerFiltersFingerprint(activeFilters, activePage));
           setHasRun(true);
           setError(null);
           return;
@@ -91,7 +97,8 @@ export function useStrategyStockScreener({
           accessToken,
           strategy,
           activeFilters,
-          limit,
+          activePage,
+          pageSize,
         );
 
         if (requestSeq !== requestSeqRef.current) {
@@ -100,7 +107,8 @@ export function useStrategyStockScreener({
 
         cache.set(cacheKey, data);
         setResult(data);
-        setFetchedFilterKey(screenerFiltersFingerprint(activeFilters));
+        setPage(data.page);
+        setFetchedFilterKey(screenerFiltersFingerprint(activeFilters, data.page));
         setHasRun(true);
       } catch (err) {
         if (requestSeq !== requestSeqRef.current) {
@@ -117,17 +125,22 @@ export function useStrategyStockScreener({
         }
       }
     },
-    [accessToken, strategy, enabled, limit],
+    [accessToken, strategy, enabled, pageSize],
   );
 
   useEffect(() => {
-    if (!accessToken || !strategy || !enabled || !autoRun) {
+    setPage(1);
+  }, [debouncedFilters, strategy]);
+
+  useEffect(() => {
+    if (!accessToken || !strategy || !enabled || !autoRun || !debouncedFilters) {
       requestSeqRef.current += 1;
       setResult(null);
       setFetchedFilterKey(null);
       setHasRun(false);
       setError(null);
       setLoading(false);
+      setPage(1);
       syncedStrategyRef.current = null;
       return;
     }
@@ -140,6 +153,7 @@ export function useStrategyStockScreener({
     void runScreen({
       force: true,
       syncProfile: shouldSyncProfile,
+      page,
     }).then(() => {
       if (shouldSyncProfile) {
         syncedStrategyRef.current = strategy;
@@ -151,15 +165,20 @@ export function useStrategyStockScreener({
     enabled,
     autoRun,
     debouncedFilters,
-    limit,
+    page,
+    pageSize,
     prepareOnAutoFetch,
     runScreen,
   ]);
 
   const stale = useMemo(() => {
-    if (fetchedFilterKey === null) return false;
-    return fetchedFilterKey !== screenerFiltersFingerprint(filters);
-  }, [fetchedFilterKey, filters]);
+    if (fetchedFilterKey === null || !filters) return false;
+    return fetchedFilterKey !== screenerFiltersFingerprint(filters, page);
+  }, [fetchedFilterKey, filters, page]);
+
+  const setPageAndFetch = useCallback((nextPage: number) => {
+    setPage(nextPage);
+  }, []);
 
   return {
     result,
@@ -167,6 +186,9 @@ export function useStrategyStockScreener({
     error,
     hasRun,
     stale,
+    page,
+    pageSize,
+    setPage: setPageAndFetch,
     runScreen,
   };
 }

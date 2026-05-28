@@ -559,10 +559,12 @@ export async function fetchStrategyStockScreener(
   accessToken: string,
   strategy: InvestmentStrategy,
   filters: StrategyScreenerFilters,
-  limit = 50,
+  page = 1,
+  pageSize = 20,
 ): Promise<StrategyStockScreenerResult> {
   const params = new URLSearchParams({
-    limit: String(limit),
+    page: String(page),
+    pageSize: String(pageSize),
     minMarketCap: String(filters.minMarketCap),
     requireDividend: String(filters.requireDividend),
   });

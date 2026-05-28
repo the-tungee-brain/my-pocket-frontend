@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -25,7 +25,7 @@ import { SymbolSearchField } from "@/components/SymbolSearchField";
 import { Button } from "@/components/ui/Button";
 import { buildPreferencesDraftUpdate } from "@/lib/strategyStockSuggestions";
 import {
-  defaultWheelScreenerFilters,
+  defaultScreenerFiltersForStrategy,
   formatMarketCap,
   supportsStrategyStockScreener,
 } from "@/lib/strategyScreener";
@@ -85,7 +85,17 @@ export function StrategyOnboardingWizard({
     [catalog, selectedStrategy],
   );
 
-  const [screenerFilters, setScreenerFilters] = useState(defaultWheelScreenerFilters());
+  const [screenerFilters, setScreenerFilters] = useState(() =>
+    selectedStrategy
+      ? defaultScreenerFiltersForStrategy(selectedStrategy)
+      : defaultScreenerFiltersForStrategy("wheel"),
+  );
+
+  useEffect(() => {
+    if (selectedStrategy) {
+      setScreenerFilters(defaultScreenerFiltersForStrategy(selectedStrategy));
+    }
+  }, [selectedStrategy]);
 
   const showSymbolScreener =
     (step === "configure" || step === "review") &&
@@ -120,6 +130,8 @@ export function StrategyOnboardingWizard({
     runScreen,
     stale: screenerStale,
     hasRun: screenerHasRun,
+    page: screenerPage,
+    setPage: setScreenerPage,
   } = useStrategyStockScreener({
     accessToken,
     strategy: selectedStrategy,
@@ -388,6 +400,7 @@ export function StrategyOnboardingWizard({
                     strategy={selectedStrategy ?? "etf-core"}
                     preset={screenerResult?.preset}
                     quotes={screenerResult?.quotes ?? []}
+                    sections={screenerResult?.sections}
                     summary={screenerResult?.summary}
                     filters={screenerFilters}
                     onFiltersChange={setScreenerFilters}
@@ -395,6 +408,10 @@ export function StrategyOnboardingWizard({
                     error={screenerError}
                     stale={screenerStale}
                     hasRun={screenerHasRun}
+                    page={screenerPage}
+                    totalPages={screenerResult?.totalPages ?? 1}
+                    totalCount={screenerResult?.totalCount ?? 0}
+                    onPageChange={setScreenerPage}
                     onRun={() => void runScreen({ force: true, syncProfile: true })}
                     onAddSymbol={(symbol) => setEtfPrimary(symbol.toUpperCase())}
                     selectedSymbols={[etfPrimary, etfBond].filter(Boolean)}
@@ -446,6 +463,7 @@ export function StrategyOnboardingWizard({
                     strategy={selectedStrategy ?? "wheel"}
                     preset={screenerResult?.preset}
                     quotes={screenerResult?.quotes ?? []}
+                    sections={screenerResult?.sections}
                     summary={screenerResult?.summary}
                     filters={screenerFilters}
                     onFiltersChange={setScreenerFilters}
@@ -453,6 +471,10 @@ export function StrategyOnboardingWizard({
                     error={screenerError}
                     stale={screenerStale}
                     hasRun={screenerHasRun}
+                    page={screenerPage}
+                    totalPages={screenerResult?.totalPages ?? 1}
+                    totalCount={screenerResult?.totalCount ?? 0}
+                    onPageChange={setScreenerPage}
                     onRun={() => void runScreen({ force: true, syncProfile: true })}
                     onAddSymbol={addSymbol}
                     selectedSymbols={symbols}
@@ -561,6 +583,7 @@ export function StrategyOnboardingWizard({
                       strategy={selectedStrategy ?? "wheel"}
                       preset={screenerResult?.preset}
                       quotes={screenerResult?.quotes ?? []}
+                      sections={screenerResult?.sections}
                       summary={screenerResult?.summary}
                       filters={screenerFilters}
                       onFiltersChange={setScreenerFilters}
@@ -568,6 +591,10 @@ export function StrategyOnboardingWizard({
                       error={screenerError}
                       stale={screenerStale}
                       hasRun={screenerHasRun}
+                      page={screenerPage}
+                      totalPages={screenerResult?.totalPages ?? 1}
+                      totalCount={screenerResult?.totalCount ?? 0}
+                      onPageChange={setScreenerPage}
                       onRun={() => void runScreen({ force: true, syncProfile: true })}
                       onAddSymbol={addSymbol}
                       selectedSymbols={symbols}

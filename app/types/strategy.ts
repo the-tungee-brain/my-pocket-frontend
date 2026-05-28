@@ -149,14 +149,27 @@ export type StrategyScreenerQuote = {
   price?: number | null;
 };
 
+export type ScreenerResultSection = {
+  preset: ScreenerPresetSummary;
+  quotes: StrategyScreenerQuote[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export type StrategyStockScreenerResult = {
   strategy: InvestmentStrategy;
   preset: ScreenerPresetSummary;
   quotes: StrategyScreenerQuote[];
   totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
   summary: string;
   generatedAt?: string | null;
   filters?: StrategyScreenerFilters | null;
+  sections?: ScreenerResultSection[];
 };
 
 export type StrategyRecommendations = {

@@ -31,7 +31,7 @@ import {
   type StrategyFormValues,
 } from "@/lib/strategyProfileForm";
 import {
-  defaultWheelScreenerFilters,
+  defaultScreenerFiltersForStrategy,
   supportsStrategyStockScreener,
 } from "@/lib/strategyScreener";
 
@@ -82,7 +82,17 @@ export function StrategyProfileEditor({
     [catalog, values.primaryStrategy],
   );
 
-  const [screenerFilters, setScreenerFilters] = useState(defaultWheelScreenerFilters());
+  const [screenerFilters, setScreenerFilters] = useState(() =>
+    values.primaryStrategy
+      ? defaultScreenerFiltersForStrategy(values.primaryStrategy)
+      : defaultScreenerFiltersForStrategy("wheel"),
+  );
+
+  useEffect(() => {
+    if (values.primaryStrategy) {
+      setScreenerFilters(defaultScreenerFiltersForStrategy(values.primaryStrategy));
+    }
+  }, [values.primaryStrategy]);
 
   const showSymbolScreener = supportsStrategyStockScreener(values.primaryStrategy);
 
@@ -98,6 +108,8 @@ export function StrategyProfileEditor({
     runScreen,
     stale: screenerStale,
     hasRun: screenerHasRun,
+    page: screenerPage,
+    setPage: setScreenerPage,
   } = useStrategyStockScreener({
     accessToken,
     strategy: values.primaryStrategy,
@@ -256,6 +268,7 @@ export function StrategyProfileEditor({
                   strategy={values.primaryStrategy ?? "etf-core"}
                   preset={screenerResult?.preset}
                   quotes={screenerResult?.quotes ?? []}
+                  sections={screenerResult?.sections}
                   summary={screenerResult?.summary}
                   filters={screenerFilters}
                   onFiltersChange={setScreenerFilters}
@@ -263,6 +276,10 @@ export function StrategyProfileEditor({
                   error={screenerError}
                   stale={screenerStale}
                   hasRun={screenerHasRun}
+                  page={screenerPage}
+                  totalPages={screenerResult?.totalPages ?? 1}
+                  totalCount={screenerResult?.totalCount ?? 0}
+                  onPageChange={setScreenerPage}
                   onRun={() => void runScreen({ force: true, syncProfile: true })}
                   onAddSymbol={(symbol) => patch({ etfPrimary: symbol.toUpperCase() })}
                   selectedSymbols={[values.etfPrimary, values.etfBond].filter(Boolean)}
@@ -275,6 +292,7 @@ export function StrategyProfileEditor({
                   strategy={values.primaryStrategy ?? "wheel"}
                   preset={screenerResult?.preset}
                   quotes={screenerResult?.quotes ?? []}
+                  sections={screenerResult?.sections}
                   summary={screenerResult?.summary}
                   filters={screenerFilters}
                   onFiltersChange={setScreenerFilters}
@@ -282,6 +300,10 @@ export function StrategyProfileEditor({
                   error={screenerError}
                   stale={screenerStale}
                   hasRun={screenerHasRun}
+                  page={screenerPage}
+                  totalPages={screenerResult?.totalPages ?? 1}
+                  totalCount={screenerResult?.totalCount ?? 0}
+                  onPageChange={setScreenerPage}
                   onRun={() => void runScreen({ force: true, syncProfile: true })}
                   onAddSymbol={addSymbol}
                   selectedSymbols={values.symbols}
