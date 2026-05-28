@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronUp, Menu, Search, Sparkles } from "lucide-react";
+import { ChevronUp, Menu, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ChatSessionHistory } from "@/components/ChatSessionHistory";
@@ -9,6 +9,7 @@ import { ConversationPane } from "@/components/ConversationPane";
 import { DesktopNav } from "@/components/DesktopNav";
 import { MobileNav } from "@/components/MobileNav";
 import { HeaderActions } from "@/components/HeaderActions";
+import { HeaderSymbolSearch } from "@/components/HeaderSymbolSearch";
 import { IconButton } from "@/components/ui/IconButton";
 import { useToast } from "./contexts/ToastContext";
 import { usePositionsContext } from "./Providers";
@@ -290,7 +291,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       : selectedView === "research" && researchSymbol
         ? `Stock research · ${researchTabLabel(pathname.split("/")[3])}`
         : selectedView === "research"
-          ? "Find a symbol and open its snapshot"
+          ? "Search a ticker in the header"
           : "Position details and assistant context";
 
   const showConversation =
@@ -392,34 +393,50 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <section className="flex min-h-screen min-w-0 flex-1 flex-col">
           <div className="sticky top-0 z-30 border-b border-border bg-secondary/80 backdrop-blur-md">
-            <div className="flex min-h-14 items-center justify-between gap-3 px-4">
-              <IconButton
-                onClick={() => setMobileNavOpen(true)}
-                size="sm"
-                aria-label="Open navigation"
-                className="md:hidden"
-              >
-                <Menu className="h-4 w-4" aria-hidden="true" />
-              </IconButton>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="truncate text-sm font-semibold text-foreground">
+            {/* Mobile: title + actions, then full-width search */}
+            <div className="flex flex-col gap-2.5 px-4 py-2.5 md:hidden">
+              <div className="flex items-center gap-3">
+                <IconButton
+                  onClick={() => setMobileNavOpen(true)}
+                  size="sm"
+                  aria-label="Open navigation"
+                  className="shrink-0"
+                >
+                  <Menu className="h-4 w-4" aria-hidden="true" />
+                </IconButton>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold leading-tight text-foreground">
                     {headerLabel}
-                  </span>
-                  {selectedView === "research" && !researchSymbol && (
-                    <Search
-                      className="h-3.5 w-3.5 text-muted"
-                      aria-hidden="true"
-                    />
-                  )}
+                  </div>
+                  <div className="truncate text-[11px] leading-snug text-muted">
+                    {headerSubtitle}
+                  </div>
                 </div>
-                <div className="truncate text-[11px] text-muted">
+                <HeaderActions />
+              </div>
+              <HeaderSymbolSearch
+                accessToken={sessionAccessToken}
+                className="w-full"
+              />
+            </div>
+
+            {/* Desktop: equal side columns so search sits in the header center */}
+            <div className="hidden min-h-14 grid-cols-[1fr_minmax(14rem,24rem)_1fr] items-center gap-x-4 px-4 md:grid">
+              <div className="min-w-0 justify-self-start">
+                <div className="truncate text-sm font-semibold leading-tight text-foreground">
+                  {headerLabel}
+                </div>
+                <div className="truncate text-[11px] leading-snug text-muted">
                   {headerSubtitle}
                 </div>
               </div>
 
-              <HeaderActions />
+              <HeaderSymbolSearch
+                accessToken={sessionAccessToken}
+                className="w-full max-w-md justify-self-center"
+              />
+
+              <HeaderActions className="justify-self-end" />
             </div>
           </div>
 

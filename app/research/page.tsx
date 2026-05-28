@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -9,9 +9,7 @@ import { History, Search, SearchX, Star, TrendingUp } from "lucide-react";
 import { TickerSymbolItem, useSymbolSearch } from "../hooks/useSymbolSearch";
 import { useRecentSymbols } from "../hooks/useRecentSymbols";
 import { useWatchlist } from "../hooks/useWatchlist";
-import { useResearchSearchShortcut } from "../hooks/useResearchSearchShortcut";
 import { usePositionsContext } from "../Providers";
-import { consumeResearchSearchFocus } from "@/lib/researchSearchFocus";
 import { rememberAssetType } from "@/lib/researchAssetType";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -27,18 +25,6 @@ export default function ResearchPage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { symbols: portfolioSymbols } = usePositionsContext();
-
-  const focusSearch = useCallback(() => {
-    searchInputRef.current?.focus();
-  }, []);
-
-  useResearchSearchShortcut({ onFocus: focusSearch });
-
-  useEffect(() => {
-    if (consumeResearchSearchFocus()) {
-      window.requestAnimationFrame(() => focusSearch());
-    }
-  }, [focusSearch]);
 
   const { symbols: watchlist } = useWatchlist();
   const { symbols: recentSymbols, clear: clearRecentSymbols } =
