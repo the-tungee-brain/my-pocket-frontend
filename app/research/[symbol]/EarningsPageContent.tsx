@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronDown, Loader2, Newspaper, TrendingUp } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  Loader2,
+  Newspaper,
+  TrendingUp,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import {
   useEarningsDetail,
@@ -168,13 +174,16 @@ function TranscriptSection({
         />
       </button>
       {open && (
-        <div className="mt-3 max-h-[28rem] space-y-4 overflow-y-auto rounded-xl border border-border bg-secondary/20 p-4 scrollbar-dark">
+        <div className="mt-3 max-h-112 space-y-4 overflow-y-auto rounded-xl border border-border bg-secondary/20 p-4 scrollbar-dark">
           {transcript.map((segment, index) => (
             <div key={`${segment.speaker}-${index}`}>
               <p className="text-xs font-semibold text-accent-strong">
                 {segment.speaker}
                 {segment.role ? (
-                  <span className="font-normal text-muted"> · {segment.role}</span>
+                  <span className="font-normal text-muted">
+                    {" "}
+                    · {segment.role}
+                  </span>
                 ) : null}
               </p>
               <p className="mt-1 text-sm leading-relaxed text-foreground">
@@ -240,9 +249,7 @@ function EarningsDetailPanel({
 
       <MetricsGrid event={event} />
 
-      {error && !analysis ? (
-        <ErrorBanner message={error} />
-      ) : null}
+      {error && !analysis ? <ErrorBanner message={error} /> : null}
 
       {showAnalysisLoading ? <AnalysisLoadingState /> : null}
 
@@ -409,7 +416,7 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
   ) : data.streetAnalysis ? (
     <ResearchSectionCard
       title="Street estimates"
-      description="Next-quarter analyst consensus from Yahoo Finance"
+      description="Next-quarter analyst consensus"
       icon={CalendarDays}
     >
       <StreetEarningsEstimates street={data.streetAnalysis} embedded={false} />
@@ -448,10 +455,7 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
 
   return (
     <div className="space-y-4">
-      <PageSplit
-        main={historyCard}
-        aside={upcomingCard ?? undefined}
-      />
+      <PageSplit main={historyCard} aside={upcomingCard ?? undefined} />
     </div>
   );
 }

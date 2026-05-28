@@ -188,7 +188,7 @@ export default function ResearchPage() {
                   <button
                     key={symbol}
                     type="button"
-                    className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent-muted px-3 py-1 text-xs font-mono text-accent-strong transition hover:border-accent/50"
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-accent/30 bg-accent-muted px-3.5 py-2 text-xs font-mono text-accent-strong transition hover:border-accent/50"
                     onClick={() => openSymbol(symbol)}
                   >
                     <Star className="h-3 w-3 fill-current" aria-hidden="true" />
@@ -218,7 +218,7 @@ export default function ResearchPage() {
                   <button
                     key={symbol}
                     type="button"
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-mono text-foreground transition hover:border-accent/50 hover:bg-secondary"
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-border bg-background px-3.5 py-2 text-xs font-mono text-foreground transition hover:border-accent/50 hover:bg-secondary"
                     onClick={() => openSymbol(symbol)}
                   >
                     <History className="h-3 w-3 text-muted" aria-hidden="true" />

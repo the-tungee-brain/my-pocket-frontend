@@ -42,11 +42,12 @@ const navSectionTitleClass =
   "text-[10px] font-semibold uppercase tracking-[0.12em] text-muted";
 const navSectionSubtitleClass = "mt-0.5 text-[10px] text-muted/80";
 const navSymbolListClass = "space-y-1 overflow-y-auto px-1";
-const navSymbolRowClass =
-  "group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-xs font-medium transition-all";
-const navSymbolButtonClass =
-  "flex min-w-0 flex-1 items-center gap-2 text-left";
-const navSymbolLabelClass = "truncate font-mono text-xs";
+const navSymbolRowButtonClass =
+  "flex w-full min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-xs font-medium transition-all";
+const navSymbolLabelClass = "min-w-0 flex-1 truncate font-mono text-xs";
+/** Space for trailing icon actions (search, remove, alert badge). */
+const navSymbolRowTrailingInset = "pr-[5.25rem]";
+const navSymbolRowTrailingInsetCompact = "pr-11";
 const navSymbolIconClass = (active: boolean) =>
   cn(
     "h-3.5 w-3.5 shrink-0",
@@ -203,6 +204,7 @@ export function NavList({
               loading={loading}
               icon={CircleDollarSign}
               iconClassName={navSymbolIconClass(isActive)}
+              trailingInset={navSymbolRowTrailingInset}
               onSelect={() => {
                 setSelectedView("research");
                 setSelectedSymbol(null);
@@ -211,13 +213,14 @@ export function NavList({
               trailing={
                 <>
                   {alertSummary && (
-                    <AlertBadge summary={alertSummary} compact className="mr-1" />
+                    <AlertBadge summary={alertSummary} compact className="mr-0.5" />
                   )}
                   <IconButton
                     size="sm"
                     aria-label={`Research ${sym}`}
                     title={`Research ${sym}`}
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.stopPropagation();
                       setSelectedView("research");
                       setSelectedSymbol(null);
                       router.replace(symbolHubPath(sym, "overview"));
@@ -260,7 +263,7 @@ export function NavList({
           )}
         </div>
       ) : (
-        <div className={cn("mb-1 max-h-36", navSymbolListClass)}>
+        <div className={cn("mb-1 max-h-44", navSymbolListClass)}>
           {watchlist.map((sym) => {
             const isActive = activeResearchSymbol === sym;
 
@@ -274,6 +277,7 @@ export function NavList({
                   navSymbolIconClass(isActive),
                   isActive && "fill-accent-strong",
                 )}
+                trailingInset={navSymbolRowTrailingInsetCompact}
                 onSelect={() => {
                   setSelectedView("research");
                   setSelectedSymbol(null);
@@ -283,7 +287,8 @@ export function NavList({
                   <IconButton
                     size="sm"
                     aria-label={`Remove ${sym} from watchlist`}
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.stopPropagation();
                       removeFromWatchlist(sym);
                       showToast(`${sym} removed from watchlist`);
                     }}
@@ -310,6 +315,7 @@ function NavSymbolRow({
   iconClassName,
   onSelect,
   trailing,
+  trailingInset = navSymbolRowTrailingInset,
 }: {
   sym: string;
   isActive: boolean;
@@ -318,27 +324,31 @@ function NavSymbolRow({
   iconClassName: string;
   onSelect: () => void;
   trailing?: ReactNode;
+  trailingInset?: string;
 }) {
   return (
-    <div
-      className={cn(
-        navSymbolRowClass,
-        isActive ? navItemActive : navItemInactive,
-      )}
-    >
+    <div className="relative">
       <button
         type="button"
         disabled={loading}
         aria-current={isActive ? "page" : undefined}
         onClick={onSelect}
-        className={navSymbolButtonClass}
+        className={cn(
+          navSymbolRowButtonClass,
+          trailing ? trailingInset : "pr-2.5",
+          isActive ? navItemActive : navItemInactive,
+        )}
       >
         <Icon className={iconClassName} aria-hidden="true" />
         <span className={navSymbolLabelClass}>{sym}</span>
       </button>
-      {trailing && (
-        <div className="flex shrink-0 items-center">{trailing}</div>
-      )}
+      {trailing ? (
+        <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center">
+          <div className="pointer-events-auto flex items-center gap-0.5">
+            {trailing}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

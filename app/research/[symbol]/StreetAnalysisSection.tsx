@@ -39,7 +39,7 @@ function RecommendationBar({
           segment.count > 0 ? (
             <div
               key={segment.key}
-              className={cn(segment.className, "min-w-[2px]")}
+              className={cn(segment.className, "min-w-0.5")}
               style={{ width: `${(segment.count / total) * 100}%` }}
               title={`${segment.label}: ${segment.count}`}
             />

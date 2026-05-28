@@ -20,7 +20,9 @@ type FundamentalsPageContentProps = {
   symbol: string;
 };
 
-export function FundamentalsPageContent({ symbol }: FundamentalsPageContentProps) {
+export function FundamentalsPageContent({
+  symbol,
+}: FundamentalsPageContentProps) {
   const { data: session } = useSession();
   const { isEtf } = useResearchAssetTypeContext();
   const { fundamentals, isLoading, error } = useFundamentals(symbol, {
@@ -92,7 +94,7 @@ export function FundamentalsPageContent({ symbol }: FundamentalsPageContentProps
             <>
               <ResearchSectionCard
                 title="Street consensus"
-                description="Analyst targets, ratings, and estimate revisions (Yahoo Finance)"
+                description="Analyst targets, ratings, and estimate revisions"
                 icon={Target}
               >
                 <StreetAnalysisSection
