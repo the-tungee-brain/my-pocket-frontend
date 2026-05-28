@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { capturePageView } from "@/lib/posthogClient";
+import { capturePageLeave, capturePageView } from "@/lib/posthogClient";
 
 export function PostHogPageView() {
   const pathname = usePathname();
@@ -26,6 +26,18 @@ export function PostHogPageView() {
     lastUrl.current = url;
     capturePageView(url);
   }, [pathname, searchParams]);
+
+  useEffect(() => {
+    const handlePageLeave = () => {
+      if (!lastUrl.current) {
+        return;
+      }
+      capturePageLeave(lastUrl.current);
+    };
+
+    window.addEventListener("pagehide", handlePageLeave);
+    return () => window.removeEventListener("pagehide", handlePageLeave);
+  }, []);
 
   return null;
 }

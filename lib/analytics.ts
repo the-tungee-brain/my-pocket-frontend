@@ -1,32 +1,15 @@
-import posthog from "posthog-js";
-import { initPostHog } from "@/lib/posthogClient";
+import {
+  captureEvent,
+  identifyUser,
+  type CaptureProperties,
+} from "@/lib/posthogClient";
 
-export type AnalyticsProperties = Record<
-  string,
-  string | number | boolean | null | undefined
->;
-
-function runWhenReady(run: () => void) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  if (!initPostHog()) {
-    return;
-  }
-
-  run();
-}
+export type AnalyticsProperties = CaptureProperties;
 
 export function identify(userId: string, traits?: AnalyticsProperties) {
-  if (!userId) return;
-  runWhenReady(() => {
-    posthog.identify(userId, traits);
-  });
+  identifyUser(userId, traits);
 }
 
 export function track(event: string, properties?: AnalyticsProperties) {
-  runWhenReady(() => {
-    posthog.capture(event, properties);
-  });
+  captureEvent(event, properties);
 }
