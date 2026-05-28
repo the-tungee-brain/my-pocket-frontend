@@ -13,6 +13,7 @@ import {
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { WatchlistButton } from "@/components/WatchlistButton";
 import { WatchlistHint } from "@/components/WatchlistHint";
 import { iconButtonClass } from "@/components/ui/IconButton";
@@ -60,21 +61,24 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
   if (isLoading) {
     if (compact) {
       return (
-        <header className="flex items-center justify-between gap-3">
-          <div className="h-5 w-24 animate-pulse rounded bg-muted-bg" />
-          <div className="h-5 w-20 animate-pulse rounded bg-muted-bg" />
+        <header className="flex items-center justify-between gap-3" aria-hidden>
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-5 w-20" />
         </header>
       );
     }
 
     return (
-      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <header
+        className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+        aria-hidden
+      >
         <div className="space-y-2">
-          <div className="h-4 w-32 animate-pulse rounded bg-muted-bg" />
-          <div className="h-7 w-64 animate-pulse rounded bg-muted-bg" />
-          <div className="h-4 w-40 animate-pulse rounded bg-muted-bg" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-7 w-64" />
+          <Skeleton className="h-4 w-40" />
         </div>
-        <div className="h-16 w-56 animate-pulse rounded-xl bg-muted-bg" />
+        <Skeleton className="h-16 w-56 rounded-xl" />
       </header>
     );
   }

@@ -2,8 +2,9 @@
 
 import { LockKeyhole } from "lucide-react";
 import type { CashSecuredPutSummary as CashSecuredPutSummaryData } from "@/app/types/schwab";
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { KpiStat } from "@/components/ui/KpiStat";
 import { formatUsd } from "@/lib/formatCurrency";
-import { cn } from "@/lib/utils";
 
 type Props = {
   summary: CashSecuredPutSummaryData;
@@ -35,70 +36,49 @@ export function CashSecuredPutSummary({
     cashTotal > 0 ? Math.min(100, Math.round((reserved / cashTotal) * 100)) : 100;
 
   return (
-    <section
-      className={cn(
-        "mx-auto w-full overflow-hidden rounded-2xl border border-accent/20 bg-accent-muted/40 shadow-sm",
-        className,
-      )}
+    <Card
+      surface="accentSoft"
+      className={className}
       aria-label="Cash-secured put reserves"
     >
-      <div className="border-b border-accent/10 px-4 py-3 sm:px-5">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent-strong">
-            <LockKeyhole className="h-4 w-4" aria-hidden />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold tracking-tight text-foreground">
-              Cash reserved for puts
-            </h3>
-            <p className="mt-0.5 text-xs leading-relaxed text-muted">
-              {compact
-                ? "Set aside to buy shares if assigned."
-                : "When you sell cash-secured puts, this cash is earmarked to buy 100 shares per contract at the strike if assigned."}
-            </p>
-          </div>
-        </div>
-      </div>
+      <CardHeader>
+        <CardTitle
+          title="Cash reserved for puts"
+          description={
+            compact
+              ? "Set aside to buy shares if assigned."
+              : "When you sell cash-secured puts, this cash is earmarked to buy 100 shares per contract at the strike if assigned."
+          }
+          icon={
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent-strong">
+              <LockKeyhole className="h-4 w-4" aria-hidden />
+            </div>
+          }
+        />
+      </CardHeader>
 
-      <div className="grid gap-3 px-4 py-4 sm:grid-cols-3 sm:px-5">
+      <CardBody className="grid gap-3 sm:grid-cols-3">
         {cashBalance != null && (
-          <div className="rounded-xl border border-border/80 bg-secondary/70 px-3.5 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-              Cash balance
-            </p>
-            <p className="mt-1 text-lg font-semibold tabular-nums">
-              {formatUsd(cashBalance)}
-            </p>
-          </div>
+          <KpiStat label="Cash balance" value={formatUsd(cashBalance)} />
         )}
-        <div className="rounded-xl border border-accent/25 bg-secondary/70 px-3.5 py-3">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Reserved
-          </p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-accent-strong">
-            {formatUsd(reserved)}
-          </p>
-        </div>
+        <KpiStat
+          label="Reserved"
+          value={formatUsd(reserved)}
+          tone="positive"
+          className="rounded-xl border border-accent/25 bg-secondary/70 px-3.5 py-2.5"
+        />
         {available != null && (
-          <div className="rounded-xl border border-border/80 bg-secondary/70 px-3.5 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-              Available after reserves
-            </p>
-            <p
-              className={cn(
-                "mt-1 text-lg font-semibold tabular-nums",
-                available <= 0 ? "text-danger" : "text-foreground",
-              )}
-            >
-              {formatUsd(available)}
-            </p>
-          </div>
+          <KpiStat
+            label="Available after reserves"
+            value={formatUsd(available)}
+            tone={available <= 0 ? "negative" : "default"}
+          />
         )}
-      </div>
+      </CardBody>
 
       {cashBalance != null && cashBalance > 0 && (
-        <div className="px-4 pb-4 sm:px-5">
-          <div className="mb-1.5 flex items-center justify-between text-[11px] text-muted">
+        <CardBody className="border-t border-border/80 pt-0">
+          <div className="mb-1.5 flex items-center justify-between text-xs text-muted">
             <span>Reserved vs cash</span>
             <span className="tabular-nums">{reservedPct}% reserved</span>
           </div>
@@ -115,7 +95,7 @@ export function CashSecuredPutSummary({
               style={{ width: `${reservedPct}%` }}
             />
           </div>
-        </div>
+        </CardBody>
       )}
 
       {!compact && summary.positions.length > 0 && (
@@ -148,6 +128,6 @@ export function CashSecuredPutSummary({
           </ul>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

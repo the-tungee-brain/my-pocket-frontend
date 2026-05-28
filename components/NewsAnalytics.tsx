@@ -11,6 +11,8 @@ import {
   ResearchAsideCard,
   ResearchBulletList,
 } from "@/components/ResearchDetailBlocks";
+import { Card } from "@/components/ui/Card";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 import { RefreshCw } from "lucide-react";
@@ -86,7 +88,8 @@ function sentimentLabel(sentiment: Sentiment) {
 
 function NewsArticleCard({ item }: { item: EnrichedNewsItem }) {
   return (
-    <li className="rounded-xl border border-border bg-secondary/60 px-4 py-3 shadow-sm">
+    <li>
+      <Card as="div" surface="subtle" className="mx-0 px-4 py-3 shadow-sm">
       <div className="mb-1.5 flex flex-wrap items-start gap-2">
         {item.url ? (
           <a
@@ -145,6 +148,7 @@ function NewsArticleCard({ item }: { item: EnrichedNewsItem }) {
           </span>
         ))}
       </div>
+      </Card>
     </li>
   );
 }
@@ -274,19 +278,17 @@ export default function NewsAnalytics({
   const aside = data ? (
     <NewsAnalysisAside data={data} />
   ) : isLoading ? (
-    <>
-      <div className="h-28 animate-pulse rounded-xl bg-muted-bg" />
-      <div className="h-40 animate-pulse rounded-xl bg-muted-bg" />
-    </>
+    <div className="space-y-3" aria-hidden>
+      <Skeleton className="h-28 rounded-xl" />
+      <Skeleton className="h-40 rounded-xl" />
+    </div>
   ) : null;
 
   return (
     <div className="space-y-6">
-      <div
-        className={cn(
-          "rounded-2xl px-4 py-4 shadow-sm sm:px-5",
-          sentimentClass,
-        )}
+      <Card
+        as="div"
+        className={cn("mx-0 px-4 py-4 shadow-sm sm:px-5", sentimentClass)}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -323,10 +325,10 @@ export default function NewsAnalytics({
           {data ? (
             data.summary
           ) : (
-            <span className="inline-block h-4 w-3/4 animate-pulse rounded bg-muted-bg" />
+            <Skeleton className="inline-block h-4 w-3/4" />
           )}
         </p>
-      </div>
+      </Card>
 
       <PageSplit
         main={
@@ -345,13 +347,12 @@ export default function NewsAnalytics({
                 <NewsArticleCard key={item.id} item={item} />
               ))}
 
-              {!data && isLoading && (
-                <>
-                  <li className="h-28 animate-pulse rounded-xl bg-muted-bg" />
-                  <li className="h-28 animate-pulse rounded-xl bg-muted-bg" />
-                  <li className="h-28 animate-pulse rounded-xl bg-muted-bg" />
-                </>
-              )}
+              {!data && isLoading &&
+                [1, 2, 3].map((row) => (
+                  <li key={row}>
+                    <Skeleton className="h-28 rounded-xl" />
+                  </li>
+                ))}
             </ul>
           </>
         }

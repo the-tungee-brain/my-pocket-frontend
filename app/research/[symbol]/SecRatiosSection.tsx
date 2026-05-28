@@ -11,6 +11,7 @@ import {
 } from "@/lib/secUtils";
 import { cn } from "@/lib/utils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type SecRatiosSectionProps = {
   symbol: string;
@@ -111,9 +112,9 @@ function LoadingTable({ rows }: { rows: number }) {
   return (
     <div className="space-y-2">
       {Array.from({ length: rows }).map((_, i) => (
-        <div
+        <Skeleton
           key={i}
-          className="h-8 animate-pulse rounded bg-muted-bg"
+          className="h-8 rounded"
           style={{ width: `${100 - i * 5}%` }}
         />
       ))}

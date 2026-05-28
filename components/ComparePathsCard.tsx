@@ -22,6 +22,7 @@ import {
   type ComparePathKind,
 } from "@/lib/inferRecommendedComparePath";
 import { cn } from "@/lib/utils";
+import { Card, CardBody } from "@/components/ui/Card";
 
 type Props = {
   outcome: HeldOptionOutcomes;
@@ -770,17 +771,17 @@ export function ComparePathsCard({
   const symbolUpper = symbol.toUpperCase();
 
   return (
-    <div
-      className={cn(
-        "grid min-w-0 gap-4",
-        orderedPaths.length >= 3
-          ? "grid-cols-1 lg:grid-cols-3"
-          : orderedPaths.length === 2
-            ? "grid-cols-1 md:grid-cols-2"
-            : "grid-cols-1",
-        className,
-      )}
-    >
+    <Card as="div" surface="subtle" className={className}>
+      <CardBody
+        className={cn(
+          "grid min-w-0 gap-4",
+          orderedPaths.length >= 3
+            ? "grid-cols-1 lg:grid-cols-3"
+            : orderedPaths.length === 2
+              ? "grid-cols-1 md:grid-cols-2"
+              : "grid-cols-1",
+        )}
+      >
       {orderedPaths.map((path) => (
         <PathCard
           key={path.path}
@@ -791,6 +792,7 @@ export function ComparePathsCard({
           rollSuggestions={rollSuggestions}
         />
       ))}
-    </div>
+      </CardBody>
+    </Card>
   );
 }

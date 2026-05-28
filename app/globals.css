@@ -12,6 +12,10 @@
   --muted-bg: #222120;
   --success: #34d399;
   --danger: #fb7185;
+  --warning: #fbbf24;
+  --warning-muted: #fbbf241a;
+  --destructive: #e11d48;
+  --destructive-foreground: #ffe4e6;
   --surface-elevated: #1e1d1c;
   --scrollbar-track: transparent;
   --scrollbar-thumb: #3a3a39;
@@ -30,7 +34,12 @@
   --color-muted-bg: var(--muted-bg);
   --color-success: var(--success);
   --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-warning-muted: var(--warning-muted);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-surface-elevated: var(--surface-elevated);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-sans: var(--font-inter);
 }
 
@@ -242,6 +251,17 @@ body {
   transform: translateY(-50%);
   border-radius: 9999px;
   background: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.text-caption {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.text-label {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  letter-spacing: 0.04em;
 }
 
 @media (prefers-reduced-motion: reduce) {

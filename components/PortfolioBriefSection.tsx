@@ -29,6 +29,8 @@ import {
 import { findQuickAction } from "@/lib/quickActions";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import {
   hasPortfolioChangeDetails,
   PortfolioChangesBody,
@@ -167,40 +169,34 @@ export function PortfolioBriefSection({
       };
 
   return (
-    <section
-      className={cn(
-        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
-        className,
-      )}
-      aria-label="Portfolio brief"
-    >
-      <div className="flex items-start justify-between gap-2 border-b border-border bg-surface-elevated/50 px-4 py-3">
-        <div className="flex min-w-0 flex-1 items-start gap-2.5">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-            <Sparkles className="h-4 w-4" aria-hidden />
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-              <h2 className="text-sm font-semibold text-foreground">
-                Morning brief
-              </h2>
+    <Card className={className} aria-label="Portfolio brief">
+      <CardHeader>
+        <CardTitle
+          title="Morning brief"
+          description={
+            <>
               {lastUpdated != null && (
-                <span className="text-[10px] text-muted">
+                <span className="mr-2 text-[10px] text-muted">
                   {formatRelativeUpdatedAt(lastUpdated)}
                 </span>
               )}
+              <span
+                className={cn(
+                  "text-xs leading-relaxed line-clamp-2",
+                  preview.urgentLead && "font-medium text-foreground",
+                )}
+              >
+                {loading && !hasContent ? "Loading your brief…" : preview.lead}
+              </span>
+            </>
+          }
+          icon={
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <Sparkles className="h-4 w-4" aria-hidden />
             </div>
-            <p
-              className={cn(
-                "mt-1 text-xs leading-relaxed text-muted line-clamp-2",
-                preview.urgentLead && "font-medium text-foreground",
-              )}
-            >
-              {loading && !hasContent ? "Loading your brief…" : preview.lead}
-            </p>
-          </div>
-        </div>
-      </div>
+          }
+        />
+      </CardHeader>
 
       {error && (
         <div className="px-4 pt-3">
@@ -208,7 +204,7 @@ export function PortfolioBriefSection({
         </div>
       )}
 
-      <div className="space-y-4 px-4 py-4">
+      <CardBody className="space-y-4 py-4">
           {(changesLoading || hasChanges || changes?.summary) && (
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
@@ -216,7 +212,7 @@ export function PortfolioBriefSection({
                 Since yesterday
               </div>
               {changesLoading ? (
-                <div className="h-16 animate-pulse rounded-xl bg-muted-bg" />
+                <Skeleton className="h-16 rounded-xl" />
               ) : (
                 <PortfolioChangesBody changes={changes} />
               )}
@@ -224,14 +220,7 @@ export function PortfolioBriefSection({
           )}
 
           {loading && !hasContent ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((row) => (
-                <div
-                  key={row}
-                  className="h-12 animate-pulse rounded-lg bg-muted-bg"
-                />
-              ))}
-            </div>
+            <SkeletonList rows={3} rowClassName="h-12 rounded-lg" />
           ) : (
             <>
               {digest?.macroRegime && (
@@ -472,7 +461,7 @@ export function PortfolioBriefSection({
               )}
             </>
           )}
-      </div>
-    </section>
+      </CardBody>
+    </Card>
   );
 }

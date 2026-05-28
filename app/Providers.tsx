@@ -130,6 +130,7 @@ type PositionsContextValue = {
   proactiveAlerts: ProactiveAlert[];
   portfolioBrief: PortfolioIntelligence | null;
   portfolioMetrics: PortfolioMetrics | null;
+  positionsLastSyncedAt?: number | null;
   refreshPositions: (refresh?: boolean) => Promise<void>;
   clearPortfolioData: () => void;
   schwabReauth: SchwabReauthDetail | null;
@@ -277,6 +278,9 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const [selectedView, setSelectedView] = useState<MainView>("research");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [positionsLastSyncedAt, setPositionsLastSyncedAt] = useState<
+    number | null
+  >(null);
   const [schwabReauth, setSchwabReauth] = useState<SchwabReauthDetail | null>(
     null,
   );
@@ -342,6 +346,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
         const data = await fetchAccountPositions(accessToken, { refresh });
         applyPositionsPayload(data);
         setSchwabReauth(null);
+        setPositionsLastSyncedAt(Date.now());
 
         const loadedPositions = Object.values(data.schwab_positions ?? {})
           .flat()
@@ -403,6 +408,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     setPortfolioBrief(null);
     setPortfolioMetrics(null);
     setSelectedSymbol(null);
+    setPositionsLastSyncedAt(null);
   }, []);
 
   const resolveChatModel = useCallback((model: string | undefined | null) => {
@@ -1327,6 +1333,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       proactiveAlerts,
       portfolioBrief,
       portfolioMetrics,
+      positionsLastSyncedAt,
       refreshPositions,
       clearPortfolioData,
       schwabReauth,
@@ -1361,6 +1368,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       proactiveAlerts,
       portfolioBrief,
       portfolioMetrics,
+      positionsLastSyncedAt,
       refreshPositions,
       clearPortfolioData,
       schwabReauth,

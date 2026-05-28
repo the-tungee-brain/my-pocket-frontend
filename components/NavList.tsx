@@ -14,6 +14,7 @@ import { useWatchlist } from "@/app/hooks/useWatchlist";
 import { useToast } from "@/app/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 import { IconButton } from "./ui/IconButton";
+import { SkeletonList } from "./ui/Skeleton";
 import { AlertBadge } from "./AlertBadge";
 import type { SymbolAlertSummary } from "@/lib/intelligence";
 import { symbolHubPath } from "@/lib/symbolRoutes";
@@ -169,11 +170,11 @@ export function NavList({
       </div>
 
       {loading && (
-        <div className="space-y-2 px-2 py-2">
-          <div className="h-8 animate-pulse rounded-lg bg-muted-bg" />
-          <div className="h-8 animate-pulse rounded-lg bg-muted-bg/80" />
-          <div className="h-8 animate-pulse rounded-lg bg-muted-bg/60" />
-        </div>
+        <SkeletonList
+          rows={3}
+          rowClassName="h-8 rounded-lg"
+          className="px-2 py-2"
+        />
       )}
 
       {!loading && symbols.length === 0 && (

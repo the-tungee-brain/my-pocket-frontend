@@ -9,6 +9,7 @@ import { useSchwabDisconnect } from "@/app/hooks/useSchwabDisconnect";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { usePositionsContext } from "@/app/Providers";
 import { Button } from "@/components/ui/Button";
+import { Card, CardBody } from "@/components/ui/Card";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import {
   SCHWAB_CONNECT_PROMPT,
@@ -83,7 +84,8 @@ export function SchwabConnectionSettings() {
   }, [showToast]);
 
   return (
-    <div className="rounded-2xl border border-border bg-secondary/60 p-4 sm:p-5">
+    <Card surface="subtle" className="mx-0">
+      <CardBody className="p-4 sm:p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <div
@@ -197,6 +199,7 @@ export function SchwabConnectionSettings() {
           className="mt-4"
         />
       )}
-    </div>
+      </CardBody>
+    </Card>
   );
 }

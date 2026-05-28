@@ -8,6 +8,7 @@ import {
   yahooFundProfileAttribution,
 } from "@/lib/streetAnalysisUtils";
 import { symbolHubPath } from "@/lib/symbolRoutes";
+import { ResearchSectionSkeleton } from "@/components/ui/Skeleton";
 
 type EtfFundsSectionProps = {
   funds: EtfFundsSnapshot | null | undefined;
@@ -62,10 +63,11 @@ function WeightingBars({ rows, max = 6 }: { rows: FundWeighting[]; max?: number 
 
 export function EtfFundsSkeleton() {
   return (
-    <div className="space-y-3">
-      <div className="h-4 w-36 animate-pulse rounded bg-muted-bg" />
-      <div className="h-24 animate-pulse rounded-lg bg-muted-bg" />
-    </div>
+    <ResearchSectionSkeleton
+      headerWidth="w-36"
+      rows={1}
+      rowClassName="h-24 rounded-lg"
+    />
   );
 }
 

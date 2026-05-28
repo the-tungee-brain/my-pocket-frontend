@@ -3,12 +3,16 @@
 import { ChevronDown, SendHorizontal, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
+import { useSession } from "next-auth/react";
 import type { ChatMessage } from "@/components/ConversationPane";
 import { ModelPicker } from "@/components/ModelPicker";
 import { QuickAnalysisBar } from "@/components/QuickAnalysisBar";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import type { MainView } from "./NavList";
 import type { QuickActionMode } from "@/lib/quickActions";
 import { IconButton } from "@/components/ui/IconButton";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import { pageShellClass } from "@/lib/pageLayout";
 import { ASSISTANT_CHAT_INPUT_CLASS } from "@/lib/scrollToChat";
@@ -62,6 +66,8 @@ export function ChatBox({
   onCollapse,
   contextLabel,
 }: ChatBoxProps) {
+  const { data: session } = useSession();
+  const { isPaid, plan } = useAccountPlan(session?.accessToken);
   const placeholderLabel =
     mode === "portfolio"
       ? "your portfolio"
@@ -116,7 +122,15 @@ export function ChatBox({
 
   return (
     <div className="bg-linear-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
-      <div className={cn("mx-auto flex w-full flex-col gap-3 rounded-2xl border border-border bg-secondary/95 p-3 shadow-lg shadow-black/10 backdrop-blur", pageShellClass)}>
+      <Card
+        as="div"
+        surface="subtle"
+        className={cn(
+          "flex flex-col gap-3 overflow-visible p-3 shadow-lg shadow-black/10 backdrop-blur",
+          pageShellClass,
+        )}
+      >
+        <CardBody flush className="flex flex-col gap-3 p-0">
         <div className="flex flex-wrap items-center justify-between gap-2 px-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-muted">
@@ -130,6 +144,11 @@ export function ChatBox({
               <span className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[10px] font-medium normal-case tracking-normal text-foreground">
                 {contextLabel}
               </span>
+            )}
+            {!isPaid && (
+              <Badge variant="muted" className="normal-case tracking-normal">
+                Free · {plan?.freeModel ?? DEFAULT_CHAT_MODEL}
+              </Badge>
             )}
           </div>
           {onCollapse && (
@@ -236,6 +255,8 @@ export function ChatBox({
                 open={modelMenuOpen}
                 value={selectedModel}
                 onChange={onModelChange}
+                isPaid={isPaid}
+                anchorRef={modelMenuRef}
               />
 
               <button
@@ -259,7 +280,8 @@ export function ChatBox({
             </div>
           </div>
         </form>
-      </div>
+        </CardBody>
+      </Card>
     </div>
   );
 }

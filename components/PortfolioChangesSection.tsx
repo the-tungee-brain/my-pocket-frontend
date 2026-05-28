@@ -9,6 +9,8 @@ import {
   Plus,
 } from "lucide-react";
 import type { PortfolioChanges } from "@/app/types/intelligence";
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -46,27 +48,23 @@ function SectionShell({
   className?: string;
 }) {
   return (
-    <section
-      className={cn(
-        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
-        className,
-      )}
-      aria-label="Portfolio changes"
-    >
-      <div className="flex items-start gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
-        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-          <GitCompareArrows className="h-4 w-4" aria-hidden />
-        </div>
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">Since yesterday</h2>
-          <p className="text-[11px] text-muted">
-            {summary ??
-              "Day-over-day changes in holdings, weights, and portfolio value"}
-          </p>
-        </div>
-      </div>
+    <Card className={className} aria-label="Portfolio changes">
+      <CardHeader>
+        <CardTitle
+          title="Since yesterday"
+          description={
+            summary ??
+            "Day-over-day changes in holdings, weights, and portfolio value"
+          }
+          icon={
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <GitCompareArrows className="h-4 w-4" aria-hidden />
+            </div>
+          }
+        />
+      </CardHeader>
       {children}
-    </section>
+    </Card>
   );
 }
 
@@ -91,10 +89,11 @@ function ChangesEmptyState() {
 
 function ChangesSkeleton() {
   return (
-    <div className="space-y-2 px-4 py-4">
-      <div className="h-12 animate-pulse rounded-xl bg-muted-bg" />
-      <div className="h-10 animate-pulse rounded-xl bg-muted-bg/80" />
-    </div>
+    <SkeletonList
+      rows={2}
+      rowClassName="h-12 rounded-xl"
+      className="px-4 py-4"
+    />
   );
 }
 
@@ -213,9 +212,9 @@ export function PortfolioChangesSection({
 
   return (
     <SectionShell className={className} summary={changes?.summary}>
-      <div className="px-4 py-4">
+      <CardBody className="py-4">
         <PortfolioChangesBody changes={changes} />
-      </div>
+      </CardBody>
     </SectionShell>
   );
 }

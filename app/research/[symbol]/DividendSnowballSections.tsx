@@ -18,6 +18,7 @@ import {
 } from "@/lib/dividendHistory";
 import { formatExpenseRatio } from "@/lib/etfHoldings";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 const BAR_FILL = "#34d399";
 const BAR_FILL_PARTIAL = "#6ee7b7";
@@ -1141,14 +1142,11 @@ export function DividendSnowballSkeleton() {
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div
-            key={index}
-            className="h-20 animate-pulse rounded-xl bg-muted-bg"
-          />
+          <Skeleton key={index} className="h-20 rounded-xl" />
         ))}
       </div>
-      <div className="h-56 animate-pulse rounded-xl bg-muted-bg" />
-      <div className="h-56 animate-pulse rounded-xl bg-muted-bg" />
+      <Skeleton className="h-56 rounded-xl" />
+      <Skeleton className="h-56 rounded-xl" />
     </div>
   );
 }

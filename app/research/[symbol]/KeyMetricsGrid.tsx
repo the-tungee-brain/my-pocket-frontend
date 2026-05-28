@@ -1,6 +1,7 @@
 "use client";
 
 import type { FundamentalMetric } from "@/app/hooks/useFundamentals";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type KeyMetricsGridProps = {
   metrics: FundamentalMetric[];
@@ -44,10 +45,7 @@ export function KeyMetricsGridSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {Array.from({ length: 6 }).map((_, index) => (
-        <div
-          key={index}
-          className="h-[4.5rem] animate-pulse rounded-xl bg-muted-bg"
-        />
+        <Skeleton key={index} className="h-[4.5rem] rounded-xl" />
       ))}
     </div>
   );

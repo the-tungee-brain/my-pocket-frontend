@@ -3,6 +3,7 @@
 import { ShieldCheck, ShieldAlert } from "lucide-react";
 import type { FinancialStrength } from "@/app/hooks/useFundamentals";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type FinancialStrengthSectionProps = {
   strength: FinancialStrength | null | undefined;
@@ -42,8 +43,8 @@ export function FinancialStrengthSection({
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-16 animate-pulse rounded-xl bg-muted-bg" />
-        <div className="h-24 animate-pulse rounded-xl bg-muted-bg" />
+        <Skeleton className="h-16 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
       </div>
     );
   }

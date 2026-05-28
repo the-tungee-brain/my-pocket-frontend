@@ -27,6 +27,8 @@ import { inferRecommendedComparePath } from "@/lib/inferRecommendedComparePath";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import { AlertBadge } from "@/components/AlertBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
+import { KpiStat } from "@/components/ui/KpiStat";
 import { ConversationalMarkdown } from "@/components/ui/ConversationalMarkdown";
 import { usePositionsContext } from "@/app/Providers";
 import { useInsights } from "@/app/hooks/useInsights";
@@ -154,21 +156,17 @@ function StatChip({
   tone?: "neutral" | "positive" | "negative";
 }) {
   return (
-    <div className="rounded-xl border border-border/80 bg-background/50 px-3 py-2">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
-        {label}
-      </p>
-      <p
-        className={cn(
-          "mt-0.5 text-sm font-semibold tabular-nums",
-          tone === "positive" && "text-success",
-          tone === "negative" && "text-danger",
-          tone === "neutral" && "text-foreground",
-        )}
-      >
-        {value}
-      </p>
-    </div>
+    <KpiStat
+      label={label}
+      value={value}
+      tone={
+        tone === "positive"
+          ? "positive"
+          : tone === "negative"
+            ? "negative"
+            : "default"
+      }
+    />
   );
 }
 
@@ -286,7 +284,7 @@ function PortfolioHoldingsTable({
     <>
       <div className="hidden overflow-x-auto scrollbar-dark md:block">
         <table className="w-full min-w-[640px] text-sm">
-          <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
+          <thead className="sticky top-0 z-10 border-b border-border bg-surface-elevated/95 text-[11px] font-medium uppercase tracking-wide text-muted backdrop-blur-sm">
             <tr>
               <th className="px-4 py-2.5 text-left">Symbol</th>
               <th className="px-4 py-2.5 text-right">Weight</th>
@@ -497,7 +495,7 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
       <div className="hidden md:block">
         <div className="overflow-x-auto scrollbar-dark">
         <table className="w-full min-w-[640px] text-sm">
-          <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
+          <thead className="sticky top-0 z-10 border-b border-border bg-surface-elevated/95 text-[11px] font-medium uppercase tracking-wide text-muted backdrop-blur-sm">
             <tr>
               <th className="px-4 py-2.5 text-left">Leg</th>
               <th className="px-4 py-2.5 text-right">Qty</th>
@@ -1023,31 +1021,29 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   }
 
   return (
-    <section
+    <Card
       id={sectionId}
       style={{ scrollMarginTop: "5.5rem" }}
-      className={cn(
-        "overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-sm",
-        className,
-      )}
+      surface="subtle"
+      className={className}
     >
-      <div className="border-b border-border bg-surface-elevated/50 px-4 py-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-              <Lightbulb className="h-4 w-4" aria-hidden />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-              <p className="text-[11px] text-muted">
-                {isPortfolio
-                  ? showPortfolioAnalysis
-                    ? "In-depth review of how your portfolio is diversified"
-                    : `${symbolCount} ${symbolCount === 1 ? "symbol" : "symbols"} · ${positions.length} ${positions.length === 1 ? "position" : "positions"}`
-                  : `${positions.length} ${positions.length === 1 ? "leg" : "legs"} · holdings & AI review`}
-              </p>
-            </div>
-          </div>
+      <CardHeader className="flex-col items-stretch gap-0">
+        <div className="flex w-full items-start justify-between gap-3">
+          <CardTitle
+            title={title}
+            description={
+              isPortfolio
+                ? showPortfolioAnalysis
+                  ? "In-depth review of how your portfolio is diversified"
+                  : `${symbolCount} ${symbolCount === 1 ? "symbol" : "symbols"} · ${positions.length} ${positions.length === 1 ? "position" : "positions"}`
+                : `${positions.length} ${positions.length === 1 ? "leg" : "legs"} · holdings & AI review`
+            }
+            icon={
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+                <Lightbulb className="h-4 w-4" aria-hidden />
+              </div>
+            }
+          />
           {showReanalyze && (
             <ReanalyzeButton loading={loading} onClick={handleRefresh} />
           )}
@@ -1076,7 +1072,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
             />
           </div>
         )}
-      </div>
+      </CardHeader>
 
       {isPortfolio && showPortfolioHoldings && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
@@ -1148,6 +1144,6 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       </div>
 
       {analysisBlock}
-    </section>
+    </Card>
   );
 }

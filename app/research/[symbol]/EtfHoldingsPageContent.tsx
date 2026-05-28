@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import {
   EtfCompositionColumns,
@@ -23,23 +24,20 @@ function LoadingBlock() {
     <div className="space-y-4">
       <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div
-            key={index}
-            className="h-16 animate-pulse rounded-xl bg-muted-bg"
-          />
+          <Skeleton key={index} className="h-16 rounded-xl" />
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
         {Array.from({ length: 2 }).map((_, index) => (
           <div key={index} className="space-y-2">
-            <div className="h-3 w-28 animate-pulse rounded bg-muted-bg" />
-            <div className="h-52 animate-pulse rounded-xl bg-muted-bg" />
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-52 rounded-xl" />
           </div>
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
         {Array.from({ length: 2 }).map((_, index) => (
-          <div key={index} className="h-52 animate-pulse rounded-xl bg-muted-bg" />
+          <Skeleton key={index} className="h-52 rounded-xl" />
         ))}
       </div>
     </div>

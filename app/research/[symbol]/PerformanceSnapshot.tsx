@@ -5,6 +5,7 @@ import { usePerformanceSnapshot } from "@/app/hooks/usePerformance";
 import { useSession } from "next-auth/react";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { ResearchSectionSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -30,11 +31,15 @@ export function PerformanceSnapshot({ symbol, className }: Props) {
     >
       {isLoading ? (
         <div className="space-y-2">
-          <div className="h-4 w-48 animate-pulse rounded bg-muted-bg" />
+          <ResearchSectionSkeleton
+            headerWidth="w-48"
+            rows={0}
+            className="space-y-2"
+          />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="h-12 animate-pulse rounded bg-muted-bg" />
-            <div className="h-12 animate-pulse rounded bg-muted-bg" />
-            <div className="h-12 animate-pulse rounded bg-muted-bg" />
+            <Skeleton className="h-12 rounded-xl" />
+            <Skeleton className="h-12 rounded-xl" />
+            <Skeleton className="h-12 rounded-xl" />
           </div>
         </div>
       ) : error ? (

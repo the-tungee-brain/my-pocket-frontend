@@ -35,6 +35,8 @@ import {
   setStrategyJourneyCollapsed,
 } from "@/lib/onboardingStorage";
 import { IconButton } from "@/components/ui/IconButton";
+import { Card, CardHeader } from "@/components/ui/Card";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -48,6 +50,8 @@ type Props = {
   onConnectSchwab?: () => void;
   connectingSchwab?: boolean;
   className?: string;
+  /** Collapse on load — e.g. when Today has attention items. */
+  defaultCollapsed?: boolean;
 };
 
 const STRATEGY_ICONS: Record<InvestmentStrategy, typeof RefreshCw> = {
@@ -69,12 +73,19 @@ export function StrategyPlaybookPanel({
   onConnectSchwab,
   connectingSchwab = false,
   className,
+  defaultCollapsed = false,
 }: Props) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() =>
+    defaultCollapsed ? false : !isStrategyJourneyCollapsed(),
+  );
 
   useEffect(() => {
+    if (defaultCollapsed) {
+      setExpanded(false);
+      return;
+    }
     setExpanded(!isStrategyJourneyCollapsed());
-  }, []);
+  }, [defaultCollapsed]);
 
   const toggleExpanded = () => {
     setExpanded((open) => {
@@ -98,24 +109,24 @@ export function StrategyPlaybookPanel({
 
   if (loading) {
     return (
-      <section className={cn("mx-auto w-full", className)}>
-        <div className="overflow-hidden rounded-2xl border border-accent/30 bg-accent-muted/20 px-4 py-3 shadow-sm">
+      <Card surface="accent" className={className} aria-hidden>
+        <CardHeader bordered={false}>
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-muted-bg" />
+            <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
             <div className="min-w-0 flex-1 space-y-2">
-              <div className="h-3 w-24 animate-pulse rounded bg-muted-bg" />
-              <div className="h-4 w-40 animate-pulse rounded bg-muted-bg" />
-              <div className="h-3 w-56 animate-pulse rounded bg-muted-bg" />
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-56" />
             </div>
           </div>
-        </div>
-      </section>
+        </CardHeader>
+      </Card>
     );
   }
 
   return (
     <section className={cn("mx-auto w-full", className)}>
-      <div className="overflow-hidden rounded-2xl border border-accent/30 bg-accent-muted/20 shadow-sm">
+      <Card surface="accent" className="mx-0">
         <div className="flex items-start justify-between gap-3 px-4 py-3">
           <button
             type="button"
@@ -289,7 +300,7 @@ export function StrategyPlaybookPanel({
             </div>
           </div>
         )}
-      </div>
+      </Card>
     </section>
   );
 }

@@ -9,6 +9,7 @@ import {
   formatSecPeriodLabel,
 } from "@/lib/secUtils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 const REVENUE_TAGS = new Set([
   "RevenueFromContractWithCustomerExcludingAssessedTax",
@@ -33,8 +34,8 @@ export function SecFinancialsTrendSection({
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="h-40 animate-pulse rounded-xl bg-muted-bg" />
-        <div className="h-40 animate-pulse rounded-xl bg-muted-bg" />
+        <Skeleton className="h-40 rounded-xl" />
+        <Skeleton className="h-40 rounded-xl" />
       </div>
     );
   }

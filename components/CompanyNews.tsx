@@ -3,6 +3,7 @@
 import { Newspaper } from "lucide-react";
 import { StockNewsView } from "@/app/hooks/useCompanyNews";
 import NewsAnalytics from "./NewsAnalytics";
+import { Card } from "@/components/ui/Card";
 import { ErrorBanner } from "./ui/ErrorBanner";
 import { EmptyState } from "./ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -31,9 +32,9 @@ export function CompanyNews({
   return (
     <section className={cn("w-full", className)}>
         {error && !isLoading && (
-          <div className="rounded-2xl border border-border bg-secondary/60 px-4 py-6">
+          <Card surface="subtle" className="mx-0 px-4 py-6">
             <ErrorBanner message={error} onRetry={onRetry} />
-          </div>
+          </Card>
         )}
 
         {!error && (analytics || isLoading) && (

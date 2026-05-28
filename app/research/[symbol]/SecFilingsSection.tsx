@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { buildSecFilingUrl } from "@/lib/secUtils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SkeletonList } from "@/components/ui/Skeleton";
 
 type SecFilingsSectionProps = {
   symbol: string;
@@ -20,13 +21,7 @@ export function SecFilingsSection({ symbol }: SecFilingsSectionProps) {
   });
 
   if (isLoading) {
-    return (
-      <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-10 animate-pulse rounded-lg bg-muted-bg" />
-        ))}
-      </div>
-    );
+    return <SkeletonList rows={5} rowClassName="h-10 rounded-lg" />;
   }
 
   if (error) {

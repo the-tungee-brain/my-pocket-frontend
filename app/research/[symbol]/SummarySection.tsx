@@ -14,6 +14,7 @@ import { pageAsideClass } from "@/lib/pageLayout";
 import { StreamingResearchContent } from "@/components/StreamingResearchContent";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type SummarySectionProps = {
   symbol: string;
@@ -39,13 +40,13 @@ export function SummarySection({ symbol }: SummarySectionProps) {
     return (
       <div className="space-y-4">
         <div className="flex items-start gap-3">
-          <div className="h-10 w-10 animate-pulse rounded-xl bg-muted-bg" />
+          <Skeleton className="h-10 w-10 rounded-xl" />
           <div className="flex-1 space-y-2">
-            <div className="h-5 w-40 animate-pulse rounded bg-muted-bg" />
-            <div className="h-4 w-full animate-pulse rounded bg-muted-bg" />
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-full" />
           </div>
         </div>
-        <div className="h-40 animate-pulse rounded-2xl bg-muted-bg" />
+        <Skeleton className="h-40 rounded-2xl" />
       </div>
     );
   }

@@ -2,6 +2,7 @@
 
 import { useSecLookup } from "@/app/hooks/useSecResearch";
 import { useSession } from "next-auth/react";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type SecCompanyBadgeProps = {
   symbol: string;
@@ -15,7 +16,7 @@ export function SecCompanyBadge({ symbol }: SecCompanyBadgeProps) {
 
   if (isLoading) {
     return (
-      <div className="h-10 animate-pulse rounded-xl border border-border bg-muted-bg/40" />
+      <Skeleton className="h-10 rounded-xl border border-border bg-muted-bg/40" />
     );
   }
 

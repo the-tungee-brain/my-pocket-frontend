@@ -5,6 +5,7 @@ import {
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
 import type { FundamentalsOverview } from "@/app/hooks/useFundamentals";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type FundamentalOverviewSectionProps = {
   overview: FundamentalsOverview | null | undefined;
@@ -73,18 +74,18 @@ export function FundamentalOverviewSkeleton() {
   return (
     <div className="space-y-5">
       <div className="space-y-2 rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
-        <div className="h-3 w-20 animate-pulse rounded bg-muted-bg" />
-        <div className="h-4 w-full animate-pulse rounded bg-muted-bg" />
-        <div className="h-4 w-4/5 animate-pulse rounded bg-muted-bg" />
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-4/5" />
       </div>
       <div className="space-y-2">
-        <div className="h-3 w-24 animate-pulse rounded bg-muted-bg" />
-        <div className="h-4 w-full animate-pulse rounded bg-muted-bg" />
-        <div className="h-4 w-5/6 animate-pulse rounded bg-muted-bg" />
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
-        <div className="h-24 animate-pulse rounded-xl bg-muted-bg" />
-        <div className="h-24 animate-pulse rounded-xl bg-muted-bg" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
       </div>
     </div>
   );

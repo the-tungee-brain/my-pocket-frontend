@@ -8,6 +8,7 @@ import {
   statementHasData,
 } from "@/lib/yfinanceFinancials";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type StatementTab = "income" | "balance" | "cash";
 
@@ -23,7 +24,7 @@ export function YFinanceStatementsSection({
   const [tab, setTab] = useState<StatementTab>("income");
 
   if (isLoading) {
-    return <div className="h-56 animate-pulse rounded-xl bg-muted-bg" />;
+    return <Skeleton className="h-56 rounded-xl" />;
   }
 
   if (!snapshot?.periods.length) {

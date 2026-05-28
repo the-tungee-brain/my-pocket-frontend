@@ -91,3 +91,7 @@ export function getModelButtonLabel(modelId: string): string {
 export function isDefaultModel(modelId: string): boolean {
   return modelId === DEFAULT_CHAT_MODEL;
 }
+
+export function requiresProModel(modelId: string): boolean {
+  return modelId !== DEFAULT_CHAT_MODEL;
+}

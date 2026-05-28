@@ -2,6 +2,7 @@
 
 import { Timer } from "lucide-react";
 import type { AssignmentRiskSummary as AssignmentRiskSummaryData } from "@/app/types/schwab";
+import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { formatUsd } from "@/lib/formatCurrency";
 import { formatOptionExpiration } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
@@ -14,8 +15,8 @@ type Props = {
 
 const RISK_STYLES: Record<string, string> = {
   critical: "border-danger/40 bg-danger/10 text-danger",
-  high: "border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-300",
-  moderate: "border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-200",
+  high: "border-warning/40 bg-warning-muted text-warning",
+  moderate: "border-warning/30 bg-warning-muted/60 text-warning",
   watch: "border-border bg-secondary/70 text-muted",
   low: "border-border bg-secondary/50 text-muted",
 };
@@ -48,35 +49,31 @@ export function AssignmentRiskSummary({
   ).length;
 
   return (
-    <section
-      className={cn(
-        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary/40 shadow-sm",
-        className,
-      )}
+    <Card
+      surface="subtle"
+      className={className}
       aria-label="Expiring options assignment risk"
     >
-      <div className="border-b border-border/80 px-4 py-3 sm:px-5">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent-strong">
-            <Timer className="h-4 w-4" aria-hidden />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold tracking-tight text-foreground">
-              Expiring short options
-            </h3>
-            <p className="mt-0.5 text-xs leading-relaxed text-muted">
-              {compact
-                ? `${summary.positions.length} leg(s) expiring within ${summary.withinDays} days.`
-                : `Short options expiring within ${summary.withinDays} days. Run Assignment risk in chat for ITM analysis and recommended actions.`}
-            </p>
-          </div>
-          {urgentCount > 0 && (
-            <span className={riskBadgeClass("high")}>
-              {urgentCount} urgent
-            </span>
-          )}
-        </div>
-      </div>
+      <CardHeader>
+        <CardTitle
+          title="Expiring short options"
+          description={
+            compact
+              ? `${summary.positions.length} leg(s) expiring within ${summary.withinDays} days.`
+              : `Short options expiring within ${summary.withinDays} days. Run Assignment risk in chat for ITM analysis and recommended actions.`
+          }
+          icon={
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent-strong">
+              <Timer className="h-4 w-4" aria-hidden />
+            </div>
+          }
+          badge={
+            urgentCount > 0 ? (
+              <span className={riskBadgeClass("high")}>{urgentCount} urgent</span>
+            ) : undefined
+          }
+        />
+      </CardHeader>
 
       <ul className="divide-y divide-border/70">
         {summary.positions.map((entry) => {
@@ -125,6 +122,6 @@ export function AssignmentRiskSummary({
           );
         })}
       </ul>
-    </section>
+    </Card>
   );
 }

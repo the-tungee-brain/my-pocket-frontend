@@ -95,3 +95,14 @@ export function registerModelMenuDismissListener(
     maybeRemoveGlobalListener();
   };
 }
+
+/** Register extra menu surfaces (e.g. portaled pickers) for outside-click detection. */
+export function registerModelMenuRoot(root: HTMLElement) {
+  menuRoots.add(root);
+  ensureGlobalListener();
+
+  return () => {
+    menuRoots.delete(root);
+    maybeRemoveGlobalListener();
+  };
+}

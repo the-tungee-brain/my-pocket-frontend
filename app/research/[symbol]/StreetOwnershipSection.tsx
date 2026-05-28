@@ -13,6 +13,7 @@ import {
   hasOwnership,
 } from "@/lib/streetAnalysisUtils";
 import { cn } from "@/lib/utils";
+import { ResearchSectionSkeleton } from "@/components/ui/Skeleton";
 
 const INSIDER_TRANSACTION_PREVIEW = 5;
 
@@ -28,10 +29,11 @@ type StreetOwnershipSectionProps = {
 
 export function StreetOwnershipSkeleton() {
   return (
-    <div className="space-y-3">
-      <div className="h-4 w-40 animate-pulse rounded bg-muted-bg" />
-      <div className="h-20 animate-pulse rounded-lg bg-muted-bg" />
-    </div>
+    <ResearchSectionSkeleton
+      headerWidth="w-40"
+      rows={1}
+      rowClassName="h-20 rounded-lg"
+    />
   );
 }
 

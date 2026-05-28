@@ -26,6 +26,7 @@ import type {
   ChatSessionMessagesResponse,
   ChatSessionsResponse,
 } from "@/app/types/chat";
+import type { AccountPlan } from "@/app/types/account";
 
 type RecentOrdersOptions = {
   symbol?: string | null;
@@ -610,5 +611,17 @@ export async function fetchStrategyStockScreener(
   return res.json() as Promise<StrategyStockScreenerResult>;
 }
 
+export async function fetchAccountPlan(
+  accessToken: string,
+): Promise<AccountPlan> {
+  const res = await apiFetch("/account/plan", {
+    method: "GET",
+    accessToken,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load account plan (${res.status})`);
+  }
+  return res.json() as Promise<AccountPlan>;
+}
 
 

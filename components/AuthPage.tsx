@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   BellRing,
@@ -26,7 +26,9 @@ import {
 } from "lucide-react";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
 import { TomcrestMark } from "@/components/brand/TomcrestMark";
+import { LandingPricingSection } from "@/components/AccountPlanCard";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/analytics";
@@ -126,6 +128,7 @@ export default function AuthPage() {
         <HowItWorksSection />
         <ProductShowcase />
         <StrategySection />
+        <LandingPricingSection />
         <AlsoIncludedSection />
         <FinalCTASection
           onSignIn={() => void handleSignIn()}
@@ -158,6 +161,7 @@ function LandingHeader({
           <LandingNavLink href="#features">Features</LandingNavLink>
           <LandingNavLink href="#how-it-works">How it works</LandingNavLink>
           <LandingNavLink href="#product">See it in action</LandingNavLink>
+          <LandingNavLink href="#pricing">Pricing</LandingNavLink>
           <LandingNavLink href="#strategies">Strategies</LandingNavLink>
         </nav>
 
@@ -198,14 +202,14 @@ function HeroSection({
           </div>
 
           <h1 className="max-w-xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.25rem]">
-            AI that reads{" "}
-            <span className="text-accent-strong">your Schwab portfolio</span>
+            Know what to do with your{" "}
+            <span className="text-accent-strong">Schwab portfolio</span>
           </h1>
 
           <p className="mt-5 max-w-lg text-base leading-relaxed text-muted sm:text-lg">
-            Connect Schwab once. Tomcrest brings your live account — holdings,
-            balances, and options — together with market data, news, and
-            fundamentals, then tells you what changed and what to do next.
+            Connect Schwab once. Tomcrest reads your live holdings, balances, and
+            options alongside market data — then surfaces what changed and your
+            best next step.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -401,7 +405,7 @@ function TopFeatureCard({
   bullets: readonly string[];
 }) {
   return (
-    <div className="h-full rounded-2xl border border-border bg-background/50 p-6 transition-colors hover:border-accent/30 hover:bg-background/70">
+    <Card as="div" surface="marketing" interactive className="h-full p-6 hover:bg-background/70">
       <div className="flex items-start justify-between gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-muted text-accent-strong">
           <Icon className="h-5 w-5" aria-hidden="true" />
@@ -423,7 +427,7 @@ function TopFeatureCard({
           </li>
         ))}
       </ul>
-    </div>
+    </Card>
   );
 }
 
@@ -848,13 +852,13 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="h-full rounded-2xl border border-border bg-background/40 p-5 transition-colors hover:bg-background/60">
+    <Card as="div" surface="marketing" interactive className="h-full p-5">
       <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
         <Icon className="h-4 w-4" aria-hidden="true" />
       </div>
       <h3 className="text-sm font-semibold">{title}</h3>
       <p className="mt-1.5 text-xs leading-relaxed text-muted">{description}</p>
-    </div>
+    </Card>
   );
 }
 
@@ -976,23 +980,68 @@ function ComparePathRow({
   );
 }
 
-function BriefLine({ label, accent }: { label: string; accent?: boolean }) {
+function BriefLine({
+  label,
+  accent,
+  muted,
+}: {
+  label: string;
+  accent?: boolean;
+  muted?: boolean;
+}) {
   return (
-    <div className="flex items-start gap-2 rounded-lg bg-background/50 px-3 py-2">
+    <div
+      className={cn(
+        "flex items-start gap-2 rounded-lg px-3 py-2",
+        accent
+          ? "border border-accent/25 bg-accent-muted/25"
+          : "bg-background/50",
+        muted && "opacity-60",
+      )}
+    >
       <span
         className={cn(
           "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
           accent ? "bg-accent-strong" : "bg-muted",
         )}
       />
-      <p className="text-[11px] leading-relaxed text-muted">{label}</p>
+      <p
+        className={cn(
+          "text-[11px] leading-relaxed",
+          accent ? "font-medium text-foreground" : "text-muted",
+        )}
+      >
+        {label}
+      </p>
     </div>
   );
 }
 
 function AppPreview() {
+  const briefLines = [
+    {
+      label: "Next: review NVDA size before Thu earnings",
+      accent: true,
+    },
+    { label: "AAPL CSP expires Fri · 12 DTE", accent: false },
+    { label: "Portfolio +0.8% pre-market · tech-led", accent: false },
+  ] as const;
+
+  const [activeBrief, setActiveBrief] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveBrief((current) => (current + 1) % briefLines.length);
+    }, 3200);
+    return () => window.clearInterval(timer);
+  }, [briefLines.length]);
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-2xl shadow-black/25">
+    <Card
+      as="div"
+      surface="subtle"
+      className="shadow-2xl shadow-black/25"
+    >
       <div className="flex">
         <div className="hidden w-44 shrink-0 border-r border-border bg-secondary p-3 sm:block">
           <div className="mb-3 rounded-xl border border-border bg-background/60 px-2.5 py-2">
@@ -1020,7 +1069,7 @@ function AppPreview() {
             <p className="px-1 text-[9px] font-semibold uppercase tracking-wide text-muted">
               Positions
             </p>
-            <PreviewNavItem icon={CircleDollarSign} label="NVDA" mono />
+            <PreviewNavItem icon={CircleDollarSign} label="NVDA" mono pulse />
             <PreviewNavItem icon={CircleDollarSign} label="AAPL" mono />
             <PreviewNavItem icon={CircleDollarSign} label="MSFT" mono />
           </div>
@@ -1044,26 +1093,55 @@ function AppPreview() {
                 </div>
               </div>
               <div className="space-y-1.5 px-3 py-3">
-                <BriefLine label="Next: review NVDA size before Thu earnings" accent />
-                <BriefLine label="AAPL CSP expires Fri · 12 DTE" />
-                <BriefLine label="Portfolio +0.8% pre-market · tech-led" />
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeBrief}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.28 }}
+                  >
+                    <BriefLine
+                      label={briefLines[activeBrief].label}
+                      accent={briefLines[activeBrief].accent}
+                    />
+                  </motion.div>
+                </AnimatePresence>
+                {briefLines.map((line, index) =>
+                  index === activeBrief ? null : (
+                    <BriefLine key={line.label} label={line.label} muted />
+                  ),
+                )}
               </div>
             </div>
 
-            <PortfolioRow
-              symbol="NVDA"
-              tag="32% weight"
-              summary="Largest position — concentration above 20% target."
-            />
-            <PortfolioRow
-              symbol="AAPL"
-              tag="Short put"
-              summary="Mar $225 put · assignment risk low at current price."
-            />
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.35 }}
+            >
+              <PortfolioRow
+                symbol="NVDA"
+                tag="32% weight"
+                summary="Largest position — concentration above 20% target."
+                highlight
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25, duration: 0.35 }}
+            >
+              <PortfolioRow
+                symbol="AAPL"
+                tag="Short put"
+                summary="Mar $225 put · assignment risk low at current price."
+              />
+            </motion.div>
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -1073,12 +1151,14 @@ function PreviewNavItem({
   sublabel,
   mono,
   active,
+  pulse,
 }: {
   icon: typeof BriefcaseBusiness;
   label: string;
   sublabel?: string;
   mono?: boolean;
   active?: boolean;
+  pulse?: boolean;
 }) {
   return (
     <div
@@ -1105,6 +1185,12 @@ function PreviewNavItem({
       {active && (
         <span className="ml-auto h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
       )}
+      {pulse && (
+        <span className="relative ml-auto flex h-2 w-2 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-strong/60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-strong" />
+        </span>
+      )}
     </div>
   );
 }
@@ -1113,13 +1199,22 @@ function PortfolioRow({
   symbol,
   tag,
   summary,
+  highlight,
 }: {
   symbol: string;
   tag: string;
   summary: string;
+  highlight?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-background/40 px-3 py-2.5">
+    <div
+      className={cn(
+        "rounded-xl border px-3 py-2.5",
+        highlight
+          ? "border-accent/25 bg-accent-muted/15"
+          : "border-border bg-background/40",
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-mono text-xs font-semibold">{symbol}</h3>

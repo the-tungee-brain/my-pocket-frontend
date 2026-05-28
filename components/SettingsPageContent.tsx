@@ -17,13 +17,17 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { SchwabConnectionSettings } from "@/components/SchwabConnectionSettings";
+import { AccountPlanCard } from "@/components/AccountPlanCard";
 import {
   SettingsSectionTabBar,
   type SettingsTabId,
 } from "@/components/SettingsSectionTabBar";
 import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { Button } from "@/components/ui/Button";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Skeleton } from "@/components/ui/Skeleton";
 import type { InvestmentStrategy } from "@/app/types/strategy";
 import type { StrategyFormValues } from "@/lib/strategyProfileForm";
 import { pageFormClass } from "@/lib/pageLayout";
@@ -43,14 +47,18 @@ const StrategyProfileEditor = dynamic(
       (mod) => mod.StrategyProfileEditor,
     ),
   {
-    loading: () => (
-      <div className="space-y-4">
-        <div className="h-24 animate-pulse rounded-xl bg-muted-bg/60" />
-        <div className="h-40 animate-pulse rounded-xl bg-muted-bg/60" />
-      </div>
-    ),
+    loading: () => <SettingsPanelSkeleton />,
   },
 );
+
+function SettingsPanelSkeleton() {
+  return (
+    <div className="space-y-4" aria-hidden>
+      <Skeleton className="h-24 rounded-xl" />
+      <Skeleton className="h-40 rounded-xl" />
+    </div>
+  );
+}
 
 function parseSettingsTab(value: string | null): SettingsTabId | null {
   if (value === "connection" || value === "strategy" || value === "account") {
@@ -74,6 +82,7 @@ export function SettingsPageContent() {
   } = useStrategyContext();
 
   const { authorized, loading: schwabLoading } = useSchwabStatus();
+  const { plan, loading: planLoading } = useAccountPlan(accessToken);
 
   useEffect(() => {
     const tab = parseSettingsTab(searchParams.get("tab"));
@@ -185,16 +194,13 @@ export function SettingsPageContent() {
           />
 
           {loading && catalog.length === 0 ? (
-            <div className="space-y-4">
-              <div className="h-24 animate-pulse rounded-xl bg-muted-bg/60" />
-              <div className="h-40 animate-pulse rounded-xl bg-muted-bg/60" />
-            </div>
+            <SettingsPanelSkeleton />
           ) : error ? (
             <p className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
               {error}
             </p>
           ) : !profile?.primaryStrategy && !loading ? (
-            <div className="rounded-xl border border-border bg-secondary/40 p-5">
+            <Card surface="subtle" className="mx-0 p-5">
               <p className="text-sm text-foreground">No strategy saved yet</p>
               <p className="mt-1 text-sm text-muted">
                 Complete onboarding to pick a strategy and watchlist symbols.
@@ -205,7 +211,7 @@ export function SettingsPageContent() {
               >
                 Start onboarding
               </Link>
-            </div>
+            </Card>
           ) : (
             <StrategyProfileEditor
               accessToken={accessToken}
@@ -223,10 +229,13 @@ export function SettingsPageContent() {
           <SettingsSectionHeader
             id="settings-account-heading"
             title="Account & privacy"
-            description="Security details and session controls."
+            description="Plan, security details, and session controls."
           />
 
-          <div className="rounded-xl border border-border bg-secondary/40 p-4 sm:p-5">
+          <AccountPlanCard plan={plan} loading={planLoading} />
+
+          <Card surface="subtle" className="mx-0">
+            <CardBody className="p-4 sm:p-5">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted-bg text-muted">
                 <Shield className="h-4 w-4" />
@@ -246,9 +255,11 @@ export function SettingsPageContent() {
                 </Link>
               </div>
             </div>
-          </div>
+            </CardBody>
+          </Card>
 
-          <div className="rounded-xl border border-border bg-secondary/40 p-4 sm:p-5">
+          <Card surface="subtle" className="mx-0">
+            <CardBody className="p-4 sm:p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-foreground">Sign out</p>
@@ -267,7 +278,8 @@ export function SettingsPageContent() {
                 Log out
               </Button>
             </div>
-          </div>
+            </CardBody>
+          </Card>
         </section>
       )}
     </div>
@@ -337,8 +349,8 @@ function StatusChip({
 
 function SettingsEmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-xl border border-border bg-secondary/40 px-4 py-8 text-center text-sm text-muted">
+    <Card surface="subtle" className="mx-0 px-4 py-8 text-center text-sm text-muted">
       {message}
-    </div>
+    </Card>
   );
 }

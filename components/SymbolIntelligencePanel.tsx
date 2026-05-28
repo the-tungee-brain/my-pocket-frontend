@@ -42,6 +42,8 @@ import { formatUsd } from "@/lib/formatCurrency";
 import { formatFriendlyDate, formatOptionExpiration } from "@/lib/dateUtils";
 import { IconButton } from "@/components/ui/IconButton";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ResearchAsideCard } from "@/components/ResearchDetailBlocks";
 import { cn } from "@/lib/utils";
@@ -61,6 +63,23 @@ type Props = {
   researchBasePath?: string;
   isEtf?: boolean;
 };
+
+function PanelLoadingSkeleton({
+  titleWidth = "w-56",
+  rows = 2,
+  rowClassName = "h-16 rounded-xl",
+}: {
+  titleWidth?: string;
+  rows?: number;
+  rowClassName?: string;
+}) {
+  return (
+    <div className="space-y-2" aria-hidden>
+      <Skeleton className={cn("h-4", titleWidth)} />
+      <SkeletonList rows={rows} rowClassName={rowClassName} />
+    </div>
+  );
+}
 
 function timelineIcon(kind: string) {
   switch (kind) {
@@ -238,11 +257,7 @@ export function IntelligenceRecentEventsPanel({
   if (loading && timeline.length === 0) {
     return (
       <ResearchAsideCard title="Recent events" className={className}>
-        <div className="space-y-2">
-          {[1, 2, 3].map((row) => (
-            <div key={row} className="h-14 animate-pulse rounded-lg bg-muted-bg" />
-          ))}
-        </div>
+        <SkeletonList rows={3} rowClassName="h-14 rounded-lg" />
       </ResearchAsideCard>
     );
   }
@@ -285,27 +300,20 @@ export function SymbolIntelligencePanel({
   }
 
   return (
-    <section
-      className={cn(
-        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
-        className,
-      )}
+    <Card
+      className={className}
       aria-label={symbol ? `${symbol} intelligence` : "Symbol intelligence"}
     >
-      <div className="flex items-start justify-between gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
-        <div className="flex min-w-0 items-start gap-2.5">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-            <Sparkles className="h-4 w-4" aria-hidden />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-foreground">
-              {symbol ? `${symbol} intelligence` : "Symbol intelligence"}
-            </h2>
-            <p className="text-[11px] text-muted">
-              Signals, peers, and timeline
-            </p>
-          </div>
-        </div>
+      <CardHeader>
+        <CardTitle
+          title={symbol ? `${symbol} intelligence` : "Symbol intelligence"}
+          description="Signals, peers, and timeline"
+          icon={
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <Sparkles className="h-4 w-4" aria-hidden />
+            </div>
+          }
+        />
         {onRefresh && (
           <IconButton
             size="sm"
@@ -319,16 +327,10 @@ export function SymbolIntelligencePanel({
             />
           </IconButton>
         )}
-      </div>
+      </CardHeader>
 
-      <div className="space-y-4 px-4 py-4">
-        {loading && !hasContent && (
-          <div className="space-y-2">
-            <div className="h-4 w-56 animate-pulse rounded bg-muted-bg" />
-            <div className="h-16 animate-pulse rounded-xl bg-muted-bg" />
-            <div className="h-16 animate-pulse rounded-xl bg-muted-bg" />
-          </div>
-        )}
+      <CardBody className="space-y-4 py-4">
+        {loading && !hasContent && <PanelLoadingSkeleton />}
 
         {error && <ErrorBanner message={error} />}
 
@@ -543,8 +545,8 @@ export function SymbolIntelligencePanel({
             </button>
           </div>
         )}
-      </div>
-    </section>
+      </CardBody>
+    </Card>
   );
 }
 
@@ -578,27 +580,20 @@ export function SymbolOptionsWorkspace({
   }
 
   return (
-    <section
-      className={cn(
-        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
-        className,
-      )}
+    <Card
+      className={className}
       aria-label={symbol ? `${symbol} options` : "Symbol options"}
     >
-      <div className="flex items-start justify-between gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
-        <div className="flex min-w-0 items-start gap-2.5">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-            <Target className="h-4 w-4" aria-hidden />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-foreground">
-              {symbol ? `${symbol} options` : "Options"}
-            </h2>
-            <p className="text-[11px] text-muted">
-              Chain, rolls, and strike candidates
-            </p>
-          </div>
-        </div>
+      <CardHeader>
+        <CardTitle
+          title={symbol ? `${symbol} options` : "Options"}
+          description="Chain, rolls, and strike candidates"
+          icon={
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <Target className="h-4 w-4" aria-hidden />
+            </div>
+          }
+        />
         {onRefresh && (
           <IconButton
             size="sm"
@@ -612,14 +607,11 @@ export function SymbolOptionsWorkspace({
             />
           </IconButton>
         )}
-      </div>
+      </CardHeader>
 
-      <div className="space-y-4 px-4 py-4">
+      <CardBody className="space-y-4 py-4">
         {loading && !hasContent && (
-          <div className="space-y-2">
-            <div className="h-4 w-48 animate-pulse rounded bg-muted-bg" />
-            <div className="h-32 animate-pulse rounded-xl bg-muted-bg" />
-          </div>
+          <PanelLoadingSkeleton titleWidth="w-48" rows={1} rowClassName="h-32 rounded-xl" />
         )}
 
         {error && <ErrorBanner message={error} />}
@@ -755,8 +747,8 @@ export function SymbolOptionsWorkspace({
             </div>
           </IntelligenceSection>
         )}
-      </div>
-    </section>
+      </CardBody>
+    </Card>
   );
 }
 

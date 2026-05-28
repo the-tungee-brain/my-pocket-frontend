@@ -12,7 +12,9 @@ import { useWatchlist } from "../hooks/useWatchlist";
 import { usePositionsContext } from "../Providers";
 import { rememberAssetType } from "@/lib/researchAssetType";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { SymbolSearchResult } from "@/components/SymbolSearchResult";
 import { PageShell } from "@/components/PageShell";
 import { ResearchOnboarding } from "@/components/ResearchOnboarding";
@@ -119,7 +121,7 @@ export default function ResearchPage() {
 
         <StrategyPlaybookQuickLinks />
 
-        <div className="relative rounded-2xl border border-border bg-secondary/80 p-3 shadow-lg shadow-black/10">
+        <Card as="div" surface="subtle" className="bg-secondary/80 p-3 shadow-lg shadow-black/10">
           <div className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted">
               <Search className="h-4 w-4" aria-hidden="true" />
@@ -241,11 +243,11 @@ export default function ResearchPage() {
           {(isLoading || error || hasResults || showEmptyState) && (
             <div className="mt-3 overflow-hidden rounded-xl border border-border bg-background text-sm">
               {isLoading && (
-                <div className="space-y-2 p-3">
-                  <div className="h-4 w-1/3 animate-pulse rounded bg-muted-bg" />
-                  <div className="h-9 animate-pulse rounded-lg bg-muted-bg/70" />
-                  <div className="h-9 animate-pulse rounded-lg bg-muted-bg/50" />
-                </div>
+                <SkeletonList
+                  rows={3}
+                  rowClassName="h-9 rounded-lg"
+                  className="p-3"
+                />
               )}
 
               {error && (
@@ -287,7 +289,7 @@ export default function ResearchPage() {
               )}
             </div>
           )}
-        </div>
+        </Card>
     </PageShell>
   );
 }

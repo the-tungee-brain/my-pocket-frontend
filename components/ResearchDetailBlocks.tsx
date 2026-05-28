@@ -1,5 +1,6 @@
 "use client";
 
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
 type ResearchBulletListProps = {
@@ -90,25 +91,24 @@ export function ResearchAsideCard({
   className?: string;
 }) {
   return (
-    <div
+    <Card
+      as="div"
+      surface={tone === "default" ? "subtle" : "accent"}
       className={cn(
-        "overflow-hidden rounded-xl border shadow-sm",
-        tone === "accent"
-          ? "border-accent/25 bg-accent-muted/30"
-          : tone === "watch"
-            ? "border-accent/20 bg-accent-muted/20"
-            : "border-border bg-secondary/60",
+        "mx-0 rounded-xl shadow-sm",
+        tone === "watch" && "border-accent/20 bg-accent-muted/20",
+        tone === "accent" && "border-accent/25 bg-accent-muted/30",
         className,
       )}
     >
-      <div
+      <CardHeader
         className={cn(
-          "border-b px-4 py-2.5",
+          "px-4 py-2.5",
           tone === "accent"
             ? "border-accent/20"
             : tone === "watch"
               ? "border-accent/15"
-              : "border-border",
+              : undefined,
         )}
       >
         <h3
@@ -119,9 +119,9 @@ export function ResearchAsideCard({
         >
           {title}
         </h3>
-      </div>
-      <div className="px-4 py-3">{children}</div>
-    </div>
+      </CardHeader>
+      <CardBody className="px-4 py-3">{children}</CardBody>
+    </Card>
   );
 }
 

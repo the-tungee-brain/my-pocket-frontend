@@ -21,6 +21,7 @@ import {
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { PageSplit } from "@/components/PageShell";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import {
   beatLabelText,
   formatEps,
@@ -204,9 +205,8 @@ function AnalysisLoadingState() {
         <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
         Generating AI analysis for this quarter…
       </div>
-      <div className="h-4 w-3/4 animate-pulse rounded bg-muted-bg" />
-      <div className="h-20 w-full animate-pulse rounded bg-muted-bg" />
-      <div className="h-20 w-full animate-pulse rounded bg-muted-bg" />
+      <Skeleton className="h-4 w-3/4" />
+      <SkeletonList rows={2} rowClassName="h-20 w-full rounded-lg" />
     </div>
   );
 }
@@ -372,8 +372,8 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
   if (isLoading && !data) {
     return (
       <div className="space-y-4">
-        <div className="h-28 animate-pulse rounded-2xl bg-muted-bg" />
-        <div className="h-48 animate-pulse rounded-2xl bg-muted-bg" />
+        <Skeleton className="h-28 rounded-2xl" />
+        <Skeleton className="h-48 rounded-2xl" />
       </div>
     );
   }

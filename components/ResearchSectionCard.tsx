@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
 type ResearchSectionCardProps = {
@@ -21,43 +22,34 @@ export function ResearchSectionCard({
   children,
   className,
 }: ResearchSectionCardProps) {
-  return (
-    <section
-      className={cn(
-        "overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-sm",
-        className,
-      )}
+  const titleNode = titleHref ? (
+    <Link
+      href={titleHref}
+      className="text-foreground transition hover:text-accent-strong hover:underline"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
-        <div className="flex items-center gap-2.5">
-          {Icon && (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-              <Icon className="h-4 w-4" aria-hidden="true" />
-            </div>
-          )}
-          <div>
-            <h2 className="text-sm font-semibold">
-              {titleHref ? (
-                <Link
-                  href={titleHref}
-                  className="text-foreground transition hover:text-accent-strong hover:underline"
-                >
-                  {title}
-                </Link>
-              ) : (
-                <span className="text-foreground">{title}</span>
-              )}
-            </h2>
-            {description && (
-              <p className="text-[11px] text-muted">{description}</p>
-            )}
-          </div>
-        </div>
-        {action ? (
-          <div className="flex shrink-0 items-center">{action}</div>
-        ) : null}
-      </div>
-      <div className="px-4 py-4">{children}</div>
-    </section>
+      {title}
+    </Link>
+  ) : (
+    title
+  );
+
+  return (
+    <Card surface="subtle" className={className}>
+      <CardHeader>
+        <CardTitle
+          title={titleNode}
+          description={description}
+          icon={
+            Icon ? (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </div>
+            ) : undefined
+          }
+        />
+        {action ? <div className="flex shrink-0 items-center">{action}</div> : null}
+      </CardHeader>
+      <CardBody className="py-4">{children}</CardBody>
+    </Card>
   );
 }

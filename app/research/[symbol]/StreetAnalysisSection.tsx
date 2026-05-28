@@ -22,6 +22,7 @@ import {
   hasStreetEarningsEstimates,
 } from "@/lib/streetAnalysisUtils";
 import { cn } from "@/lib/utils";
+import { ResearchSectionSkeleton } from "@/components/ui/Skeleton";
 import { StreetAnalysisEmptyState } from "./StreetAnalysisEmptyState";
 import { StreetEstimatesEmptyState } from "./StreetEstimatesEmptyState";
 
@@ -164,11 +165,11 @@ function RecentRatingActions({ actions }: { actions: AnalystRatingAction[] }) {
 
 export function StreetAnalysisSkeleton() {
   return (
-    <div className="space-y-3">
-      <div className="h-4 w-32 animate-pulse rounded bg-muted-bg" />
-      <div className="h-16 animate-pulse rounded-lg bg-muted-bg" />
-      <div className="h-10 animate-pulse rounded-lg bg-muted-bg" />
-    </div>
+    <ResearchSectionSkeleton
+      headerWidth="w-32"
+      rows={2}
+      rowClassName="h-16 rounded-lg"
+    />
   );
 }
 
