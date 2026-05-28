@@ -6,6 +6,7 @@ import type {
   WheelBacktestTrade,
 } from "@/app/types/wheelBacktest";
 import type { WheelBacktestRunParams } from "@/lib/wheelBacktestExport";
+import { wheelBacktestDteLabel } from "@/lib/wheelBacktestDte";
 import { formatDateMMDDYYYY } from "@/lib/dateUtils";
 
 const MARGIN = 14;
@@ -216,7 +217,7 @@ export function downloadWheelBacktestPdf(
     ["Symbol", result.symbol],
     ["Horizon", `${result.lookbackYears} years`],
     ["Delta band", `${run.targetDeltaMin.toFixed(2)} - ${run.targetDeltaMax.toFixed(2)}`],
-    ["DTE (trading days)", String(run.dteDays)],
+    ["DTE", wheelBacktestDteLabel(run.dteDays)],
     ["Add cash if CSP needs more", run.maintainOneLot ? "Yes" : "No"],
     [
       "Covered calls after assign",

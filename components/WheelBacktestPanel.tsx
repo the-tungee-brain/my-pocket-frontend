@@ -17,6 +17,12 @@ import type {
 import { formatDateMMDDYYYY } from "@/lib/dateUtils";
 import { downloadWheelBacktestResult } from "@/lib/wheelBacktestExport";
 import { fetchWheelBacktest } from "@/lib/wheelBacktest";
+import {
+  DEFAULT_WHEEL_BACKTEST_DTE_DAYS,
+  WHEEL_BACKTEST_DTE_PRESETS,
+  type WheelBacktestDteDays,
+  wheelBacktestDteLabel,
+} from "@/lib/wheelBacktestDte";
 import { WheelBacktestCharts } from "@/components/WheelBacktestCharts";
 import { WheelBacktestTradeLedger } from "@/components/WheelBacktestTradeLedger";
 import { Button } from "@/components/ui/Button";
@@ -56,7 +62,7 @@ type Props = {
   fixedSymbol?: string;
   targetDeltaMin?: number;
   targetDeltaMax?: number;
-  dteDays?: number;
+  defaultDteDays?: WheelBacktestDteDays;
   defaultYears?: WheelBacktestYears;
   defaultMaintainOneLot?: boolean;
   defaultCallStrikeMode?: WheelBacktestCallStrikeMode;
@@ -77,7 +83,7 @@ export function WheelBacktestPanel({
   fixedSymbol,
   targetDeltaMin = 0.2,
   targetDeltaMax = 0.3,
-  dteDays = 30,
+  defaultDteDays = DEFAULT_WHEEL_BACKTEST_DTE_DAYS,
   defaultYears = 5,
   defaultMaintainOneLot = true,
   defaultCallStrikeMode = "delta",
@@ -92,6 +98,7 @@ export function WheelBacktestPanel({
   const lockedSymbol = fixedSymbol?.trim().toUpperCase() ?? "";
   const [symbol, setSymbol] = useState((lockedSymbol || choices[0]) ?? "");
   const [years, setYears] = useState<WheelBacktestYears>(defaultYears);
+  const [dteDays, setDteDays] = useState<WheelBacktestDteDays>(defaultDteDays);
   const [maintainOneLot, setMaintainOneLot] = useState(defaultMaintainOneLot);
   const [callStrikeMode, setCallStrikeMode] =
     useState<WheelBacktestCallStrikeMode>(defaultCallStrikeMode);
@@ -109,6 +116,10 @@ export function WheelBacktestPanel({
   useEffect(() => {
     setYears(defaultYears);
   }, [defaultYears]);
+
+  useEffect(() => {
+    setDteDays(defaultDteDays);
+  }, [defaultDteDays]);
 
   useEffect(() => {
     setMaintainOneLot(defaultMaintainOneLot);
@@ -241,6 +252,22 @@ export function WheelBacktestPanel({
               ))}
             </WheelSelect>
 
+            <WheelSelect
+              id="wheel-backtest-dte"
+              label="DTE"
+              value={String(dteDays)}
+              onChange={(e) =>
+                setDteDays(Number(e.target.value) as WheelBacktestDteDays)
+              }
+              wrapperClassName="min-w-[7.5rem]"
+            >
+              {WHEEL_BACKTEST_DTE_PRESETS.map((preset) => (
+                <option key={preset.value} value={preset.value}>
+                  {preset.label}
+                </option>
+              ))}
+            </WheelSelect>
+
             <label
               className="flex h-9 cursor-pointer items-center gap-2 text-[11px] text-muted"
               title="When the next CSP needs more cash secured than you have, add the difference so the wheel can continue"
@@ -296,7 +323,7 @@ export function WheelBacktestPanel({
 
         <p className="text-[10px] leading-relaxed text-muted">
           Uses your wheel delta band ({targetDeltaMin.toFixed(2)}–
-          {targetDeltaMax.toFixed(2)}) and ~{dteDays} trading-day DTE (~1 month).
+          {targetDeltaMax.toFixed(2)}) and {wheelBacktestDteLabel(dteDays)} per leg.
           European expiration at daily close; model premiums (realized vol).
         </p>
 

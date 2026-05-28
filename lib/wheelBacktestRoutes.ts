@@ -3,11 +3,16 @@ import type {
   WheelBacktestCallStrikeMode,
   WheelBacktestYears,
 } from "@/app/types/wheelBacktest";
+import {
+  type WheelBacktestDteDays,
+  normalizeWheelBacktestDteDays,
+} from "@/lib/wheelBacktestDte";
 
 export const WHEEL_BACKTEST_TAB: ResearchTabId = "wheel-backtest";
 
 export type WheelBacktestUrlOptions = {
   years?: WheelBacktestYears;
+  dteDays?: WheelBacktestDteDays;
   maintainOneLot?: boolean;
   callStrikeMode?: WheelBacktestCallStrikeMode;
   /** Run the simulation as soon as the page loads. */
@@ -26,6 +31,9 @@ export function wheelBacktestPath(
   if (options.years != null) {
     params.set("years", String(options.years));
   }
+  if (options.dteDays != null) {
+    params.set("dte", String(options.dteDays));
+  }
   if (options.maintainOneLot != null) {
     params.set("maintain", options.maintainOneLot ? "1" : "0");
   }
@@ -43,6 +51,7 @@ export function parseWheelBacktestSearchParams(
   searchParams: URLSearchParams,
 ): {
   years: WheelBacktestYears | null;
+  dteDays: WheelBacktestDteDays | null;
   maintainOneLot: boolean | null;
   callStrikeMode: WheelBacktestCallStrikeMode | null;
   autoRun: boolean;
@@ -61,8 +70,15 @@ export function parseWheelBacktestSearchParams(
   const callStrikeMode: WheelBacktestCallStrikeMode | null =
     searchParams.get("callFloor") === "1" ? "at_or_above_assignment" : null;
 
+  const dteRaw = searchParams.get("dte");
+  const dteParsed = dteRaw ? Number(dteRaw) : NaN;
+  const dteDays = normalizeWheelBacktestDteDays(
+    Number.isFinite(dteParsed) ? dteParsed : null,
+  );
+
   return {
     years,
+    dteDays,
     maintainOneLot,
     callStrikeMode,
     autoRun: searchParams.get("run") === "1",

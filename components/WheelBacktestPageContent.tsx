@@ -69,7 +69,7 @@ export function WheelBacktestPageContent({ symbol }: Props) {
             {wheel?.targetDeltaMin != null && wheel?.targetDeltaMax != null
               ? ` (${wheel.targetDeltaMin.toFixed(2)}–${wheel.targetDeltaMax.toFixed(2)})`
               : ""}{" "}
-            and ~30 trading-day DTE. Model premiums — not live option quotes.
+            and your chosen DTE. Model premiums — not live option quotes.
           </p>
         </div>
       </div>
@@ -80,8 +80,10 @@ export function WheelBacktestPageContent({ symbol }: Props) {
         fixedSymbol={upperSymbol}
         targetDeltaMin={wheel?.targetDeltaMin}
         targetDeltaMax={wheel?.targetDeltaMax}
-        dteDays={30}
         defaultYears={urlOptions.years ?? 5}
+        {...(urlOptions.dteDays != null
+          ? { defaultDteDays: urlOptions.dteDays }
+          : {})}
         defaultMaintainOneLot={urlOptions.maintainOneLot ?? true}
         defaultCallStrikeMode={urlOptions.callStrikeMode ?? "delta"}
         autoRun={urlOptions.autoRun}

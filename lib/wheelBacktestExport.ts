@@ -1,11 +1,12 @@
 import type { WheelBacktestCallStrikeMode } from "@/app/types/wheelBacktest";
+import type { WheelBacktestDteDays } from "@/lib/wheelBacktestDte";
 
 export type WheelBacktestRunParams = {
   symbol: string;
   lookbackYears: number;
   targetDeltaMin: number;
   targetDeltaMax: number;
-  dteDays: number;
+  dteDays: WheelBacktestDteDays;
   maintainOneLot: boolean;
   callStrikeMode: WheelBacktestCallStrikeMode;
 };
