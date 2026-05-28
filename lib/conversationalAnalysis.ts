@@ -122,13 +122,22 @@ export function stripPlaybookSourceLabels(content: string): string {
     .replace(/\bmaterials you provided\b/gi, "")
     .replace(/\bmaterials you gave\b/gi, "")
     .replace(
-      /\bI don't have the exact current payout ratio[^.]*\.\s*/gi,
+      /\bI don't have (?:the exact current|a precise current) payout ratio[^.]*\.\s*/gi,
+      "",
+    )
+    .replace(
+      /\bso I can't quantify payout ratio or the exact FCF[-‑]to[-‑]dividend coverage[^.]*\.\s*/gi,
       "",
     )
     .replace(
       /\bso dividend coverage beyond headline FCF isn't fully quantified here\.?\s*/gi,
       "",
     )
+    .replace(/\bGood question\b[^.]*\.\s*/gi, "")
+    .replace(/\bData I need\b[\s\S]*?(?=\n\n|\*\*Verdict:\*\*|$)/gi, "")
+    .replace(/\bExact formulas I['’]ll use\b[\s\S]*?(?=\n\n|\*\*Verdict:\*\*|$)/gi, "")
+    .replace(/\bmaterials you pasted\b/gi, "")
+    .replace(/\bWant me to fetch\b[^.]*\.\s*/gi, "")
     .replace(/\bisn't fully quantified here\.?\s*/gi, "")
     .replace(/\s+([,.])/g, "$1");
 }
