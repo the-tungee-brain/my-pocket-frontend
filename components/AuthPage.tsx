@@ -209,8 +209,8 @@ function HeroSection({
 
           <p className="mt-5 max-w-lg text-base leading-relaxed text-muted sm:text-lg">
             Connect Schwab once. Tomcrest reads your live holdings, balances, and
-            options alongside market data — then surfaces what changed and your
-            best next step.
+            options alongside market data, macro context, and news — then chat,
+            backtest, and research with a clear next step.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -289,46 +289,52 @@ const TOP_FEATURES = [
   {
     icon: BrainCircuit,
     tag: "Core",
-    title: "AI that ends with a next step",
+    title: "Portfolio-aware AI chat",
     description:
-      "Analyze portfolio or any symbol with streaming answers that cite your weights, options legs, and available buying power — then a ranked recommendation, not a wall of metrics.",
+      "In-depth analysis on your portfolio or any symbol — streaming answers grounded in Schwab positions, cash, and options, plus live quotes, macro regime, and market news.",
     bullets: [
-      "One-click Analyze with a primary move",
+      "One-click Analyze with a ranked next step",
       "Deploy, trim, hold, and roll guidance",
       "Follow-up chat with smart chips",
     ],
   },
   {
-    icon: BellRing,
-    tag: "Daily habit",
-    title: "Morning brief & alerts",
+    icon: LineChart,
+    tag: "Backtest",
+    title: "Historical strategy backtests",
     description:
-      "Start the day knowing what moved, what needs attention, and the one thing worth doing first.",
+      "Stress-test how a strategy would have behaved on real price history before you commit capital — not generic chat guesses.",
     bullets: [
-      "Assignment & DTE warnings on short options",
-      "Wash-sale and earnings reminders",
-      "Attention items ranked by urgency",
+      "Wheel: CSP → assign → covered call with equity charts",
+      "Dividend: snowball & DRIP on historical payouts",
+      "ETF core: long-horizon targets & composition in research",
     ],
-  },
-  {
-    icon: Route,
-    tag: "Options",
-    title: "Options-aware decisions",
-    description:
-      "Built for wheelers and income traders: compare hold vs roll vs close, see premium math, and get playbook verdicts before selling a put.",
-    bullets: ["Compare paths on open short puts/calls", "Strategy playbook with Ask AI", "Roll suggestions with cash picture"],
   },
   {
     icon: Search,
     tag: "Research",
-    title: "Research without tab-hopping",
+    title: "Deep company & ETF research",
     description:
-      "Everything for a ticker in one workspace — fundamentals, SEC filings, dividends, news, and ETF composition.",
-    bullets: ["AI summaries on overview & business", "Dividend snowball with DRIP scenarios", "Street targets & watchlist"],
+      "One workspace per ticker — fundamentals, SEC filings, earnings, news, and AI on the business, not just the chart.",
+    bullets: [
+      "AI summaries on overview, risks, and headlines",
+      "Financial statements & dividend payout health",
+      "Street targets, ETF holdings, watchlist",
+    ],
   },
 ] as const;
 
 const ALSO_INCLUDED = [
+  {
+    icon: BellRing,
+    title: "Morning brief & alerts",
+    description: "Pre-market summary, assignment/DTE risk, earnings, and wash-sale reminders.",
+  },
+  {
+    icon: Route,
+    title: "Options-aware decisions",
+    description: "Hold vs roll vs close on short legs, premium math, and wheel playbook Ask AI.",
+  },
   {
     icon: Target,
     title: "Strategy screener",
@@ -370,11 +376,11 @@ function TopFeaturesSection() {
       <div className={pageShellStandaloneClass}>
         <SectionHeading
           eyebrow="Why investors sign up"
-          title="Four things you can't get from a generic chatbot"
-          description="Tomcrest is opinionated for Schwab: your positions feed every insight — and every reply points toward a decision."
+          title="Chat, backtest, and research — built on your Schwab book"
+          description="Tomcrest is opinionated for Schwab investors: your positions feed every insight, and every reply points toward a decision."
         />
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-2">
+        <div className="mt-10 grid gap-4 lg:grid-cols-3">
           {TOP_FEATURES.map((feature, index) => (
             <motion.div
               key={feature.title}
@@ -482,7 +488,7 @@ function HowItWorksSection() {
       icon: Sparkles,
       title: "Get AI-powered insights",
       description:
-        "Review your morning brief, model dividend income, explore research, and chat with AI about your actual portfolio.",
+        "Review your morning brief, run strategy backtests, explore research, and chat with AI about your actual portfolio.",
     },
   ];
 
