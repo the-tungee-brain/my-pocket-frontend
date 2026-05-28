@@ -73,3 +73,24 @@ export function stripStreamingStatusPrefix(content: string): string {
   if (!match) return content;
   return trimmed.slice(match[0].length);
 }
+
+/** Remove common report-style lead labels the model sometimes adds anyway. */
+export function stripLeadResponseLabels(content: string): string {
+  let result = content.trimStart();
+  const labelPattern =
+    /^(?:\*\*)?(?:Short answer|In short|Summary|Bottom line|My recommendation)(?:\*\*)?:\s*/i;
+
+  while (labelPattern.test(result)) {
+    result = result.replace(labelPattern, "").trimStart();
+  }
+
+  return result;
+}
+
+/** Remove "(plain English)" meta labels the model sometimes echoes from prompts. */
+export function stripPlainEnglishLabels(content: string): string {
+  return content
+    .replace(/\s*\(plain English\)/gi, "")
+    .replace(/\bin plain English\b(?=\s*[—:\-])/gi, "")
+    .replace(/ {2,}/g, " ");
+}

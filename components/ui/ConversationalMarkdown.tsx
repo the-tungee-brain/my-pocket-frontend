@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { PlaybookVerdictCard } from "@/components/PlaybookVerdictCard";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 import {
@@ -11,6 +12,7 @@ import {
   type MarkdownSection,
 } from "@/lib/conversationalAnalysis";
 import { getVisibleAssistantContent } from "@/lib/chatFollowUpSuggestions";
+import { parsePlaybookVerdict } from "@/lib/playbookVerdict";
 import { cn } from "@/lib/utils";
 
 type ConversationalMarkdownProps = {
@@ -93,14 +95,19 @@ export function ConversationalMarkdown({
   );
   const trimmed = displayContent.trim();
 
+  const playbookVerdict = useMemo(() => {
+    if (!trimmed || isStreaming) return null;
+    return parsePlaybookVerdict(trimmed);
+  }, [trimmed, isStreaming]);
+
   const sectionedLayout = useMemo(() => {
-    if (!trimmed || isStreaming || !isLongConversationalContent(trimmed)) {
+    if (!trimmed || isStreaming || playbookVerdict || !isLongConversationalContent(trimmed)) {
       return null;
     }
     const { preamble, sections } = splitMarkdownSections(trimmed);
     if (sections.length < 2) return null;
     return { preamble, sections };
-  }, [trimmed, isStreaming]);
+  }, [trimmed, isStreaming, playbookVerdict]);
 
   if (isStreaming && !trimmed) {
     return (
@@ -121,6 +128,14 @@ export function ConversationalMarkdown({
             aria-hidden
           />
         </p>
+      </div>
+    );
+  }
+
+  if (playbookVerdict) {
+    return (
+      <div className={cn("conversational-analysis", className)}>
+        <PlaybookVerdictCard verdict={playbookVerdict} />
       </div>
     );
   }

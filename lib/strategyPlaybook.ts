@@ -120,23 +120,12 @@ export function playbookAskDisplayLabel(action: StrategyNextAction): string {
       titleLower.includes("csp") ||
       titleLower.includes("wheel")
     ) {
-      return (
-        `I'm thinking about selling a cash-secured put on ${symbol} for my strategy playbook. ` +
-        "Would I be comfortable owning shares if assigned? " +
-        "Help me weigh fundamentals, timing, and a sensible strike range before I sell."
-      );
+      return `Would I be comfortable owning ${symbol} if assigned on a put for my strategy playbook?`;
     }
     if (titleLower.includes("dividend")) {
-      return (
-        `I'm researching ${symbol} as a dividend name on my strategy playbook. ` +
-        "Is the payout sustainable, and does it fit my strategy? " +
-        "What should I verify before buying?"
-      );
+      return `Should I hold ${symbol} as a dividend name on my strategy playbook?`;
     }
-    return (
-      `I'm researching ${symbol} for my strategy playbook. ` +
-      "What's the case for or against my next step — fundamentals, timing, and fit?"
-    );
+    return `Should I hold ${symbol} for my strategy playbook?`;
   }
 
   if (action.type === "options") {
@@ -147,11 +136,7 @@ export function playbookAskDisplayLabel(action: StrategyNextAction): string {
       );
     }
     if (titleLower.includes("csp") || titleLower.includes("put")) {
-      return (
-        `I'm thinking about selling a cash-secured put on ${symbol} for my strategy playbook. ` +
-        "Would I be comfortable owning shares if assigned? " +
-        "Help me weigh fundamentals, timing, and a sensible strike range before I sell."
-      );
+      return `Would I be comfortable owning ${symbol} if assigned on a put for my strategy playbook?`;
     }
     return (
       `For ${symbol} on my strategy playbook: ${action.title.trim()}. ` +
@@ -173,10 +158,7 @@ export function playbookAskDisplayLabel(action: StrategyNextAction): string {
   }
 
   if (action.type === "buy") {
-    return (
-      `I want to build a position in ${symbol} for my strategy playbook. ` +
-      "What's a sensible way to size and enter without breaking my rules?"
-    );
+    return `Should I build a position in ${symbol} for my strategy playbook?`;
   }
 
   if (action.type === "rebalance") {
