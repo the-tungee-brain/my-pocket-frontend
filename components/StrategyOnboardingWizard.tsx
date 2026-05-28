@@ -29,6 +29,7 @@ import {
   formatMarketCap,
   supportsStrategyStockScreener,
 } from "@/lib/strategyScreener";
+import { MAX_STRATEGY_SYMBOLS } from "@/lib/strategyPlaybook";
 import { deltaBandDescription, deltaBandForRisk } from "@/lib/strategyProfileForm";
 import { cn } from "@/lib/utils";
 
@@ -150,7 +151,7 @@ export function StrategyOnboardingWizard({
   const addSymbol = (symbol: string) => {
     const upper = symbol.toUpperCase();
     if (!upper || symbols.includes(upper)) return;
-    setSymbols((prev) => [...prev, upper].slice(0, 5));
+    setSymbols((prev) => [...prev, upper].slice(0, MAX_STRATEGY_SYMBOLS));
     setSymbolInput("");
   };
 
@@ -403,6 +404,7 @@ export function StrategyOnboardingWizard({
                     strategy={selectedStrategy ?? "etf-core"}
                     preset={screenerResult?.preset}
                     quotes={screenerResult?.quotes ?? []}
+                    pinnedQuotes={screenerResult?.pinnedQuotes ?? []}
                     sections={screenerResult?.sections}
                     summary={screenerResult?.summary}
                     filters={screenerFilters}
@@ -469,6 +471,7 @@ export function StrategyOnboardingWizard({
                     strategy={selectedStrategy ?? "wheel"}
                     preset={screenerResult?.preset}
                     quotes={screenerResult?.quotes ?? []}
+                    pinnedQuotes={screenerResult?.pinnedQuotes ?? []}
                     sections={screenerResult?.sections}
                     summary={screenerResult?.summary}
                     filters={screenerFilters}
@@ -592,6 +595,7 @@ export function StrategyOnboardingWizard({
                       strategy={selectedStrategy ?? "wheel"}
                       preset={screenerResult?.preset}
                       quotes={screenerResult?.quotes ?? []}
+                      pinnedQuotes={screenerResult?.pinnedQuotes ?? []}
                       sections={screenerResult?.sections}
                       summary={screenerResult?.summary}
                       filters={screenerFilters}

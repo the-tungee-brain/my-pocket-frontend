@@ -15,7 +15,7 @@ import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
 import { AnalysisPanel, type PortfolioNavigationRequest } from "@/components/AnalysisPanel";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
-import { StrategyJourneyPanel } from "@/components/StrategyJourneyPanel";
+import { StrategyPlaybookPanel } from "@/components/StrategyPlaybookPanel";
 import { StrategyOnboardingWizard } from "@/components/StrategyOnboardingWizard";
 import { PortfolioSectionTabBar } from "@/components/PortfolioSectionTabBar";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
@@ -128,6 +128,8 @@ export default function PortfolioPage() {
   const {
     catalog,
     profile: strategyProfile,
+    journey: strategyJourney,
+    recommendations: strategyRecommendations,
     needsOnboarding,
     loading: strategyLoading,
     chooseStrategy,
@@ -355,13 +357,19 @@ export default function PortfolioPage() {
       )}
 
       {showStrategyJourney && strategyProfile?.primaryStrategy && (
-        <StrategyJourneyPanel
+        <StrategyPlaybookPanel
           className={pageSectionClass}
           strategy={strategyProfile.primaryStrategy}
+          journey={strategyJourney}
+          recommendations={strategyRecommendations}
           catalogItem={
             catalog.find((item) => item.id === strategyProfile.primaryStrategy) ??
             null
           }
+          onRunAction={(action) => {
+            if (!action.actionId) return;
+            handleSuggestedAction(action.actionId);
+          }}
         />
       )}
 

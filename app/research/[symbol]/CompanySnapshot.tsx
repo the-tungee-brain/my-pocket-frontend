@@ -21,6 +21,7 @@ import { resolveResearchLogoUrl } from "@/lib/logoUrl";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { AssetTypeBadge } from "@/components/AssetTypeBadge";
+import { StrategySymbolBadge } from "@/components/StrategySymbolBadge";
 import {
   formatSnapshotSizeLabel,
   formatSnapshotSubtitle,
@@ -130,8 +131,13 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
               </span>
             </p>
             {assetType ? (
-              <AssetTypeBadge assetType={assetType} className="mt-1" />
-            ) : null}
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <AssetTypeBadge assetType={assetType} />
+                <StrategySymbolBadge symbol={upperSymbol} />
+              </div>
+            ) : (
+              <StrategySymbolBadge symbol={upperSymbol} className="mt-1" />
+            )}
           </div>
           {userPositions?.length ? (
             <Link
@@ -194,7 +200,10 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {snapshot.symbol} · {snapshot.name}
           </h1>
-          {assetType ? <AssetTypeBadge assetType={assetType} /> : null}
+          <div className="flex flex-wrap items-center gap-2">
+            {assetType ? <AssetTypeBadge assetType={assetType} /> : null}
+            <StrategySymbolBadge symbol={upperSymbol} />
+          </div>
           {snapshot.weburl && (
             <a
               href={snapshot.weburl}

@@ -34,6 +34,7 @@ import {
   recommendedSectorsForStrategy,
   screenerTitle,
 } from "@/lib/strategyScreener";
+import { MAX_STRATEGY_SYMBOLS } from "@/lib/strategyPlaybook";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -43,6 +44,7 @@ type Props = {
     description: string;
   } | null;
   quotes: StrategyScreenerQuote[];
+  pinnedQuotes?: StrategyScreenerQuote[];
   sections?: ScreenerResultSection[];
   summary?: string | null;
   filters: StrategyScreenerFilters;
@@ -74,6 +76,7 @@ export function StrategyStockScreenerPanel({
   strategy,
   preset,
   quotes,
+  pinnedQuotes = [],
   sections = [],
   summary,
   filters,
@@ -102,6 +105,8 @@ export function StrategyStockScreenerPanel({
     () => new Set(selectedSymbols.map((symbol) => symbol.toUpperCase())),
     [selectedSymbols],
   );
+  const atSymbolCap = selectedSymbols.length >= MAX_STRATEGY_SYMBOLS;
+  const discoveryMode = selectedSymbols.length > 0;
 
   const recommendedSectors = useMemo(
     () => new Set(recommendedSectorsForStrategy(strategy)),
@@ -203,9 +208,11 @@ export function StrategyStockScreenerPanel({
           </h4>
           {!compact && (
             <p className="mt-1 text-xs leading-relaxed text-muted">
-              {summary ??
-                preset?.description ??
-                "Browse strategy-filtered ideas and add symbols you want to own."}
+              {discoveryMode
+                ? "Your playbook symbols are pinned below. Browse ideas to add or replace names."
+                : summary ??
+                  preset?.description ??
+                  "Browse strategy-filtered ideas and add symbols you want to own."}
             </p>
           )}
         </div>
@@ -351,8 +358,47 @@ export function StrategyStockScreenerPanel({
         </p>
       )}
 
+      {(pinnedQuotes.length > 0 || (discoveryMode && hasRun)) && (
+        <div className="space-y-2 rounded-xl border border-accent/20 bg-accent-muted/10 p-3">
+          <div>
+            <h5 className="text-xs font-semibold text-foreground">Your playbook</h5>
+            <p className="text-[11px] text-muted">
+              {atSymbolCap
+                ? `Playbook full (${selectedSymbols.length}/${MAX_STRATEGY_SYMBOLS}). Remove one to add another.`
+                : `${selectedSymbols.length}/${MAX_STRATEGY_SYMBOLS} symbols saved for this strategy.`}
+            </p>
+          </div>
+          {pinnedQuotes.length > 0 ? (
+            <QuoteTable
+              rows={pinnedQuotes.map((quote) => ({ kind: "quote" as const, quote }))}
+              selected={selected}
+              onAddSymbol={onAddSymbol}
+              compact={compact}
+              atSymbolCap={atSymbolCap}
+              showPresetFit
+            />
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {selectedSymbols.map((symbol) => (
+                <span
+                  key={symbol}
+                  className="rounded-full border border-accent/30 bg-background px-3 py-1 text-xs font-medium text-accent-strong"
+                >
+                  {symbol}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {showResults && (
         <>
+          {discoveryMode && (
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+              Discover more
+            </p>
+          )}
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-muted" />
             <input
@@ -374,6 +420,7 @@ export function StrategyStockScreenerPanel({
               selected={selected}
               onAddSymbol={onAddSymbol}
               compact={compact}
+              atSymbolCap={atSymbolCap}
             />
           </div>
 
@@ -411,6 +458,7 @@ export function StrategyStockScreenerPanel({
                 selected={selected}
                 onAddSymbol={onAddSymbol}
                 compact={compact}
+                atSymbolCap={atSymbolCap}
               />
               {section.quotes.length === 0 && (
                 <p className="text-xs text-muted">No ETF matches right now.</p>
@@ -428,11 +476,15 @@ function QuoteTable({
   selected,
   onAddSymbol,
   compact,
+  atSymbolCap = false,
+  showPresetFit = false,
 }: {
   rows: QuoteTableRowData[];
   selected: Set<string>;
   onAddSymbol: (symbol: string) => void;
   compact?: boolean;
+  atSymbolCap?: boolean;
+  showPresetFit?: boolean;
 }) {
   if (rows.length === 0) {
     return null;
@@ -463,6 +515,8 @@ function QuoteTable({
             selected={selected}
             onAddSymbol={onAddSymbol}
             compact={compact}
+            atSymbolCap={atSymbolCap}
+            showPresetFit={showPresetFit}
           />
         ))}
       </tbody>
@@ -475,11 +529,15 @@ function QuoteTableRow({
   selected,
   onAddSymbol,
   compact,
+  atSymbolCap = false,
+  showPresetFit = false,
 }: {
   row: QuoteTableRowData;
   selected: Set<string>;
   onAddSymbol: (symbol: string) => void;
   compact?: boolean;
+  atSymbolCap?: boolean;
+  showPresetFit?: boolean;
 }) {
   if (row.kind === "spacer") {
     return (
@@ -506,7 +564,19 @@ function QuoteTableRow({
 
   return (
     <tr className="h-11 border-b border-border/40">
-      <td className="py-2 pr-3 font-semibold text-foreground">{quote.symbol}</td>
+      <td className="py-2 pr-3">
+        <div className="font-semibold text-foreground">{quote.symbol}</div>
+        {showPresetFit && quote.presetFit != null && (
+          <span
+            className={cn(
+              "text-[10px] font-medium",
+              quote.presetFit ? "text-accent-strong" : "text-muted",
+            )}
+          >
+            {quote.presetFit ? "Still fits preset" : "Drifted from preset"}
+          </span>
+        )}
+      </td>
       {!compact && (
         <td className="truncate py-2 pr-3 text-xs text-muted">
           {quote.companyName ?? "—"}
@@ -528,6 +598,8 @@ function QuoteTableRow({
             <Check className="h-3.5 w-3.5" />
             Added
           </span>
+        ) : atSymbolCap ? (
+          <span className="text-[11px] text-muted">Full</span>
         ) : (
           <Button
             size="xs"

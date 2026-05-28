@@ -147,6 +147,17 @@ export type StrategyScreenerQuote = {
   peRatio?: number | null;
   dividendYield?: number | null;
   price?: number | null;
+  presetFit?: boolean | null;
+};
+
+export type StrategySymbolStatus = {
+  symbol: string;
+  held: boolean;
+  portfolioWeightPct?: number | null;
+  wheelPhase?: WheelPhase | null;
+  statusLabel: string;
+  nextAction?: StrategyNextAction | null;
+  priority?: number;
 };
 
 export type ScreenerResultSection = {
@@ -162,6 +173,7 @@ export type StrategyStockScreenerResult = {
   strategy: InvestmentStrategy;
   preset: ScreenerPresetSummary;
   quotes: StrategyScreenerQuote[];
+  pinnedQuotes?: StrategyScreenerQuote[];
   totalCount: number;
   page: number;
   pageSize: number;
@@ -178,6 +190,7 @@ export type StrategyRecommendations = {
   wheelPhase?: WheelPhase | null;
   readiness: StrategyReadiness;
   symbol?: string | null;
+  symbolStatuses?: StrategySymbolStatus[];
   nextActions: StrategyNextAction[];
   screenedStocks?: StrategyScreenerQuote[];
   screenerSummary?: string | null;

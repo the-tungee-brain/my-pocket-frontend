@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SymbolSearchResult } from "@/components/SymbolSearchResult";
 import { PageShell } from "@/components/PageShell";
 import { ResearchOnboarding } from "@/components/ResearchOnboarding";
+import { StrategyPlaybookQuickLinks } from "@/components/StrategyPlaybookQuickLinks";
 
 export default function ResearchPage() {
   const { data: session } = useSession();
@@ -115,6 +116,8 @@ export default function ResearchPage() {
         </div>
 
         <ResearchOnboarding />
+
+        <StrategyPlaybookQuickLinks />
 
         <div className="relative rounded-2xl border border-border bg-secondary/80 p-3 shadow-lg shadow-black/10">
           <div className="relative">

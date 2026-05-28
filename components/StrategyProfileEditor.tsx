@@ -33,6 +33,7 @@ import {
   profileToFormValues,
   type StrategyFormValues,
 } from "@/lib/strategyProfileForm";
+import { MAX_STRATEGY_SYMBOLS } from "@/lib/strategyPlaybook";
 import {
   defaultScreenerFiltersForStrategy,
   supportsStrategyStockScreener,
@@ -149,7 +150,7 @@ export function StrategyProfileEditor({
   const addSymbol = (symbol: string) => {
     const upper = symbol.toUpperCase();
     if (!upper || values.symbols.includes(upper)) return;
-    patch({ symbols: [...values.symbols, upper].slice(0, 5) });
+    patch({ symbols: [...values.symbols, upper].slice(0, MAX_STRATEGY_SYMBOLS) });
     setSymbolInput("");
   };
 
@@ -188,6 +189,7 @@ export function StrategyProfileEditor({
         strategy={values.primaryStrategy ?? "etf-core"}
         preset={screenerResult?.preset}
         quotes={screenerResult?.quotes ?? []}
+        pinnedQuotes={screenerResult?.pinnedQuotes ?? []}
         sections={screenerResult?.sections}
         summary={screenerResult?.summary}
         filters={screenerFilters}
@@ -213,6 +215,7 @@ export function StrategyProfileEditor({
         strategy={values.primaryStrategy ?? "wheel"}
         preset={screenerResult?.preset}
         quotes={screenerResult?.quotes ?? []}
+        pinnedQuotes={screenerResult?.pinnedQuotes ?? []}
         sections={screenerResult?.sections}
         summary={screenerResult?.summary}
         filters={screenerFilters}
@@ -581,7 +584,8 @@ function SymbolConfig({
       <div>
         <p className="text-xs font-semibold text-foreground">Your symbols</p>
         <p className="mt-0.5 text-[11px] text-muted">
-          Up to 5 tickers for this strategy ({values.symbols.length}/5)
+          Up to {MAX_STRATEGY_SYMBOLS} tickers for this strategy (
+          {values.symbols.length}/{MAX_STRATEGY_SYMBOLS})
         </p>
       </div>
       <SymbolSearchField
