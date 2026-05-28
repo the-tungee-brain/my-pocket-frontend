@@ -385,7 +385,8 @@ function formatYieldPct(value: number | null | undefined): string {
   return `${value.toFixed(2)}%`;
 }
 
-export function DividendSnowballStats({
+/** Historic dividend facts — available on Free and Pro. */
+export function DividendSummaryStats({
   history,
   sharePrice,
   isEtf = false,
@@ -396,47 +397,64 @@ export function DividendSnowballStats({
   isEtf?: boolean;
   expenseRatio?: string | null;
 }) {
+  const currentYieldPct = resolveCurrentYieldPct(history, sharePrice);
+
+  return (
+    <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-3">
+      <StatCard
+        label="Dividend streak"
+        value={
+          history.consecutiveAnnualIncreases > 0
+            ? `${history.consecutiveAnnualIncreases} yrs`
+            : "—"
+        }
+        hint="Years in a row the annual dividend per share increased"
+      />
+      <StatCard
+        label="Current yield"
+        value={formatYieldPct(currentYieldPct)}
+        hint="Latest annual dividend per share ÷ your share price"
+      />
+      {isEtf ? (
+        <StatCard
+          label="Expense ratio"
+          value={formatExpenseRatio(expenseRatio) ?? "—"}
+          hint="Annual fund fee deducted from ETF returns"
+        />
+      ) : null}
+      <StatCard
+        label="5Y dividend CAGR"
+        value={formatPct(history.cagr5yPct)}
+        hint="Average annual dividend growth, completed years"
+      />
+    </div>
+  );
+}
+
+/** Pro snowball projection summary (requires API scenario). */
+export function DividendSnowballStats({
+  history,
+  sharePrice: _sharePrice,
+}: {
+  history: DividendHistoryContext;
+  sharePrice?: number | null;
+}) {
   const { scenario } = history;
+  if (!scenario) return null;
+
   const { currentYear, endYear, projectYears } = dividendProjectionWindow(
     scenario.projectYears,
   );
-  const currentYieldPct = resolveCurrentYieldPct(history, sharePrice);
   const priceGrowthPct =
-    history.priceCagrPct ?? history.scenario.advanced?.priceCagrPct ?? null;
+    history.priceCagrPct ?? scenario.advanced?.priceCagrPct ?? null;
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-3">
-        <StatCard
-          label="Dividend streak"
-          value={
-            history.consecutiveAnnualIncreases > 0
-              ? `${history.consecutiveAnnualIncreases} yrs`
-              : "—"
-          }
-          hint="Years in a row the annual dividend per share increased"
-        />
-        <StatCard
-          label="Current yield"
-          value={formatYieldPct(currentYieldPct)}
-          hint="Latest annual dividend per share ÷ your share price"
-        />
-        {isEtf ? (
-          <StatCard
-            label="Expense ratio"
-            value={formatExpenseRatio(expenseRatio) ?? "—"}
-            hint="Annual fund fee deducted from ETF returns"
-          />
-        ) : null}
-        <StatCard
-          label="5Y dividend CAGR"
-          value={formatPct(history.cagr5yPct)}
-          hint="Average annual dividend growth, completed years"
-        />
+      <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-2">
         <StatCard
           label="5Y price growth"
           value={formatPct(priceGrowthPct)}
-          hint="Average annual share price growth, applied automatically"
+          hint="Average annual share price growth, applied in projections"
         />
         <StatCard
           label={`${projectYears}-year total`}
@@ -839,7 +857,9 @@ export function DividendSnowballScenarioCard({
   advancedMetrics?: DividendAdvancedSnowballScenario | null;
   onScenarioChange?: (params: DividendScenarioParams) => void;
 }) {
-  const { scenario } = history;
+  const scenario = history.scenario;
+  if (!scenario) return null;
+
   const [lastEdited, setLastEdited] =
     useState<SnowballInputSource>("investment");
 

@@ -15,15 +15,15 @@ type AccountPlanCardProps = {
 };
 
 const FREE_FEATURES = [
-  "Schwab portfolio sync & morning brief",
-  "Research workspace & strategy playbooks",
-  "AI chat, analyze, and news on the free model",
+  "Portfolio sync, morning brief, and strategy playbooks",
+  "Research, dividend history charts, and allocation tools",
+  "AI chat with Simple & Standard models",
 ] as const;
 
 const PRO_FEATURES = [
-  "Choose advanced models (gpt-5.4, o3, and more)",
-  "Same portfolio context and playbooks as Free",
-  "Best for deep options and multi-leg reasoning",
+  "Income snowball (DRIP projections & contributions)",
+  "Wheel backtest with trade log and PDF export",
+  "Advanced AI models (gpt-5.4, o3, o4-mini, and more)",
 ] as const;
 
 export function AccountPlanCard({
@@ -55,7 +55,8 @@ export function AccountPlanCard({
             <p className="mt-0.5 text-sm text-muted">
               {isPaid
                 ? "You have access to every AI model in Tomcrest."
-                : `Free accounts use ${freeModel} for all AI features.`}
+                : "Free includes Simple and Standard models; default is " +
+                  `${freeModel}.`}
             </p>
           </div>
           <Badge variant={isPaid ? "accent" : "muted"}>
@@ -69,7 +70,7 @@ export function AccountPlanCard({
             price="$0"
             active={!isPaid}
             features={FREE_FEATURES}
-            footnote={`Includes ${freeModel} for chat, analyze, playbook, and news.`}
+            footnote={`Simple & Standard models for chat, analyze, playbook, and news. Defaults to ${freeModel}.`}
           />
           <PlanFeatureList
             title="Pro"
@@ -82,9 +83,9 @@ export function AccountPlanCard({
 
         {!isPaid && (
           <div className="rounded-xl border border-border bg-background/50 px-3 py-3 text-sm text-muted">
-            <p className="font-medium text-foreground">Want advanced models?</p>
+            <p className="font-medium text-foreground">Want Advanced models?</p>
             <p className="mt-1 text-xs leading-relaxed">
-              Pro unlocks model choice in chat and deeper analysis. Reply from
+              Pro unlocks the Advanced tier (gpt-5.4, o3, and more). Reply from
               Settings or email support to request access while billing is in
               beta.
             </p>
@@ -100,7 +101,7 @@ export function AccountPlanCard({
         {isPaid && (
           <p className="flex items-center gap-2 text-xs text-muted">
             <Sparkles className="h-3.5 w-3.5 text-accent-strong" aria-hidden />
-            Model picker in chat includes every tier.
+            Model picker includes Simple, Standard, and Advanced tiers.
           </p>
         )}
       </CardBody>
@@ -165,8 +166,8 @@ export function LandingPricingSection() {
             Start free. Upgrade when you want deeper models.
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
-            Every Schwab investor gets the full workspace on Free. Pro adds model
-            choice for power users — no paywall on your portfolio data.
+            Free covers day-to-day portfolio work and research. Pro unlocks
+            snowball, wheel backtest, and Advanced AI models.
           </p>
         </div>
 
@@ -176,7 +177,7 @@ export function LandingPricingSection() {
               <div>
                 <h3 className="text-lg font-semibold">Free</h3>
                 <p className="mt-1 text-sm text-muted">
-                  Everything you need to run your Schwab portfolio day to day.
+                  Portfolio, research, playbooks, and Simple & Standard AI.
                 </p>
               </div>
               <p className="text-2xl font-semibold tabular-nums">$0</p>
@@ -193,7 +194,8 @@ export function LandingPricingSection() {
               ))}
             </ul>
             <p className="mt-4 text-xs text-muted">
-              AI runs on gpt-4.1-mini — fast, cost-efficient, portfolio-aware.
+              AI: Simple & Standard tiers (e.g. gpt-4.1-mini, gpt-4o) —
+              portfolio-aware chat and analysis.
             </p>
           </Card>
 
@@ -209,7 +211,7 @@ export function LandingPricingSection() {
               <div>
                 <h3 className="text-lg font-semibold">Pro</h3>
                 <p className="mt-1 text-sm text-muted">
-                  Advanced models for complex options and research questions.
+                  Advanced AI tier plus everything in Free.
                 </p>
               </div>
               <p className="text-sm font-medium text-muted">Invite only</p>

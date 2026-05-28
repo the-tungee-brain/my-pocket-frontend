@@ -106,7 +106,7 @@ export type DividendHistoryContext = {
   annualIncome: AnnualDividendIncome[];
   recentPayments: DividendPaymentItem[];
   payments: DividendPaymentItem[];
-  scenario: DividendSnowballScenario;
+  scenario?: DividendSnowballScenario | null;
   historicalBacktest?: DividendHistoricalBacktest | null;
   dataAsOf?: string | null;
   confidenceScore?: number | null;

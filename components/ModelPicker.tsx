@@ -237,8 +237,8 @@ export function ModelPicker({
       </div>
       {!isPaid && (
         <p className="shrink-0 border-t border-border px-3 py-2 text-[10px] leading-relaxed text-muted">
-          Free plan uses {DEFAULT_CHAT_MODEL}. Upgrade to Pro in Settings to
-          unlock advanced models.
+          Free includes Simple and Standard models. Upgrade to Pro for the
+          Advanced tier.
         </p>
       )}
     </div>

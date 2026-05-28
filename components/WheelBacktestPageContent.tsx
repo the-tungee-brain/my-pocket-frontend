@@ -4,8 +4,11 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { BarChart3 } from "lucide-react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useStrategyContext } from "@/app/contexts/StrategyContext";
+import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { WheelBacktestPanel } from "@/components/WheelBacktestPanel";
+import { hasProFeature } from "@/lib/planFeatures";
 import { parseWheelBacktestSearchParams } from "@/lib/wheelBacktestRoutes";
 import Link from "next/link";
 
@@ -17,6 +20,8 @@ export function WheelBacktestPageContent({ symbol }: Props) {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const { profile } = useStrategyContext();
+  const { isPaid, plan } = useAccountPlan(session?.accessToken);
+  const backtestAllowed = hasProFeature(isPaid, "wheelBacktest", plan);
   const accessToken = session?.accessToken as string | undefined;
 
   const upperSymbol = symbol.trim().toUpperCase();
@@ -74,21 +79,23 @@ export function WheelBacktestPageContent({ symbol }: Props) {
         </div>
       </div>
 
-      <WheelBacktestPanel
-        accessToken={accessToken}
-        symbols={[upperSymbol]}
-        fixedSymbol={upperSymbol}
-        targetDeltaMin={wheel?.targetDeltaMin}
-        targetDeltaMax={wheel?.targetDeltaMax}
-        defaultYears={urlOptions.years ?? 5}
-        {...(urlOptions.dteDays != null
-          ? { defaultDteDays: urlOptions.dteDays }
-          : {})}
-        defaultMaintainOneLot={urlOptions.maintainOneLot ?? true}
-        defaultCallStrikeMode={urlOptions.callStrikeMode ?? "delta"}
-        autoRun={urlOptions.autoRun}
-        variant="research"
-      />
+      <ProFeatureGate feature="wheelBacktest" allowed={backtestAllowed}>
+        <WheelBacktestPanel
+          accessToken={accessToken}
+          symbols={[upperSymbol]}
+          fixedSymbol={upperSymbol}
+          targetDeltaMin={wheel?.targetDeltaMin}
+          targetDeltaMax={wheel?.targetDeltaMax}
+          defaultYears={urlOptions.years ?? 5}
+          {...(urlOptions.dteDays != null
+            ? { defaultDteDays: urlOptions.dteDays }
+            : {})}
+          defaultMaintainOneLot={urlOptions.maintainOneLot ?? true}
+          defaultCallStrikeMode={urlOptions.callStrikeMode ?? "delta"}
+          autoRun={backtestAllowed ? urlOptions.autoRun : false}
+          variant="research"
+        />
+      </ProFeatureGate>
     </div>
   );
 }

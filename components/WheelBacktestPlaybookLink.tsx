@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart3, ChevronRight } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { BarChart3, ChevronRight, Lock } from "lucide-react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { wheelBacktestPath } from "@/lib/wheelBacktestRoutes";
+import { hasProFeature } from "@/lib/planFeatures";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -11,6 +14,9 @@ type Props = {
 };
 
 export function WheelBacktestPlaybookLink({ symbols, className }: Props) {
+  const { data: session } = useSession();
+  const { isPaid, plan } = useAccountPlan(session?.accessToken);
+  const allowed = hasProFeature(isPaid, "wheelBacktest", plan);
   const choices = [...new Set(symbols.map((s) => s.trim().toUpperCase()).filter(Boolean))];
 
   if (choices.length === 0) {
@@ -40,16 +46,27 @@ export function WheelBacktestPlaybookLink({ symbols, className }: Props) {
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {choices.map((ticker) => (
-          <Link
-            key={ticker}
-            href={wheelBacktestPath(ticker, { years: 5, run: true })}
-            className="inline-flex h-8 items-center gap-1 rounded-lg bg-accent-muted/50 px-3 text-xs font-medium text-accent-strong transition hover:bg-accent-muted/70"
-          >
-            {choices.length === 1 ? "Open backtest" : `Backtest ${ticker}`}
-            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-          </Link>
-        ))}
+        {choices.map((ticker) =>
+          allowed ? (
+            <Link
+              key={ticker}
+              href={wheelBacktestPath(ticker, { years: 5, run: true })}
+              className="inline-flex h-8 items-center gap-1 rounded-lg bg-accent-muted/50 px-3 text-xs font-medium text-accent-strong transition hover:bg-accent-muted/70"
+            >
+              {choices.length === 1 ? "Open backtest" : `Backtest ${ticker}`}
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          ) : (
+            <Link
+              key={ticker}
+              href="/settings?tab=account"
+              className="inline-flex h-8 items-center gap-1 rounded-lg bg-muted-bg px-3 text-xs font-medium text-muted transition hover:text-foreground"
+            >
+              <Lock className="h-3 w-3" aria-hidden />
+              {choices.length === 1 ? "Backtest (Pro)" : `${ticker} · Pro`}
+            </Link>
+          ),
+        )}
       </div>
     </div>
   );

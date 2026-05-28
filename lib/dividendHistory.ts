@@ -268,7 +268,7 @@ export function resolveSnowballPriceCagrPct(
   }
   return (
     history.priceCagrPct ??
-    history.scenario.advanced?.priceCagrPct ??
+    history.scenario?.advanced?.priceCagrPct ??
     null
   );
 }
@@ -290,6 +290,8 @@ export function needsProjectionRefetch(
   data: DividendHistoryContext,
   params: DividendFetchParams,
 ): boolean {
+  if (!data.scenario) return false;
+
   const hasSharePrice =
     (params.sharePrice != null && params.sharePrice > 0) ||
     (data.scenario.sharePrice != null && data.scenario.sharePrice > 0);
@@ -365,14 +367,14 @@ export function resolveSnowballAdvancedMetrics(
     annualContributionUsd?: number | null;
   },
 ): DividendAdvancedSnowballScenario | null {
-  const sharePrice =
-    params.sharePrice ?? history.scenario.sharePrice ?? null;
+  const { scenario } = history;
+  if (!scenario) return null;
+
+  const sharePrice = params.sharePrice ?? scenario.sharePrice ?? null;
   if (sharePrice == null || sharePrice <= 0) return null;
 
-  const shares = params.shares > 0 ? params.shares : history.scenario.shares;
+  const shares = params.shares > 0 ? params.shares : scenario.shares;
   if (shares <= 0) return null;
-
-  const { scenario } = history;
   const projectYears = Math.max(
     1,
     Math.min(Math.round(params.projectYears ?? scenario.projectYears ?? 10), 50),
@@ -495,7 +497,7 @@ export function normalizeDividendHistoryContext(
     typeof data.ticker === "string" ? data.ticker.trim().toUpperCase() : null;
   const totalDividends = readNumber(data.totalDividends ?? data.total_dividends);
   const scenario = normalizeScenario(data.scenario);
-  if (!ticker || totalDividends == null || !scenario) return null;
+  if (!ticker || totalDividends == null) return null;
 
   const annualIncomeRaw = data.annualIncome ?? data.annual_income;
   const annualIncome: DividendHistoryContext["annualIncome"] = [];
@@ -583,19 +585,34 @@ export function resolveCurrentYieldPct(
     return history.dividendYieldPct;
   }
 
-  const resolvedPrice = sharePrice ?? history.scenario.sharePrice ?? null;
-  const { shares, annualIncomeStart } = history.scenario;
-  if (
-    resolvedPrice == null ||
-    resolvedPrice <= 0 ||
-    shares <= 0 ||
-    annualIncomeStart <= 0
-  ) {
-    return null;
+  const scenario = history.scenario;
+  const resolvedPrice = sharePrice ?? scenario?.sharePrice ?? null;
+  if (scenario) {
+    const { shares, annualIncomeStart } = scenario;
+    if (
+      resolvedPrice != null &&
+      resolvedPrice > 0 &&
+      shares > 0 &&
+      annualIncomeStart > 0
+    ) {
+      const baseDps = annualIncomeStart / shares;
+      return Math.round((baseDps / resolvedPrice) * 10000) / 100;
+    }
   }
 
-  const baseDps = annualIncomeStart / shares;
-  return Math.round((baseDps / resolvedPrice) * 10000) / 100;
+  const latestAnnual = history.annualIncome.at(-1);
+  if (
+    latestAnnual &&
+    resolvedPrice != null &&
+    resolvedPrice > 0 &&
+    latestAnnual.totalPerShare > 0
+  ) {
+    return (
+      Math.round((latestAnnual.totalPerShare / resolvedPrice) * 10000) / 100
+    );
+  }
+
+  return null;
 }
 
 function buildQueryParams(symbol: string, params: DividendFetchParams): URLSearchParams {

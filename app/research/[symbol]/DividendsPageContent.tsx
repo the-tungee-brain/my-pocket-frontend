@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { History, LineChart, TrendingUp } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useDividendHistory } from "@/app/hooks/useDividendHistory";
+import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import { useStockData } from "@/app/hooks/useStockData";
@@ -26,7 +28,9 @@ import {
   DividendSnowballScenarioCard,
   DividendSnowballSkeleton,
   DividendSnowballStats,
+  DividendSummaryStats,
 } from "./DividendSnowballSections";
+import { hasProFeature } from "@/lib/planFeatures";
 
 type Props = {
   symbol: string;
@@ -95,6 +99,8 @@ function buildInitialScenarioParams(
 
 export function DividendsPageContent({ symbol }: Props) {
   const { data: session } = useSession();
+  const { isPaid, plan } = useAccountPlan(session?.accessToken);
+  const snowballAllowed = hasProFeature(isPaid, "dividendSnowball", plan);
   const { isEtf } = useResearchAssetTypeContext();
   const { positionMap } = usePositionsContext();
   const symbolUpper = symbol.toUpperCase();
@@ -175,9 +181,11 @@ export function DividendsPageContent({ symbol }: Props) {
     [scenarioParams, debouncedInvestmentInputs, marketSharePrice, heldShares],
   );
 
+  const snowballFetchParams = snowballAllowed ? fetchScenarioParams : {};
+
   const { history, isLoading, isFetching, error, refetch } = useDividendHistory(symbol, {
     accessToken: session?.accessToken,
-    ...fetchScenarioParams,
+    ...snowballFetchParams,
   });
 
   const displayScenarioParams = useMemo(
@@ -191,14 +199,14 @@ export function DividendsPageContent({ symbol }: Props) {
   );
 
   const advancedMetrics = useMemo(() => {
-    if (!history) return null;
+    if (!history || !snowballAllowed) return null;
     const sharePrice = displayScenarioParams.sharePrice ?? marketSharePrice ?? null;
     if (sharePrice == null || sharePrice <= 0) return null;
 
     const shares =
       displayScenarioParams.shares != null && displayScenarioParams.shares > 0
         ? displayScenarioParams.shares
-        : history.scenario.shares;
+        : (history.scenario?.shares ?? displayScenarioParams.shares ?? 0);
     return resolveSnowballAdvancedMetrics(history, {
       shares,
       sharePrice,
@@ -210,7 +218,7 @@ export function DividendsPageContent({ symbol }: Props) {
       ),
       annualContributionUsd: displayScenarioParams.annualContributionUsd ?? 0,
     });
-  }, [history, displayScenarioParams, marketSharePrice]);
+  }, [history, displayScenarioParams, marketSharePrice, snowballAllowed]);
 
   const marketPriceReadyRef = useRef(false);
   useEffect(() => {
@@ -272,18 +280,29 @@ export function DividendsPageContent({ symbol }: Props) {
                     Updating projections…
                   </p>
                 ) : null}
-                <DividendSnowballStats
+                <DividendSummaryStats
                   history={history}
                   sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
                   isEtf={isEtf}
                   expenseRatio={etfHoldings?.expense_ratio}
                 />
-                <DividendSnowballScenarioCard
-                  history={history}
-                  scenarioParams={displayScenarioParams}
-                  advancedMetrics={advancedMetrics}
-                  onScenarioChange={setScenarioParams}
-                />
+                <ProFeatureGate
+                  feature="dividendSnowball"
+                  allowed={snowballAllowed}
+                >
+                  <div className="space-y-4">
+                    <DividendSnowballStats
+                      history={history}
+                      sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
+                    />
+                    <DividendSnowballScenarioCard
+                      history={history}
+                      scenarioParams={displayScenarioParams}
+                      advancedMetrics={advancedMetrics}
+                      onScenarioChange={setScenarioParams}
+                    />
+                  </div>
+                </ProFeatureGate>
               </div>
             </ResearchSectionCard>
           </>

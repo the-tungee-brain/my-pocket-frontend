@@ -300,14 +300,14 @@ const TOP_FEATURES = [
   },
   {
     icon: LineChart,
-    tag: "Backtest",
-    title: "Historical strategy backtests",
+    tag: "Pro",
+    title: "Backtests & income snowball",
     description:
-      "Stress-test how a strategy would have behaved on real price history before you commit capital — not generic chat guesses.",
+      "Pro tools to stress-test the wheel on real history and project dividend snowballs with DRIP — before you commit capital.",
     bullets: [
-      "Wheel: CSP → assign → covered call with equity charts",
-      "Dividend: snowball & DRIP on historical payouts",
-      "ETF core: long-horizon targets & composition in research",
+      "Wheel backtest: CSP → assign → covered call with trade log",
+      "Income snowball: forward DRIP and yearly contributions",
+      "Free tier still includes dividend history charts and research",
     ],
   },
   {
@@ -488,7 +488,7 @@ function HowItWorksSection() {
       icon: Sparkles,
       title: "Get AI-powered insights",
       description:
-        "Review your morning brief, run strategy backtests, explore research, and chat with AI about your actual portfolio.",
+        "Review your morning brief, explore research, and chat with AI about your actual portfolio. Upgrade to Pro for backtests and snowball.",
     },
   ];
 

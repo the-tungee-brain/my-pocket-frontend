@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useCallback } from "react";
 import { ArrowRight, BarChart3 } from "lucide-react";
 import { usePositionsContext } from "@/app/Providers";
+import { useSession } from "next-auth/react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useStrategyContext } from "@/app/contexts/StrategyContext";
+import { hasProFeature } from "@/lib/planFeatures";
 import type { StrategyNextAction } from "@/app/types/strategy";
 import { PlaybookActionButtons } from "@/components/PlaybookActionButtons";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
@@ -26,6 +29,9 @@ type Props = {
 };
 
 export function StrategySymbolPlaybookStrip({ symbol, className }: Props) {
+  const { data: session } = useSession();
+  const { isPaid, plan } = useAccountPlan(session?.accessToken);
+  const backtestAllowed = hasProFeature(isPaid, "wheelBacktest", plan);
   const { profile, recommendations } = useStrategyContext();
   const { sendPlaybookAsk } = usePositionsContext();
   const { connect, connecting } = useSchwabConnect();
@@ -105,7 +111,7 @@ export function StrategySymbolPlaybookStrip({ symbol, className }: Props) {
         </p>
       )}
 
-      {showBacktestLink && (
+      {showBacktestLink && backtestAllowed && (
         <Link
           href={wheelBacktestPath(upperSymbol, { years: 5, run: true })}
           className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-medium text-accent-strong hover:underline"

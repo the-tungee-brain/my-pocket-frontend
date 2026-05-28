@@ -13,8 +13,8 @@ export const CHAT_MODEL_TIERS: {
   id: ModelTierId;
   label: string;
 }[] = [
-  { id: "fast", label: "Fast" },
-  { id: "balanced", label: "Balanced" },
+  { id: "fast", label: "Simple" },
+  { id: "balanced", label: "Standard" },
   { id: "advanced", label: "Advanced" },
 ];
 
@@ -80,7 +80,10 @@ export function getModelDisplayName(modelId: string): string {
 
 export function getModelTierLabel(modelId: string): string {
   const match = CHAT_MODEL_OPTIONS.find((option) => option.id === modelId);
-  return match?.label ?? "Balanced";
+  if (!match) return "Standard";
+  return (
+    CHAT_MODEL_TIERS.find((tier) => tier.id === match.tier)?.label ?? "Standard"
+  );
 }
 
 export function getModelButtonLabel(modelId: string): string {
@@ -92,6 +95,14 @@ export function isDefaultModel(modelId: string): boolean {
   return modelId === DEFAULT_CHAT_MODEL;
 }
 
+/** Advanced-tier models — Pro only. Free includes Simple (fast) and Standard (balanced). */
 export function requiresProModel(modelId: string): boolean {
-  return modelId !== DEFAULT_CHAT_MODEL;
+  const match = CHAT_MODEL_OPTIONS.find((option) => option.id === modelId);
+  if (!match) return true;
+  return match.tier === "advanced";
+}
+
+export function isFreePlanModel(modelId: string): boolean {
+  const match = CHAT_MODEL_OPTIONS.find((option) => option.id === modelId);
+  return match?.tier === "fast" || match?.tier === "balanced";
 }
