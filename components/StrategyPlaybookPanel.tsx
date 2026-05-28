@@ -4,9 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  Check,
   ChevronDown,
-  Circle,
   CircleDollarSign,
   Layers,
   RefreshCw,
@@ -19,15 +17,11 @@ import type {
   StrategyCatalogItem,
   StrategyNextAction,
   StrategyRecommendations,
-  UserStrategyJourney,
 } from "@/app/types/strategy";
 import { StrategyFlowDiagram } from "@/components/StrategyFlowDiagram";
 import {
   actionTypeLabel,
   formatStrategyPlaybookTitle,
-  journeyProgressLabel,
-  journeyStepStatusLabel,
-  pickSymbolsFromStep,
   primaryPlaybookAction,
 } from "@/lib/strategyPlaybook";
 import { getStrategyFlow } from "@/lib/strategyFlows";
@@ -40,7 +34,6 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   strategy: InvestmentStrategy;
-  journey: UserStrategyJourney | null;
   recommendations: StrategyRecommendations | null;
   catalogItem?: StrategyCatalogItem | null;
   onRunAction?: (action: StrategyNextAction) => void;
@@ -57,7 +50,6 @@ const STRATEGY_ICONS: Record<InvestmentStrategy, typeof RefreshCw> = {
 
 export function StrategyPlaybookPanel({
   strategy,
-  journey,
   recommendations,
   catalogItem,
   onRunAction,
@@ -84,10 +76,9 @@ export function StrategyPlaybookPanel({
     catalogItem?.subtitle ?? "Your guided investing playbook";
   const strategyDescription =
     catalogItem?.description ??
-    "Expand to see your playbook symbols, checklist, and next steps.";
+    "Expand to see your playbook symbols and next steps.";
   const symbolStatuses = recommendations?.symbolStatuses ?? [];
   const topAction = primaryPlaybookAction(recommendations);
-  const progress = journeyProgressLabel(journey);
 
   return (
     <section className={cn("mx-auto w-full", className)}>
@@ -112,7 +103,6 @@ export function StrategyPlaybookPanel({
                 </h2>
                 <p className="mt-0.5 text-xs text-accent-strong/90">
                   {strategySubtitle}
-                  {progress ? ` · ${progress}` : ""}
                 </p>
                 {!expanded && symbolStatuses.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
@@ -161,6 +151,21 @@ export function StrategyPlaybookPanel({
 
         {expanded && (
           <div className="space-y-4 border-t border-accent/20 px-4 pb-4 pt-4">
+            <div>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  How it works
+                </p>
+                {flow.repeats && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted">
+                    <RefreshCw className="h-3 w-3" aria-hidden />
+                    Repeating cycle
+                  </span>
+                )}
+              </div>
+              <StrategyFlowDiagram flow={flow} />
+            </div>
+
             {topAction && (
               <div className="rounded-xl border border-accent/25 bg-background/70 px-3 py-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-accent-strong">
@@ -211,50 +216,6 @@ export function StrategyPlaybookPanel({
                 </div>
               </div>
             )}
-
-            {journey?.steps?.length ? (
-              <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Checklist
-                </p>
-                <ol className="space-y-2">
-                  {journey.steps.map((step) => (
-                    <li
-                      key={step.stepId}
-                      className="flex items-start gap-2 rounded-lg border border-border/70 bg-background/50 px-3 py-2"
-                    >
-                      <StepStatusIcon status={step.status} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-foreground">
-                          {step.title}
-                        </p>
-                        <p className="mt-0.5 text-[11px] text-muted">
-                          {journeyStepStatusLabel(step.status)}
-                          {pickSymbolsFromStep(step).length > 0
-                            ? ` · ${pickSymbolsFromStep(step).join(", ")}`
-                            : ""}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ) : null}
-
-            <div>
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  How it works
-                </p>
-                {flow.repeats && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted">
-                    <RefreshCw className="h-3 w-3" aria-hidden />
-                    Repeating cycle
-                  </span>
-                )}
-              </div>
-              <StrategyFlowDiagram flow={flow} />
-            </div>
           </div>
         )}
       </div>
@@ -314,34 +275,5 @@ function PlaybookSymbolCard({
         </div>
       )}
     </div>
-  );
-}
-
-function StepStatusIcon({
-  status,
-}: {
-  status: UserStrategyJourney["steps"][number]["status"];
-}) {
-  if (status === "completed" || status === "skipped") {
-    return (
-      <Check
-        className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong"
-        aria-hidden
-      />
-    );
-  }
-  if (status === "in-progress" || status === "available") {
-    return (
-      <Circle
-        className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong"
-        aria-hidden
-      />
-    );
-  }
-  return (
-    <Circle
-      className="mt-0.5 h-4 w-4 shrink-0 text-muted/40"
-      aria-hidden
-    />
   );
 }

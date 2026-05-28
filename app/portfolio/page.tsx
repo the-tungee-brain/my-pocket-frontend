@@ -128,7 +128,6 @@ export default function PortfolioPage() {
   const {
     catalog,
     profile: strategyProfile,
-    journey: strategyJourney,
     recommendations: strategyRecommendations,
     needsOnboarding,
     loading: strategyLoading,
@@ -358,9 +357,8 @@ export default function PortfolioPage() {
 
       {showStrategyJourney && strategyProfile?.primaryStrategy && (
         <StrategyPlaybookPanel
-          className={pageSectionClass}
+          className={cn(pageSectionClass, "mb-6")}
           strategy={strategyProfile.primaryStrategy}
-          journey={strategyJourney}
           recommendations={strategyRecommendations}
           catalogItem={
             catalog.find((item) => item.id === strategyProfile.primaryStrategy) ??

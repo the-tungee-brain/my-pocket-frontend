@@ -1,12 +1,9 @@
 import type {
   InvestmentStrategy,
-  JourneyStep,
-  JourneyStepStatus,
   StrategyCatalogItem,
   StrategyNextAction,
   StrategyRecommendations,
   UserInvestmentProfile,
-  UserStrategyJourney,
   WheelPhase,
 } from "@/app/types/strategy";
 
@@ -57,21 +54,6 @@ export function wheelPhaseLabel(phase: WheelPhase | null | undefined): string {
   }
 }
 
-export function journeyStepStatusLabel(status: JourneyStepStatus): string {
-  switch (status) {
-    case "completed":
-      return "Done";
-    case "in-progress":
-      return "In progress";
-    case "available":
-      return "Ready";
-    case "skipped":
-      return "Skipped";
-    default:
-      return "Locked";
-  }
-}
-
 export function formatStrategyPlaybookTitle(
   strategy: InvestmentStrategy,
   catalogItem?: StrategyCatalogItem | null,
@@ -98,22 +80,6 @@ export function primaryPlaybookAction(
 ): StrategyNextAction | null {
   if (!recommendations?.nextActions?.length) return null;
   return recommendations.nextActions[0] ?? null;
-}
-
-export function journeyProgressLabel(journey: UserStrategyJourney | null): string {
-  if (!journey?.steps?.length) return "";
-  const completed = journey.steps.filter(
-    (step) => step.status === "completed" || step.status === "skipped",
-  ).length;
-  return `${completed}/${journey.steps.length} steps`;
-}
-
-export function pickSymbolsFromStep(step: JourneyStep): string[] {
-  const raw = step.metadata?.symbols;
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((value): value is string => typeof value === "string")
-    .map((symbol) => symbol.toUpperCase());
 }
 
 export function actionTypeLabel(type: StrategyNextAction["type"]): string {
