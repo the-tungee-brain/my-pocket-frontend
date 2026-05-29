@@ -50,6 +50,9 @@ type Props = {
 const ACTIVITY_DAY_OPTIONS = [7, 30, 60] as const;
 const ACTIVITY_PAGE_SIZE = 25;
 
+const activityFilterLabelClass =
+  "w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted";
+
 function StrategyBadge({ label }: { label: string }) {
   return (
     <span className="mt-0.5 inline-flex max-w-full rounded-full bg-accent-muted px-2 py-0.5 text-[10px] font-medium text-accent-strong">
@@ -367,49 +370,47 @@ function ActivityFilters({
     ([, a], [, b]) => b - a,
   );
 
+  const symbolPillClass = (active: boolean) =>
+    cn(
+      "inline-flex items-center justify-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
+      active
+        ? "border-accent/40 bg-accent-muted text-accent-strong"
+        : "border-border bg-background text-muted hover:border-accent/30 hover:text-foreground",
+    );
+
   return (
     <div className="space-y-3 border-b border-border px-4 py-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-          Period
-        </span>
-        {ACTIVITY_DAY_OPTIONS.map((days) => {
-          const active = daysBack === days;
-          return (
-            <button
-              key={days}
-              type="button"
-              disabled={disabled}
-              onClick={() => onDaysBackChange(days)}
-              className={cn(
-                "rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
-                active
-                  ? "border-accent/40 bg-accent-muted text-accent-strong"
-                  : "border-border bg-background text-muted hover:border-accent/30 hover:text-foreground",
-                disabled && "opacity-60",
-              )}
-            >
-              {days}d
-            </button>
-          );
-        })}
+      <div className="flex items-center gap-3">
+        <span className={activityFilterLabelClass}>Period</span>
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          {ACTIVITY_DAY_OPTIONS.map((days) => {
+            const active = daysBack === days;
+            return (
+              <button
+                key={days}
+                type="button"
+                disabled={disabled}
+                onClick={() => onDaysBackChange(days)}
+                className={cn(symbolPillClass(active), disabled && "opacity-60")}
+              >
+                {days}d
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {symbolOptions.length > 1 && (
-        <div className="flex items-center gap-2">
-          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted">
-            Symbol
-          </span>
-          <div className="flex min-w-0 gap-1.5 overflow-x-auto pb-0.5 scrollbar-dark">
+        <div className="flex items-start gap-3">
+          <span className={cn(activityFilterLabelClass, "pt-1")}>Symbol</span>
+          <div className="grid min-w-0 flex-1 grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-1.5 sm:grid-cols-[repeat(auto-fill,minmax(6rem,1fr))]">
             <button
               type="button"
               disabled={disabled}
               onClick={() => onSymbolFilterChange(null)}
               className={cn(
-                "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
-                symbolFilter == null
-                  ? "border-accent/40 bg-accent-muted text-accent-strong"
-                  : "border-border bg-background text-muted hover:border-accent/30 hover:text-foreground",
+                symbolPillClass(symbolFilter == null),
+                "w-full",
               )}
             >
               All
@@ -422,12 +423,7 @@ function ActivityFilters({
                   type="button"
                   disabled={disabled}
                   onClick={() => onSymbolFilterChange(sym)}
-                  className={cn(
-                    "inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
-                    active
-                      ? "border-accent/40 bg-accent-muted text-accent-strong"
-                      : "border-border bg-background text-muted hover:border-accent/30 hover:text-foreground",
-                  )}
+                  className={cn(symbolPillClass(active), "w-full")}
                 >
                   <span className="font-mono">{sym}</span>
                   <span className="tabular-nums text-[10px] opacity-80">{count}</span>
@@ -512,7 +508,9 @@ export function RecentActivitySection({
   const [suggestedActions, setSuggestedActions] = useState(
     summary?.suggestedActions ?? [],
   );
-  const [daysBack, setDaysBack] = useState(summary?.daysBack ?? 30);
+  const [daysBack, setDaysBack] = useState(
+    showFullHistory ? 7 : (summary?.daysBack ?? 7),
+  );
   const [symbolFilter, setSymbolFilter] = useState<string | null>(null);
   const [activityBySymbol, setActivityBySymbol] = useState<
     Record<string, number>
@@ -550,7 +548,6 @@ export function RecentActivitySection({
         });
         setOrders(data.orders);
         setSuggestedActions(data.suggestedActions);
-        setDaysBack(data.daysBack);
         setTotalOrders(data.totalOrders);
         setRecentOrderCount(data.recentOrderCount);
         if (!symbol && !symbolFilter) {
@@ -572,7 +569,7 @@ export function RecentActivitySection({
       return;
     }
 
-    if (summary) {
+    if (summary && !showFullHistory) {
       setOrders(summary.latestOrders);
       setSuggestedActions(summary.suggestedActions);
       setDaysBack(summary.daysBack);
