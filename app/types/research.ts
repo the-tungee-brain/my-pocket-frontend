@@ -90,7 +90,7 @@ export type DividendScenarioParams = {
   dividendCagrPct?: number | null;
   reinvestDividends?: boolean;
   priceCagrPct?: number | null;
-  /** Optional cash added at the start of each year after the first (projection). */
+  /** New cash added at the start of each year after the first (projection). */
   annualContributionUsd?: number | null;
 };
 

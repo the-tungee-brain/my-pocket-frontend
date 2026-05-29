@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type MouseEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 import { ChevronDown, History, LineChart, TrendingUp } from "lucide-react";
 import type {
   AnnualDividendIncome,
@@ -24,7 +18,6 @@ import {
   resolveSnowballPriceCagrPct,
 } from "@/lib/dividendHistory";
 import { formatExpenseRatio } from "@/lib/etfHoldings";
-import { appStackClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import { PageSplit } from "@/components/PageShell";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
@@ -127,19 +120,8 @@ type SnowballNumericInputProps = {
   min?: number;
   max?: number;
   step?: number;
-  /** When set, spinner uses this step and typing commits on blur (snapped to step). */
-  commitStep?: number;
   className?: string;
 };
-
-function snapToCommitStep(value: number, step: number, stepMin = 0): number {
-  return Math.round((value - stepMin) / step) * step + stepMin;
-}
-
-function isOnCommitStep(value: number, step: number, stepMin = 0): boolean {
-  const snapped = snapToCommitStep(value, step, stepMin);
-  return Math.abs(value - snapped) < 0.001;
-}
 
 function SnowballNumericInput({
   value,
@@ -148,125 +130,52 @@ function SnowballNumericInput({
   min,
   max,
   step,
-  commitStep,
   className,
 }: SnowballNumericInputProps) {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const allowsZero = min === 0;
-  const stepMin = commitStep != null ? (min ?? 0) : 0;
-
-  const formatCommittedValue = (committed: number | null | undefined) => {
-    if (committed == null) return "";
-    if (allowsZero) {
-      return committed >= 0 ? String(roundSnowball(committed)) : "";
-    }
-    return committed > 0 ? String(roundSnowball(committed)) : "";
-  };
-
-  const isValidCommit = (next: number) => {
-    if (!Number.isFinite(next)) return false;
-    if (min != null && next < min) return false;
-    if (max != null && next > max) return false;
-    return allowsZero ? next >= 0 : next > 0;
-  };
-
-  const clampCommit = (next: number) => {
-    let clamped = next;
-    if (min != null) clamped = Math.max(min, clamped);
-    if (max != null) clamped = Math.min(max, clamped);
-    return roundSnowball(clamped);
-  };
-
-  const finalizeCommit = (next: number) => {
-    let committed = clampCommit(next);
-    if (commitStep != null && commitStep > 0) {
-      committed = clampCommit(snapToCommitStep(committed, commitStep, stepMin));
-    }
-    if (!isValidCommit(committed)) return null;
-    onCommit(committed);
-    return committed;
-  };
 
   useEffect(() => {
     if (isFocused) return;
-    setText(formatCommittedValue(value));
-  }, [value, isFocused, allowsZero]);
+    setText(value != null && value > 0 ? String(roundSnowball(value)) : "");
+  }, [value, isFocused]);
 
   return (
     <input
       type="number"
       min={min}
       max={max}
-      step={commitStep ?? step}
+      step={step}
       value={text}
       onFocus={() => setIsFocused(true)}
       onBlur={() => {
         setIsFocused(false);
         const trimmed = text.trim();
         if (trimmed === "") {
-          if (allowsZero) {
-            onCommit(0);
-            setText("0");
-          } else {
-            onClear?.();
-            setText("");
-          }
+          onClear?.();
+          setText("");
           return;
         }
         const next = Number(trimmed);
-        const committed = finalizeCommit(next);
-        if (committed != null) {
-          setText(String(committed));
+        if (Number.isFinite(next) && next > 0) {
+          onCommit(next);
+          setText(String(roundSnowball(next)));
           return;
         }
-        setText(formatCommittedValue(value));
+        setText(value != null && value > 0 ? String(roundSnowball(value)) : "");
       }}
       onChange={(event) => {
         const nextText = event.target.value;
         setText(nextText);
-        if (commitStep != null) {
-          const trimmed = nextText.trim();
-          if (trimmed === "") return;
-          const next = Number(trimmed);
-          if (
-            isValidCommit(next) &&
-            isOnCommitStep(next, commitStep, stepMin)
-          ) {
-            onCommit(clampCommit(next));
-          }
-          return;
-        }
         const trimmed = nextText.trim();
         if (trimmed === "") return;
         const next = Number(trimmed);
-        if (isValidCommit(next)) {
-          onCommit(clampCommit(next));
+        if (Number.isFinite(next) && next > 0) {
+          onCommit(next);
         }
       }}
       className={className}
     />
-  );
-}
-
-const SNOWBALL_INPUT_CLASS =
-  "w-full rounded-md border border-border bg-background py-1.5 text-sm tabular-nums text-foreground";
-
-function SnowballCurrencyInput(props: SnowballNumericInputProps) {
-  const { className, ...rest } = props;
-  return (
-    <div className="relative">
-      <span
-        className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-sm font-medium text-muted"
-        aria-hidden
-      >
-        $
-      </span>
-      <SnowballNumericInput
-        {...rest}
-        className={cn(SNOWBALL_INPUT_CLASS, "pl-7 pr-2", className)}
-      />
-    </div>
   );
 }
 
@@ -294,7 +203,7 @@ function buildScenarioParams(
   const dividendCagrPct =
     values.dividendCagrPct ?? base?.dividendCagrPct ?? null;
   const annualContributionUsd =
-    values.annualContributionUsd ?? base?.annualContributionUsd ?? 0;
+    values.annualContributionUsd ?? base?.annualContributionUsd ?? null;
 
   if (sharePrice != null && sharePrice > 0) {
     if (source === "shares" && values.shares != null && values.shares > 0) {
@@ -352,7 +261,7 @@ function mergeScenarioParams(
       next.reinvestDividends ?? base?.reinvestDividends ?? false,
     priceCagrPct: next.priceCagrPct ?? base?.priceCagrPct ?? null,
     annualContributionUsd:
-      next.annualContributionUsd ?? base?.annualContributionUsd ?? 0,
+      next.annualContributionUsd ?? base?.annualContributionUsd ?? null,
   };
 }
 
@@ -457,9 +366,6 @@ type StatProps = {
   hint?: string;
 };
 
-const DIVIDEND_STAT_GRID_CLASS =
-  "grid grid-cols-1 items-stretch gap-2 sm:grid-cols-2 lg:grid-cols-3";
-
 function StatCard({ label, value, hint }: StatProps) {
   return (
     <div className="flex h-full flex-col rounded-xl border border-border bg-surface-elevated/40 px-3 py-2.5">
@@ -481,88 +387,92 @@ function formatYieldPct(value: number | null | undefined): string {
   return `${value.toFixed(2)}%`;
 }
 
-/** Dividend KPI cards — historic stats for all users; projection stats when Pro. */
-export function DividendMetricStats({
+/** Historic dividend facts — available on Free and Pro. */
+export function DividendSummaryStats({
   history,
   sharePrice,
   isEtf = false,
   expenseRatio,
-  showProjection = false,
 }: {
   history: DividendHistoryContext;
   sharePrice?: number | null;
   isEtf?: boolean;
   expenseRatio?: string | null;
-  showProjection?: boolean;
 }) {
   const currentYieldPct = resolveCurrentYieldPct(history, sharePrice);
-  const scenario = showProjection ? history.scenario : null;
-  const projection =
-    scenario != null
-      ? dividendProjectionWindow(scenario.projectYears)
-      : null;
+
+  return (
+    <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-3">
+      <StatCard
+        label="Dividend streak"
+        value={
+          history.consecutiveAnnualIncreases > 0
+            ? `${history.consecutiveAnnualIncreases} yrs`
+            : "—"
+        }
+        hint="Years in a row the annual dividend per share increased"
+      />
+      <StatCard
+        label="Current yield"
+        value={formatYieldPct(currentYieldPct)}
+        hint="Latest annual dividend per share ÷ your share price"
+      />
+      {isEtf ? (
+        <StatCard
+          label="Expense ratio"
+          value={formatExpenseRatio(expenseRatio) ?? "—"}
+          hint="Annual fund fee deducted from ETF returns"
+        />
+      ) : null}
+      <StatCard
+        label="5Y dividend CAGR"
+        value={formatPct(history.cagr5yPct)}
+        hint="Average annual dividend growth, completed years"
+      />
+    </div>
+  );
+}
+
+/** Pro snowball projection summary (requires API scenario). */
+export function DividendSnowballStats({
+  history,
+  sharePrice: _sharePrice,
+}: {
+  history: DividendHistoryContext;
+  sharePrice?: number | null;
+}) {
+  const { scenario } = history;
+  if (!scenario) return null;
+
+  const { currentYear, endYear, projectYears } = dividendProjectionWindow(
+    scenario.projectYears,
+  );
   const priceGrowthPct =
-    scenario != null
-      ? (history.priceCagrPct ?? scenario.advanced?.priceCagrPct ?? null)
-      : null;
+    history.priceCagrPct ?? scenario.advanced?.priceCagrPct ?? null;
 
   return (
     <div className="space-y-3">
-      <div className={DIVIDEND_STAT_GRID_CLASS}>
+      <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-2">
         <StatCard
-          label="Dividend streak"
-          value={
-            history.consecutiveAnnualIncreases > 0
-              ? `${history.consecutiveAnnualIncreases} yrs`
-              : "—"
-          }
-          hint="Years in a row the annual dividend per share increased"
+          label="5Y price growth"
+          value={formatPct(priceGrowthPct)}
+          hint="Average annual share price growth, applied in projections"
         />
         <StatCard
-          label="Current yield"
-          value={formatYieldPct(currentYieldPct)}
-          hint="Latest annual dividend per share ÷ your share price"
+          label={`${projectYears}-year total`}
+          value={formatUsd(scenario.totalCollected, {
+            maximumFractionDigits: 0,
+          })}
+          hint={`Estimated dividend cash collected ${currentYear}–${endYear}`}
         />
-        {isEtf ? (
-          <StatCard
-            label="Expense ratio"
-            value={formatExpenseRatio(expenseRatio) ?? "—"}
-            hint="Annual fund fee deducted from ETF returns"
-          />
-        ) : null}
-        <StatCard
-          label="5Y dividend CAGR"
-          value={formatPct(history.cagr5yPct)}
-          hint="Average annual dividend growth, completed years"
-        />
-        {scenario && projection ? (
-          <>
-            <StatCard
-              label="5Y price growth"
-              value={formatPct(priceGrowthPct)}
-              hint="Average annual share price growth, applied in projections"
-            />
-            <StatCard
-              label={`${projection.projectYears}-year total`}
-              value={formatUsd(scenario.totalCollected, {
-                maximumFractionDigits: 0,
-              })}
-              hint={`Estimated dividend cash collected ${projection.currentYear}–${projection.endYear}`}
-            />
-          </>
-        ) : null}
       </div>
-      {scenario && projection ? (
-        <p className="text-xs leading-relaxed text-muted">
-          Projections combine historic dividend growth (5Y CAGR when available),{" "}
-          {priceGrowthPct != null
-            ? `${priceGrowthPct.toFixed(1)}%`
-            : "estimated"}{" "}
-          annual price growth, and your share count. Portfolio value also reflects
-          price growth; enable DRIP below to reinvest dividends into more shares.
-          Past growth rates are not guaranteed to continue.
-        </p>
-      ) : null}
+      <p className="text-xs leading-relaxed text-muted">
+        Projections combine historic dividend growth (5Y CAGR when available),{" "}
+        {priceGrowthPct != null ? `${priceGrowthPct.toFixed(1)}%` : "estimated"}{" "}
+        annual price growth, and your share count. Portfolio value also reflects
+        price growth; enable DRIP below to reinvest dividends into more shares.
+        Past growth rates are not guaranteed to continue.
+      </p>
     </div>
   );
 }
@@ -915,18 +825,13 @@ export function DividendPayoutHistoryChart({
   );
 }
 
-/** Two h-56 charts + section labels — keep recent payments panel aligned. */
-export const DIVIDEND_HISTORY_PANEL_MIN_H = "min-h-[34rem]";
-
-export const RECENT_PAYMENTS_COUNT = 16;
-
 export function DividendHistoryCharts({
   history,
 }: {
   history: DividendHistoryContext;
 }) {
   return (
-    <div className={cn("space-y-8", DIVIDEND_HISTORY_PANEL_MIN_H)}>
+    <div className="space-y-8">
       <div>
         <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted">
           Annual totals per share
@@ -1055,10 +960,10 @@ export function DividendSnowballScenarioCard({
         <div className="grid gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="space-y-1 text-xs text-muted">
             Investment
-            <SnowballCurrencyInput
-              min={0}
+            <SnowballNumericInput
+              min={0.01}
               max={100000000}
-              commitStep={100}
+              step={0.01}
               value={investmentUsd}
               onCommit={(next) => {
                 emitScenario("investment", {
@@ -1070,11 +975,12 @@ export function DividendSnowballScenarioCard({
                   annualContributionUsd,
                 });
               }}
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
             />
           </label>
           <label className="space-y-1 text-xs text-muted">
             Share price
-            <SnowballCurrencyInput
+            <SnowballNumericInput
               min={0.01}
               max={1000000}
               step={0.01}
@@ -1101,6 +1007,7 @@ export function DividendSnowballScenarioCard({
                   annualContributionUsd,
                 });
               }}
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
             />
           </label>
           <label className="space-y-1 text-xs text-muted">
@@ -1120,19 +1027,21 @@ export function DividendSnowballScenarioCard({
                   annualContributionUsd,
                 });
               }}
-              className={cn(SNOWBALL_INPUT_CLASS, "px-2")}
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
             />
           </label>
           <label className="space-y-1 text-xs text-muted">
-            Annual contribution
-            <SnowballCurrencyInput
+            New cash / year
+            <SnowballNumericInput
               min={0}
               max={100000000}
               step={100}
-              value={annualContributionUsd}
+              value={annualContributionUsd > 0 ? annualContributionUsd : null}
               onCommit={(next) => {
                 updateScenario({ annualContributionUsd: next });
               }}
+              onClear={() => updateScenario({ annualContributionUsd: 0 })}
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
             />
           </label>
         </div>
@@ -1182,14 +1091,14 @@ export function DividendSnowballScenarioCard({
         </div>
 
         <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
-          <label className="flex cursor-pointer items-start gap-3 text-sm text-foreground">
+          <label className="flex items-start gap-3 text-sm text-foreground">
             <input
               type="checkbox"
               checked={reinvestDividends}
               onChange={(event) => {
                 updateScenario({ reinvestDividends: event.target.checked });
               }}
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-[var(--accent)]"
+              className="mt-0.5"
             />
             <span>
               <span className="font-medium">Reinvest dividends (DRIP)</span>
@@ -1288,7 +1197,7 @@ export function DividendSnowballScenarioCard({
               advanced.totalAnnualContributionsUsd > 0
                 ? `${formatUsd(advanced.totalAnnualContributionsUsd, {
                     maximumFractionDigits: 0,
-                  })} contributed over ${projectYears} yrs`
+                  })} new cash over ${projectYears} yrs`
                 : reinvestDividends
                   ? `${advanced.priceCagrPct.toFixed(1)}% avg price growth / yr`
                   : `${advanced.priceCagrPct.toFixed(1)}% avg price growth / yr · no reinvestment`}
@@ -1308,7 +1217,7 @@ export function DividendSnowballScenarioCard({
         {annualContributionUsd > 0
           ? `Adds ${formatUsd(annualContributionUsd, {
               maximumFractionDigits: 0,
-            })} added at the start of each year after ${currentYear} (buys shares at modeled price). `
+            })} of new cash at the start of each year after ${currentYear} (buys shares at modeled price). `
           : ""}
         {reinvestDividends && advanced
           ? `DRIP reinvests ${formatUsd(advanced.totalDividendsReinvested, {
@@ -1331,64 +1240,47 @@ export function DividendSnowballScenarioCard({
 
 export function DividendRecentPaymentsTable({
   payments,
-  itemCount = RECENT_PAYMENTS_COUNT,
 }: {
   payments: DividendPaymentItem[];
-  itemCount?: number;
 }) {
-  const sortedPayments = useMemo(
-    () =>
-      [...payments].sort((left, right) =>
-        right.date.localeCompare(left.date),
-      ),
-    [payments],
-  );
-
-  if (sortedPayments.length === 0) {
+  if (payments.length === 0) {
     return (
       <p className="text-sm text-muted">No recent payments were returned.</p>
     );
   }
 
-  const visiblePayments = sortedPayments.slice(0, itemCount);
-
   return (
-    <>
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto">
-        <table className="min-w-full text-left text-xs">
-          <thead className="text-muted">
-            <tr>
-              <th className="pb-2 pr-4 font-medium">Payment date</th>
-              <th className="pb-2 font-medium">Amount / share</th>
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-left text-xs">
+        <thead className="text-muted">
+          <tr>
+            <th className="pb-2 pr-4 font-medium">Payment date</th>
+            <th className="pb-2 font-medium">Amount / share</th>
+          </tr>
+        </thead>
+        <tbody>
+          {payments.map((payment) => (
+            <tr key={payment.date} className="border-t border-border">
+              <td className="py-2 pr-4 text-foreground">
+                {formatDate(payment.date)}
+              </td>
+              <td className="py-2 tabular-nums text-foreground">
+                ${payment.amountPerShare.toFixed(4)}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {visiblePayments.map((payment, index) => (
-              <tr
-                key={`${payment.date}-${payment.amountPerShare}-${index}`}
-                className="border-t border-border"
-              >
-                <td className="py-2 pr-4 text-foreground">
-                  {formatDate(payment.date)}
-                </td>
-                <td className="py-2 tabular-nums text-foreground">
-                  ${payment.amountPerShare.toFixed(4)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
 export function DividendSnowballSkeleton() {
   return (
     <div className="space-y-4">
-      <div className={DIVIDEND_STAT_GRID_CLASS}>
-        {Array.from({ length: 6 }).map((_, index) => (
-          <Skeleton key={index} className="h-24 rounded-xl" />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={index} className="h-20 rounded-xl" />
         ))}
       </div>
       <Skeleton className="h-56 rounded-xl" />
@@ -1399,51 +1291,35 @@ export function DividendSnowballSkeleton() {
 
 export function DividendsPageSkeleton() {
   return (
-    <div className={appStackClass}>
-      <PageSplit
-        className="lg:items-stretch"
-        main={
+    <PageSplit
+      main={
+        <>
           <ResearchSectionCard
             title="Dividend history"
             description="How annual totals and each payout per share have changed over time"
             icon={LineChart}
-            className="flex h-full flex-col"
           >
-            <Skeleton
-              className={cn("rounded-xl", DIVIDEND_HISTORY_PANEL_MIN_H)}
-            />
+            <Skeleton className="h-56 rounded-xl" />
           </ResearchSectionCard>
-        }
-        aside={
+
           <ResearchSectionCard
-            title="Recent payments"
-            description="Latest dividend payments per share"
-            icon={History}
-            className="flex h-full flex-col"
+            title="Dividend snowball"
+            description="Historic payout growth and cash income on your share count"
+            icon={TrendingUp}
           >
-            <div
-              className={cn(
-                DIVIDEND_HISTORY_PANEL_MIN_H,
-                "flex flex-col",
-              )}
-            >
-              <SkeletonList
-                rows={RECENT_PAYMENTS_COUNT}
-                className="min-h-0 flex-1"
-                rowClassName="h-10 rounded-lg"
-              />
-            </div>
+            <DividendSnowballSkeleton />
           </ResearchSectionCard>
-        }
-      />
-      <ResearchSectionCard
-        title="Dividend snowball"
-        description="Historic payout growth and cash income on your share count"
-        icon={TrendingUp}
-        className="w-full max-w-none"
-      >
-        <DividendSnowballSkeleton />
-      </ResearchSectionCard>
-    </div>
+        </>
+      }
+      aside={
+        <ResearchSectionCard
+          title="Recent payments"
+          description="Latest dividend payments per share"
+          icon={History}
+        >
+          <SkeletonList rows={6} rowClassName="h-10 rounded-lg" />
+        </ResearchSectionCard>
+      }
+    />
   );
 }

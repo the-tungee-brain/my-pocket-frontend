@@ -211,33 +211,32 @@ function NewsHeadlineCard({
   view: HeadlinesView;
 }) {
   const headlineClass =
-    "text-sm font-semibold leading-snug text-foreground group-hover:text-accent-strong";
+    "line-clamp-2 max-w-full overflow-hidden break-words text-sm font-semibold leading-snug text-foreground group-hover:text-accent-strong";
+  const summaryClass =
+    "line-clamp-2 max-w-full overflow-hidden break-words text-sm leading-relaxed text-muted";
 
   const cardInner = (
     <>
       <NewsHeadlineIcon item={item} />
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <div
-          className={cn(
-            "flex gap-2",
-            view === "grid" ? "flex-col items-start" : "flex-wrap items-start",
-          )}
-        >
+      <div className="min-w-0 w-full max-w-full flex-1 space-y-1.5 overflow-hidden">
+        <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-2">
           {item.url ? (
             <a
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn("min-w-0 hover:underline", headlineClass)}
+              className={cn("block w-full min-w-0 max-w-full hover:underline", headlineClass)}
             >
               {item.headline}
             </a>
           ) : (
-            <p className={cn("min-w-0", headlineClass)}>{item.headline}</p>
+            <p className={cn("w-full min-w-0 max-w-full", headlineClass)}>
+              {item.headline}
+            </p>
           )}
           <span
             className={cn(
-              "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+              "inline-flex max-w-full shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
               sentimentColor(item.sentiment),
             )}
           >
@@ -245,11 +244,9 @@ function NewsHeadlineCard({
           </span>
         </div>
 
-        <p className="line-clamp-2 text-sm leading-relaxed text-muted">
-          {item.summary}
-        </p>
+        <p className={summaryClass}>{item.summary}</p>
 
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted">
+        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted">
           <time dateTime={item.datetime}>
             {new Date(item.datetime).toLocaleString(undefined, {
               month: "short",
@@ -267,7 +264,7 @@ function NewsHeadlineCard({
         </div>
 
         {item.topics.length > 0 ? (
-          <p className="line-clamp-1 text-[11px] text-muted">
+          <p className="line-clamp-1 max-w-full overflow-hidden break-words text-[11px] text-muted">
             {item.topics.map((t) => t.replace(/_/g, " ")).join(" · ")}
           </p>
         ) : null}
@@ -278,9 +275,9 @@ function NewsHeadlineCard({
   return (
     <article
       className={cn(
-        "group flex h-full gap-3 rounded-xl border border-border bg-background/60 p-3 transition-colors",
+        "group flex h-full min-w-0 max-w-full gap-3 overflow-hidden rounded-xl border border-border bg-background/60 p-3 transition-colors",
         "hover:border-accent/30 hover:bg-surface-elevated/50",
-        view === "grid" ? "flex-col items-start" : "flex-row items-start",
+        view === "grid" ? "w-full flex-col items-stretch" : "w-full flex-row items-start",
       )}
     >
       {cardInner}
@@ -349,13 +346,21 @@ function NewsHeadlinesSkeleton({ view }: { view: HeadlinesView }) {
   );
 
   return view === "grid" ? (
-    <div className="grid gap-3 sm:grid-cols-2">{[1, 2, 3, 4].map((row) => (
-      <div key={row}>{card}</div>
-    ))}</div>
+    <div className="grid w-full min-w-0 grid-cols-1 gap-3 min-[480px]:grid-cols-2">
+      {[1, 2, 3, 4].map((row) => (
+        <div key={row} className="min-w-0">
+          {card}
+        </div>
+      ))}
+    </div>
   ) : (
-    <div className="flex flex-col gap-3">{[1, 2, 3, 4].map((row) => (
-      <div key={row}>{card}</div>
-    ))}</div>
+    <div className="flex w-full min-w-0 flex-col gap-3">
+      {[1, 2, 3, 4].map((row) => (
+        <div key={row} className="min-w-0">
+          {card}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -591,9 +596,10 @@ export default function NewsAnalytics({
                   {filteredItems.length > 0 ? (
                     <div
                       className={cn(
+                        "min-w-0 w-full max-w-full",
                         headlinesView === "grid"
-                          ? "grid gap-3 sm:grid-cols-2"
-                          : "flex flex-col gap-3",
+                          ? "grid w-full grid-cols-1 gap-3 min-[480px]:grid-cols-2"
+                          : "flex w-full flex-col gap-3",
                       )}
                     >
                       {filteredItems.map((item) => (
