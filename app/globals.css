@@ -17,6 +17,8 @@
   --destructive: #e11d48;
   --destructive-foreground: #ffe4e6;
   --surface-elevated: #1e1d1c;
+  --surface-marketing: #161514;
+  --marketing-glow: color-mix(in oklab, var(--accent) 18%, transparent);
   --scrollbar-track: transparent;
   --scrollbar-thumb: #3a3a39;
   --scrollbar-thumb-hover: #5a5a59;
@@ -39,8 +41,10 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-surface-elevated: var(--surface-elevated);
+  --color-surface-marketing: var(--surface-marketing);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-sans: var(--font-inter);
+  --font-display: var(--font-display), ui-serif, Georgia, serif;
 }
 
 html {
@@ -735,6 +739,145 @@ body {
   font-size: 0.75rem;
   line-height: 1.125rem;
   letter-spacing: 0.04em;
+}
+
+/* —— Marketing / landing (Mistral-inspired editorial layout) —— */
+
+.marketing-canvas {
+  position: relative;
+  background-color: var(--background);
+}
+
+.marketing-canvas::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(
+      ellipse 90% 55% at 50% -15%,
+      var(--marketing-glow),
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 45% 35% at 100% 20%,
+      color-mix(in oklab, var(--accent-strong) 6%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--surface-marketing) 40%, transparent) 0%,
+      transparent 35%
+    );
+}
+
+/* Keep header/footer positioning intact (sticky nav must not be forced to relative). */
+.marketing-canvas > :not(header):not(footer) {
+  position: relative;
+  z-index: 1;
+}
+
+.marketing-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.marketing-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--foreground);
+}
+
+.marketing-lead {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+@media (min-width: 640px) {
+  .marketing-lead {
+    font-size: 1.125rem;
+  }
+}
+
+.marketing-section {
+  scroll-margin-top: 5rem;
+  padding-block: 4rem;
+}
+
+@media (min-width: 1024px) {
+  .marketing-section {
+    padding-block: 5.5rem;
+  }
+}
+
+.marketing-section--band {
+  border-top: 1px solid var(--border);
+  background: color-mix(in oklab, var(--surface-marketing) 85%, var(--background));
+}
+
+.marketing-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--secondary) 70%, transparent);
+  padding: 0.375rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.marketing-bento-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  border-radius: 1.25rem;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--secondary) 55%, var(--background));
+  padding: 1.5rem;
+  transition:
+    border-color 200ms ease,
+    background 200ms ease,
+    transform 200ms ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marketing-bento-card:hover {
+    border-color: color-mix(in oklab, var(--accent) 35%, var(--border));
+    background: color-mix(in oklab, var(--secondary) 80%, var(--background));
+    transform: translateY(-2px);
+  }
+}
+
+.marketing-tag {
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.marketing-nav-link {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+  transition: color 150ms ease;
+}
+
+.marketing-nav-link:hover {
+  color: var(--foreground);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -5,6 +5,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { AccountPlan } from "@/app/types/account";
+import {
+  MarketingDisplayTitle,
+  MarketingEyebrow,
+  MarketingLead,
+  MarketingSection,
+} from "@/components/marketing/MarketingPrimitives";
 import { pageProseClass, pageShellStandaloneClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 
@@ -153,26 +159,24 @@ function PlanFeatureList({
 
 export function LandingPricingSection() {
   return (
-    <section
-      id="pricing"
-      className="scroll-mt-20 border-t border-border py-16 lg:py-20"
-    >
+    <MarketingSection id="pricing">
       <div className={pageShellStandaloneClass}>
         <div className={cn(pageProseClass, "text-center")}>
-          <p className="text-xs font-semibold uppercase tracking-wider text-accent-strong">
-            Pricing
-          </p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-            Start free. Upgrade when you want deeper models.
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
+          <MarketingEyebrow>Pricing</MarketingEyebrow>
+          <MarketingDisplayTitle
+            as="h2"
+            className="mt-3 text-3xl sm:text-4xl lg:text-[2.75rem]"
+          >
+            Start free. Upgrade when you need more depth.
+          </MarketingDisplayTitle>
+          <MarketingLead className="mx-auto mt-4">
             Free covers day-to-day portfolio work and research. Pro unlocks
             snowball, wheel backtest, and Advanced AI models.
-          </p>
+          </MarketingLead>
         </div>
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-2">
-          <Card as="article" surface="marketing" className="h-full p-6">
+        <div className="mt-12 grid gap-4 lg:grid-cols-2">
+          <Card as="article" surface="marketing" className="h-full rounded-2xl p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold">Free</h3>
@@ -202,7 +206,7 @@ export function LandingPricingSection() {
           <Card
             as="article"
             surface="accentSoft"
-            className="relative h-full overflow-visible p-6"
+            className="relative h-full overflow-visible rounded-2xl p-6"
           >
             <Badge variant="accent" className="absolute -top-2.5 right-4">
               Early access
@@ -234,6 +238,6 @@ export function LandingPricingSection() {
           </Card>
         </div>
       </div>
-    </section>
+    </MarketingSection>
   );
 }

@@ -1,6 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import type { ReactNode } from "react";
 import { AppProviders } from "./AppProviders";
@@ -10,6 +10,13 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+/** Editorial headlines on marketing pages (Mistral-style display type). */
+const sourceSerif = Source_Serif_4({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "600"],
+});
+
 export const metadata: Metadata = {
   title: "Tomcrest",
   description: "AI portfolio intelligence by Tomcrest",
@@ -17,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${sourceSerif.variable}`}>
       <body className="font-sans antialiased">
         <AppProviders>{children}</AppProviders>
       </body>

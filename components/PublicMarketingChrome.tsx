@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft, Mail } from "lucide-react";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
 import { TomcrestMark } from "@/components/brand/TomcrestMark";
+import { MarketingCanvas } from "@/components/marketing/MarketingPrimitives";
 import {
   pageNarrowStandaloneClass,
   pageShellStandaloneClass,
@@ -34,10 +35,7 @@ export function PublicNavLinks({
               ·
             </span>
           ) : null}
-          <Link
-            href={href}
-            className="font-medium text-muted transition hover:text-foreground"
-          >
+          <Link href={href} className="marketing-nav-link">
             {label}
           </Link>
         </span>
@@ -54,11 +52,11 @@ export function PublicMarketingHeader({
   backLabel?: string;
 }) {
   return (
-    <header className="border-b border-border/80 bg-background/80 backdrop-blur-md">
+    <header className="border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div
         className={cn(
           pageShellStandaloneClass,
-          "flex h-14 items-center justify-between gap-4",
+          "flex h-16 items-center justify-between gap-4",
         )}
       >
         <Link href="/" className="inline-flex">
@@ -104,13 +102,13 @@ export function PublicMarketingFooter() {
 
 export function PublicMarketingPageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
+    <MarketingCanvas className="flex min-h-screen flex-col">
       <PublicMarketingHeader />
-      <main className={cn(pageNarrowStandaloneClass, "flex-1 py-10 sm:py-14")}>
+      <main className={cn(pageNarrowStandaloneClass, "flex-1 py-12 sm:py-16")}>
         {children}
       </main>
       <PublicMarketingFooter />
-    </div>
+    </MarketingCanvas>
   );
 }
 

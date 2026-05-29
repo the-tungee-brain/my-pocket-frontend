@@ -27,6 +27,17 @@ import {
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
 import { PublicMarketingFooter } from "@/components/PublicMarketingChrome";
 import { LandingPricingSection } from "@/components/AccountPlanCard";
+import {
+  MarketingBentoCard,
+  MarketingBentoCell,
+  MarketingBentoGrid,
+  MarketingCanvas,
+  MarketingDisplayTitle,
+  MarketingEyebrow,
+  MarketingLead,
+  MarketingSection,
+  MarketingSectionHeader,
+} from "@/components/marketing/MarketingPrimitives";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -107,12 +118,7 @@ export default function AuthPage() {
   const { handleSignIn, signingIn, signInError } = useGoogleSignIn();
 
   return (
-    <div className="min-h-screen scroll-smooth bg-background text-foreground">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 h-130 w-180 -translate-x-1/2 rounded-full bg-accent/8 blur-3xl" />
-        <div className="absolute top-1/3 -right-32 h-80 w-80 rounded-full bg-accent-strong/5 blur-3xl" />
-      </div>
-
+    <MarketingCanvas className="scroll-smooth">
       <LandingHeader
         onSignIn={() => void handleSignIn()}
         signingIn={signingIn}
@@ -139,7 +145,7 @@ export default function AuthPage() {
       </main>
 
       <LandingFooter />
-    </div>
+    </MarketingCanvas>
   );
 }
 
@@ -151,17 +157,22 @@ function LandingHeader({
   signingIn: boolean;
 }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/80 backdrop-blur-md">
-      <div className={cn(pageShellStandaloneClass, "flex h-14 items-center justify-between gap-4")}>
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+      <div
+        className={cn(
+          pageShellStandaloneClass,
+          "flex h-16 items-center justify-between gap-6",
+        )}
+      >
         <TomcrestLogo size="sm" />
 
         <nav
-          className="hidden flex-1 items-center justify-center gap-5 md:flex"
+          className="hidden flex-1 items-center justify-center gap-8 md:flex"
           aria-label="Page sections"
         >
           <LandingNavLink href="#features">Features</LandingNavLink>
           <LandingNavLink href="#how-it-works">How it works</LandingNavLink>
-          <LandingNavLink href="#product">See it in action</LandingNavLink>
+          <LandingNavLink href="#product">Product</LandingNavLink>
           <LandingNavLink href="#pricing">Pricing</LandingNavLink>
           <LandingNavLink href="#strategies">Strategies</LandingNavLink>
         </nav>
@@ -171,6 +182,7 @@ function LandingHeader({
           signingIn={signingIn}
           size="sm"
           variant="outline"
+          className="rounded-full px-5"
         />
       </div>
     </header>
@@ -187,14 +199,19 @@ function HeroSection({
   signInError: string | null;
 }) {
   return (
-    <section className={cn(pageShellStandaloneClass, "relative pb-16 pt-12 lg:pb-24 lg:pt-16")}>
-      <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+    <section
+      className={cn(
+        pageShellStandaloneClass,
+        "relative pb-20 pt-14 lg:pb-28 lg:pt-20",
+      )}
+    >
+      <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
         >
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-muted">
+          <div className="marketing-pill mb-8">
             <Sparkles
               className="h-3.5 w-3.5 text-accent-strong"
               aria-hidden="true"
@@ -202,16 +219,15 @@ function HeroSection({
             Built for Charles Schwab investors
           </div>
 
-          <h1 className="max-w-xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.25rem]">
-            Know what to do with your{" "}
-            <span className="text-accent-strong">Schwab portfolio</span>
-          </h1>
+          <MarketingDisplayTitle className="max-w-xl text-[2.5rem] sm:text-6xl lg:text-[4rem]">
+            Know what to do with your Schwab portfolio.
+          </MarketingDisplayTitle>
 
-          <p className="mt-5 max-w-lg text-base leading-relaxed text-muted sm:text-lg">
+          <MarketingLead className="mt-6 max-w-lg">
             Connect Schwab once. Tomcrest reads your live holdings, balances, and
             options alongside market data, macro context, and news — then chat,
-            backtest, and research with a clear next step.
-          </p>
+            research, and plan with a clear next step.
+          </MarketingLead>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <SignInWithGoogleButton
@@ -278,7 +294,7 @@ function LandingNavLink({
   return (
     <a
       href={href}
-      className="text-xs font-medium text-muted transition-colors hover:text-foreground"
+      className="marketing-nav-link"
     >
       {children}
     </a>
@@ -369,32 +385,37 @@ const ALSO_INCLUDED = [
 
 function TopFeaturesSection() {
   return (
-    <section
-      id="features"
-      className="scroll-mt-20 border-t border-border bg-secondary/30 py-16 lg:py-20"
-    >
+    <MarketingSection id="features" band>
       <div className={pageShellStandaloneClass}>
-        <SectionHeading
+        <MarketingSectionHeader
           eyebrow="Why investors sign up"
-          title="Chat, backtest, and research — built on your Schwab book"
+          title={
+            <>
+              Portfolio intelligence.
+              <br />
+              In your hands.
+            </>
+          }
           description="Tomcrest is opinionated for Schwab investors: your positions feed every insight, and every reply points toward a decision."
         />
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+        <MarketingBentoGrid>
           {TOP_FEATURES.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.35, delay: index * 0.06 }}
-            >
-              <TopFeatureCard {...feature} />
-            </motion.div>
+            <MarketingBentoCell key={feature.title} featured={index === 0}>
+              <motion.div
+                className="h-full"
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.35, delay: index * 0.06 }}
+              >
+                <TopFeatureCard {...feature} featured={index === 0} />
+              </motion.div>
+            </MarketingBentoCell>
           ))}
-        </div>
+        </MarketingBentoGrid>
       </div>
-    </section>
+    </MarketingSection>
   );
 }
 
@@ -404,37 +425,56 @@ function TopFeatureCard({
   title,
   description,
   bullets,
+  featured = false,
 }: {
   icon: typeof BrainCircuit;
   tag: string;
   title: string;
   description: string;
   bullets: readonly string[];
+  featured?: boolean;
 }) {
   return (
-    <Card as="div" surface="marketing" interactive className="h-full p-6 hover:bg-background/70">
+    <MarketingBentoCard>
       <div className="flex items-start justify-between gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-muted text-accent-strong">
-          <Icon className="h-5 w-5" aria-hidden="true" />
+        <div
+          className={cn(
+            "flex items-center justify-center rounded-xl bg-accent-muted text-accent-strong",
+            featured ? "h-12 w-12" : "h-10 w-10",
+          )}
+        >
+          <Icon className={featured ? "h-6 w-6" : "h-5 w-5"} aria-hidden="true" />
         </div>
-        <span className="rounded-full border border-border bg-secondary/80 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
-          {tag}
-        </span>
+        <span className="marketing-tag">{tag}</span>
       </div>
-      <h3 className="mt-4 text-base font-semibold tracking-tight">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-muted">{description}</p>
-      <ul className="mt-4 space-y-1.5">
+      <h3
+        className={cn(
+          "mt-5 font-semibold tracking-tight text-foreground",
+          featured ? "text-xl sm:text-2xl" : "text-base",
+        )}
+      >
+        {title}
+      </h3>
+      <p
+        className={cn(
+          "mt-2 leading-relaxed text-muted",
+          featured ? "text-sm sm:text-base" : "text-sm",
+        )}
+      >
+        {description}
+      </p>
+      <ul className={cn("mt-5 space-y-2", featured && "mt-auto pt-4")}>
         {bullets.map((bullet) => (
           <li
             key={bullet}
-            className="flex items-start gap-2 text-xs leading-relaxed text-muted"
+            className="flex items-start gap-2 text-xs leading-relaxed text-muted sm:text-sm"
           >
-            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
+            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
             {bullet}
           </li>
         ))}
       </ul>
-    </Card>
+    </MarketingBentoCard>
   );
 }
 
@@ -743,23 +783,13 @@ function SectionHeading({
   centered?: boolean;
 }) {
   return (
-    <div className={cn(centered && cn(pageProseClass, "text-center"))}>
-      <p className="text-xs font-semibold uppercase tracking-wider text-accent-strong">
-        {eyebrow}
-      </p>
-      <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-        {title}
-      </h2>
-      <p
-        className={cn(
-          "mt-3 text-sm leading-relaxed text-muted sm:text-base",
-          centered && "mx-auto",
-          !centered && pageProseClass,
-        )}
-      >
-        {description}
-      </p>
-    </div>
+    <MarketingSectionHeader
+      eyebrow={eyebrow}
+      title={title}
+      description={description}
+      centered={centered}
+      className={!centered ? pageProseClass : undefined}
+    />
   );
 }
 
@@ -768,11 +798,13 @@ function SignInWithGoogleButton({
   signingIn,
   size = "lg",
   variant = "default",
+  className,
 }: {
   onClick: () => void;
   signingIn: boolean;
   size?: "sm" | "lg";
   variant?: "default" | "outline";
+  className?: string;
 }) {
   return (
     <Button
@@ -782,8 +814,9 @@ function SignInWithGoogleButton({
       size={size}
       variant={variant}
       className={cn(
-        size === "lg" && "min-w-55 rounded-xl px-8",
-        variant === "default" && "shadow-lg shadow-black/20",
+        size === "lg" && "min-w-55 rounded-full px-8",
+        variant === "default" && "shadow-lg shadow-black/25",
+        className,
       )}
     >
       {signingIn ? (
