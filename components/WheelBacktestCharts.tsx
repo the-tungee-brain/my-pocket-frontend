@@ -26,6 +26,12 @@ import {
   type WheelZoomPreset,
 } from "@/lib/wheelBacktestChartData";
 import { formatDateMMDDYYYY } from "@/lib/dateUtils";
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import {
+  appSectionLabelClass,
+  appTabBarClass,
+  appTabLinkClass,
+} from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 const CHART_HEIGHT = 440;
@@ -346,36 +352,30 @@ export function WheelBacktestCharts({
   }
 
   return (
-    <div className={cn("space-y-3", className)}>
-      <div>
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-            Backtest charts
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {ZOOM_OPTIONS.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => setZoom(opt.id)}
-                className={cn(
-                  "rounded-md px-2 py-0.5 text-[10px] font-medium transition-colors",
-                  zoom === opt.id
-                    ? "bg-accent-muted text-accent-strong"
-                    : "bg-secondary/60 text-muted hover:text-foreground",
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle title="Backtest charts" />
+        <div className={cn(appTabBarClass, "shrink-0")}>
+          {ZOOM_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setZoom(opt.id)}
+              className={appTabLinkClass(zoom === opt.id)}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
+      </CardHeader>
+      <CardBody spacious className="space-y-5">
+      <div>
 
         <CrosshairNoteBar note={displayNote} />
 
         <div
           ref={containerRef}
-          className="h-[440px] min-h-[440px] max-h-[440px] w-full shrink-0 overflow-hidden rounded-lg border border-border/60"
+          className="h-[440px] min-h-[440px] max-h-[440px] w-full shrink-0 overflow-hidden rounded-lg border border-border"
           style={{ height: CHART_HEIGHT, minHeight: CHART_HEIGHT, maxHeight: CHART_HEIGHT }}
         />
         {bundle.rangeLabel && (
@@ -396,10 +396,8 @@ export function WheelBacktestCharts({
 
       {bundle.phaseStrip.length > 1 && (
         <div>
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
-            Strategy phase
-          </p>
-          <div className="flex h-3 w-full overflow-hidden rounded-md border border-border/50">
+          <p className={cn(appSectionLabelClass, "mb-3")}>Strategy phase</p>
+          <div className="flex h-3 w-full overflow-hidden rounded-lg border border-border">
             {bundle.phaseStrip.map((segment, index) => (
               <div
                 key={`${segment.date}-${index}`}
@@ -427,10 +425,8 @@ export function WheelBacktestCharts({
 
       {annualSummary.length > 0 && (
         <div>
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
-            Return by year
-          </p>
-          <div className="flex items-end gap-2 rounded-lg border border-border/60 bg-secondary/20 px-3 py-3">
+          <p className={cn(appSectionLabelClass, "mb-3")}>Return by year</p>
+          <div className="flex items-end gap-2 rounded-xl bg-muted-bg/60 px-3 py-3">
             {annualSummary.map((row) => {
               const heightPct = Math.min(
                 100,
@@ -445,9 +441,7 @@ export function WheelBacktestCharts({
                   <span
                     className={cn(
                       "text-[10px] font-medium tabular-nums",
-                      positive
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-red-600 dark:text-red-400",
+                      positive ? "text-success" : "text-danger",
                     )}
                   >
                     {positive ? "+" : ""}
@@ -471,13 +465,13 @@ export function WheelBacktestCharts({
         </div>
       )}
 
-      <p className="text-[10px] leading-relaxed text-muted">
+      <p className="text-xs leading-relaxed text-muted">
         Same {formatUsd(startingCashUsd, 0)} starting wallet as buy &amp; hold.
         Move the crosshair — the note above tracks stock and strike lines. Zoom
-        narrows the window;
-        PDF export remains tables for print-friendly layout.
+        narrows the window; PDF export remains tables for print-friendly layout.
       </p>
-    </div>
+      </CardBody>
+    </Card>
   );
 }
 
@@ -485,7 +479,7 @@ function CrosshairNoteBar({ note }: { note: CrosshairNote | null }) {
   if (!note) {
     return (
       <div
-        className="mb-2 flex items-center rounded-lg border border-border/60 bg-secondary/30 px-3 py-2 text-[10px] text-muted"
+        className="mb-2 flex items-center rounded-xl bg-muted-bg/60 px-3 py-2 text-xs text-muted"
         style={{ minHeight: HOVER_PANEL_HEIGHT }}
       >
         Move the crosshair on the chart to see stock and strike prices.

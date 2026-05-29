@@ -26,11 +26,12 @@ import {
   DividendHistoryCharts,
   DividendRecentPaymentsTable,
   DividendSnowballScenarioCard,
-  DividendSnowballSkeleton,
+  DividendsPageSkeleton,
   DividendSnowballStats,
   DividendSummaryStats,
 } from "./DividendSnowballSections";
 import { hasProFeature } from "@/lib/planFeatures";
+import { cn } from "@/lib/utils";
 
 type Props = {
   symbol: string;
@@ -235,28 +236,33 @@ export function DividendsPageContent({ symbol }: Props) {
   const showInitialLoading = isLoading && !history;
   const showUnavailable = !showInitialLoading && !history;
 
-  const unavailableState = (
-    <EmptyState
-      icon={TrendingUp}
-      title="Dividend data unavailable"
-      description={
-        error ??
-        "Historic dividend data is not available for this symbol right now."
-      }
-      variant="solid"
-      className="py-4"
-    />
-  );
+  if (showInitialLoading) {
+    return <DividendsPageSkeleton />;
+  }
+
+  if (showUnavailable) {
+    return (
+      <EmptyState
+        icon={TrendingUp}
+        title="Dividend data unavailable"
+        description={
+          error ??
+          "Historic dividend data is not available for this symbol right now."
+        }
+        variant="solid"
+        className="py-4"
+      />
+    );
+  }
+
+  if (!history) {
+    return null;
+  }
 
   return (
     <PageSplit
       main={
-        showInitialLoading ? (
-          <DividendSnowballSkeleton />
-        ) : showUnavailable ? (
-          unavailableState
-        ) : history ? (
-          <>
+        <>
             <ResearchSectionCard
               title="Dividend history"
               description="How annual totals and each payout per share have changed over time"
@@ -271,15 +277,12 @@ export function DividendsPageContent({ symbol }: Props) {
               icon={TrendingUp}
             >
               <div
-                className={
-                  isFetching ? "space-y-4 opacity-60 transition-opacity" : "space-y-4"
-                }
+                className={cn(
+                  "space-y-4 transition-opacity",
+                  isFetching && "opacity-60",
+                )}
+                aria-busy={isFetching}
               >
-                {isFetching ? (
-                  <p className="text-xs text-muted" aria-live="polite">
-                    Updating projections…
-                  </p>
-                ) : null}
                 <DividendSummaryStats
                   history={history}
                   sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
@@ -305,11 +308,9 @@ export function DividendsPageContent({ symbol }: Props) {
                 </ProFeatureGate>
               </div>
             </ResearchSectionCard>
-          </>
-        ) : null
+        </>
       }
       aside={
-        history ? (
           <ResearchSectionCard
             title="Recent payments"
             description={
@@ -326,7 +327,6 @@ export function DividendsPageContent({ symbol }: Props) {
               </p>
             ) : null}
           </ResearchSectionCard>
-        ) : null
       }
     />
   );

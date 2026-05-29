@@ -1,16 +1,19 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { BarChart3 } from "lucide-react";
 import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { WheelBacktestPanel } from "@/components/WheelBacktestPanel";
+import { Card, CardBody } from "@/components/ui/Card";
 import { hasProFeature } from "@/lib/planFeatures";
 import { parseWheelBacktestSearchParams } from "@/lib/wheelBacktestRoutes";
-import Link from "next/link";
+import { appStackClass } from "@/lib/appUi";
+import { pageSectionClass } from "@/lib/pageLayout";
+import { cn } from "@/lib/utils";
 
 type Props = {
   symbol: string;
@@ -33,52 +36,46 @@ export function WheelBacktestPageContent({ symbol }: Props) {
   const wheel = profile?.wheel;
   const isWheel = profile?.primaryStrategy === "wheel";
 
+  const pageDescription = useMemo(() => {
+    const band =
+      wheel?.targetDeltaMin != null && wheel?.targetDeltaMax != null
+        ? ` (${wheel.targetDeltaMin.toFixed(2)}–${wheel.targetDeltaMax.toFixed(2)})`
+        : "";
+    return `One cash-secured put contract at a time using your wheel delta band${band} and your chosen DTE. Model premiums — not live option quotes.`;
+  }, [wheel?.targetDeltaMin, wheel?.targetDeltaMax]);
+
   if (!accessToken) {
     return (
-      <p className="rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted">
-        Sign in to run a wheel backtest.
-      </p>
+      <Card className={pageSectionClass}>
+        <CardBody className="text-sm text-muted">
+          Sign in to run a wheel backtest.
+        </CardBody>
+      </Card>
     );
   }
 
   if (!isWheel) {
     return (
-      <div className="rounded-xl border border-border/80 bg-secondary/20 px-4 py-5 text-sm">
-        <p className="font-medium text-foreground">Wheel backtest</p>
-        <p className="mt-2 text-muted">
-          Historical wheel simulation is available when your primary strategy is
-          the wheel. You can change that in settings.
-        </p>
-        <Link
-          href="/settings?tab=strategy"
-          className="mt-3 inline-flex text-sm font-medium text-accent-strong hover:underline"
-        >
-          Strategy settings
-        </Link>
-      </div>
+      <Card className={pageSectionClass}>
+        <CardBody className="space-y-3 text-sm">
+          <p className="font-medium text-foreground">Wheel backtest</p>
+          <p className="text-muted">
+            Historical wheel simulation is available when your primary strategy is
+            the wheel. You can change that in settings.
+          </p>
+          <Link
+            href="/settings?tab=strategy"
+            className="inline-flex font-medium text-accent-strong hover:underline"
+          >
+            Strategy settings
+          </Link>
+        </CardBody>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-start gap-2">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-          <BarChart3 className="h-4 w-4" aria-hidden />
-        </div>
-        <div>
-          <h1 className="text-base font-semibold text-foreground">
-            Wheel backtest · {upperSymbol}
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
-            One cash-secured put contract at a time using your wheel delta band
-            {wheel?.targetDeltaMin != null && wheel?.targetDeltaMax != null
-              ? ` (${wheel.targetDeltaMin.toFixed(2)}–${wheel.targetDeltaMax.toFixed(2)})`
-              : ""}{" "}
-            and your chosen DTE. Model premiums — not live option quotes.
-          </p>
-        </div>
-      </div>
-
+    <div className={cn(appStackClass, pageSectionClass)}>
       <ProFeatureGate feature="wheelBacktest" allowed={backtestAllowed}>
         <WheelBacktestPanel
           accessToken={accessToken}
@@ -94,6 +91,8 @@ export function WheelBacktestPageContent({ symbol }: Props) {
           defaultCallStrikeMode={urlOptions.callStrikeMode ?? "delta"}
           autoRun={backtestAllowed ? urlOptions.autoRun : false}
           variant="research"
+          pageTitle={`Wheel backtest · ${upperSymbol}`}
+          pageDescription={pageDescription}
         />
       </ProFeatureGate>
     </div>

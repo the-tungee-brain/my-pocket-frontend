@@ -146,19 +146,27 @@ const SORT_OPTIONS: { id: SortKey; label: string }[] = [
   { id: "alerts", label: "Alerts" },
 ];
 
+const METRIC_TH_CLASS =
+  "w-[18%] min-w-[5.5rem] whitespace-nowrap px-4 py-2.5 text-right";
+const METRIC_TD_CLASS =
+  "w-[18%] min-w-[5.5rem] whitespace-nowrap px-4 py-3 text-right tabular-nums";
+
 function StatChip({
   label,
   value,
   tone = "neutral",
+  className,
 }: {
   label: string;
   value: string;
   tone?: "neutral" | "positive" | "negative";
+  className?: string;
 }) {
   return (
     <KpiStat
       label={label}
       value={value}
+      className={cn("min-w-0 w-full", className)}
       tone={
         tone === "positive"
           ? "positive"
@@ -283,14 +291,21 @@ function PortfolioHoldingsTable({
   return (
     <>
       <div className="hidden overflow-x-auto scrollbar-dark md:block">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="w-full table-fixed text-sm">
+          <colgroup>
+            <col className="w-[34%]" />
+            <col className="w-[10%]" />
+            <col className="w-[18%]" />
+            <col className="w-[18%]" />
+            <col className="w-[20%]" />
+          </colgroup>
           <thead className="sticky top-0 z-10 border-b border-border bg-surface-elevated/95 text-[11px] font-medium uppercase tracking-wide text-muted backdrop-blur-sm">
             <tr>
               <th className="px-4 py-2.5 text-left">Symbol</th>
-              <th className="px-4 py-2.5 text-right">Weight</th>
-              <th className="px-4 py-2.5 text-right">Value</th>
-              <th className="px-4 py-2.5 text-right">Open P/L</th>
-              <th className="px-4 py-2.5 text-right">Today</th>
+              <th className="whitespace-nowrap px-4 py-2.5 text-right">Weight</th>
+              <th className={METRIC_TH_CLASS}>Value</th>
+              <th className={METRIC_TH_CLASS}>Open P/L</th>
+              <th className={METRIC_TH_CLASS}>Today</th>
             </tr>
           </thead>
           <tbody>
@@ -327,15 +342,13 @@ function PortfolioHoldingsTable({
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
+                    <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-muted">
                       {weightPct != null ? `${weightPct.toFixed(1)}%` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {formatUsd(totalValue)}
-                    </td>
+                    <td className={METRIC_TD_CLASS}>{formatUsd(totalValue)}</td>
                     <td
                       className={cn(
-                        "px-4 py-3 text-right tabular-nums",
+                        METRIC_TD_CLASS,
                         openPL == null
                           ? "text-muted"
                           : openPL >= 0
@@ -359,7 +372,7 @@ function PortfolioHoldingsTable({
                     </td>
                     <td
                       className={cn(
-                        "px-4 py-3 text-right tabular-nums",
+                        METRIC_TD_CLASS,
                         dayPL >= 0 ? "text-success" : "text-danger",
                       )}
                     >
@@ -445,20 +458,20 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
         <div className="mt-1">
           <PositionTypeChip position={p} siblingPositions={sorted} />
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-          <div>
+        <div className="mt-3 grid grid-cols-4 gap-3 text-xs">
+          <div className="min-w-0">
             <p className="text-muted">Qty</p>
             <p className="mt-0.5 tabular-nums font-medium">
               {qty.toLocaleString()}
             </p>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-muted">Value</p>
             <p className="mt-0.5 tabular-nums font-medium">
               {formatUsd(p.marketValue)}
             </p>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-muted">Open P/L</p>
             <p
               className={cn(
@@ -474,7 +487,7 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
               {openPLPctVal != null && ` (${openPLPctVal.toFixed(1)}%)`}
             </p>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-muted">Today</p>
             <p
               className={cn(
@@ -494,14 +507,21 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
     <>
       <div className="hidden md:block">
         <div className="overflow-x-auto scrollbar-dark">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="w-full table-fixed text-sm">
+          <colgroup>
+            <col className="w-[30%]" />
+            <col className="w-[10%]" />
+            <col className="w-[20%]" />
+            <col className="w-[20%]" />
+            <col className="w-[20%]" />
+          </colgroup>
           <thead className="sticky top-0 z-10 border-b border-border bg-surface-elevated/95 text-[11px] font-medium uppercase tracking-wide text-muted backdrop-blur-sm">
             <tr>
               <th className="px-4 py-2.5 text-left">Leg</th>
-              <th className="px-4 py-2.5 text-right">Qty</th>
-              <th className="px-4 py-2.5 text-right">Value</th>
-              <th className="px-4 py-2.5 text-right">Open P/L</th>
-              <th className="px-4 py-2.5 text-right">Today</th>
+              <th className="whitespace-nowrap px-4 py-2.5 text-right">Qty</th>
+              <th className={METRIC_TH_CLASS}>Value</th>
+              <th className={METRIC_TH_CLASS}>Open P/L</th>
+              <th className={METRIC_TH_CLASS}>Today</th>
             </tr>
           </thead>
           <tbody>
@@ -521,15 +541,15 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
                     </p>
                     <PositionTypeChip position={p} siblingPositions={sorted} />
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                     {qty.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  <td className={METRIC_TD_CLASS}>
                     {formatUsd(p.marketValue)}
                   </td>
                   <td
                     className={cn(
-                      "px-4 py-3 text-right tabular-nums",
+                      METRIC_TD_CLASS,
                       openPL == null
                         ? "text-muted"
                         : openPL >= 0
@@ -541,7 +561,7 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
                   </td>
                   <td
                     className={cn(
-                      "px-4 py-3 text-right tabular-nums",
+                      METRIC_TD_CLASS,
                       p.currentDayProfitLoss >= 0
                         ? "text-success"
                         : "text-danger",
@@ -570,20 +590,20 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
               <div className="mt-1">
                 <PositionTypeChip position={p} siblingPositions={sorted} />
               </div>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                <div>
+              <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
+                <div className="min-w-0">
                   <p className="text-muted">Qty</p>
                   <p className="tabular-nums font-medium">
                     {qty.toLocaleString()}
                   </p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-muted">Value</p>
                   <p className="tabular-nums font-medium">
                     {formatUsd(p.marketValue)}
                   </p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-muted">Open P/L</p>
                   <p
                     className={cn(
@@ -598,7 +618,7 @@ function SymbolLegsTable({ positions }: { positions: Position[] }) {
                     {openPL != null ? formatSignedUsd(openPL) : "—"}
                   </p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-muted">Today</p>
                   <p
                     className={cn(
@@ -1050,7 +1070,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
         </div>
 
         {!isPortfolio && (
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="mt-3 grid w-full grid-cols-3 gap-2">
             <StatChip label="Value" value={formatUsd(totalValue)} />
             <StatChip
               label="Open P/L"

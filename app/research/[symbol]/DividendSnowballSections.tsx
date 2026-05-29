@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, History, LineChart, TrendingUp } from "lucide-react";
 import type {
   AnnualDividendIncome,
   DividendAdvancedSnowballScenario,
@@ -19,7 +19,9 @@ import {
 } from "@/lib/dividendHistory";
 import { formatExpenseRatio } from "@/lib/etfHoldings";
 import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { PageSplit } from "@/components/PageShell";
+import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 
 const BAR_FILL = "#34d399";
 const BAR_FILL_PARTIAL = "#6ee7b7";
@@ -1275,7 +1277,7 @@ export function DividendRecentPaymentsTable({
 
 export function DividendSnowballSkeleton() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
           <Skeleton key={index} className="h-20 rounded-xl" />
@@ -1284,5 +1286,40 @@ export function DividendSnowballSkeleton() {
       <Skeleton className="h-56 rounded-xl" />
       <Skeleton className="h-56 rounded-xl" />
     </div>
+  );
+}
+
+export function DividendsPageSkeleton() {
+  return (
+    <PageSplit
+      main={
+        <>
+          <ResearchSectionCard
+            title="Dividend history"
+            description="How annual totals and each payout per share have changed over time"
+            icon={LineChart}
+          >
+            <Skeleton className="h-56 rounded-xl" />
+          </ResearchSectionCard>
+
+          <ResearchSectionCard
+            title="Dividend snowball"
+            description="Historic payout growth and cash income on your share count"
+            icon={TrendingUp}
+          >
+            <DividendSnowballSkeleton />
+          </ResearchSectionCard>
+        </>
+      }
+      aside={
+        <ResearchSectionCard
+          title="Recent payments"
+          description="Latest dividend payments per share"
+          icon={History}
+        >
+          <SkeletonList rows={6} rowClassName="h-10 rounded-lg" />
+        </ResearchSectionCard>
+      }
+    />
   );
 }

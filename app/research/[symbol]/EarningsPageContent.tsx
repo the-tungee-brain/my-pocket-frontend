@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   ChevronDown,
-  Loader2,
   Newspaper,
   TrendingUp,
 } from "lucide-react";
@@ -22,7 +21,11 @@ import {
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { PageSplit } from "@/components/PageShell";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import {
+  ResearchSectionSkeleton,
+  Skeleton,
+  SkeletonList,
+} from "@/components/ui/Skeleton";
 import {
   beatLabelText,
   formatEps,
@@ -199,16 +202,72 @@ function TranscriptSection({
   );
 }
 
-function AnalysisLoadingState() {
+function EarningsAnalysisSkeleton() {
   return (
-    <div className="space-y-3 border-t border-border pt-6">
-      <div className="flex items-center gap-2 text-xs text-muted">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-        Generating AI analysis for this quarter…
-      </div>
-      <Skeleton className="h-4 w-3/4" />
-      <SkeletonList rows={2} rowClassName="h-20 w-full rounded-lg" />
+    <div className="space-y-6 border-t border-border pt-6" aria-hidden>
+      <Skeleton className="h-20 rounded-xl" />
+      <ResearchSectionSkeleton
+        headerWidth="w-20"
+        rows={1}
+        rowClassName="h-14 rounded-xl"
+      />
+      <ResearchSectionSkeleton
+        headerWidth="w-28"
+        rows={2}
+        rowClassName="h-12 rounded-xl"
+      />
+      <ResearchSectionSkeleton
+        headerWidth="w-32"
+        rows={3}
+        rowClassName="h-8 rounded-lg"
+      />
+      <Skeleton className="h-16 rounded-xl" />
     </div>
+  );
+}
+
+function EarningsPageSkeleton() {
+  return (
+    <PageSplit
+      main={
+        <ResearchSectionCard
+          title="Earnings history"
+          description="Quarterly results, surprises, transcripts, and AI summaries"
+          icon={TrendingUp}
+        >
+          <div className="space-y-6">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton
+                  key={index}
+                  className="h-16 w-28 flex-none rounded-lg"
+                />
+              ))}
+            </div>
+            <ResearchSectionSkeleton
+              headerWidth="w-40"
+              rows={1}
+              rowClassName="h-12 rounded-xl"
+            />
+            <SkeletonList rows={8} rowClassName="h-10 rounded-lg" />
+            <EarningsAnalysisSkeleton />
+          </div>
+        </ResearchSectionCard>
+      }
+      aside={
+        <ResearchSectionCard
+          title="Next earnings"
+          description="Upcoming report date and current estimates"
+          icon={CalendarDays}
+        >
+          <ResearchSectionSkeleton
+            headerWidth="w-36"
+            rows={3}
+            rowClassName="h-12 rounded-xl"
+          />
+        </ResearchSectionCard>
+      }
+    />
   );
 }
 
@@ -252,7 +311,7 @@ function EarningsDetailPanel({
 
       {error && !analysis ? <ErrorBanner message={error} /> : null}
 
-      {showAnalysisLoading ? <AnalysisLoadingState /> : null}
+      {showAnalysisLoading ? <EarningsAnalysisSkeleton /> : null}
 
       {!showAnalysisLoading && analysis ? (
         <div className="space-y-6 border-t border-border pt-6">
@@ -373,12 +432,7 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
   const selectedItem = historyWithKeys.find((item) => item.key === selectedKey);
 
   if (isLoading && !data) {
-    return (
-      <div className="app-stack">
-        <Skeleton className="h-28 rounded-2xl" />
-        <Skeleton className="h-48 rounded-2xl" />
-      </div>
-    );
+    return <EarningsPageSkeleton />;
   }
 
   if (error) {

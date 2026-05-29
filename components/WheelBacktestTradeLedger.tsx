@@ -4,6 +4,9 @@ import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { WheelBacktestTrade } from "@/app/types/wheelBacktest";
 import { formatDateMMDDYYYY } from "@/lib/dateUtils";
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { appSectionLabelClass } from "@/lib/appUi";
+import { responsiveTableScrollClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 
 function formatUsd(value: number, fraction = 0) {
@@ -22,8 +25,8 @@ function formatSignedUsd(value: number) {
 
 function cashFlowTone(value: number | null | undefined) {
   if (value == null || value === 0) return "text-muted";
-  if (value > 0) return "text-emerald-600 dark:text-emerald-400";
-  return "text-red-600 dark:text-red-400";
+  if (value > 0) return "text-success";
+  return "text-danger";
 }
 
 type CycleGroup = {
@@ -93,27 +96,32 @@ export function WheelBacktestTradeLedger({
   }
 
   return (
-    <div className="rounded-lg border border-border/60">
-      <button
-        type="button"
-        onClick={() => setExpanded((open) => !open)}
-        className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
-      >
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-          Trade log — one ~month cycle per group ({grouped.cycles.length} cycles)
-        </span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 text-muted transition-transform",
-            expanded && "rotate-180",
-          )}
-          aria-hidden
-        />
-      </button>
+    <Card>
+      <CardHeader bordered className="py-0">
+        <button
+          type="button"
+          onClick={() => setExpanded((open) => !open)}
+          className="flex w-full items-center justify-between gap-2 py-3 text-left"
+        >
+          <div className="min-w-0 flex-1">
+            <CardTitle
+              title={`Trade log (${grouped.cycles.length} cycles)`}
+              description="One ~month cycle per group"
+            />
+          </div>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-muted transition-transform",
+              expanded && "rotate-180",
+            )}
+            aria-hidden
+          />
+        </button>
+      </CardHeader>
 
       {expanded && (
-        <div className="space-y-4 border-t border-border/60 px-3 pb-3 pt-2">
-          <p className="text-[10px] leading-relaxed text-muted">
+        <CardBody spacious className="space-y-4 border-t border-border/50 pt-4">
+          <p className="text-xs leading-relaxed text-muted">
             Each group is one option round (~30 trading days): sell put → expire or
             assign → sell call (if assigned) → expire or called away. Cash secured
             on the put row is strike × 100 (collateral held until expiry/assignment).
@@ -136,29 +144,31 @@ export function WheelBacktestTradeLedger({
               Show {hiddenCount} more cycles
             </button>
           )}
-        </div>
+        </CardBody>
       )}
-    </div>
+    </Card>
   );
 }
 
 function TradeTable({ title, trades }: { title: string; trades: WheelBacktestTrade[] }) {
   return (
     <div>
-      <p className="mb-1.5 text-xs font-semibold text-foreground">{title}</p>
-      <div className="overflow-x-auto rounded-md border border-border/50">
-        <table className="w-full min-w-[700px] text-left text-[11px]">
+      <p className={cn(appSectionLabelClass, "mb-3 normal-case tracking-normal")}>
+        {title}
+      </p>
+      <div className={responsiveTableScrollClass}>
+        <table className="w-full min-w-[700px] text-left text-xs">
           <thead>
-            <tr className="border-b border-border/60 bg-secondary/30 text-muted">
-              <th className="px-2 py-1.5 font-medium">Date</th>
-              <th className="px-2 py-1.5 font-medium">Step</th>
-              <th className="px-2 py-1.5 font-medium text-right">Strike</th>
-              <th className="px-2 py-1.5 font-medium text-right">Stock</th>
-              <th className="px-2 py-1.5 font-medium text-right">Cash secured</th>
-              <th className="px-2 py-1.5 font-medium text-right">Premium</th>
-              <th className="px-2 py-1.5 font-medium text-right">DTE</th>
-              <th className="px-2 py-1.5 font-medium">Expires</th>
-              <th className="px-2 py-1.5 font-medium text-right">Cash flow</th>
+            <tr className="border-b border-border text-muted">
+              <th className="px-4 py-2.5 font-medium">Date</th>
+              <th className="px-4 py-2.5 font-medium">Step</th>
+              <th className="px-4 py-2.5 font-medium text-right">Strike</th>
+              <th className="px-4 py-2.5 font-medium text-right">Stock</th>
+              <th className="px-4 py-2.5 font-medium text-right">Cash secured</th>
+              <th className="px-4 py-2.5 font-medium text-right">Premium</th>
+              <th className="px-4 py-2.5 font-medium text-right">DTE</th>
+              <th className="px-4 py-2.5 font-medium">Expires</th>
+              <th className="px-4 py-2.5 font-medium text-right">Cash flow</th>
             </tr>
           </thead>
           <tbody>
@@ -167,10 +177,10 @@ function TradeTable({ title, trades }: { title: string; trades: WheelBacktestTra
                 key={`${trade.date}-${trade.action}-${index}`}
                 className="border-b border-border/40 text-foreground"
               >
-                <td className="whitespace-nowrap px-2 py-1.5 text-muted">
+                <td className="whitespace-nowrap px-4 py-2.5 text-muted">
                   {formatDateMMDDYYYY(trade.date)}
                 </td>
-                <td className="max-w-[12rem] px-2 py-1.5">
+                <td className="max-w-[12rem] px-4 py-2.5">
                   <span className="font-medium">{trade.label ?? trade.action}</span>
                   {trade.premiumPerShare != null && trade.premiumUsd > 0 && (
                     <span className="mt-0.5 block text-[10px] text-muted">
@@ -188,20 +198,20 @@ function TradeTable({ title, trades }: { title: string; trades: WheelBacktestTra
                     </span>
                   )}
                 </td>
-                <td className="px-2 py-1.5 text-right tabular-nums">
+                <td className="px-4 py-2.5 text-right tabular-nums">
                   {trade.strike != null ? `$${trade.strike.toFixed(2)}` : "—"}
                 </td>
-                <td className="px-2 py-1.5 text-right tabular-nums text-muted">
+                <td className="px-4 py-2.5 text-right tabular-nums text-muted">
                   {trade.stockPrice != null
                     ? `$${trade.stockPrice.toFixed(2)}`
                     : `$${trade.close.toFixed(2)}`}
                 </td>
-                <td className="px-2 py-1.5 text-right tabular-nums text-amber-700 dark:text-amber-400">
+                <td className="px-4 py-2.5 text-right tabular-nums text-warning">
                   {trade.collateralReservedUsd != null && trade.collateralReservedUsd > 0
                     ? formatUsd(trade.collateralReservedUsd)
                     : "—"}
                 </td>
-                <td className="px-2 py-1.5 text-right tabular-nums">
+                <td className="px-4 py-2.5 text-right tabular-nums">
                   {trade.premiumUsd > 0 ? formatUsd(trade.premiumUsd) : "—"}
                   {trade.feesUsd > 0 && (
                     <span className="block text-[10px] text-muted">
@@ -209,17 +219,17 @@ function TradeTable({ title, trades }: { title: string; trades: WheelBacktestTra
                     </span>
                   )}
                 </td>
-                <td className="px-2 py-1.5 text-right tabular-nums text-muted">
+                <td className="px-4 py-2.5 text-right tabular-nums text-muted">
                   {trade.dteDays ?? "—"}
                 </td>
-                <td className="whitespace-nowrap px-2 py-1.5 text-muted">
+                <td className="whitespace-nowrap px-4 py-2.5 text-muted">
                   {trade.expirationDate
                     ? formatDateMMDDYYYY(trade.expirationDate)
                     : "—"}
                 </td>
                 <td
                   className={cn(
-                    "px-2 py-1.5 text-right font-medium tabular-nums",
+                    "px-4 py-2.5 text-right font-medium tabular-nums",
                     cashFlowTone(trade.cashFlowUsd),
                   )}
                 >

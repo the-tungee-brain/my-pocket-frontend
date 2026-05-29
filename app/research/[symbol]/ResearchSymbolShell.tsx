@@ -92,7 +92,9 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
 
       <div
         className={cn(
-          "sticky top-0 z-20 bg-background/95 backdrop-blur-md transition-[padding] duration-200",
+          "sticky top-0 z-20 transition-[padding] duration-200",
+          scrollCollapsed &&
+            "border-b border-[var(--app-border-subtle)] bg-background/80 backdrop-blur-sm",
           collapsed ? "pb-2 pt-1.5" : "pb-3 pt-2",
         )}
       >

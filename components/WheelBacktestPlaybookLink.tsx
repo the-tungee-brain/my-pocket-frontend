@@ -6,7 +6,11 @@ import { BarChart3, ChevronRight, Lock } from "lucide-react";
 import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { wheelBacktestPath } from "@/lib/wheelBacktestRoutes";
 import { hasProFeature } from "@/lib/planFeatures";
-import { appIconBoxClass, appInsetClass, appSectionLabelClass } from "@/lib/appUi";
+import {
+  appCalloutClass,
+  appIconBoxClass,
+  appSectionLabelClass,
+} from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -25,7 +29,7 @@ export function WheelBacktestPlaybookLink({ symbols, className }: Props) {
   }
 
   return (
-    <div className={cn(appInsetClass, "min-h-0", className)}>
+    <div className={cn(appCalloutClass, "min-h-0", className)}>
       <div className="flex items-start gap-3">
         <div className={appIconBoxClass}>
           <BarChart3 className="h-4 w-4" aria-hidden />
