@@ -542,92 +542,87 @@ function formatYieldPct(value: number | null | undefined): string {
   return `${value.toFixed(2)}%`;
 }
 
-/** Historic dividend facts — available on Free and Pro. */
+export const DIVIDEND_KPI_GRID_CLASS =
+  "grid grid-cols-1 items-stretch gap-2 sm:grid-cols-2 lg:grid-cols-3";
+
+/** Dividend KPI cards — historic facts plus optional snowball projection stats. */
 export function DividendSummaryStats({
   history,
   sharePrice,
   isEtf = false,
   expenseRatio,
+  includeSnowball = false,
 }: {
   history: DividendHistoryContext;
   sharePrice?: number | null;
   isEtf?: boolean;
   expenseRatio?: string | null;
+  includeSnowball?: boolean;
 }) {
   const currentYieldPct = resolveCurrentYieldPct(history, sharePrice);
-
-  return (
-    <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-3">
-      <StatCard
-        label="Dividend streak"
-        value={
-          history.consecutiveAnnualIncreases > 0
-            ? `${history.consecutiveAnnualIncreases} yrs`
-            : "—"
-        }
-        hint="Years in a row the annual dividend per share increased"
-      />
-      <StatCard
-        label="Current yield"
-        value={formatYieldPct(currentYieldPct)}
-        hint="Latest annual dividend per share ÷ your share price"
-      />
-      {isEtf ? (
-        <StatCard
-          label="Expense ratio"
-          value={formatExpenseRatio(expenseRatio) ?? "—"}
-          hint="Annual fund fee deducted from ETF returns"
-        />
-      ) : null}
-      <StatCard
-        label="5Y dividend CAGR"
-        value={formatPct(history.cagr5yPct)}
-        hint="Average annual dividend growth, completed years"
-      />
-    </div>
-  );
-}
-
-/** Pro snowball projection summary (requires API scenario). */
-export function DividendSnowballStats({
-  history,
-  sharePrice: _sharePrice,
-}: {
-  history: DividendHistoryContext;
-  sharePrice?: number | null;
-}) {
-  const { scenario } = history;
-  if (!scenario) return null;
-
-  const { currentYear, endYear, projectYears } = dividendProjectionWindow(
-    scenario.projectYears,
-  );
+  const scenario = includeSnowball ? history.scenario : null;
   const priceGrowthPct =
-    history.priceCagrPct ?? scenario.advanced?.priceCagrPct ?? null;
+    scenario != null
+      ? (history.priceCagrPct ?? scenario.advanced?.priceCagrPct ?? null)
+      : null;
+  const projectionWindow =
+    scenario != null ? dividendProjectionWindow(scenario.projectYears) : null;
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-2">
+      <div className={DIVIDEND_KPI_GRID_CLASS}>
         <StatCard
-          label="5Y price growth"
-          value={formatPct(priceGrowthPct)}
-          hint="Average annual share price growth, applied in projections"
+          label="Dividend streak"
+          value={
+            history.consecutiveAnnualIncreases > 0
+              ? `${history.consecutiveAnnualIncreases} yrs`
+              : "—"
+          }
+          hint="Years in a row the annual dividend per share increased"
         />
         <StatCard
-          label={`${projectYears}-year total`}
-          value={formatUsd(scenario.totalCollected, {
-            maximumFractionDigits: 0,
-          })}
-          hint={`Estimated dividend cash collected ${currentYear}–${endYear}`}
+          label="Current yield"
+          value={formatYieldPct(currentYieldPct)}
+          hint="Latest annual dividend per share ÷ your share price"
         />
+        {isEtf ? (
+          <StatCard
+            label="Expense ratio"
+            value={formatExpenseRatio(expenseRatio) ?? "—"}
+            hint="Annual fund fee deducted from ETF returns"
+          />
+        ) : null}
+        <StatCard
+          label="5Y dividend CAGR"
+          value={formatPct(history.cagr5yPct)}
+          hint="Average annual dividend growth, completed years"
+        />
+        {scenario && projectionWindow ? (
+          <>
+            <StatCard
+              label="5Y price growth"
+              value={formatPct(priceGrowthPct)}
+              hint="Average annual share price growth, applied in projections"
+            />
+            <StatCard
+              label={`${projectionWindow.projectYears}-year total`}
+              value={formatUsd(scenario.totalCollected, {
+                maximumFractionDigits: 0,
+              })}
+              hint={`Estimated dividend cash collected ${projectionWindow.currentYear}–${projectionWindow.endYear}`}
+            />
+          </>
+        ) : null}
       </div>
-      <p className="text-xs leading-relaxed text-muted">
-        Projections combine historic dividend growth (5Y CAGR when available),{" "}
-        {priceGrowthPct != null ? `${priceGrowthPct.toFixed(1)}%` : "estimated"}{" "}
-        annual price growth, and your share count. Portfolio value also reflects
-        price growth; enable DRIP below to reinvest dividends into more shares.
-        Past growth rates are not guaranteed to continue.
-      </p>
+      {scenario && projectionWindow ? (
+        <p className="text-xs leading-relaxed text-muted">
+          Projections combine historic dividend growth (5Y CAGR when available),{" "}
+          {priceGrowthPct != null ? `${priceGrowthPct.toFixed(1)}%` : "estimated"}{" "}
+          annual price growth, and your share count. Portfolio value also reflects
+          price growth; enable DRIP below to reinvest dividends into more shares.
+          Past growth rates are not guaranteed to continue.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -1383,20 +1378,18 @@ export function DividendRecentPaymentsTable({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-dark">
-        <table className="min-w-full text-left text-xs">
-          <thead className="sticky top-0 z-10 bg-surface-elevated/95 text-muted backdrop-blur-sm">
-            <tr>
-              <th className="pb-2 pr-4 font-medium">Payment date</th>
-              <th className="pb-2 font-medium">Amount / share</th>
+        <table className="min-w-full text-left text-xs text-foreground">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="py-2 pr-4 font-normal">Payment date</th>
+              <th className="py-2 font-normal tabular-nums">Amount / share</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((payment) => (
               <tr key={payment.date} className="border-t border-border">
-                <td className="py-2 pr-4 text-foreground">
-                  {formatDate(payment.date)}
-                </td>
-                <td className="py-2 tabular-nums text-foreground">
+                <td className="py-2 pr-4">{formatDate(payment.date)}</td>
+                <td className="py-2 tabular-nums">
                   ${payment.amountPerShare.toFixed(4)}
                 </td>
               </tr>
@@ -1411,9 +1404,9 @@ export function DividendRecentPaymentsTable({
 export function DividendSnowballSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-20 rounded-xl" />
+      <div className={DIVIDEND_KPI_GRID_CLASS}>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Skeleton key={index} className="h-24 rounded-xl" />
         ))}
       </div>
       <Skeleton className="h-56 rounded-xl" />

@@ -29,7 +29,6 @@ import {
   DividendRecentPaymentsTable,
   DividendSnowballScenarioCard,
   DividendsPageSkeleton,
-  DividendSnowballStats,
   DividendSummaryStats,
 } from "./DividendSnowballSections";
 import { hasProFeature } from "@/lib/planFeatures";
@@ -320,16 +319,13 @@ export function DividendsPageContent({ symbol }: Props) {
             sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
             isEtf={isEtf}
             expenseRatio={etfHoldings?.expense_ratio}
+            includeSnowball={snowballAllowed}
           />
           <ProFeatureGate
             feature="dividendSnowball"
             allowed={snowballAllowed}
           >
             <div className="app-stack w-full max-w-none">
-              <DividendSnowballStats
-                history={history}
-                sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
-              />
               <DividendSnowballScenarioCard
                 history={history}
                 scenarioParams={displayScenarioParams}
