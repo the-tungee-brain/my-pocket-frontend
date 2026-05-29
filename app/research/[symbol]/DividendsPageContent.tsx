@@ -15,6 +15,7 @@ import type { Position } from "@/app/types/schwab";
 import type { DividendScenarioParams } from "@/app/types/research";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { PageSplit } from "@/components/PageShell";
+import { appStackClass } from "@/lib/appUi";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   defaultDividendInvestmentUsd,
@@ -23,12 +24,12 @@ import {
   resolveSnowballPriceCagrPct,
 } from "@/lib/dividendHistory";
 import {
+  DIVIDEND_HISTORY_PANEL_MIN_H,
   DividendHistoryCharts,
   DividendRecentPaymentsTable,
   DividendSnowballScenarioCard,
   DividendsPageSkeleton,
-  DividendSnowballStats,
-  DividendSummaryStats,
+  DividendMetricStats,
 } from "./DividendSnowballSections";
 import { hasProFeature } from "@/lib/planFeatures";
 import { cn } from "@/lib/utils";
@@ -79,8 +80,9 @@ function buildInitialScenarioParams(
       sharePrice: price,
       shares,
       projectYears: 10,
-      reinvestDividends: false,
+      reinvestDividends: true,
       priceCagrPct: null,
+      annualContributionUsd: 0,
     };
   }
 
@@ -93,8 +95,9 @@ function buildInitialScenarioParams(
         ? roundToTwo(investmentUsd / price)
         : null,
     projectYears: 10,
-    reinvestDividends: false,
+    reinvestDividends: true,
     priceCagrPct: null,
+    annualContributionUsd: 0,
   };
 }
 
@@ -260,57 +263,20 @@ export function DividendsPageContent({ symbol }: Props) {
   }
 
   return (
-    <PageSplit
-      main={
-        <>
-            <ResearchSectionCard
-              title="Dividend history"
-              description="How annual totals and each payout per share have changed over time"
-              icon={LineChart}
-            >
-              <DividendHistoryCharts history={history} />
-            </ResearchSectionCard>
-
-            <ResearchSectionCard
-              title="Dividend snowball"
-              description="Historic payout growth and cash income on your share count"
-              icon={TrendingUp}
-            >
-              <div
-                className={cn(
-                  "space-y-4 transition-opacity",
-                  isFetching && "opacity-60",
-                )}
-                aria-busy={isFetching}
-              >
-                <DividendSummaryStats
-                  history={history}
-                  sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
-                  isEtf={isEtf}
-                  expenseRatio={etfHoldings?.expense_ratio}
-                />
-                <ProFeatureGate
-                  feature="dividendSnowball"
-                  allowed={snowballAllowed}
-                >
-                  <div className="app-stack">
-                    <DividendSnowballStats
-                      history={history}
-                      sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
-                    />
-                    <DividendSnowballScenarioCard
-                      history={history}
-                      scenarioParams={displayScenarioParams}
-                      advancedMetrics={advancedMetrics}
-                      onScenarioChange={setScenarioParams}
-                    />
-                  </div>
-                </ProFeatureGate>
-              </div>
-            </ResearchSectionCard>
-        </>
-      }
-      aside={
+    <div className={appStackClass}>
+      <PageSplit
+        className="lg:items-stretch"
+        main={
+          <ResearchSectionCard
+            title="Dividend history"
+            description="How annual totals and each payout per share have changed over time"
+            icon={LineChart}
+            className="flex h-full flex-col"
+          >
+            <DividendHistoryCharts history={history} />
+          </ResearchSectionCard>
+        }
+        aside={
           <ResearchSectionCard
             title="Recent payments"
             description={
@@ -319,15 +285,66 @@ export function DividendsPageContent({ symbol }: Props) {
                 : "Latest dividend payments per share"
             }
             icon={History}
+            className="flex h-full flex-col"
           >
-            <DividendRecentPaymentsTable payments={history.recentPayments} />
-            {history.cagr10yPct != null ? (
-              <p className="mt-3 text-[11px] text-muted">
-                10-year dividend CAGR: {history.cagr10yPct.toFixed(1)}%
-              </p>
-            ) : null}
+            <div
+              className={cn(
+                DIVIDEND_HISTORY_PANEL_MIN_H,
+                "flex flex-col",
+              )}
+            >
+              <DividendRecentPaymentsTable
+                payments={
+                  history.payments.length > 0
+                    ? history.payments
+                    : history.recentPayments
+                }
+              />
+              {history.cagr10yPct != null ? (
+                <p className="mt-3 shrink-0 text-[11px] text-muted">
+                  10-year dividend CAGR: {history.cagr10yPct.toFixed(1)}%
+                </p>
+              ) : null}
+            </div>
           </ResearchSectionCard>
-      }
-    />
+        }
+      />
+
+      <ResearchSectionCard
+        title="Dividend snowball"
+        description="Historic payout growth and cash income on your share count"
+        icon={TrendingUp}
+        className="w-full max-w-none"
+      >
+        <div
+          className={cn(
+            "space-y-4 transition-opacity",
+            isFetching && "opacity-60",
+          )}
+          aria-busy={isFetching}
+        >
+          <DividendMetricStats
+            history={history}
+            sharePrice={scenarioParams.sharePrice ?? marketSharePrice}
+            isEtf={isEtf}
+            expenseRatio={etfHoldings?.expense_ratio}
+            showProjection={snowballAllowed}
+          />
+          <ProFeatureGate
+            feature="dividendSnowball"
+            allowed={snowballAllowed}
+          >
+            <div className="app-stack">
+              <DividendSnowballScenarioCard
+                history={history}
+                scenarioParams={displayScenarioParams}
+                advancedMetrics={advancedMetrics}
+                onScenarioChange={setScenarioParams}
+              />
+            </div>
+          </ProFeatureGate>
+        </div>
+      </ResearchSectionCard>
+    </div>
   );
 }
