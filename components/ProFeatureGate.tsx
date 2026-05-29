@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
 type Props = {
   feature: ProFeatureId;
   allowed: boolean;
-  children: ReactNode;
+  /** Shown when allowed; omit for upsell-only (aside) placements. */
+  children?: ReactNode;
   className?: string;
   /** Override default title from PRO_FEATURE_LABELS */
   title?: string;
@@ -26,7 +27,7 @@ export function ProFeatureGate({
   description,
 }: Props) {
   if (allowed) {
-    return <>{children}</>;
+    return children ? <>{children}</> : null;
   }
 
   const meta = PRO_FEATURE_LABELS[feature];
