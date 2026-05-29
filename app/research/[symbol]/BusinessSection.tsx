@@ -9,7 +9,6 @@ import { useSession } from "next-auth/react";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import {
   ResearchAtAGlanceBox,
-  ResearchAsideCard,
   ResearchBulletList,
   ResearchProseText,
   ResearchTextBlock,
@@ -136,9 +135,9 @@ function BusinessOverviewContent({ business }: { business: BusinessBlock }) {
       ) : null}
 
       {moatText ? (
-        <ResearchAsideCard title="Moat & differentiators" tone="accent">
+        <ResearchTextBlock title="Moat & differentiators">
           <ResearchProseText text={moatText} />
-        </ResearchAsideCard>
+        </ResearchTextBlock>
       ) : null}
 
       {(business.growthDrivers?.length || business.keyRisks?.length) ? (
