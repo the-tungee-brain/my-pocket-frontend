@@ -64,7 +64,7 @@ export function StreetOwnershipSection({
       : insiders.slice(0, INSIDER_TRANSACTION_PREVIEW);
 
   return (
-    <div className="space-y-4">
+    <div className="app-stack">
       {(ownership?.insidersPctHeld != null ||
         ownership?.institutionsPctHeld != null) && (
         <div className="grid grid-cols-2 gap-2">

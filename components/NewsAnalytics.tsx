@@ -15,6 +15,7 @@ import {
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { appHighlightClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 import { Activity, List, Newspaper, RefreshCw, Sparkles } from "lucide-react";
@@ -248,8 +249,8 @@ function NewsArticleRow({ item }: { item: EnrichedNewsItem }) {
 
 function NewsOverviewSkeleton() {
   return (
-    <div className="space-y-5">
-      <div className="space-y-2 rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
+    <div className="app-stack">
+      <div className={cn(appHighlightClass, "space-y-2")}>
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-4/5" />
@@ -285,7 +286,7 @@ function NewsContextAside({ data }: { data: StockNewsView }) {
       : Math.max(0, Math.min(100, (actionabilityScore / 5) * 100));
 
   return (
-    <div className="space-y-5">
+    <div className="app-stack">
       <ResearchTextBlock title="Dominant driver">
         <p className="font-medium">{formatMetadataValue(data.dominant_driver)}</p>
       </ResearchTextBlock>
@@ -329,7 +330,7 @@ function NewsAnalysisAside({ data }: { data: StockNewsView }) {
   const risks = data.risks.slice(0, 4);
 
   return (
-    <div className="space-y-5">
+    <div className="app-stack">
       {insights.length > 0 ? (
         <ResearchBulletList title="Key insights" items={insights} />
       ) : null}
@@ -421,7 +422,7 @@ export default function NewsAnalytics({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="app-stack">
       <PageSplit
         main={
           <>
@@ -438,7 +439,7 @@ export default function NewsAnalytics({
               {isLoading && !data ? (
                 <NewsOverviewSkeleton />
               ) : data ? (
-                <div className="space-y-5">
+                <div className="app-stack">
                   <ResearchAtAGlanceBox title="What matters">
                     <p className="text-sm font-medium leading-relaxed text-foreground">
                       {data.summary}
@@ -467,7 +468,7 @@ export default function NewsAnalytics({
               {isLoading && !data ? (
                 <NewsHeadlinesSkeleton />
               ) : data ? (
-                <div className="space-y-4">
+                <div className="app-stack">
                   <div
                     className="flex flex-wrap gap-1.5"
                     role="group"
@@ -518,7 +519,7 @@ export default function NewsAnalytics({
         }
         aside={
           isLoading && !data ? (
-            <div className="space-y-4" aria-hidden>
+            <div className="app-stack" aria-hidden>
               <Skeleton className="h-40 rounded-xl" />
               <Skeleton className="h-48 rounded-xl" />
             </div>

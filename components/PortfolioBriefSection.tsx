@@ -35,6 +35,7 @@ import {
   hasPortfolioChangeDetails,
   PortfolioChangesBody,
 } from "@/components/PortfolioChangesSection";
+import { appChipClass, appIconBoxClass, appKpiClass, appSectionLabelClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 
@@ -72,7 +73,7 @@ function AlertChip({
       disabled={disabled || !onRun}
       title={alert.reason}
       onClick={() => onRun?.(alert)}
-      className="inline-flex max-w-full flex-col items-start gap-0.5 rounded-xl border border-border bg-background px-3 py-2 text-left transition hover:border-accent/40 hover:bg-muted-bg disabled:opacity-60"
+      className={appChipClass}
     >
       <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
         <Icon className="h-3.5 w-3.5 shrink-0 text-accent-strong" aria-hidden />
@@ -191,7 +192,7 @@ export function PortfolioBriefSection({
             </>
           }
           icon={
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+            <div className={appIconBoxClass}>
               <Sparkles className="h-4 w-4" aria-hidden />
             </div>
           }
@@ -199,15 +200,15 @@ export function PortfolioBriefSection({
       </CardHeader>
 
       {error && (
-        <div className="px-4 pt-3">
+        <div className="px-5 pt-4">
           <ErrorBanner message={error} />
         </div>
       )}
 
-      <CardBody className="space-y-4 py-4">
+      <CardBody spacious className="space-y-5">
           {(changesLoading || hasChanges || changes?.summary) && (
             <div>
-              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+              <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
                 <GitCompareArrows className="h-3.5 w-3.5" aria-hidden />
                 Since yesterday
               </div>
@@ -224,7 +225,7 @@ export function PortfolioBriefSection({
           ) : (
             <>
               {digest?.macroRegime && (
-                <div className="rounded-xl border border-border bg-background/60 px-3 py-2.5">
+                <div className={appKpiClass}>
                   <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                     <TrendingUp className="h-3.5 w-3.5" aria-hidden />
                     Macro
@@ -237,7 +238,7 @@ export function PortfolioBriefSection({
 
               {!!digest?.macroNews?.length && (
                 <div>
-                  <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+                  <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
                     <Newspaper className="h-3.5 w-3.5" aria-hidden />
                     Market headlines
                   </div>
@@ -245,7 +246,7 @@ export function PortfolioBriefSection({
                     {digest.macroNews.slice(0, 5).map((item, index) => (
                       <li
                         key={`${item.headline}-${index}`}
-                        className="rounded-xl border border-border bg-background/60 px-3 py-2"
+                        className={appKpiClass}
                       >
                         {item.source && (
                           <div className="flex flex-wrap items-center gap-2 text-[11px]">
@@ -284,7 +285,7 @@ export function PortfolioBriefSection({
 
               {!!digest?.sectorWeights?.length && (
                 <div>
-                  <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+                  <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
                     <PieChart className="h-3.5 w-3.5" aria-hidden />
                     Sector allocation
                   </div>
@@ -319,7 +320,7 @@ export function PortfolioBriefSection({
 
               {!!digest?.earningsThisWeek?.length && (
                 <div>
-                  <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+                  <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
                     <CalendarDays className="h-3.5 w-3.5" aria-hidden />
                     Earnings this week
                   </div>
@@ -339,7 +340,7 @@ export function PortfolioBriefSection({
 
               {!!digest?.topNews?.length && (
                 <div>
-                  <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+                  <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
                     <Newspaper className="h-3.5 w-3.5" aria-hidden />
                     Top holdings news
                   </div>
@@ -347,7 +348,7 @@ export function PortfolioBriefSection({
                     {digest.topNews.slice(0, 4).map((item) => (
                       <li
                         key={`${item.symbol}-${item.headline}`}
-                        className="rounded-xl border border-border bg-background/60 px-3 py-2"
+                        className={appKpiClass}
                       >
                         <div className="flex flex-wrap items-center gap-2 text-[11px]">
                           <Link
@@ -392,7 +393,7 @@ export function PortfolioBriefSection({
 
               {!!signals.length && (
                 <div>
-                  <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+                  <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
                     <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
                     {signals.some((signal) => signal.kind === "holding")
                       ? "Top holdings"
@@ -402,7 +403,7 @@ export function PortfolioBriefSection({
                     {signals.slice(0, 5).map((signal, index) => (
                       <li
                         key={`${signal.kind}-${signal.symbol ?? "portfolio"}-${index}`}
-                        className="flex items-start gap-2 rounded-xl border border-border bg-background/60 px-3 py-2"
+                        className={cn(appKpiClass, "flex items-start gap-2")}
                       >
                         <span
                           className={cn(

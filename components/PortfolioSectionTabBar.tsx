@@ -1,5 +1,6 @@
 "use client";
 
+import { appTabBarClass, appTabLinkClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import type { PortfolioSectionId } from "@/app/contexts/PortfolioSectionContext";
 
@@ -24,10 +25,7 @@ export function PortfolioSectionTabBar({
 }: Props) {
   return (
     <div
-      className={cn(
-        "mx-auto mb-4 flex w-full rounded-xl border border-border bg-secondary p-1",
-        className,
-      )}
+      className={cn(appTabBarClass, "w-full", className)}
       role="tablist"
       aria-label="Portfolio sections"
     >
@@ -42,19 +40,17 @@ export function PortfolioSectionTabBar({
             aria-selected={active}
             onClick={() => onChange(section.id)}
             className={cn(
-              "flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition sm:gap-1.5 sm:px-3 sm:py-2 sm:text-sm",
-              active
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted hover:text-foreground",
+              appTabLinkClass(active),
+              "flex-1 justify-center",
             )}
           >
             <span>{section.label}</span>
             {badge > 0 && (
               <span
                 className={cn(
-                  "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                  "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
                   active
-                    ? "bg-accent-muted text-accent-strong"
+                    ? "bg-accent/20 text-accent-strong"
                     : "bg-muted-bg text-muted",
                 )}
               >

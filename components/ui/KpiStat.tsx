@@ -1,3 +1,4 @@
+import { appKpiClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type Tone = "default" | "positive" | "negative" | "warning";
@@ -29,7 +30,12 @@ export function KpiStat({
   const isHero = variant === "hero";
 
   return (
-    <div className={cn(isHero ? "min-w-0" : "rounded-xl border border-border bg-background/60 px-3 py-2.5", className)}>
+    <div
+      className={cn(
+        isHero ? "app-kpi--hero min-w-0" : appKpiClass,
+        className,
+      )}
+    >
       <p
         className={cn(
           "font-medium uppercase tracking-wide text-muted",

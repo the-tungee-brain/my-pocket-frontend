@@ -17,6 +17,7 @@ import {
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { buildBusinessAtAGlance } from "@/lib/businessArticle";
+import { appHighlightClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type BusinessSectionProps = {
@@ -25,8 +26,8 @@ type BusinessSectionProps = {
 
 function BusinessOverviewSkeleton() {
   return (
-    <div className="space-y-5">
-      <div className="space-y-2 rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
+    <div className="app-stack">
+      <div className={cn(appHighlightClass, "space-y-2")}>
         <Skeleton className="h-3 w-20" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-4/5" />
@@ -37,8 +38,8 @@ function BusinessOverviewSkeleton() {
         <Skeleton className="h-4 w-5/6" />
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
-        <Skeleton className="h-24 rounded-xl" />
-        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-lg" />
+        <Skeleton className="h-24 rounded-lg" />
       </div>
     </div>
   );
@@ -52,7 +53,7 @@ export function BusinessSection({ symbol }: BusinessSectionProps) {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="app-stack">
       {error && !business ? <ErrorBanner message={error} /> : null}
 
       <ResearchSectionCard
@@ -81,7 +82,7 @@ function BusinessOverviewContent({ business }: { business: BusinessBlock }) {
   const whatTheyDo = business.whatTheyDo?.trim() ?? "";
 
   return (
-    <div className="space-y-5">
+    <div className="app-stack">
       {atAGlance.length > 0 ? (
         <ResearchAtAGlanceBox>
           <ul className="space-y-1.5 text-sm font-medium leading-relaxed text-foreground">

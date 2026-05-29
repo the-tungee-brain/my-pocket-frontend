@@ -1,6 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
+import { appHighlightClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import {
   buildBigPictureSections,
@@ -45,8 +46,8 @@ function sentimentBadge(sentiment: StockSummary["sentiment"]) {
 
 export function BigPictureOverviewSkeleton() {
   return (
-    <div className="space-y-5">
-      <div className="space-y-2 rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
+    <div className="app-stack">
+      <div className={cn(appHighlightClass, "space-y-2")}>
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-4/5" />
@@ -58,8 +59,8 @@ export function BigPictureOverviewSkeleton() {
         <Skeleton className="h-4 w-5/6" />
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
-        <Skeleton className="h-24 rounded-xl" />
-        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-lg" />
+        <Skeleton className="h-24 rounded-lg" />
       </div>
     </div>
   );
@@ -87,7 +88,7 @@ export function BigPictureArticle({
       icon={Info}
       action={sentimentBadge(summary.sentiment)}
     >
-      <div className="space-y-5">
+      <div className="app-stack">
         <ResearchAtAGlanceBox title="Key takeaways">
           <ul className="space-y-1.5 text-sm font-medium leading-relaxed text-foreground">
             {keyTakeaways.map((point) => (

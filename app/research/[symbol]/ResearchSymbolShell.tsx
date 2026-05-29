@@ -16,6 +16,7 @@ import { usePositionsContext } from "@/app/Providers";
 import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { shouldShowOptionsTab } from "@/lib/symbolOptions";
+import { appStackClass, appStackSmClass } from "@/lib/appUi";
 import { pageShellClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 import {
@@ -109,7 +110,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
           />
         )}
 
-        <div className={cn("space-y-3", collapsed && "space-y-2")}>
+        <div className={cn(appStackSmClass, collapsed && "gap-2")}>
           <CompanySnapshot symbol={symbol} compact={collapsed} />
           {!collapsed && <StrategySymbolPlaybookStrip symbol={symbol} />}
           <ResearchTabBar
@@ -141,7 +142,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
         </div>
       </div>
 
-      <div className="mt-6 space-y-4">{children}</div>
+      <div className={cn("mt-8", appStackClass)}>{children}</div>
     </div>
   );
 }

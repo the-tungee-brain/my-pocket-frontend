@@ -32,6 +32,7 @@ import {
   MarketingBentoCell,
   MarketingBentoGrid,
   MarketingCanvas,
+  MarketingCTACard,
   MarketingDisplayTitle,
   MarketingEyebrow,
   MarketingLead,
@@ -726,44 +727,46 @@ function FinalCTASection({
   signInError: string | null;
 }) {
   return (
-    <section className="border-t border-border bg-secondary/30 py-16 lg:py-20">
+    <MarketingSection band>
       <div className={pageShellStandaloneClass}>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4 }}
-          className="relative overflow-hidden rounded-3xl border border-border bg-background/60 px-6 py-12 text-center sm:px-12 sm:py-16"
         >
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--accent)_18%,transparent),transparent_60%)]" />
+          <MarketingCTACard className="px-6 py-12 sm:px-12 sm:py-16">
+            <div className="relative">
+              <MarketingDisplayTitle
+                as="h2"
+                className="text-2xl font-semibold sm:text-3xl"
+              >
+                Start with the portfolio you already have
+              </MarketingDisplayTitle>
+              <MarketingLead className="mx-auto mt-3 max-w-lg text-sm sm:text-base">
+                Sign in with Google, connect Schwab read-only, and get your first
+                morning brief and AI analysis in minutes.
+              </MarketingLead>
 
-          <div className="relative">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Start with the portfolio you already have
-            </h2>
-            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted sm:text-base">
-              Sign in with Google, connect Schwab read-only, and get your first
-              morning brief and AI analysis in minutes.
-            </p>
-
-            <div className="mt-8 flex flex-col items-center gap-3">
-              <SignInWithGoogleButton
-                onClick={onSignIn}
-                signingIn={signingIn}
-                size="lg"
-              />
-              {signInError && (
-                <ErrorBanner
-                  message={signInError}
-                  onRetry={onSignIn}
-                  className="max-w-md text-left"
+              <div className="mt-8 flex flex-col items-center gap-3">
+                <SignInWithGoogleButton
+                  onClick={onSignIn}
+                  signingIn={signingIn}
+                  size="lg"
                 />
-              )}
+                {signInError && (
+                  <ErrorBanner
+                    message={signInError}
+                    onRetry={onSignIn}
+                    className="max-w-md text-left"
+                  />
+                )}
+              </div>
             </div>
-          </div>
+          </MarketingCTACard>
         </motion.div>
       </div>
-    </section>
+    </MarketingSection>
   );
 }
 

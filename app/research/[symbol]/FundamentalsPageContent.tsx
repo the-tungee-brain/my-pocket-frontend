@@ -76,7 +76,7 @@ export function FundamentalsPageContent({
     ) : null;
 
   return (
-    <div className="space-y-4">
+    <div className="app-stack">
       {error && <ErrorBanner message={error} />}
 
       <PageSplit

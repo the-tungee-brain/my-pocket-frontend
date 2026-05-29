@@ -371,7 +371,7 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
 
   if (isLoading && !data) {
     return (
-      <div className="space-y-4">
+      <div className="app-stack">
         <Skeleton className="h-28 rounded-2xl" />
         <Skeleton className="h-48 rounded-2xl" />
       </div>
@@ -396,7 +396,7 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
       description="Upcoming report date and current estimates"
       icon={CalendarDays}
     >
-      <div className="space-y-4">
+      <div className="app-stack">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-foreground">
@@ -461,7 +461,7 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="app-stack">
       <PageSplit main={historyCard} aside={upcomingCard ?? undefined} />
     </div>
   );

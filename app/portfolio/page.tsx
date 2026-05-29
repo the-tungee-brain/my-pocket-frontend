@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { usePositionsContext } from "../Providers";
 import {
@@ -16,6 +15,7 @@ import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
 import { AnalysisPanel, type PortfolioNavigationRequest } from "@/components/AnalysisPanel";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
+import { PortfolioStrategyNudge } from "@/components/portfolio/PortfolioStrategyNudge";
 import { StrategyPlaybookPanel } from "@/components/StrategyPlaybookPanel";
 import { StrategyOnboardingWizard } from "@/components/StrategyOnboardingWizard";
 import { PortfolioSectionTabBar } from "@/components/PortfolioSectionTabBar";
@@ -49,9 +49,11 @@ import type { StrategyNextAction } from "@/app/types/strategy";
 import {
   playbookActionAskable,
 } from "@/lib/strategyPlaybook";
+import { appStackClass } from "@/lib/appUi";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { PageShell, PageSplit } from "@/components/PageShell";
-import { cn } from "@/lib/utils";
+
+const sectionClass = pageSectionClass;
 
 export default function PortfolioPage() {
   const {
@@ -336,8 +338,37 @@ export default function PortfolioPage() {
     todayBadgeCount,
   ]);
 
+  const openStrategySetup = useCallback(() => {
+    clearStrategyOnboardingDismissed();
+    setStrategyDismissed(false);
+    setShowStrategySetup(true);
+  }, []);
+
+  const strategyPlaybook = showStrategyJourney && strategyProfile?.primaryStrategy && (
+    <StrategyPlaybookPanel
+      className={sectionClass}
+      strategy={strategyProfile.primaryStrategy}
+      accessToken={sessionAccessToken}
+      wheelSymbols={strategyProfile.wheel?.wheelSymbols ?? []}
+      wheelTargetDeltaMin={strategyProfile.wheel?.targetDeltaMin}
+      wheelTargetDeltaMax={strategyProfile.wheel?.targetDeltaMax}
+      wheelDteDays={30}
+      recommendations={strategyRecommendations}
+      loading={strategyLoading}
+      refreshing={refreshingPlaybook}
+      onRefresh={() => void handlePlaybookRefresh()}
+      catalogItem={
+        catalog.find((item) => item.id === strategyProfile.primaryStrategy) ?? null
+      }
+      onRunAction={handlePlaybookAsk}
+      onConnectSchwab={() => void connectSchwab()}
+      connectingSchwab={connectingSchwab}
+      defaultCollapsed={todayBadgeCount > 0}
+    />
+  );
+
   return (
-    <PageShell>
+    <PageShell className={appStackClass}>
       {schwabReauth && (
         <SchwabConnectionBanner
           message={schwabReauth.message}
@@ -345,7 +376,7 @@ export default function PortfolioPage() {
         />
       )}
 
-      {error && !schwabReauth && <ErrorBanner message={error} className="mb-3" />}
+      {error && !schwabReauth && <ErrorBanner message={error} />}
 
       {showStrategyWizard && sessionAccessToken && (
         <StrategyOnboardingWizard
@@ -361,62 +392,13 @@ export default function PortfolioPage() {
         />
       )}
 
-      {!showStrategyWizard && needsOnboarding && sessionAccessToken && (
-        <div
-          className={cn(
-            pageSectionClass,
-            "mb-4 rounded-xl border border-border bg-background/40 px-4 py-3 text-sm text-muted",
-          )}
-        >
-          <span>Set up your investing strategy for a guided checklist and next steps.</span>{" "}
-          <button
-            type="button"
-            onClick={() => {
-              clearStrategyOnboardingDismissed();
-              setStrategyDismissed(false);
-              setShowStrategySetup(true);
-            }}
-            className="font-medium text-accent-strong hover:underline"
-          >
-            Start onboarding
-          </button>
-          {" · "}
-          <Link href="/settings" className="font-medium text-accent-strong hover:underline">
-            Open settings
-          </Link>
-        </div>
-      )}
-
-      {showStrategyJourney && strategyProfile?.primaryStrategy && (
-        <StrategyPlaybookPanel
-          className={cn(pageSectionClass, "mb-6")}
-          strategy={strategyProfile.primaryStrategy}
-          accessToken={sessionAccessToken}
-          wheelSymbols={strategyProfile.wheel?.wheelSymbols ?? []}
-          wheelTargetDeltaMin={strategyProfile.wheel?.targetDeltaMin}
-          wheelTargetDeltaMax={strategyProfile.wheel?.targetDeltaMax}
-          wheelDteDays={30}
-          recommendations={strategyRecommendations}
-          loading={strategyLoading}
-          refreshing={refreshingPlaybook}
-          onRefresh={() => void handlePlaybookRefresh()}
-          catalogItem={
-            catalog.find((item) => item.id === strategyProfile.primaryStrategy) ??
-            null
-          }
-          onRunAction={handlePlaybookAsk}
-          onConnectSchwab={() => void connectSchwab()}
-          connectingSchwab={connectingSchwab}
-        />
-      )}
-
-      {!showStrategyWizard && !needsOnboarding && !showStrategyJourney && (
-        <PortfolioOnboarding className={pageSectionClass} />
+      {!showContent && !loading && (
+        <PortfolioOnboarding className={sectionClass} />
       )}
 
       {(showContent || loading) && (
         <PortfolioSnapshot
-          className={cn(pageSectionClass, "mb-4")}
+          className={sectionClass}
           loading={loading}
           allPositions={allPositions}
           symbols={symbols}
@@ -427,109 +409,129 @@ export default function PortfolioPage() {
       )}
 
       {showContent && (
-        <div className="sticky top-14 z-10 mb-4 border-b border-border/60 bg-background/95 pb-3 pt-1 backdrop-blur-md">
-          <PortfolioSectionTabBar
-            activeSection={activeSection}
-            onChange={handleSectionChange}
-            badges={{
-              today: todayBadgeCount,
-              activity: activityBadgeCount,
-            }}
-            className={cn(pageSectionClass, "mb-0")}
-          />
-        </div>
-      )}
-
-      {showContent && activeSection === "today" && (
-        <PageSplit
-          main={
-            <AnalysisPanel
-              mode="portfolio"
-              portfolioView="analysis"
-              positions={allPositions}
-              positionMap={positionMap}
-              liquidationValue={
-                account?.securitiesAccount.currentBalances.liquidationValue
-              }
-              symbolAlertMap={symbolAlertMap}
-              autoStart={pendingPortfolioAnalysis}
-              portfolioNavigation={portfolioNavigation}
-              onLoadingChange={setPortfolioAnalysisLoading}
-              onAskFollowUp={() => scrollToChat()}
-              className={pageSectionClass}
+        <>
+          {!showStrategyWizard && needsOnboarding && sessionAccessToken && (
+            <PortfolioStrategyNudge
+              className={sectionClass}
+              onStart={openStrategySetup}
             />
-          }
-          aside={
-            <>
-              <PortfolioAttentionSection
-                className={pageSectionClass}
-                taxItems={taxItems}
-                alerts={mergedAlerts}
-                attentionItems={attentionQueue}
-                suggestedActions={recentActivity?.suggestedActions ?? []}
-                onRunAlert={handleRunAlert}
-                onRunAttentionItem={handleRunAttentionItem}
-                onDismissAttention={handleDismissAttention}
-                onRunTax={handleTaxAlert}
-                onRunActionId={handleSuggestedAction}
-              />
+          )}
 
-              {showBriefSection && (
-                <PortfolioBriefSection
-                  className={pageSectionClass}
-                  brief={displayBrief}
-                  changes={morningBrief?.changes}
-                  changesLoading={briefLoading && !morningBrief}
-                  fallbackAlerts={proactiveAlerts}
-                  loading={briefLoading && !displayBrief}
-                  error={displayBrief ? null : briefError}
-                  lastUpdated={briefLastUpdated}
-                  onGoDeeper={handleAnalyzePortfolio}
-                  analyzeLoading={portfolioAnalysisLoading}
-                  hideSuggestedActions
+          <div className="sticky top-14 z-10 -mx-1 border-b border-border/60 bg-background/95 px-1 py-3 backdrop-blur-md sm:-mx-0">
+            <PortfolioSectionTabBar
+              activeSection={activeSection}
+              onChange={handleSectionChange}
+              badges={{
+                today: todayBadgeCount,
+                activity: activityBadgeCount,
+              }}
+            />
+          </div>
+
+          {activeSection === "today" && (
+            <PageSplit
+              main={
+                <div className={appStackClass}>
+                  {showBriefSection && (
+                    <PortfolioBriefSection
+                      className={sectionClass}
+                      brief={displayBrief}
+                      changes={morningBrief?.changes}
+                      changesLoading={briefLoading && !morningBrief}
+                      fallbackAlerts={proactiveAlerts}
+                      loading={briefLoading && !displayBrief}
+                      error={displayBrief ? null : briefError}
+                      lastUpdated={briefLastUpdated}
+                      onGoDeeper={handleAnalyzePortfolio}
+                      analyzeLoading={portfolioAnalysisLoading}
+                      hideSuggestedActions
+                    />
+                  )}
+
+                  {!showStrategyJourney && (
+                    <PortfolioOnboarding className={sectionClass} />
+                  )}
+
+                  <AnalysisPanel
+                    mode="portfolio"
+                    portfolioView="analysis"
+                    positions={allPositions}
+                    positionMap={positionMap}
+                    liquidationValue={
+                      account?.securitiesAccount.currentBalances.liquidationValue
+                    }
+                    symbolAlertMap={symbolAlertMap}
+                    autoStart={pendingPortfolioAnalysis}
+                    portfolioNavigation={portfolioNavigation}
+                    onLoadingChange={setPortfolioAnalysisLoading}
+                    onAskFollowUp={() => scrollToChat()}
+                    className={sectionClass}
+                  />
+                </div>
+              }
+              aside={
+                <div className={appStackClass}>
+                  <PortfolioAttentionSection
+                    className={sectionClass}
+                    taxItems={taxItems}
+                    alerts={mergedAlerts}
+                    attentionItems={attentionQueue}
+                    suggestedActions={recentActivity?.suggestedActions ?? []}
+                    onRunAlert={handleRunAlert}
+                    onRunAttentionItem={handleRunAttentionItem}
+                    onDismissAttention={handleDismissAttention}
+                    onRunTax={handleTaxAlert}
+                    onRunActionId={handleSuggestedAction}
+                  />
+                  {strategyPlaybook}
+                </div>
+              }
+            />
+          )}
+
+          {activeSection === "holdings" && (
+            <PageSplit
+              main={
+                <AnalysisPanel
+                  mode="portfolio"
+                  portfolioView="holdings"
+                  positions={allPositions}
+                  positionMap={positionMap}
+                  liquidationValue={
+                    account?.securitiesAccount.currentBalances.liquidationValue
+                  }
+                  symbolAlertMap={symbolAlertMap}
+                  className={sectionClass}
                 />
-              )}
-            </>
-          }
-        />
-      )}
-
-      {showContent && activeSection === "holdings" && (
-        <PageSplit
-          main={
-            <AnalysisPanel
-              mode="portfolio"
-              portfolioView="holdings"
-              positions={allPositions}
-              positionMap={positionMap}
-              liquidationValue={
-                account?.securitiesAccount.currentBalances.liquidationValue
               }
-              symbolAlertMap={symbolAlertMap}
-              className={cn(pageSectionClass, "mb-0")}
+              aside={
+                <div className={appStackClass}>
+                  <PortfolioRiskSection
+                    cashSecuredPutSummary={cashSecuredPutSummary}
+                    assignmentRiskSummary={assignmentRiskSummary}
+                    cashBalance={
+                      account?.securitiesAccount.currentBalances.cashBalance
+                    }
+                    className={sectionClass}
+                  />
+                  {strategyPlaybook}
+                </div>
+              }
             />
-          }
-          aside={
-            <PortfolioRiskSection
-              cashSecuredPutSummary={cashSecuredPutSummary}
-              assignmentRiskSummary={assignmentRiskSummary}
-              cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
-              className={cn(pageSectionClass, "mb-0")}
-            />
-          }
-        />
-      )}
+          )}
 
-      {showContent && activeSection === "activity" && sessionAccessToken && (
-        <RecentActivitySection
-          className={pageSectionClass}
-          accessToken={sessionAccessToken}
-          summary={recentActivity}
-          showFullHistory
-          onRefresh={() => refreshPositions(true)}
-          onRunSuggestedAction={handleSuggestedAction}
-          hideSuggestedActions
-        />
+          {activeSection === "activity" && sessionAccessToken && (
+            <RecentActivitySection
+              className={sectionClass}
+              accessToken={sessionAccessToken}
+              summary={recentActivity}
+              showFullHistory
+              onRefresh={() => refreshPositions(true)}
+              onRunSuggestedAction={handleSuggestedAction}
+              hideSuggestedActions
+            />
+          )}
+        </>
       )}
     </PageShell>
   );

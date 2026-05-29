@@ -21,6 +21,7 @@ import {
 import { wheelBacktestPath } from "@/lib/wheelBacktestRoutes";
 import { scrollToChat } from "@/lib/scrollToChat";
 import { symbolChatKey } from "@/lib/chatKeys";
+import { appEyebrowClass, appInsetClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -64,15 +65,14 @@ export function StrategySymbolPlaybookStrip({ symbol, className }: Props) {
   return (
     <section
       className={cn(
-        "rounded-xl border border-border bg-muted-bg/40 px-3 py-2.5",
+        appInsetClass,
+        "min-h-0",
         className,
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-            On your playbook
-          </p>
+          <p className={appEyebrowClass}>On your playbook</p>
           <p className="mt-0.5 text-xs font-medium text-foreground">
             {status?.statusLabel ?? "Tracking this symbol"}
             {status ? ` · ${playbookHoldBadge(status)}` : ""}

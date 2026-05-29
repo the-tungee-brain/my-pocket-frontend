@@ -21,7 +21,7 @@ type Props = {
 
 function LoadingBlock() {
   return (
-    <div className="space-y-4">
+    <div className="app-stack">
       <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3">
         {Array.from({ length: 4 }).map((_, index) => (
           <Skeleton key={index} className="h-16 rounded-xl" />
@@ -63,7 +63,7 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="app-stack">
         <ResearchSectionCard
           title="ETF composition"
           description="Holdings, sectors, and fund stats"
@@ -95,7 +95,7 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="app-stack">
       <ResearchSectionCard
         title="Fund stats"
         description="Size, cost, and income profile"
@@ -190,7 +190,7 @@ export function EtfHoldingsOverviewPreview({
       titleHref={symbolHubPath(symbol, "holdings")}
       className={className}
     >
-      <div className="space-y-4">
+      <div className="app-stack">
         <EtfFundStats holdings={holdings} />
         <EtfCompositionColumns
           sectorBreakdown={holdings.sector_breakdown}

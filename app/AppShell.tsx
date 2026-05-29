@@ -439,7 +439,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               id="main-content"
               className={cn(
                 appCanvasClass,
-                "relative overflow-x-hidden overflow-y-auto px-4 pt-3 pb-2 sm:px-6",
+                "relative overflow-x-hidden overflow-y-auto px-5 pt-4 pb-4 sm:px-8",
                 "max-md:pb-20",
               )}
             >

@@ -161,3 +161,18 @@ export function MarketingBentoCard({
 }) {
   return <div className={cn("marketing-bento-card", className)}>{children}</div>;
 }
+
+/** Bottom-of-page sign-in CTA — matches bento cards + teal marketing glow. */
+export function MarketingCTACard({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("marketing-cta-card text-center", className)}>
+      {children}
+    </div>
+  );
+}

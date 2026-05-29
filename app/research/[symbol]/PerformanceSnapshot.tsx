@@ -47,7 +47,7 @@ export function PerformanceSnapshot({ symbol, className }: Props) {
       ) : !perf ? (
         <p className="text-sm text-muted">Performance data is not available.</p>
       ) : (
-        <div className="space-y-4">
+        <div className="app-stack">
           <p className="text-sm leading-relaxed text-foreground">
             {perf.trendLabel}
           </p>

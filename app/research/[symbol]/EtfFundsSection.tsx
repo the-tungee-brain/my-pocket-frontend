@@ -91,7 +91,7 @@ export function EtfFundsSection({ funds, isLoading }: EtfFundsSectionProps) {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="app-stack">
       {(funds.category || funds.family || funds.legalType) && (
         <div className="flex flex-wrap gap-2">
           {funds.category ? (

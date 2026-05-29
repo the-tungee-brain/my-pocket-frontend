@@ -1,19 +1,21 @@
 /**
- * In-app design tokens (research, portfolio, chat). Marketing pages use `.marketing-*`.
- * ClawHub-inspired: dark grid, mono labels, uniform panels.
+ * In-app design tokens (research, portfolio, chat). Marketing uses `.marketing-*`.
  */
 
-/** Vertical rhythm between sections (16px). */
-export const appStackClass = "flex flex-col gap-4";
+/** Standard vertical gap between sections (20px). */
+export const appGapClass = "gap-5";
 
-export const appStackSmClass = "flex flex-col gap-3";
+/** Tighter gap for dense sub-sections (12px). */
+export const appGapSmClass = "gap-3";
 
-/** Page main column inside shell. */
+export const appStackClass = `flex flex-col ${appGapClass}`;
+
+export const appStackSmClass = `flex flex-col ${appGapSmClass}`;
+
 export const appMainClass = `min-w-0 ${appStackClass}`;
 
-/** Primary + sidebar split. */
 export const appSplitClass =
-  "grid gap-4 lg:grid-cols-[minmax(0,1.62fr)_minmax(240px,1fr)] lg:items-start lg:gap-4";
+  `grid ${appGapClass} lg:grid-cols-[minmax(0,1.62fr)_minmax(260px,1fr)] lg:items-start`;
 
 export const appPanelClass = "app-panel w-full max-w-none";
 
@@ -25,11 +27,27 @@ export const appPanelBodyClass = "app-panel__body";
 
 export const appPanelBodyLgClass = "app-panel__body app-panel__body--lg";
 
+export const appPanelFooterClass = "app-panel__footer";
+
 export const appIconBoxClass = "app-icon-box";
 
 export const appEyebrowClass = "app-eyebrow";
 
+export const appSectionLabelClass = "app-section-label";
+
 export const appHighlightClass = "app-highlight";
+
+export const appInsetClass = "app-inset";
+
+export const appKpiClass = "app-kpi";
+
+export const appChipClass = "app-chip";
+
+export const appStatGridClass = "app-stat-grid";
+
+export const appListClass = "app-list";
+
+export const appListRowClass = "app-list-row";
 
 export const appTabBarClass = "app-tab-bar";
 

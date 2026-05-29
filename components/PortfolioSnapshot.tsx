@@ -16,6 +16,11 @@ import type {
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
 import { sumOpenProfitLoss } from "@/lib/positionMetrics";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
+import {
+  appIconBoxClass,
+  appPanelFooterClass,
+  appStatGridClass,
+} from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -33,12 +38,13 @@ type Props = {
 function SnapshotSkeleton({ className }: { className?: string }) {
   return (
     <section className={cn("mx-auto w-full", className)} aria-hidden>
-      <div className="overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm">
-        <div className="border-b border-border bg-surface-elevated/50 px-4 py-3">
+      <Card>
+        <CardHeader>
           <Skeleton className="h-5 w-32" />
           <Skeleton className="mt-2 h-3 w-48" />
-        </div>
-        <div className="grid gap-4 px-4 py-5 sm:grid-cols-2">
+        </CardHeader>
+        <CardBody spacious>
+        <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-10 w-40" />
@@ -48,12 +54,13 @@ function SnapshotSkeleton({ className }: { className?: string }) {
             <Skeleton className="h-10 w-32" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 border-t border-border/70 px-4 py-3 sm:grid-cols-4">
+        <div className={appStatGridClass}>
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-14 rounded-xl" />
+            <Skeleton key={i} className="h-[4.5rem] rounded-lg" />
           ))}
         </div>
-      </div>
+        </CardBody>
+      </Card>
     </section>
   );
 }
@@ -130,7 +137,7 @@ export function PortfolioSnapshot({
             </>
           }
           icon={
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+            <div className={appIconBoxClass}>
               <BriefcaseBusiness className="h-4 w-4" aria-hidden />
             </div>
           }
@@ -156,7 +163,7 @@ export function PortfolioSnapshot({
       </CardHeader>
 
       {isInCall && (
-        <div className="border-b border-danger/30 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+        <div className="border-b border-danger/30 bg-danger/5 px-5 py-3 text-sm text-danger">
           {maintenanceCall > 0 && (
             <p>Maintenance call: {formatUsd(maintenanceCall)}</p>
           )}
@@ -167,8 +174,8 @@ export function PortfolioSnapshot({
         </div>
       )}
 
-      <CardBody className="space-y-4 py-4">
-        <div className="grid gap-6 sm:grid-cols-2">
+      <CardBody spacious className="space-y-5">
+        <div className="grid gap-5 sm:grid-cols-2">
           <KpiStat
             variant="hero"
             label="Total value"
@@ -188,7 +195,7 @@ export function PortfolioSnapshot({
           />
         </div>
 
-        <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border/70 pt-3 text-xs text-muted">
+        <div className="flex flex-wrap gap-x-5 gap-y-2 border-t border-border/70 pt-4 text-xs text-muted">
           {totalOpenPL != null && (
             <span className={cn("tabular-nums", openTone === "positive" && "text-success", openTone === "negative" && "text-danger")}>
               Open P/L {formatSignedUsd(totalOpenPL)}
@@ -209,7 +216,10 @@ export function PortfolioSnapshot({
             type="button"
             onClick={() => setDetailsOpen((open) => !open)}
             aria-expanded={detailsOpen}
-            className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-xs font-medium text-muted transition hover:bg-muted-bg/40 hover:text-foreground"
+            className={cn(
+              appPanelFooterClass,
+              "w-full text-left text-xs font-medium text-muted transition hover:bg-muted-bg/40 hover:text-foreground",
+            )}
           >
             Account details
             <ChevronDown
@@ -222,7 +232,7 @@ export function PortfolioSnapshot({
           </button>
 
           {detailsOpen && (
-            <div className="grid grid-cols-2 gap-2 border-t border-border/70 px-4 py-3 sm:grid-cols-4">
+            <div className={cn(appStatGridClass, "border-t border-border/70")}>
               <KpiStat label="Cash" value={formatUsd(balances?.cashBalance ?? 0)} />
               <KpiStat
                 label="Buying power"

@@ -7,6 +7,8 @@ import {
 } from "@/components/ResearchDetailBlocks";
 import type { FundamentalsOverview } from "@/app/hooks/useFundamentals";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { appHighlightClass } from "@/lib/appUi";
+import { cn } from "@/lib/utils";
 
 type FundamentalOverviewSectionProps = {
   overview: FundamentalsOverview | null | undefined;
@@ -23,7 +25,7 @@ export function FundamentalOverviewSection({
     const valuationTitle = isEtf ? "Cost & composition" : "Valuation take";
 
     return (
-      <div className="space-y-5">
+      <div className="app-stack">
         <ResearchAtAGlanceBox>
           <p className="text-sm font-medium leading-relaxed text-foreground">
             {overview.atAGlance}
@@ -70,8 +72,8 @@ export function FundamentalOverviewSection({
 
 export function FundamentalOverviewSkeleton() {
   return (
-    <div className="space-y-5">
-      <div className="space-y-2 rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
+    <div className="app-stack">
+      <div className={cn(appHighlightClass, "space-y-2")}>
         <Skeleton className="h-3 w-20" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-[80%]" />
@@ -82,8 +84,8 @@ export function FundamentalOverviewSkeleton() {
         <Skeleton className="h-4 w-5/6" />
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
-        <Skeleton className="h-24 rounded-xl" />
-        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-lg" />
+        <Skeleton className="h-24 rounded-lg" />
       </div>
     </div>
   );

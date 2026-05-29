@@ -290,7 +290,7 @@ export function DividendsPageContent({ symbol }: Props) {
                   feature="dividendSnowball"
                   allowed={snowballAllowed}
                 >
-                  <div className="space-y-4">
+                  <div className="app-stack">
                     <DividendSnowballStats
                       history={history}
                       sharePrice={scenarioParams.sharePrice ?? marketSharePrice}

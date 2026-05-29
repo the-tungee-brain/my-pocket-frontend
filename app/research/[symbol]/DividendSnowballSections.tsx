@@ -929,7 +929,7 @@ export function DividendSnowballScenarioCard({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="app-stack">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-foreground">Income snowball</p>

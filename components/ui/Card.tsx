@@ -126,7 +126,7 @@ export function CardTitle({
   const Heading = `h${headingLevel}` as "h1" | "h2" | "h3";
 
   return (
-    <div className="flex min-w-0 flex-1 items-start gap-3">
+    <div className="flex min-w-0 flex-1 items-center gap-4">
       {icon}
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">

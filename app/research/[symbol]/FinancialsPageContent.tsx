@@ -33,7 +33,7 @@ export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
       : fundamentals?.annualFinancials;
 
   return (
-    <div className="space-y-4">
+    <div className="app-stack">
       {error && <ErrorBanner message={error} />}
 
       <div className="flex justify-end px-1">

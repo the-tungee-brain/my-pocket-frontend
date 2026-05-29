@@ -3,7 +3,13 @@
 import type { ReactNode } from "react";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { splitIntoParagraphs } from "@/lib/bigPictureArticle";
-import { appEyebrowClass, appHighlightClass } from "@/lib/appUi";
+import {
+  appEyebrowClass,
+  appHighlightClass,
+  appListClass,
+  appListRowClass,
+  appSectionLabelClass,
+} from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 export function ResearchAtAGlanceBox({
@@ -54,9 +60,7 @@ export function ResearchBulletList({
     return (
       <div>
         {!hideTitle && title && (
-          <h3 className={cn("mb-2 font-mono text-xs font-semibold uppercase tracking-wide text-muted")}>
-            {title}
-          </h3>
+          <h3 className={appSectionLabelClass}>{title}</h3>
         )}
         <p className="text-sm text-muted">{emptyMessage}</p>
       </div>
@@ -80,18 +84,13 @@ export function ResearchBulletList({
   return (
     <div>
       {!hideTitle && title && (
-        <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wide text-muted">
-          {title}
-        </h3>
+        <h3 className={appSectionLabelClass}>{title}</h3>
       )}
-      <ul className="space-y-2">
+      <ul className={appListClass}>
         {items.map((item) => (
           <li
             key={item}
-            className={cn(
-              "flex items-start gap-2 rounded-lg border px-3 py-2 text-sm leading-relaxed text-foreground",
-              itemClass,
-            )}
+            className={cn(appListRowClass, "text-foreground", itemClass)}
           >
             <span
               className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", dotClass)}
@@ -134,7 +133,6 @@ export function ResearchAsideCard({
     >
       <CardHeader
         className={cn(
-          "px-4 py-2.5",
           tone === "accent"
             ? "border-accent/20"
             : tone === "watch"
@@ -144,14 +142,15 @@ export function ResearchAsideCard({
       >
         <h3
           className={cn(
-            "text-xs font-semibold uppercase tracking-wide",
+            appSectionLabelClass,
+            "mb-0",
             tone === "default" ? "text-muted" : "text-accent-strong",
           )}
         >
           {title}
         </h3>
       </CardHeader>
-      <CardBody className="px-4 py-3">{children}</CardBody>
+      <CardBody>{children}</CardBody>
     </Card>
   );
 }
@@ -163,9 +162,7 @@ export function ResearchTextBlock({
 }: ResearchTextBlockProps) {
   return (
     <div className={className}>
-      <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wide text-muted">
-        {title}
-      </h3>
+      <h3 className={appSectionLabelClass}>{title}</h3>
       <div className="text-sm leading-relaxed text-foreground">{children}</div>
     </div>
   );

@@ -11,6 +11,7 @@ import {
   BriefcaseBusiness,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { appInsetClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -229,7 +230,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
         <p className="text-sm text-muted">{subtitle}</p>
       </div>
 
-      <div className="rounded-xl border border-border bg-secondary/80 px-4 py-3 text-sm">
+      <div className={cn(appInsetClass, "text-sm")}>
         <div className="flex items-baseline gap-3">
           <span className="text-2xl font-semibold tabular-nums">
             ${snapshot.price.toLocaleString()}

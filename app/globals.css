@@ -23,10 +23,14 @@
   --scrollbar-thumb: #2e333d;
   --scrollbar-thumb-hover: #454b58;
 
-  /* In-app panels (ClawHub-style uniform chrome) */
+  /* In-app panels (uniform chrome + rhythm) */
   --app-radius: 0.5rem;
-  --app-header-h: 3.25rem;
-  --app-gap: 1rem;
+  --app-header-h: 3.5rem;
+  --app-gap: 1.25rem;
+  --app-gap-sm: 0.75rem;
+  --app-gap-lg: 1.5rem;
+  --app-padding: 1.25rem;
+  --app-padding-lg: 1.5rem;
   --app-border: oklch(78% 0.02 250 / 0.16);
   --app-border-subtle: oklch(78% 0.01 250 / 0.08);
   --app-panel-bg: color-mix(in oklab, var(--secondary) 92%, var(--background));
@@ -230,20 +234,40 @@ body {
 .app-panel__header {
   display: flex;
   min-height: var(--app-header-h);
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  gap: 1rem;
+  padding: 0.875rem var(--app-padding);
   border-bottom: 1px solid var(--app-border-subtle);
   background: var(--app-header-bg);
 }
 
 .app-panel__body {
-  padding: 1rem;
+  padding: var(--app-padding);
 }
 
 .app-panel__body--lg {
-  padding: 1.25rem;
+  padding: var(--app-padding-lg);
+}
+
+.app-panel__footer {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem var(--app-padding);
+  border-top: 1px solid var(--app-border-subtle);
+}
+
+.app-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-gap);
+}
+
+.app-stack--lg {
+  gap: var(--app-gap-lg);
 }
 
 .app-icon-box {
@@ -274,7 +298,101 @@ body {
   border-left-width: 3px;
   border-left-color: var(--accent);
   background: color-mix(in oklab, var(--accent-muted) 65%, transparent);
-  padding: 1rem 1.125rem;
+  padding: var(--app-padding);
+}
+
+.app-inset {
+  min-height: 4.5rem;
+  border-radius: var(--app-radius);
+  border: 1px solid var(--app-border);
+  background: color-mix(in oklab, var(--secondary) 88%, var(--background));
+  padding: var(--app-padding);
+}
+
+.app-kpi {
+  display: flex;
+  min-height: 4.5rem;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: var(--app-radius);
+  border: 1px solid var(--app-border-subtle);
+  background: color-mix(in oklab, var(--secondary) 55%, transparent);
+  padding: 0.875rem 1rem;
+}
+
+.app-kpi--hero {
+  min-height: 5.5rem;
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+}
+
+.app-chip {
+  display: inline-flex;
+  min-height: 2.75rem;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.125rem;
+  border-radius: var(--app-radius);
+  border: 1px solid var(--app-border);
+  background: color-mix(in oklab, var(--background) 90%, transparent);
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+}
+
+.app-chip:hover:not(:disabled) {
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--app-border));
+  background: var(--muted-bg);
+}
+
+.app-chip:disabled {
+  opacity: 0.6;
+}
+
+.app-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--app-gap-sm);
+  padding: var(--app-padding);
+}
+
+@media (min-width: 640px) {
+  .app-stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.app-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-gap-sm);
+}
+
+.app-list-row {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border-radius: var(--app-radius);
+  border: 1px solid var(--app-border-subtle);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.app-section-label {
+  margin-bottom: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .app-tab-bar {
@@ -537,6 +655,27 @@ body {
     border-color 200ms ease,
     background 200ms ease,
     transform 200ms ease;
+}
+
+.marketing-cta-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--border));
+  background: color-mix(in oklab, var(--secondary) 72%, var(--surface-marketing));
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 8%, transparent);
+}
+
+.marketing-cta-card::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 85% 65% at 50% 0%,
+    var(--marketing-glow),
+    transparent 68%
+  );
 }
 
 @media (prefers-reduced-motion: no-preference) {
