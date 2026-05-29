@@ -37,6 +37,8 @@ export type StockNewsView = {
   investorTakeaway?: string | null;
   deepAnalysis?: string | null;
   items: EnrichedNewsItem[];
+  /** False when the server returned headlines only (free tier). */
+  aiEnrichment?: boolean;
 };
 
 type CachedNews = {

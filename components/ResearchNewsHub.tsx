@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   Activity,
   ArrowRight,
@@ -10,8 +11,11 @@ import {
   RefreshCw,
   Sparkles,
 } from "lucide-react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
 import { usePressReleases } from "@/app/hooks/usePressReleases";
+import { ProFeatureGate } from "@/components/ProFeatureGate";
+import { hasProFeature } from "@/lib/planFeatures";
 import NewsAnalytics, {
   NewsAnalysisAside,
   NewsContextAside,
@@ -127,6 +131,9 @@ function OfficialEmptyHint() {
 
 export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
   const [scope, setScope] = useState<NewsFeedScope>("all");
+  const { data: session } = useSession();
+  const { isPaid, plan } = useAccountPlan(session?.accessToken ?? accessToken);
+  const newsAiPlanAllowed = hasProFeature(isPaid, "newsAi", plan);
 
   const {
     analytics,
@@ -146,6 +153,9 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
   } = usePressReleases(symbol, accessToken, {
     enabled: Boolean(symbol && accessToken),
   });
+
+  const showAiNews =
+    newsAiPlanAllowed && (analytics?.aiEnrichment ?? true);
 
   const coverageDisplay = useMemo(
     () => (analytics ? analytics.items.map(enrichedNewsItemToDisplay) : []),
@@ -239,6 +249,7 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
           lastUpdated={coverageUpdated}
           onRefresh={refreshCoverage}
           headlinesOnly
+          showAiEnrichment={showAiNews}
         />
       </div>
     );
@@ -288,21 +299,64 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
             <ResearchSectionCard
               title="AI news brief"
               description={
-                analytics
+                showAiNews && analytics
                   ? `${coverageCount} stories analyzed`
-                  : "Loading coverage summary…"
+                  : showAiNews
+                    ? "Loading coverage summary…"
+                    : "Pro — synthesized from recent headlines"
               }
               icon={Newspaper}
               bodyClassName="min-w-0"
             >
-              {coverageLoading && !analytics ? (
-                <NewsOverviewSkeleton />
-              ) : analytics ? (
-                <NewsOverviewContent data={analytics} />
-              ) : (
-                <Skeleton className="h-24 rounded-xl" />
-              )}
+              <ProFeatureGate feature="newsAi" allowed={showAiNews}>
+                {coverageLoading && !analytics ? (
+                  <NewsOverviewSkeleton />
+                ) : analytics ? (
+                  <NewsOverviewContent data={analytics} />
+                ) : (
+                  <Skeleton className="h-24 rounded-xl" />
+                )}
+              </ProFeatureGate>
             </ResearchSectionCard>
+
+            {showCoverageBlock ? (
+              <ResearchSectionCard
+                title="Market coverage"
+                description={
+                  showAiNews
+                    ? "Headlines with AI sentiment and summaries"
+                    : "Recent headlines from market coverage"
+                }
+                icon={List}
+                bodyClassName="min-w-0"
+              >
+                {coverageLoading && !analytics ? (
+                  <NewsHeadlinesPanel items={[]} isLoading />
+                ) : coverageCount > 0 ? (
+                  <NewsHeadlinesPanel
+                    items={coverageDisplay}
+                    isLoading={coverageLoading && !analytics}
+                    itemLimit={FEED_PREVIEW_LIMIT}
+                    defaultView="grid"
+                    hideViewToggle
+                    showSentimentFilters={showAiNews}
+                    showSentiment={showAiNews}
+                    footer={
+                      coverageCount > FEED_PREVIEW_LIMIT ? (
+                        <ViewAllLink
+                          label={`View all ${coverageCount} stories`}
+                          onClick={() => setScope("coverage")}
+                        />
+                      ) : null
+                    }
+                  />
+                ) : (
+                  <p className="text-sm text-muted">
+                    No enriched market headlines yet.
+                  </p>
+                )}
+              </ResearchSectionCard>
+            ) : null}
 
             <ResearchSectionCard
               title="From the company"
@@ -337,43 +391,10 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
                 <OfficialEmptyHint />
               )}
             </ResearchSectionCard>
-
-            {showCoverageBlock ? (
-              <ResearchSectionCard
-                title="Market coverage"
-                description="Headlines with AI sentiment and summaries"
-                icon={List}
-                bodyClassName="min-w-0"
-              >
-                {coverageLoading && !analytics ? (
-                  <NewsHeadlinesPanel items={[]} isLoading />
-                ) : coverageCount > 0 ? (
-                  <NewsHeadlinesPanel
-                    items={coverageDisplay}
-                    isLoading={coverageLoading && !analytics}
-                    itemLimit={FEED_PREVIEW_LIMIT}
-                    defaultView="grid"
-                    hideViewToggle
-                    footer={
-                      coverageCount > FEED_PREVIEW_LIMIT ? (
-                        <ViewAllLink
-                          label={`View all ${coverageCount} stories`}
-                          onClick={() => setScope("coverage")}
-                        />
-                      ) : null
-                    }
-                  />
-                ) : (
-                  <p className="text-sm text-muted">
-                    No enriched market headlines yet.
-                  </p>
-                )}
-              </ResearchSectionCard>
-            ) : null}
           </div>
         }
         aside={
-          analytics ? (
+          showAiNews && analytics ? (
             <>
               <ResearchSectionCard
                 title="Market context"
@@ -395,6 +416,8 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
                 </ResearchSectionCard>
               )}
             </>
+          ) : !showAiNews ? (
+            <ProFeatureGate feature="newsAi" allowed={false} />
           ) : coverageLoading ? (
             <div className="app-stack" aria-hidden>
               <Skeleton className="h-40 rounded-xl" />

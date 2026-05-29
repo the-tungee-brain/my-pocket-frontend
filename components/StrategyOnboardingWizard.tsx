@@ -22,7 +22,7 @@ import type {
 } from "@/app/types/strategy";
 import { StrategyStockScreenerPanel } from "@/components/StrategyStockScreenerPanel";
 import { SymbolSearchField } from "@/components/SymbolSearchField";
-import { Button } from "@/components/ui/Button";
+import { Button, compactTextButtonClass } from "@/components/ui/Button";
 import { buildPreferencesDraftUpdate } from "@/lib/strategyStockSuggestions";
 import {
   defaultScreenerFiltersForStrategy,
@@ -267,9 +267,9 @@ export function StrategyOnboardingWizard({
               </h2>
             </div>
             {onClose && (
-              <Button size="xs" variant="ghost" onClick={onClose}>
+              <button type="button" onClick={onClose} className={compactTextButtonClass}>
                 Skip for now
-              </Button>
+              </button>
             )}
           </div>
         </div>

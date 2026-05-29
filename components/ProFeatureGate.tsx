@@ -53,8 +53,8 @@ export function ProFeatureGate({
             {description ?? meta.description}
           </p>
           <p className="mt-2 text-xs text-muted">
-            Free includes portfolio sync, research, dividend history, Simple &
-            Standard AI, and strategy playbooks.
+            Free includes portfolio sync, research headlines, dividend history,
+            Simple & Standard AI, and strategy playbooks.
           </p>
           <Link
             href="/settings?tab=account"

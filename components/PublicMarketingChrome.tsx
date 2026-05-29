@@ -16,6 +16,8 @@ const publicNavLinks = [
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
   { href: "/security", label: "Security" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
 ] as const;
 
 export function PublicNavLinks({
@@ -127,11 +129,14 @@ export function SupportEmailLink({
     <a
       href={href}
       className={cn(
-        "inline-flex items-center gap-1.5 font-medium text-accent-strong hover:underline",
+        "inline font-medium text-accent-strong hover:underline",
         className,
       )}
     >
-      <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      <Mail
+        className="mr-1 inline h-3.5 w-3.5 align-[-0.125em] text-accent-strong"
+        aria-hidden="true"
+      />
       {SUPPORT_EMAIL}
     </a>
   );

@@ -256,12 +256,26 @@ export function SettingsPageContent() {
                 <p className="mt-0.5 text-sm text-muted">
                   Read-only Schwab OAuth, what we store, and how to disconnect.
                 </p>
-                <Link
-                  href="/security"
-                  className="mt-3 inline-flex text-xs font-medium text-accent-strong hover:underline"
-                >
-                  Read security overview →
-                </Link>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium">
+                  <Link
+                    href="/security"
+                    className="text-accent-strong hover:underline"
+                  >
+                    Security overview
+                  </Link>
+                  <Link
+                    href="/privacy"
+                    className="text-accent-strong hover:underline"
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    href="/terms"
+                    className="text-accent-strong hover:underline"
+                  >
+                    Terms of Service
+                  </Link>
+                </div>
               </div>
             </div>
             </CardBody>

@@ -25,6 +25,7 @@ import {
   Zap,
 } from "lucide-react";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
+import { SignInLegalNotice } from "@/components/legal/SignInLegalNotice";
 import { PublicMarketingFooter } from "@/components/PublicMarketingChrome";
 import { LandingPricingSection } from "@/components/AccountPlanCard";
 import {
@@ -230,13 +231,16 @@ function HeroSection({
             research, and plan with a clear next step.
           </MarketingLead>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <SignInWithGoogleButton
-              onClick={onSignIn}
-              signingIn={signingIn}
-              size="lg"
-            />
-            <p className="text-xs text-muted sm:max-w-52">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-start">
+            <div className="flex flex-col gap-2">
+              <SignInWithGoogleButton
+                onClick={onSignIn}
+                signingIn={signingIn}
+                size="lg"
+              />
+              <SignInLegalNotice />
+            </div>
+            <p className="text-xs text-muted sm:max-w-52 sm:pt-2">
               Free to start · read-only Schwab OAuth · no card required
             </p>
           </div>
@@ -754,6 +758,7 @@ function FinalCTASection({
                   signingIn={signingIn}
                   size="lg"
                 />
+                <SignInLegalNotice className="text-center" />
                 {signInError && (
                   <ErrorBanner
                     message={signInError}

@@ -215,6 +215,8 @@ type Props = {
   onRefresh?: () => void;
   /** Headlines grid only—overview and aside live on the All tab. */
   headlinesOnly?: boolean;
+  /** When false, hide AI sentiment UI (free tier headlines). */
+  showAiEnrichment?: boolean;
 };
 
 export default function NewsAnalytics({
@@ -224,6 +226,7 @@ export default function NewsAnalytics({
   lastUpdated = null,
   onRefresh,
   headlinesOnly = false,
+  showAiEnrichment = true,
 }: Props) {
   const data = analytics;
   const headlineItems = useMemo(
@@ -237,18 +240,19 @@ export default function NewsAnalytics({
     ? formatRelativeUpdatedAt(lastUpdated)
     : null;
 
-  const sentimentAction = data ? (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-medium leading-none",
-        overallSentimentPillClass(data.overall_sentiment),
-      )}
-    >
-      {overallSentimentLabel(data.overall_sentiment)}
-    </span>
-  ) : (
-    <Skeleton className="h-5 w-20 rounded-full" />
-  );
+  const sentimentAction =
+    showAiEnrichment && data ? (
+      <span
+        className={cn(
+          "inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-medium leading-none",
+          overallSentimentPillClass(data.overall_sentiment),
+        )}
+      >
+        {overallSentimentLabel(data.overall_sentiment)}
+      </span>
+    ) : showAiEnrichment ? (
+      <Skeleton className="h-5 w-20 rounded-full" />
+    ) : null;
 
   const refreshAction = (
     <div className="flex shrink-0 items-center gap-2">
@@ -278,7 +282,9 @@ export default function NewsAnalytics({
         title="Headlines"
         description={
           data
-            ? `${data.items.length} stories with AI sentiment and summaries`
+            ? showAiEnrichment
+              ? `${data.items.length} stories with AI sentiment and summaries`
+              : `${data.items.length} recent headlines`
             : "Loading headlines…"
         }
         icon={List}
@@ -288,7 +294,12 @@ export default function NewsAnalytics({
         {isLoading && !data ? (
           <NewsHeadlinesSkeleton view="grid" />
         ) : data ? (
-          <NewsHeadlinesPanel items={headlineItems} defaultView="grid" />
+          <NewsHeadlinesPanel
+            items={headlineItems}
+            defaultView="grid"
+            showSentimentFilters={showAiEnrichment}
+            showSentiment={showAiEnrichment}
+          />
         ) : null}
       </ResearchSectionCard>
     );

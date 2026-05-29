@@ -43,9 +43,19 @@ export default function ContactPage() {
         <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted">
           <li>
             <Link href="/security" className="font-medium text-accent-strong hover:underline">
-              Security & privacy
+              Security overview
             </Link>{" "}
             — how Schwab OAuth works, what we read, and how to disconnect.
+          </li>
+          <li>
+            <Link href="/privacy" className="font-medium text-accent-strong hover:underline">
+              Privacy Policy
+            </Link>{" "}
+            and{" "}
+            <Link href="/terms" className="font-medium text-accent-strong hover:underline">
+              Terms of Service
+            </Link>
+            .
           </li>
           <li>
             Tomcrest provides portfolio insights and AI answers for

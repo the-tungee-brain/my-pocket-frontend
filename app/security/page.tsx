@@ -78,8 +78,16 @@ export default function SecurityPage() {
         </ul>
       </section>
 
-      <p className="mt-8 text-xs text-muted">
-        Questions?{" "}
+      <p className="mt-8 text-sm text-muted">
+        Formal policies:{" "}
+        <Link href="/privacy" className="font-medium text-accent-strong hover:underline">
+          Privacy Policy
+        </Link>
+        ,{" "}
+        <Link href="/terms" className="font-medium text-accent-strong hover:underline">
+          Terms of Service
+        </Link>
+        . Questions?{" "}
         <Link href="/contact" className="font-medium text-accent-strong hover:underline">
           Contact us
         </Link>

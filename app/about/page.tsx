@@ -48,9 +48,17 @@ export default function AboutPage() {
         <Link href="/contact" className="font-medium text-accent-strong hover:underline">
           Contact us
         </Link>{" "}
-        with questions, or read{" "}
+        with questions, or read our{" "}
+        <Link href="/privacy" className="font-medium text-accent-strong hover:underline">
+          Privacy Policy
+        </Link>
+        ,{" "}
+        <Link href="/terms" className="font-medium text-accent-strong hover:underline">
+          Terms of Service
+        </Link>
+        , and{" "}
         <Link href="/security" className="font-medium text-accent-strong hover:underline">
-          security & privacy
+          security overview
         </Link>
         .{" "}
         <Link href="/" className="font-medium text-accent-strong hover:underline">

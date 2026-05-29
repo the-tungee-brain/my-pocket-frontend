@@ -27,6 +27,7 @@ const FREE_FEATURES = [
 ] as const;
 
 const PRO_FEATURES = [
+  "AI news research (brief, sentiment, coverage analysis)",
   "Income snowball (DRIP projections & contributions)",
   "Wheel backtest with trade log and PDF export",
   "Advanced AI models (gpt-5.4, o3, o4-mini, and more)",
@@ -76,7 +77,7 @@ export function AccountPlanCard({
             price="$0"
             active={!isPaid}
             features={FREE_FEATURES}
-            footnote={`Simple & Standard models for chat, analyze, playbook, and news. Defaults to ${freeModel}.`}
+            footnote={`Simple & Standard models for chat, analyze, and playbooks. Research news headlines are free; AI news analysis is Pro. Defaults to ${freeModel}.`}
           />
           <PlanFeatureList
             title="Pro"
