@@ -3,7 +3,6 @@
 import { Newspaper } from "lucide-react";
 import { StockNewsView } from "@/app/hooks/useCompanyNews";
 import NewsAnalytics from "./NewsAnalytics";
-import { Card } from "@/components/ui/Card";
 import { ErrorBanner } from "./ui/ErrorBanner";
 import { EmptyState } from "./ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -30,34 +29,32 @@ export function CompanyNews({
   className,
 }: Props) {
   return (
-    <section className={cn("w-full", className)}>
-        {error && !isLoading && (
-          <Card surface="subtle" className="mx-0 px-4 py-6">
-            <ErrorBanner message={error} onRetry={onRetry} />
-          </Card>
-        )}
+    <section className={cn("w-full space-y-4", className)}>
+      {error && !isLoading ? (
+        <ErrorBanner message={error} onRetry={onRetry} />
+      ) : null}
 
-        {!error && (analytics || isLoading) && (
-          <NewsAnalytics
-            analytics={analytics}
-            isLoading={isLoading}
-            lastUpdated={lastUpdated}
-            onRefresh={onRefresh}
-          />
-        )}
+      {!error && (analytics || isLoading) ? (
+        <NewsAnalytics
+          analytics={analytics}
+          isLoading={isLoading}
+          lastUpdated={lastUpdated}
+          onRefresh={onRefresh}
+        />
+      ) : null}
 
-        {!error && !isLoading && !analytics && (
-          <EmptyState
-            icon={Newspaper}
-            title="No news yet"
-            description={
-              symbol
-                ? `We couldn't find recent news analysis for ${symbol} right now.`
-                : "No news analysis is available for this symbol right now."
-            }
-            variant="solid"
-          />
-        )}
+      {!error && !isLoading && !analytics ? (
+        <EmptyState
+          icon={Newspaper}
+          title="No news yet"
+          description={
+            symbol
+              ? `We couldn't find recent news analysis for ${symbol} right now.`
+              : "No news analysis is available for this symbol right now."
+          }
+          variant="solid"
+        />
+      ) : null}
     </section>
   );
 }

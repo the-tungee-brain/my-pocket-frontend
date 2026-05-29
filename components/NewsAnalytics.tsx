@@ -8,14 +8,16 @@ import type {
   OverallSentiment,
 } from "@/app/hooks/useCompanyNews";
 import { PageSplit } from "@/components/PageShell";
+import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import {
-  ResearchAsideCard,
+  ResearchAtAGlanceBox,
   ResearchBulletList,
+  ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
-import { ChevronDown, Newspaper, RefreshCw } from "lucide-react";
+import { Activity, List, Newspaper, RefreshCw, Sparkles } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
 
 type SentimentFilter = "all" | Sentiment;
@@ -105,25 +107,28 @@ function SentimentMixBar({ items }: { items: EnrichedNewsItem[] }) {
   ];
 
   return (
-    <div className="news-tab__mix" aria-label="Sentiment mix in recent headlines">
-      <div className="news-tab__mix-bar">
+    <div className="flex flex-col gap-2" aria-label="Sentiment mix in recent headlines">
+      <div className="flex h-1.5 overflow-hidden rounded-full bg-muted-bg">
         {segments.map(
           (seg) =>
             seg.count > 0 && (
               <div
                 key={seg.key}
-                className={cn("news-tab__mix-segment", seg.className)}
+                className={cn("min-w-1 transition-[width]", seg.className)}
                 style={{ width: `${(seg.count / total) * 100}%` }}
                 title={`${sentimentLabel(seg.key)}: ${seg.count}`}
               />
             ),
         )}
       </div>
-      <div className="news-tab__mix-legend">
+      <div className="flex flex-wrap gap-3">
         {segments.map((seg) => (
-          <span key={seg.key} className="news-tab__mix-label">
+          <span
+            key={seg.key}
+            className="inline-flex items-center gap-1.5 text-[11px] text-muted"
+          >
             <span
-              className={cn("news-tab__mix-dot", seg.className)}
+              className={cn("inline-block h-2 w-2 rounded-full", seg.className)}
               aria-hidden
             />
             {sentimentLabel(seg.key)} {seg.count}
@@ -170,42 +175,36 @@ function FilterChip({
   );
 }
 
-function NewsArticleRow({
-  item,
-  expanded,
-  onToggle,
-}: {
-  item: EnrichedNewsItem;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
+function NewsArticleRow({ item }: { item: EnrichedNewsItem }) {
   const imageUrl = item.image?.toString();
+  const headlineClass =
+    "text-sm font-medium leading-snug text-foreground hover:text-accent-strong";
 
   return (
-    <li className="news-tab__article">
-      <button
-        type="button"
-        className="news-tab__article-trigger"
-        onClick={onToggle}
-        aria-expanded={expanded}
-      >
+    <li className="py-4 first:pt-0 last:pb-0">
+      <div className="flex gap-3">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt=""
-            className="news-tab__article-thumb"
+            className="mt-0.5 h-10 w-10 shrink-0 rounded-md object-cover"
             loading="lazy"
           />
-        ) : (
-          <div className="news-tab__article-thumb news-tab__article-thumb--placeholder">
-            <Newspaper className="h-4 w-4 text-muted" aria-hidden />
-          </div>
-        )}
-        <span className="min-w-0 flex-1 text-left">
-          <span className="flex flex-wrap items-start gap-2">
-            <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-foreground">
-              {item.headline}
-            </span>
+        ) : null}
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex flex-wrap items-start gap-2">
+            {item.url ? (
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn("min-w-0 flex-1 hover:underline", headlineClass)}
+              >
+                {item.headline}
+              </a>
+            ) : (
+              <p className={cn("min-w-0 flex-1", headlineClass)}>{item.headline}</p>
+            )}
             <span
               className={cn(
                 "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
@@ -214,8 +213,9 @@ function NewsArticleRow({
             >
               {sentimentLabel(item.sentiment)}
             </span>
-          </span>
-          <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted">
+          </div>
+
+          <p className="text-[11px] text-muted">
             <time dateTime={item.datetime}>
               {new Date(item.datetime).toLocaleString(undefined, {
                 month: "short",
@@ -224,52 +224,60 @@ function NewsArticleRow({
                 minute: "2-digit",
               })}
             </time>
-            {item.source ? <span>{item.source}</span> : null}
-          </span>
-        </span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 text-muted transition-transform",
-            expanded && "rotate-180",
-          )}
-          aria-hidden
-        />
-      </button>
+            {item.source ? <span> · {item.source}</span> : null}
+          </p>
 
-      {expanded ? (
-        <div className="news-tab__article-body">
-          <p className="text-sm leading-relaxed text-foreground">{item.summary}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {item.url ? (
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-medium text-accent-strong hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Read source
-              </a>
-            ) : null}
-            <span className="text-[11px] text-muted">
-              Confidence {(item.confidence * 100).toFixed(0)}%
-            </span>
-            {item.topics.map((topic) => (
-              <span
-                key={topic}
-                className="inline-flex rounded-full bg-muted-bg px-2 py-px text-[11px] text-muted"
-              >
-                {topic.replace(/_/g, " ")}
-              </span>
-            ))}
-          </div>
+          <p className="text-sm leading-relaxed text-muted">{item.summary}</p>
+
+          {(item.topics.length > 0 || item.confidence > 0) && (
+            <p className="text-[11px] text-muted">
+              {item.confidence > 0 ? (
+                <span>Confidence {(item.confidence * 100).toFixed(0)}%</span>
+              ) : null}
+              {item.confidence > 0 && item.topics.length > 0 ? <span> · </span> : null}
+              {item.topics.length > 0 ? (
+                <span>{item.topics.map((t) => t.replace(/_/g, " ")).join(" · ")}</span>
+              ) : null}
+            </p>
+          )}
         </div>
-      ) : null}
+      </div>
     </li>
   );
 }
 
-function NewsMetricsAside({ data }: { data: StockNewsView }) {
+function NewsOverviewSkeleton() {
+  return (
+    <div className="space-y-5">
+      <div className="space-y-2 rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-4/5" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-1.5 w-full rounded-full" />
+        <Skeleton className="h-3 w-40" />
+      </div>
+    </div>
+  );
+}
+
+function NewsHeadlinesSkeleton() {
+  return (
+    <div className="divide-y divide-border">
+      {[1, 2, 3, 4].map((row) => (
+        <div key={row} className="space-y-2 py-4 first:pt-0">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/3" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NewsContextAside({ data }: { data: StockNewsView }) {
   const actionabilityScore = data.actionability_score ?? null;
   const actionabilityPercent =
     actionabilityScore == null
@@ -277,80 +285,64 @@ function NewsMetricsAside({ data }: { data: StockNewsView }) {
       : Math.max(0, Math.min(100, (actionabilityScore / 5) * 100));
 
   return (
-    <ResearchAsideCard title="At a glance">
-      <div className="space-y-3">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-            Dominant driver
-          </p>
-          <p className="mt-1 text-sm font-medium text-foreground">
-            {formatMetadataValue(data.dominant_driver)}
-          </p>
+    <div className="space-y-5">
+      <ResearchTextBlock title="Dominant driver">
+        <p className="font-medium">{formatMetadataValue(data.dominant_driver)}</p>
+      </ResearchTextBlock>
+
+      <ResearchTextBlock title="Impact horizon">
+        <p className="font-medium">
+          {formatMetadataValue(data.market_impact_horizon)}
+        </p>
+      </ResearchTextBlock>
+
+      <div>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Actionability
+          </h3>
+          <span
+            className={cn(
+              "text-xs font-semibold",
+              actionabilityTone(actionabilityScore),
+            )}
+          >
+            {actionabilityScore == null ? "N/A" : `${actionabilityScore}/5`}
+          </span>
         </div>
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-            Impact horizon
-          </p>
-          <p className="mt-1 text-sm font-medium text-foreground">
-            {formatMetadataValue(data.market_impact_horizon)}
-          </p>
-        </div>
-        <div>
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-              Actionability
-            </p>
-            <span
-              className={cn(
-                "text-xs font-semibold",
-                actionabilityTone(actionabilityScore),
-              )}
-            >
-              {actionabilityScore == null ? "N/A" : `${actionabilityScore}/5`}
-            </span>
-          </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted-bg">
-            <div
-              className={cn(
-                "h-full rounded-full bg-current transition-all",
-                actionabilityTone(actionabilityScore),
-              )}
-              style={{ width: `${actionabilityPercent}%` }}
-            />
-          </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-muted-bg">
+          <div
+            className={cn(
+              "h-full rounded-full bg-current transition-all",
+              actionabilityTone(actionabilityScore),
+            )}
+            style={{ width: `${actionabilityPercent}%` }}
+          />
         </div>
       </div>
-    </ResearchAsideCard>
+    </div>
   );
 }
 
 function NewsAnalysisAside({ data }: { data: StockNewsView }) {
-  return (
-    <>
-      {data.insights.length > 0 ? (
-        <ResearchAsideCard title="Key insights">
-          <ResearchBulletList items={data.insights.slice(0, 4)} hideTitle />
-        </ResearchAsideCard>
-      ) : null}
+  const insights = data.insights.slice(0, 4);
+  const risks = data.risks.slice(0, 4);
 
-      {data.risks.length > 0 ? (
-        <ResearchAsideCard title="Risks">
-          <ResearchBulletList
-            items={data.risks.slice(0, 4)}
-            variant="risk"
-            hideTitle
-          />
-        </ResearchAsideCard>
+  return (
+    <div className="space-y-5">
+      {insights.length > 0 ? (
+        <ResearchBulletList title="Key insights" items={insights} />
+      ) : null}
+      {risks.length > 0 ? (
+        <ResearchBulletList title="Risks" items={risks} variant="risk" />
       ) : null}
 
       {data.deepAnalysis ? (
-        <ResearchAsideCard title="Deep analysis">
-          <p className="text-sm leading-relaxed text-foreground">
-            {data.deepAnalysis}
-          </p>
-        </ResearchAsideCard>
+        <ResearchTextBlock title="Deep analysis">
+          <p>{data.deepAnalysis}</p>
+        </ResearchTextBlock>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -369,7 +361,6 @@ export default function NewsAnalytics({
 }: Props) {
   const data = analytics;
   const [filter, setFilter] = useState<SentimentFilter>("all");
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
   const counts = useMemo(
     () => (data ? countBySentiment(data.items) : null),
@@ -383,43 +374,8 @@ export default function NewsAnalytics({
   }, [data, filter]);
 
   useEffect(() => {
-    if (!data?.items.length) {
-      setExpandedIds(new Set());
-      return;
-    }
-    setExpandedIds(new Set([data.items[0].id]));
     setFilter("all");
   }, [data?.symbol, data?.items.length]);
-
-  useEffect(() => {
-    if (filteredItems.length === 0) {
-      setExpandedIds(new Set());
-      return;
-    }
-    setExpandedIds((current) => {
-      const visible = new Set(filteredItems.map((item) => item.id));
-      const kept = [...current].filter((id) => visible.has(id));
-      if (kept.length > 0) return new Set(kept);
-      return new Set([filteredItems[0].id]);
-    });
-  }, [filter, filteredItems]);
-
-  const toggleExpanded = (id: number) => {
-    setExpandedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const expandAll = () => {
-    setExpandedIds(new Set(filteredItems.map((item) => item.id)));
-  };
-
-  const collapseAll = () => {
-    setExpandedIds(new Set());
-  };
 
   if (!data && !isLoading) return null;
 
@@ -427,82 +383,89 @@ export default function NewsAnalytics({
     ? formatRelativeUpdatedAt(lastUpdated)
     : null;
 
-  const asideLoading = isLoading && !data;
+  const sentimentAction = data ? (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-medium leading-none",
+        overallSentimentPillClass(data.overall_sentiment),
+      )}
+    >
+      {overallSentimentLabel(data.overall_sentiment)}
+    </span>
+  ) : (
+    <Skeleton className="h-5 w-20 rounded-full" />
+  );
+
+  const refreshAction = (
+    <div className="flex shrink-0 items-center gap-2">
+      {sentimentAction}
+      <span className="hidden text-[11px] text-muted sm:inline">
+        {isLoading ? "Updating…" : updatedLabel}
+      </span>
+      {onRefresh ? (
+        <IconButton
+          size="sm"
+          onClick={onRefresh}
+          disabled={isLoading}
+          aria-label="Refresh news"
+        >
+          <RefreshCw
+            className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}
+            aria-hidden
+          />
+        </IconButton>
+      ) : null}
+    </div>
+  );
 
   return (
-    <div className="news-tab space-y-5">
-      <header className="news-tab__header">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-            <Newspaper className="h-4 w-4" aria-hidden />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-sm font-semibold text-foreground">News</h2>
-              {data ? (
-                <span
-                  className={cn(
-                    "inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-medium leading-none",
-                    overallSentimentPillClass(data.overall_sentiment),
-                  )}
-                >
-                  {overallSentimentLabel(data.overall_sentiment)}
-                </span>
-              ) : (
-                <Skeleton className="h-5 w-16 rounded-full" />
-              )}
-            </div>
-            <p className="mt-0.5 text-xs text-muted">
-              {data
-                ? `${data.items.length} headlines · AI-enriched`
-                : "Loading headlines…"}
-            </p>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="text-[11px] text-muted">
-            {isLoading ? "Updating…" : updatedLabel}
-          </span>
-          {onRefresh ? (
-            <IconButton
-              size="sm"
-              onClick={onRefresh}
-              disabled={isLoading}
-              aria-label="Refresh news"
-            >
-              <RefreshCw
-                className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}
-                aria-hidden
-              />
-            </IconButton>
-          ) : null}
-        </div>
-      </header>
-
-      {data ? (
-        <div className="news-tab__summary" aria-labelledby="news-summary">
-          <h3 id="news-summary" className="news-tab__summary-title">
-            What matters
-          </h3>
-          <p className="text-sm leading-relaxed text-foreground">{data.summary}</p>
-          {data.investorTakeaway ? (
-            <p className="mt-2 text-sm font-medium leading-relaxed text-foreground">
-              {data.investorTakeaway}
-            </p>
-          ) : null}
-        </div>
-      ) : (
-        <Skeleton className="h-24 rounded-xl" />
-      )}
-
-      {data && data.items.length > 0 ? <SentimentMixBar items={data.items} /> : null}
-
+    <div className="space-y-4">
       <PageSplit
         main={
-          <div className="space-y-3">
-            {data ? (
-              <>
-                <div className="flex flex-wrap items-center justify-between gap-2">
+          <>
+            <ResearchSectionCard
+              title="News overview"
+              description={
+                data
+                  ? `${data.items.length} headlines · AI-enriched`
+                  : "Loading headlines…"
+              }
+              icon={Newspaper}
+              action={refreshAction}
+            >
+              {isLoading && !data ? (
+                <NewsOverviewSkeleton />
+              ) : data ? (
+                <div className="space-y-5">
+                  <ResearchAtAGlanceBox title="What matters">
+                    <p className="text-sm font-medium leading-relaxed text-foreground">
+                      {data.summary}
+                    </p>
+                    {data.investorTakeaway ? (
+                      <p className="mt-2 text-sm font-medium leading-relaxed text-foreground">
+                        {data.investorTakeaway}
+                      </p>
+                    ) : null}
+                  </ResearchAtAGlanceBox>
+
+                  {data.items.length > 0 ? (
+                    <ResearchTextBlock title="Sentiment mix">
+                      <SentimentMixBar items={data.items} />
+                    </ResearchTextBlock>
+                  ) : null}
+                </div>
+              ) : null}
+            </ResearchSectionCard>
+
+            <ResearchSectionCard
+              title="Headlines"
+              description="Recent stories with AI summaries"
+              icon={List}
+            >
+              {isLoading && !data ? (
+                <NewsHeadlinesSkeleton />
+              ) : data ? (
+                <div className="space-y-4">
                   <div
                     className="flex flex-wrap gap-1.5"
                     role="group"
@@ -533,67 +496,52 @@ export default function NewsAnalytics({
                       onClick={() => setFilter("bearish")}
                     />
                   </div>
-                  <div className="flex gap-2 text-[11px]">
-                    <button
-                      type="button"
-                      className="font-medium text-accent-strong hover:underline"
-                      onClick={expandAll}
-                    >
-                      Expand all
-                    </button>
-                    <span className="text-muted" aria-hidden>
-                      ·
-                    </span>
-                    <button
-                      type="button"
-                      className="font-medium text-muted hover:text-foreground hover:underline"
-                      onClick={collapseAll}
-                    >
-                      Collapse all
-                    </button>
-                  </div>
+
+                  {filteredItems.length > 0 ? (
+                    <ul className="m-0 list-none divide-y divide-border p-0">
+                      {filteredItems.map((item) => (
+                        <NewsArticleRow key={item.id} item={item} />
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted">
+                      No {filter === "all" ? "" : `${filter} `}headlines in this
+                      batch. Try another filter.
+                    </p>
+                  )}
                 </div>
-
-                <ul className="news-tab__feed">
-                  {filteredItems.map((item) => (
-                    <NewsArticleRow
-                      key={item.id}
-                      item={item}
-                      expanded={expandedIds.has(item.id)}
-                      onToggle={() => toggleExpanded(item.id)}
-                    />
-                  ))}
-                </ul>
-
-                {filteredItems.length === 0 ? (
-                  <p className="rounded-lg border border-border bg-muted-bg/40 px-3 py-4 text-sm text-muted">
-                    No {filter === "all" ? "" : `${filter} `}headlines in this
-                    batch. Try another filter.
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <ul className="space-y-0">
-                {[1, 2, 3, 4].map((row) => (
-                  <li key={row} className="border-b border-border py-4">
-                    <Skeleton className="h-12 w-full" />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+              ) : null}
+            </ResearchSectionCard>
+          </>
         }
         aside={
-          data ? (
-            <>
-              <NewsMetricsAside data={data} />
-              <NewsAnalysisAside data={data} />
-            </>
-          ) : asideLoading ? (
-            <div className="space-y-3" aria-hidden>
-              <Skeleton className="h-28 rounded-xl" />
+          isLoading && !data ? (
+            <div className="space-y-4" aria-hidden>
               <Skeleton className="h-40 rounded-xl" />
+              <Skeleton className="h-48 rounded-xl" />
             </div>
+          ) : data ? (
+            <>
+              <ResearchSectionCard
+                title="Market context"
+                description="How recent news may affect the stock"
+                icon={Activity}
+              >
+                <NewsContextAside data={data} />
+              </ResearchSectionCard>
+
+              {(data.insights.length > 0 ||
+                data.risks.length > 0 ||
+                data.deepAnalysis) && (
+                <ResearchSectionCard
+                  title="Coverage analysis"
+                  description="Themes and risks from recent headlines"
+                  icon={Sparkles}
+                >
+                  <NewsAnalysisAside data={data} />
+                </ResearchSectionCard>
+              )}
+            </>
           ) : undefined
         }
       />

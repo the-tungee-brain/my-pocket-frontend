@@ -11,7 +11,7 @@ import {
 import { PageSplit } from "@/components/PageShell";
 import type { IntelligenceSignal } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
-import { pageArticleClass, pageSectionClass } from "@/lib/pageLayout";
+import { pageSectionClass } from "@/lib/pageLayout";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
@@ -107,7 +107,7 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
           </>
         }
       />
-      <SummarySection symbol={symbol} className={pageArticleClass} />
+      <SummarySection symbol={symbol} className={pageSectionClass} />
     </div>
   );
 }

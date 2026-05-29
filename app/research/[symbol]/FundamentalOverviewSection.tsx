@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ResearchAtAGlanceBox,
   ResearchBulletList,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
@@ -23,14 +24,11 @@ export function FundamentalOverviewSection({
 
     return (
       <div className="space-y-5">
-        <div className="rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent-strong">
-            At a glance
-          </h3>
+        <ResearchAtAGlanceBox>
           <p className="text-sm font-medium leading-relaxed text-foreground">
             {overview.atAGlance}
           </p>
-        </div>
+        </ResearchAtAGlanceBox>
 
         {overview.valuationTake ? (
           <ResearchTextBlock title={valuationTitle}>
@@ -76,7 +74,7 @@ export function FundamentalOverviewSkeleton() {
       <div className="space-y-2 rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
         <Skeleton className="h-3 w-20" />
         <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-4/5" />
+        <Skeleton className="h-4 w-[80%]" />
       </div>
       <div className="space-y-2">
         <Skeleton className="h-3 w-24" />

@@ -1,7 +1,39 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { splitIntoParagraphs } from "@/lib/bigPictureArticle";
 import { cn } from "@/lib/utils";
+
+export function ResearchAtAGlanceBox({
+  title = "At a glance",
+  children,
+}: {
+  title?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent-strong">
+        {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+export function ResearchProseText({ text }: { text: string }) {
+  const paragraphs = splitIntoParagraphs(text.trim());
+  if (paragraphs.length === 0) return null;
+
+  return (
+    <>
+      {paragraphs.map((paragraph) => (
+        <p key={paragraph.slice(0, 48)}>{paragraph}</p>
+      ))}
+    </>
+  );
+}
 
 type ResearchBulletListProps = {
   title?: string;
