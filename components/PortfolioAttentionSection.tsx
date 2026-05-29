@@ -234,10 +234,15 @@ export function PortfolioAttentionSection({
       </CardHeader>
 
       {visibleTax.length > 0 && (
-        <div className="border-b border-amber-500/20 bg-amber-500/5">
+        <div className="border-b border-[var(--app-border-subtle)] bg-amber-500/5">
           <div className="flex items-center gap-2 px-5 pt-4">
-            <Scale className="h-3.5 w-3.5 text-amber-800 dark:text-amber-200" aria-hidden />
-            <p className={appSectionLabelClass}>Tax & wash-sale</p>
+            <Scale
+              className="h-3.5 w-3.5 shrink-0 text-amber-800 dark:text-amber-200"
+              aria-hidden
+            />
+            <p className={cn(appSectionLabelClass, "mb-0 leading-none")}>
+              Tax & wash-sale
+            </p>
           </div>
           <ul className="divide-y divide-border/60">
             {visibleTax.map((item) => {
