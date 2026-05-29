@@ -89,11 +89,31 @@ function timelineIcon(kind: string) {
       return FileText;
     case "earnings":
       return CalendarDays;
-    case "news":
     case "press_release":
+      return FileText;
+    case "news":
       return Newspaper;
     default:
       return CalendarDays;
+  }
+}
+
+function timelineKindLabel(kind: string): string {
+  switch (kind) {
+    case "press_release":
+      return "Press release";
+    case "news":
+      return "News";
+    case "earnings":
+      return "Earnings";
+    case "filing":
+      return "SEC filing";
+    case "trade":
+      return "Trade";
+    case "macro":
+      return "Macro";
+    default:
+      return kind.replace(/_/g, " ");
   }
 }
 
@@ -211,7 +231,7 @@ function IntelligenceRecentEventsList({
             <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-wide text-muted">
                 {formatFriendlyDate(entry.date, { weekday: true })} ·{" "}
-                {entry.kind.replace(/_/g, " ")}
+                {timelineKindLabel(entry.kind)}
               </p>
               {linkable ? (
                 <a

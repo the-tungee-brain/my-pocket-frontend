@@ -19,6 +19,8 @@ import { PortfolioStrategyNudge } from "@/components/portfolio/PortfolioStrategy
 import { StrategyPlaybookPanel } from "@/components/StrategyPlaybookPanel";
 import { StrategyOnboardingWizard } from "@/components/StrategyOnboardingWizard";
 import { PortfolioSectionTabBar } from "@/components/PortfolioSectionTabBar";
+import { PortfolioNewsSection } from "@/components/PortfolioNewsSection";
+import { usePortfolioNews } from "@/app/hooks/usePortfolioNews";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -292,6 +294,15 @@ export default function PortfolioPage() {
 
   const showContent = !loading && allPositions.length > 0;
   const showBriefSection = showContent && sessionAccessToken;
+  const {
+    items: portfolioNewsItems,
+    loading: portfolioNewsLoading,
+    error: portfolioNewsError,
+    lastUpdated: portfolioNewsLastUpdated,
+    refetch: refetchPortfolioNews,
+  } = usePortfolioNews(sessionAccessToken, {
+    enabled: showContent && activeSection === "news",
+  });
   const attentionQueue = morningBrief?.attentionQueue ?? [];
 
   const todayBadgeCount = useMemo(
@@ -472,6 +483,17 @@ export default function PortfolioPage() {
                   <div className={appStackClass}>{strategyPlaybook}</div>
                 ) : undefined
               }
+            />
+          )}
+
+          {activeSection === "news" && sessionAccessToken && (
+            <PortfolioNewsSection
+              className={sectionClass}
+              items={portfolioNewsItems}
+              loading={portfolioNewsLoading}
+              error={portfolioNewsError}
+              lastUpdated={portfolioNewsLastUpdated}
+              onRefresh={() => void refetchPortfolioNews()}
             />
           )}
 

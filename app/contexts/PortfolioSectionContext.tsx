@@ -9,7 +9,7 @@ import {
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-export type PortfolioSectionId = "today" | "holdings" | "activity";
+export type PortfolioSectionId = "today" | "news" | "holdings" | "activity";
 
 type PortfolioSectionContextType = {
   activeSection: PortfolioSectionId;
@@ -20,7 +20,9 @@ const PortfolioSectionContext =
   createContext<PortfolioSectionContextType | null>(null);
 
 function parseSection(value: string | null): PortfolioSectionId {
-  if (value === "holdings" || value === "activity") return value;
+  if (value === "news" || value === "holdings" || value === "activity") {
+    return value;
+  }
   return "today";
 }
 

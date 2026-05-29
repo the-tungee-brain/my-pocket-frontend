@@ -4,9 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   ChevronDown,
+  FileText,
   Newspaper,
   TrendingUp,
 } from "lucide-react";
+import {
+  NewsHeadlinesPanel,
+  pressReleaseToDisplay,
+} from "@/components/NewsHeadlinesFeed";
 import { useSession } from "next-auth/react";
 import {
   useEarningsDetail,
@@ -290,7 +295,9 @@ function EarningsDetailPanel({
   const event = data?.event ?? previewEvent;
   const analysis = data?.analysis ?? null;
   const relatedNews = data?.relatedNews ?? [];
+  const officialReleases = data?.officialReleases ?? [];
   const transcript = data?.transcript ?? [];
+  const officialDisplayItems = officialReleases.map(pressReleaseToDisplay);
   const showAnalysisLoading = isLoading && !analysis;
 
   return (
@@ -359,35 +366,44 @@ function EarningsDetailPanel({
         </p>
       ) : null}
 
+      {!showAnalysisLoading && officialReleases.length > 0 ? (
+        <div className="min-w-0 border-t border-border pt-6">
+          <div className="mb-3 flex items-center gap-2">
+            <FileText className="h-4 w-4 text-muted" aria-hidden="true" />
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
+              Official releases
+            </h3>
+          </div>
+          <p className="mb-3 text-xs text-muted">
+            Company press releases within about a week before and a few days
+            after this report.
+          </p>
+          <NewsHeadlinesPanel
+            items={officialDisplayItems}
+            showSentimentFilters={false}
+            defaultView="list"
+            emptyMessage="No press releases in this earnings window."
+          />
+        </div>
+      ) : null}
+
       {!showAnalysisLoading && relatedNews.length > 0 ? (
-        <div className="border-t border-border pt-6">
+        <div className="min-w-0 border-t border-border pt-6">
           <div className="mb-3 flex items-center gap-2">
             <Newspaper className="h-4 w-4 text-muted" aria-hidden="true" />
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
               Related news
             </h3>
           </div>
-          <ul className="space-y-2">
-            {relatedNews.map((item) => (
-              <li
-                key={`${item.headline}-${item.datetime}`}
-                className="rounded-lg border border-border bg-surface-elevated/40 px-3 py-2"
-              >
-                <p className="text-sm font-medium text-foreground">
-                  {item.headline}
-                </p>
-                {item.summary ? (
-                  <p className="mt-1 text-xs leading-relaxed text-muted">
-                    {item.summary}
-                  </p>
-                ) : null}
-                <p className="mt-1 text-[11px] text-muted">
-                  {item.source}
-                  {item.datetime ? ` · ${item.datetime.slice(0, 10)}` : ""}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <p className="mb-3 text-xs text-muted">
+            Media coverage around the report date.
+          </p>
+          <NewsHeadlinesPanel
+            items={relatedNews.map(pressReleaseToDisplay)}
+            showSentimentFilters={false}
+            defaultView="list"
+            emptyMessage="No related headlines for this quarter."
+          />
         </div>
       ) : null}
 

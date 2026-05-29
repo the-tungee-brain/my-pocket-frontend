@@ -57,6 +57,7 @@ export type EarningsDetailResponse = {
   symbol: string;
   event: EarningsEvent;
   relatedNews: EarningsNewsHeadline[];
+  officialReleases: EarningsNewsHeadline[];
   transcriptAvailable: boolean;
   transcript: TranscriptSegment[];
   analysis: EarningsAnalysis | null;

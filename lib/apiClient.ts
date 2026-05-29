@@ -9,6 +9,8 @@ import type {
   PortfolioIntelligence,
   SymbolIntelligence,
 } from "@/app/types/intelligence";
+import type { PortfolioNewsResponse } from "@/app/types/portfolioNews";
+import type { PressReleasesResponse } from "@/app/types/pressReleases";
 import type {
   InvestmentStrategy,
   JourneyStepStatus,
@@ -93,6 +95,47 @@ export async function fetchPortfolioBrief(
   }
 
   return res.json() as Promise<PortfolioIntelligence>;
+}
+
+export async function fetchPortfolioNews(
+  accessToken: string,
+): Promise<PortfolioNewsResponse> {
+  const res = await apiFetch("/portfolio/news", {
+    method: "GET",
+    accessToken,
+  });
+
+  if (!res.ok) {
+    const error = new Error(
+      res.status === 404
+        ? "Portfolio news endpoint is not available."
+        : `Failed to load portfolio news (${res.status})`,
+    ) as Error & { status?: number };
+    error.status = res.status;
+    throw error;
+  }
+
+  return res.json() as Promise<PortfolioNewsResponse>;
+}
+
+export async function fetchPressReleases(
+  accessToken: string,
+  symbol: string,
+  options: { lookbackDays?: number } = {},
+): Promise<PressReleasesResponse> {
+  const res = await apiFetch(
+    `/research/press-releases${buildQuery({
+      symbol: symbol.toUpperCase(),
+      lookbackDays: options.lookbackDays,
+    })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load press releases (${res.status})`);
+  }
+
+  return res.json() as Promise<PressReleasesResponse>;
 }
 
 export async function fetchMorningBrief(
