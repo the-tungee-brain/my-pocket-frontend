@@ -2,8 +2,11 @@
 
 import { BarChart3, FileSpreadsheet, Landmark, PieChart, Target, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useFundamentals } from "@/app/hooks/useFundamentals";
+import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { hasProFeature } from "@/lib/planFeatures";
 import { PageSplit } from "@/components/PageShell";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -29,9 +32,16 @@ export function FundamentalsPageContent({
   symbol,
 }: FundamentalsPageContentProps) {
   const { data: session } = useSession();
+  const { isPaid, plan } = useAccountPlan(session?.accessToken);
+  const financialStrengthAllowed = hasProFeature(
+    isPaid,
+    "financialStrength",
+    plan,
+  );
   const { isEtf } = useResearchAssetTypeContext();
   const { fundamentals, isLoading, error } = useFundamentals(symbol, {
     accessToken: session?.accessToken,
+    proFinancialAnalysis: financialStrengthAllowed,
   });
 
   const keyMetricsCard = (
@@ -85,29 +95,36 @@ export function FundamentalsPageContent({
             <ResearchSectionCard
               title={isEtf ? "Fund overview" : "Fundamental overview"}
               description={
-                isEtf
-                  ? "AI-generated snapshot focused on cost, yield, and composition"
-                  : "AI-generated snapshot from SEC filings and market data"
+                financialStrengthAllowed
+                  ? isEtf
+                    ? "AI-generated snapshot focused on cost, yield, and composition"
+                    : "AI-generated snapshot from SEC filings and market data"
+                  : "Pro — AI snapshot from SEC filings and market data"
               }
               icon={FileSpreadsheet}
             >
-              {isLoading ? (
-                <FundamentalOverviewSkeleton />
-              ) : fundamentals?.overview || fundamentals?.overviewNote ? (
-                <FundamentalOverviewSection
-                  overview={fundamentals.overview}
-                  fallbackNote={fundamentals.overviewNote}
-                  isEtf={isEtf}
-                />
-              ) : (
-                <EmptyState
-                  icon={FileSpreadsheet}
-                  title="Overview unavailable"
-                  description="An AI overview isn't available for this symbol right now."
-                  variant="solid"
-                  className="py-4"
-                />
-              )}
+              <ProFeatureGate
+                feature="financialStrength"
+                allowed={financialStrengthAllowed}
+              >
+                {isLoading && financialStrengthAllowed ? (
+                  <FundamentalOverviewSkeleton />
+                ) : fundamentals?.overview || fundamentals?.overviewNote ? (
+                  <FundamentalOverviewSection
+                    overview={fundamentals.overview}
+                    fallbackNote={fundamentals.overviewNote}
+                    isEtf={isEtf}
+                  />
+                ) : financialStrengthAllowed ? (
+                  <EmptyState
+                    icon={FileSpreadsheet}
+                    title="Overview unavailable"
+                    description="An AI overview isn't available for this symbol right now."
+                    variant="solid"
+                    className="py-4"
+                  />
+                ) : null}
+              </ProFeatureGate>
             </ResearchSectionCard>
 
             {isEtf ? keyMetricsCard : ownershipCard}

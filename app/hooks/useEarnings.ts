@@ -65,6 +65,8 @@ export type EarningsDetailResponse = {
 
 type AccessOptions = {
   accessToken?: string | null;
+  /** When false, detail API skips LLM earnings analysis. */
+  proEarningsAnalysis?: boolean;
 };
 
 const listCache = new Map<string, EarningsListResponse>();
@@ -74,8 +76,8 @@ function listKey(symbol: string, limit: number) {
   return `${symbol}:${limit}`;
 }
 
-function detailKey(symbol: string, reportDate: string) {
-  return `${symbol}:${reportDate}`;
+function detailKey(symbol: string, reportDate: string, proEarningsAnalysis: boolean) {
+  return `${symbol}:${reportDate}:${proEarningsAnalysis ? "pro" : "free"}`;
 }
 
 export function useEarningsList(
@@ -154,7 +156,11 @@ export function useEarningsList(
 export function useEarningsDetail(
   symbol: string | null,
   reportDate: string | null,
-  { accessToken, enabled = true }: AccessOptions & { enabled?: boolean } = {},
+  {
+    accessToken,
+    enabled = true,
+    proEarningsAnalysis = true,
+  }: AccessOptions & { enabled?: boolean } = {},
 ) {
   const [data, setData] = useState<EarningsDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(
@@ -179,7 +185,7 @@ export function useEarningsDetail(
       return;
     }
 
-    const cacheKey = detailKey(key, reportDate);
+    const cacheKey = detailKey(key, reportDate, proEarningsAnalysis);
     const cached = detailCache.get(cacheKey);
     if (cached) {
       setData(cached);
@@ -199,7 +205,7 @@ export function useEarningsDetail(
           symbol: key!,
           report_date: reportDate!,
           include_transcript: "true",
-          include_analysis: "true",
+          include_analysis: proEarningsAnalysis ? "true" : "false",
         });
         const res = await apiFetch(`/research/earnings/detail?${params}`, {
           method: "GET",
@@ -231,7 +237,7 @@ export function useEarningsDetail(
     return () => {
       cancelled = true;
     };
-  }, [symbol, reportDate, accessToken, enabled]);
+  }, [symbol, reportDate, accessToken, enabled, proEarningsAnalysis]);
 
   return { data, isLoading, error };
 }

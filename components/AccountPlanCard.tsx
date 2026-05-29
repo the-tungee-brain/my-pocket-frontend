@@ -22,12 +22,15 @@ type AccountPlanCardProps = {
 
 const FREE_FEATURES = [
   "Portfolio sync, morning brief, and strategy playbooks",
-  "Research, dividend history charts, and allocation tools",
+  "Research essentials: quotes, SEC filings, earnings history, news headlines",
+  "Dividend history charts, allocation tools, and playbooks",
   "AI chat with Simple & Standard models",
 ] as const;
 
 const PRO_FEATURES = [
+  "AI earnings analysis (quarterly summaries & takeaways)",
   "AI news research (brief, sentiment, coverage analysis)",
+  "Financial strength & fundamental AI on Research",
   "Income snowball (DRIP projections & contributions)",
   "Wheel backtest with trade log and PDF export",
   "Advanced AI models (gpt-5.4, o3, o4-mini, and more)",
@@ -77,7 +80,7 @@ export function AccountPlanCard({
             price="$0"
             active={!isPaid}
             features={FREE_FEATURES}
-            footnote={`Simple & Standard models for chat, analyze, and playbooks. Research news headlines are free; AI news analysis is Pro. Defaults to ${freeModel}.`}
+            footnote={`Simple & Standard models for chat and playbooks. Research headlines, filings, and earnings history are free; AI earnings, news, and financial strength are Pro. Defaults to ${freeModel}.`}
           />
           <PlanFeatureList
             title="Pro"
@@ -171,8 +174,9 @@ export function LandingPricingSection() {
             Start free. Upgrade when you need more depth.
           </MarketingDisplayTitle>
           <MarketingLead className="mx-auto mt-4">
-            Free covers day-to-day portfolio work and research. Pro unlocks
-            snowball, wheel backtest, and Advanced AI models.
+            Free covers portfolio work and research essentials. Pro unlocks AI
+            earnings, news, and financial analysis, plus snowball, wheel
+            backtest, and Advanced AI models.
           </MarketingLead>
         </div>
 
@@ -182,7 +186,8 @@ export function LandingPricingSection() {
               <div>
                 <h3 className="text-lg font-semibold">Free</h3>
                 <p className="mt-1 text-sm text-muted">
-                  Portfolio, research, playbooks, and Simple & Standard AI.
+                  Portfolio, research essentials, playbooks, and Simple &
+                  Standard AI.
                 </p>
               </div>
               <p className="text-2xl font-semibold tabular-nums">$0</p>
@@ -216,7 +221,8 @@ export function LandingPricingSection() {
               <div>
                 <h3 className="text-lg font-semibold">Pro</h3>
                 <p className="mt-1 text-sm text-muted">
-                  Advanced AI tier plus everything in Free.
+                  Deep Research AI plus snowball, backtest, and Advanced chat
+                  models.
                 </p>
               </div>
               <p className="text-sm font-medium text-muted">Invite only</p>

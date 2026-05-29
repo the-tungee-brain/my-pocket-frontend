@@ -1,12 +1,19 @@
 import type { AccountPlan } from "@/app/types/account";
 
 /** Premium tools gated behind Pro. */
-export type ProFeatureId = "wheelBacktest" | "dividendSnowball" | "newsAi";
+export type ProFeatureId =
+  | "wheelBacktest"
+  | "dividendSnowball"
+  | "newsAi"
+  | "financialStrength"
+  | "earningsAi";
 
 const API_FEATURE_KEYS: Record<ProFeatureId, string> = {
   wheelBacktest: "wheel_backtest",
   dividendSnowball: "dividend_snowball",
   newsAi: "news_ai",
+  financialStrength: "financial_strength",
+  earningsAi: "earnings_ai",
 };
 
 export const PRO_FEATURE_LABELS: Record<
@@ -27,6 +34,16 @@ export const PRO_FEATURE_LABELS: Record<
     title: "AI news research",
     description:
       "News brief, per-headline sentiment and summaries, market context, and coverage analysis in Research.",
+  },
+  financialStrength: {
+    title: "Financial strength analysis",
+    description:
+      "Pro strength score, strengths and risks, and AI fundamental overview on Research Financials and Fundamentals.",
+  },
+  earningsAi: {
+    title: "AI earnings analysis",
+    description:
+      "Quarterly earnings summaries, highlights, guidance takeaways, and investor-oriented analysis on Research Earnings.",
   },
 };
 

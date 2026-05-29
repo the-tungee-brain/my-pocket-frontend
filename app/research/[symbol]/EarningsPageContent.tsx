@@ -13,11 +13,14 @@ import {
   pressReleaseToDisplay,
 } from "@/components/NewsHeadlinesFeed";
 import { useSession } from "next-auth/react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import {
   useEarningsDetail,
   useEarningsList,
   type EarningsEvent,
 } from "@/app/hooks/useEarnings";
+import { ProFeatureGate } from "@/components/ProFeatureGate";
+import { hasProFeature } from "@/lib/planFeatures";
 import {
   ResearchAtAGlanceBox,
   ResearchBulletList,
@@ -284,21 +287,24 @@ function EarningsDetailPanel({
   previewEvent: EarningsEvent;
 }) {
   const { data: session } = useSession();
+  const { isPaid, plan } = useAccountPlan(session?.accessToken);
+  const earningsAiAllowed = hasProFeature(isPaid, "earningsAi", plan);
   const { data, isLoading, error } = useEarningsDetail(
     symbol,
     previewEvent.reportDate,
     {
       accessToken: session?.accessToken,
+      proEarningsAnalysis: earningsAiAllowed,
     },
   );
 
   const event = data?.event ?? previewEvent;
-  const analysis = data?.analysis ?? null;
+  const analysis = earningsAiAllowed ? (data?.analysis ?? null) : null;
   const relatedNews = data?.relatedNews ?? [];
   const officialReleases = data?.officialReleases ?? [];
   const transcript = data?.transcript ?? [];
   const officialDisplayItems = officialReleases.map(pressReleaseToDisplay);
-  const showAnalysisLoading = isLoading && !analysis;
+  const showAnalysisLoading = earningsAiAllowed && isLoading && !analysis;
 
   return (
     <div className="space-y-6">
@@ -316,55 +322,61 @@ function EarningsDetailPanel({
 
       <MetricsGrid event={event} />
 
-      {error && !analysis ? <ErrorBanner message={error} /> : null}
-
-      {showAnalysisLoading ? <EarningsAnalysisSkeleton /> : null}
-
-      {!showAnalysisLoading && analysis ? (
-        <div className="space-y-6 border-t border-border pt-6">
-          <div className="rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent-strong">
-              Headline
-            </h3>
-            <p className="text-sm font-medium leading-relaxed text-foreground">
-              {analysis.headline}
-            </p>
-          </div>
-
-          <ResearchTextBlock title="Summary">
-            <p>{analysis.summary}</p>
-          </ResearchTextBlock>
-
-          <ResearchTextBlock title="Context going in">
-            <p>{analysis.context}</p>
-          </ResearchTextBlock>
-
-          <ResearchBulletList
-            title="Key highlights"
-            items={analysis.keyHighlights}
-          />
-
-          <ResearchTextBlock title="Guidance & outlook">
-            <p>{analysis.guidanceAndOutlook}</p>
-          </ResearchTextBlock>
-
-          <ResearchTextBlock title="What surprised the market">
-            <p>{analysis.whatSurprised}</p>
-          </ResearchTextBlock>
-
-          <ResearchAtAGlanceBox title="Investor takeaway">
-            <p className="text-sm font-medium leading-relaxed text-foreground">
-              {analysis.investorTakeaway}
-            </p>
-          </ResearchAtAGlanceBox>
-        </div>
+      {error && earningsAiAllowed && !analysis ? (
+        <ErrorBanner message={error} />
       ) : null}
 
-      {!showAnalysisLoading && !analysis && !error && !isLoading ? (
-        <p className="text-sm text-muted">
-          AI analysis is not available for this quarter.
-        </p>
-      ) : null}
+      <div className="border-t border-border pt-6">
+        <ProFeatureGate feature="earningsAi" allowed={earningsAiAllowed}>
+          {showAnalysisLoading ? <EarningsAnalysisSkeleton /> : null}
+
+          {!showAnalysisLoading && analysis ? (
+            <div className="space-y-6">
+              <div className="rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent-strong">
+                  Headline
+                </h3>
+                <p className="text-sm font-medium leading-relaxed text-foreground">
+                  {analysis.headline}
+                </p>
+              </div>
+
+              <ResearchTextBlock title="Summary">
+                <p>{analysis.summary}</p>
+              </ResearchTextBlock>
+
+              <ResearchTextBlock title="Context going in">
+                <p>{analysis.context}</p>
+              </ResearchTextBlock>
+
+              <ResearchBulletList
+                title="Key highlights"
+                items={analysis.keyHighlights}
+              />
+
+              <ResearchTextBlock title="Guidance & outlook">
+                <p>{analysis.guidanceAndOutlook}</p>
+              </ResearchTextBlock>
+
+              <ResearchTextBlock title="What surprised the market">
+                <p>{analysis.whatSurprised}</p>
+              </ResearchTextBlock>
+
+              <ResearchAtAGlanceBox title="Investor takeaway">
+                <p className="text-sm font-medium leading-relaxed text-foreground">
+                  {analysis.investorTakeaway}
+                </p>
+              </ResearchAtAGlanceBox>
+            </div>
+          ) : null}
+
+          {!showAnalysisLoading && !analysis && !error && !isLoading ? (
+            <p className="text-sm text-muted">
+              AI analysis is not available for this quarter.
+            </p>
+          ) : null}
+        </ProFeatureGate>
+      </div>
 
       {!showAnalysisLoading && officialReleases.length > 0 ? (
         <div className="min-w-0 border-t border-border pt-6">
@@ -421,6 +433,8 @@ function EarningsDetailPanel({
 
 export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
   const { data: session } = useSession();
+  const { isPaid, plan } = useAccountPlan(session?.accessToken);
+  const earningsAiAllowed = hasProFeature(isPaid, "earningsAi", plan);
   const { data, isLoading, error } = useEarningsList(symbol, {
     accessToken: session?.accessToken,
   });
@@ -506,7 +520,11 @@ export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
   const historyCard = (
     <ResearchSectionCard
       title="Earnings history"
-      description="Quarterly results, surprises, transcripts, and AI summaries"
+      description={
+        earningsAiAllowed
+          ? "Quarterly results, surprises, transcripts, and AI summaries"
+          : "Quarterly results, surprises, and transcripts — AI summaries on Pro"
+      }
       icon={TrendingUp}
     >
       {!hasHistory ? (

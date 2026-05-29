@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { BarChart3, LineChart, ScrollText, Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useFundamentals } from "@/app/hooks/useFundamentals";
+import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { hasProFeature } from "@/lib/planFeatures";
 import { PageSplit } from "@/components/PageShell";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import type { SecPeriod } from "@/lib/secUtils";
@@ -22,9 +25,16 @@ type FinancialsPageContentProps = {
 
 export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
   const { data: session } = useSession();
+  const { isPaid, plan } = useAccountPlan(session?.accessToken);
+  const financialStrengthAllowed = hasProFeature(
+    isPaid,
+    "financialStrength",
+    plan,
+  );
   const [period, setPeriod] = useState<SecPeriod>("annual");
   const { fundamentals, isLoading, error } = useFundamentals(symbol, {
     accessToken: session?.accessToken,
+    proFinancialAnalysis: financialStrengthAllowed,
   });
 
   const yfinanceSnapshot =
@@ -42,13 +52,22 @@ export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
 
       <ResearchSectionCard
         title="Financial strength"
-        description="Rule-based read on growth, margins, cash flow, and leverage"
+        description={
+          financialStrengthAllowed
+            ? "AI-assisted read on growth, margins, cash flow, and leverage"
+            : "Pro — score, strengths, risks, and narrative from filings & market data"
+        }
         icon={Shield}
       >
-        <FinancialStrengthSection
-          strength={fundamentals?.strength}
-          isLoading={isLoading}
-        />
+        <ProFeatureGate
+          feature="financialStrength"
+          allowed={financialStrengthAllowed}
+        >
+          <FinancialStrengthSection
+            strength={fundamentals?.strength}
+            isLoading={isLoading && financialStrengthAllowed}
+          />
+        </ProFeatureGate>
       </ResearchSectionCard>
 
       <PageSplit

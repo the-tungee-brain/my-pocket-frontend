@@ -57,11 +57,13 @@ const fundamentalsCache = new Map<string, FundamentalsBlock>();
 
 type UseFundamentalsOptions = {
   accessToken?: string | null;
+  /** When false, API omits strength & AI overview — use a separate cache slot. */
+  proFinancialAnalysis?: boolean;
 };
 
 export function useFundamentals(
   symbol: string | null,
-  { accessToken }: UseFundamentalsOptions = {},
+  { accessToken, proFinancialAnalysis = true }: UseFundamentalsOptions = {},
 ) {
   const [fundamentals, setFundamentals] = useState<FundamentalsBlock | null>(
     null,
@@ -86,7 +88,8 @@ export function useFundamentals(
       return;
     }
 
-    const cached = fundamentalsCache.get(key);
+    const cacheId = `${key}:${proFinancialAnalysis ? "pro" : "free"}`;
+    const cached = fundamentalsCache.get(cacheId);
     if (cached) {
       setFundamentals(cached);
       setIsLoading(false);
@@ -116,7 +119,7 @@ export function useFundamentals(
         const data: FundamentalsBlock = await res.json();
         if (cancelled) return;
 
-        fundamentalsCache.set(key!, data);
+        fundamentalsCache.set(cacheId, data);
         setFundamentals(data);
         setError(null);
       } catch (e: any) {
@@ -135,7 +138,7 @@ export function useFundamentals(
     return () => {
       cancelled = true;
     };
-  }, [symbol, accessToken]);
+  }, [symbol, accessToken, proFinancialAnalysis]);
 
   return { fundamentals, isLoading, error };
 }
