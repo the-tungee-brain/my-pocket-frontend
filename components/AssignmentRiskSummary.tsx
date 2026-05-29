@@ -51,7 +51,7 @@ export function AssignmentRiskSummary({
   return (
     <Card
       surface="subtle"
-      className={className}
+      className={cn("flex h-full min-h-0 flex-col", className)}
       aria-label="Expiring options assignment risk"
     >
       <CardHeader>
@@ -75,7 +75,7 @@ export function AssignmentRiskSummary({
         />
       </CardHeader>
 
-      <ul className="divide-y divide-border/70">
+      <ul className="min-h-0 flex-1 divide-y divide-border/70 overflow-y-auto">
         {summary.positions.map((entry) => {
           const label = entry.underlyingSymbol ?? entry.symbol;
           const optionType = entry.putCall === "PUT" ? "put" : "call";

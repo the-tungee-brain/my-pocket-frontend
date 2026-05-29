@@ -581,7 +581,7 @@ export function SymbolOptionsWorkspace({
 
   return (
     <Card
-      className={className}
+      className={cn("w-full max-w-none", className)}
       aria-label={symbol ? `${symbol} options` : "Symbol options"}
     >
       <CardHeader>
@@ -897,7 +897,7 @@ function OptionChainPreviewTable({
   const atmStrike = findAtmStrike(rows, underlying);
 
   return (
-    <div>
+    <div className="w-full max-w-none">
       {!hideTitle && (
         <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium uppercase tracking-wide text-muted">
           <Target className="h-3.5 w-3.5" aria-hidden />
@@ -915,14 +915,14 @@ function OptionChainPreviewTable({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-border">
+      <div className="w-full max-w-none overflow-hidden rounded-xl border border-border">
         <p className="border-b border-border/70 px-3 py-2 text-[11px] text-muted">
           Bid and ask need a live quote. When they&apos;re missing, last is usually
           yesterday&apos;s close and mark is an estimated price.
         </p>
 
-        <div className="max-h-[min(65vh,520px)] overflow-y-auto md:hidden">
-          <table className="w-full text-left text-xs">
+        <div className="max-h-[min(65vh,520px)] w-full overflow-y-auto md:hidden">
+          <table className="w-full table-fixed text-left text-xs">
             <thead className="sticky top-0 z-10 bg-secondary/95 text-muted shadow-sm backdrop-blur-sm">
               <tr>
                 <th className="px-3 py-2 font-medium">Strike</th>
@@ -958,8 +958,8 @@ function OptionChainPreviewTable({
           </table>
         </div>
 
-        <div className="hidden max-h-[min(65vh,520px)] overflow-auto md:block">
-          <table className="w-full min-w-[1240px] text-left text-xs">
+        <div className="hidden max-h-[min(65vh,520px)] w-full overflow-x-auto overflow-y-auto scrollbar-dark md:block">
+          <table className="w-full min-w-full table-fixed text-left text-xs">
             <thead className="sticky top-0 z-10 bg-secondary/95 text-muted shadow-sm backdrop-blur-sm">
               <tr>
                 <th className="px-3 py-2 font-medium">Strike</th>

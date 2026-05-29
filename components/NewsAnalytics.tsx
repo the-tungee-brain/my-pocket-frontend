@@ -335,7 +335,7 @@ function NewsAnalysisAside({ data }: { data: StockNewsView }) {
         <ResearchBulletList title="Key insights" items={insights} />
       ) : null}
       {risks.length > 0 ? (
-        <ResearchBulletList title="Risks" items={risks} variant="risk" />
+        <ResearchBulletList title="Risks" items={risks} bulletTone="risk" />
       ) : null}
 
       {data.deepAnalysis ? (

@@ -40,18 +40,39 @@ export function ResearchProseText({ text }: { text: string }) {
   );
 }
 
+type BulletTone = "default" | "risk" | "watch";
+
 type ResearchBulletListProps = {
   title?: string;
   items: string[];
-  variant?: "default" | "risk" | "watch";
+  variant?: BulletTone;
+  /** Bullet color only; row styling follows `variant`. */
+  bulletTone?: BulletTone;
   emptyMessage?: string;
   hideTitle?: boolean;
 };
+
+function bulletDotClass(tone: BulletTone) {
+  return tone === "risk"
+    ? "bg-danger"
+    : tone === "watch"
+      ? "bg-accent-strong"
+      : "bg-accent-strong";
+}
+
+function bulletItemClass(tone: BulletTone) {
+  return tone === "risk"
+    ? "border-danger/20 bg-danger/5"
+    : tone === "watch"
+      ? "border-accent/20 bg-accent-muted/40"
+      : "border-border bg-surface-elevated/40";
+}
 
 export function ResearchBulletList({
   title,
   items,
   variant = "default",
+  bulletTone,
   emptyMessage,
   hideTitle = false,
 }: ResearchBulletListProps) {
@@ -67,19 +88,8 @@ export function ResearchBulletList({
     );
   }
 
-  const dotClass =
-    variant === "risk"
-      ? "bg-danger"
-      : variant === "watch"
-        ? "bg-accent-strong"
-        : "bg-accent-strong";
-
-  const itemClass =
-    variant === "risk"
-      ? "border-danger/20 bg-danger/5"
-      : variant === "watch"
-        ? "border-accent/20 bg-accent-muted/40"
-        : "border-border bg-surface-elevated/40";
+  const dotClass = bulletDotClass(bulletTone ?? variant);
+  const itemClass = bulletItemClass(variant);
 
   return (
     <div>

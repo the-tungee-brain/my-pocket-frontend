@@ -15,8 +15,10 @@ import { filterAssignmentRiskSummary } from "@/lib/assignmentRiskSummary";
 import { hasSymbolOptionsContent } from "@/lib/intelligence";
 import { symbolHasOptionPositions } from "@/lib/symbolOptions";
 import { symbolChatKey } from "@/lib/chatKeys";
+import { appStackClass } from "@/lib/appUi";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { PageSplit } from "@/components/PageShell";
+import { cn } from "@/lib/utils";
 
 type Props = {
   symbol: string;
@@ -39,7 +41,6 @@ export function SymbolOptionsContent({ symbol }: Props) {
     useSymbolIntelligence(symbol, { accessToken });
 
   const positionsForSymbol = positionMap[symbolUpper] ?? null;
-  const hasPosition = (positionsForSymbol?.length ?? 0) > 0;
   const hasOptionLegs = symbolHasOptionPositions(positionsForSymbol);
   const hasOptionsData = hasSymbolOptionsContent(intelligence);
 
@@ -51,9 +52,15 @@ export function SymbolOptionsContent({ symbol }: Props) {
     : null;
 
   const symbolAssignmentRiskSummary =
-    assignmentRiskSummary && hasPosition
+    assignmentRiskSummary && (positionsForSymbol?.length ?? 0) > 0
       ? filterAssignmentRiskSummary(assignmentRiskSummary, symbolUpper)
       : null;
+
+  const showCashReserved =
+    symbolCspSummary != null && symbolCspSummary.totalReservedCash > 0;
+  const showExpiring = symbolAssignmentRiskSummary != null;
+  const showWorkspace =
+    hasOptionLegs || hasOptionsData || intelligenceLoading;
 
   const handleAnalyzeOption = useCallback(
     (prompt: string) => {
@@ -68,7 +75,7 @@ export function SymbolOptionsContent({ symbol }: Props) {
     [chatKey, symbolUpper, sendPrompt, positionsForSymbol],
   );
 
-  if (!hasOptionLegs && !hasOptionsData && !intelligenceLoading) {
+  if (!showWorkspace && !showExpiring && !showCashReserved && !intelligenceLoading) {
     return (
       <EmptyState
         icon={Target}
@@ -79,49 +86,55 @@ export function SymbolOptionsContent({ symbol }: Props) {
     );
   }
 
-  return (
-    <>
-      {error && <ErrorBanner message={error} className="mb-3" />}
+  const workspace = showWorkspace ? (
+    <SymbolOptionsWorkspace
+      intelligence={intelligence}
+      loading={intelligenceLoading}
+      error={intelligenceError}
+      onRefresh={refetchIntelligence}
+      onAnalyzeOption={handleAnalyzeOption}
+      className={pageSectionClass}
+    />
+  ) : null;
 
-      <PageSplit
-        main={
-          <>
-            <SymbolOptionsWorkspace
-              intelligence={intelligence}
-              loading={intelligenceLoading}
-              error={intelligenceError}
-              onRefresh={refetchIntelligence}
-              onAnalyzeOption={handleAnalyzeOption}
-              className={pageSectionClass}
-            />
-          </>
-        }
-        aside={
-          symbolCspSummary?.totalReservedCash ||
-          symbolAssignmentRiskSummary ? (
-            <>
-              {symbolCspSummary && symbolCspSummary.totalReservedCash > 0 && (
-                <CashSecuredPutSummary
-                  summary={symbolCspSummary}
-                  cashBalance={
-                    account?.securitiesAccount.currentBalances.cashBalance
-                  }
-                  compact
-                  className={pageSectionClass}
-                />
-              )}
+  const splitPanelClass = cn(pageSectionClass, "h-full min-h-0");
 
-              {symbolAssignmentRiskSummary && (
-                <AssignmentRiskSummary
-                  summary={symbolAssignmentRiskSummary}
-                  compact
-                  className={pageSectionClass}
-                />
-              )}
-            </>
-          ) : undefined
-        }
+  const cashReserved =
+    showCashReserved && symbolCspSummary ? (
+      <CashSecuredPutSummary
+        summary={symbolCspSummary}
+        cashBalance={account?.securitiesAccount.currentBalances.cashBalance}
+        className={splitPanelClass}
       />
-    </>
+    ) : null;
+
+  const expiring = showExpiring ? (
+    <AssignmentRiskSummary
+      summary={symbolAssignmentRiskSummary}
+      className={splitPanelClass}
+    />
+  ) : null;
+
+  const reservesAndExpiring =
+    cashReserved && expiring ? (
+      <PageSplit
+        main={cashReserved}
+        aside={expiring}
+        className="lg:grid-cols-2 lg:items-stretch"
+        mainClassName="h-full min-h-0"
+        asideClassName="h-full min-h-0"
+      />
+    ) : (
+      cashReserved ?? expiring
+    );
+
+  return (
+    <div className={cn(appStackClass, "w-full max-w-none")}>
+      {error && <ErrorBanner message={error} />}
+
+      {reservesAndExpiring}
+
+      {workspace}
+    </div>
   );
 }

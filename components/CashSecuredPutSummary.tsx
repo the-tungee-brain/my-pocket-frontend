@@ -5,6 +5,7 @@ import type { CashSecuredPutSummary as CashSecuredPutSummaryData } from "@/app/t
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { KpiStat } from "@/components/ui/KpiStat";
 import { formatUsd } from "@/lib/formatCurrency";
+import { cn } from "@/lib/utils";
 
 type Props = {
   summary: CashSecuredPutSummaryData;
@@ -38,7 +39,7 @@ export function CashSecuredPutSummary({
   return (
     <Card
       surface="accentSoft"
-      className={className}
+      className={cn("flex h-full min-h-0 flex-col", className)}
       aria-label="Cash-secured put reserves"
     >
       <CardHeader>
@@ -57,77 +58,81 @@ export function CashSecuredPutSummary({
         />
       </CardHeader>
 
-      <CardBody className="grid gap-3 sm:grid-cols-3">
-        {cashBalance != null && (
-          <KpiStat label="Cash balance" value={formatUsd(cashBalance)} />
-        )}
-        <KpiStat
-          label="Reserved"
-          value={formatUsd(reserved)}
-          tone="positive"
-          className="rounded-xl border border-accent/25 bg-secondary/70 px-3.5 py-2.5"
-        />
-        {available != null && (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <CardBody className="grid gap-3 sm:grid-cols-3">
+          {cashBalance != null && (
+            <KpiStat label="Cash balance" value={formatUsd(cashBalance)} />
+          )}
           <KpiStat
-            label="Available after reserves"
-            value={formatUsd(available)}
-            tone={available <= 0 ? "negative" : "default"}
+            label="Reserved"
+            value={formatUsd(reserved)}
+            tone="positive"
+            className="rounded-xl border border-accent/25 bg-secondary/70 px-3.5 py-2.5"
           />
-        )}
-      </CardBody>
-
-      {cashBalance != null && cashBalance > 0 && (
-        <CardBody className="border-t border-border/80 pt-0">
-          <div className="mb-1.5 flex items-center justify-between text-xs text-muted">
-            <span>Reserved vs cash</span>
-            <span className="tabular-nums">{reservedPct}% reserved</span>
-          </div>
-          <div
-            className="h-2 overflow-hidden rounded-full bg-muted-bg"
-            role="progressbar"
-            aria-valuenow={reservedPct}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`${reservedPct}% of cash reserved for puts`}
-          >
-            <div
-              className="h-full rounded-full bg-accent transition-[width] duration-300"
-              style={{ width: `${reservedPct}%` }}
+          {available != null && (
+            <KpiStat
+              label="Available after reserves"
+              value={formatUsd(available)}
+              tone={available <= 0 ? "negative" : "default"}
             />
-          </div>
+          )}
         </CardBody>
-      )}
 
-      {!compact && summary.positions.length > 0 && (
-        <div className="border-t border-border/80 bg-secondary/30">
-          <ul className="divide-y divide-border/70">
-            {summary.positions.map((item) => {
-              const label = item.underlyingSymbol ?? item.symbol;
-              const contractLabel =
-                item.contracts === 1 ? "1 contract" : `${item.contracts} contracts`;
+        {cashBalance != null && cashBalance > 0 && (
+          <CardBody className="border-t border-border/80 pt-0">
+            <div className="mb-1.5 flex items-center justify-between text-xs text-muted">
+              <span>Reserved vs cash</span>
+              <span className="tabular-nums">{reservedPct}% reserved</span>
+            </div>
+            <div
+              className="h-2 overflow-hidden rounded-full bg-muted-bg"
+              role="progressbar"
+              aria-valuenow={reservedPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`${reservedPct}% of cash reserved for puts`}
+            >
+              <div
+                className="h-full rounded-full bg-accent transition-[width] duration-300"
+                style={{ width: `${reservedPct}%` }}
+              />
+            </div>
+          </CardBody>
+        )}
 
-              return (
-                <li
-                  key={`${item.symbol}-${item.strike}-${item.contracts}`}
-                  className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      <span className="font-mono">{label}</span>
-                      <span className="text-muted"> · </span>
-                      <span className="text-muted">{formatStrike(item.strike)} put</span>
+        {!compact && summary.positions.length > 0 ? (
+          <div className="mt-auto min-h-0 flex-1 border-t border-border/80 bg-secondary/30">
+            <ul className="divide-y divide-border/70">
+              {summary.positions.map((item) => {
+                const label = item.underlyingSymbol ?? item.symbol;
+                const contractLabel =
+                  item.contracts === 1 ? "1 contract" : `${item.contracts} contracts`;
+
+                return (
+                  <li
+                    key={`${item.symbol}-${item.strike}-${item.contracts}`}
+                    className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        <span className="font-mono">{label}</span>
+                        <span className="text-muted"> · </span>
+                        <span className="text-muted">{formatStrike(item.strike)} put</span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted">{contractLabel}</p>
+                    </div>
+                    <p className="shrink-0 text-sm font-semibold tabular-nums text-accent-strong">
+                      {formatUsd(item.reservedCash)}
                     </p>
-                    <p className="mt-0.5 text-xs text-muted">{contractLabel}</p>
-                  </div>
-                  <p className="shrink-0 text-sm font-semibold tabular-nums text-accent-strong">
-                    {formatUsd(item.reservedCash)}
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : (
+          <div className="min-h-0 flex-1" aria-hidden />
+        )}
+      </div>
     </Card>
   );
 }
