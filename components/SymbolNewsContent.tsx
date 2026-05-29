@@ -20,7 +20,7 @@ export function SymbolNewsContent({ symbol }: Props) {
     error,
     lastUpdated,
     refresh,
-  } = useCompanyNews(symbol, accessToken);
+  } = useCompanyNews(symbol, accessToken, Boolean(symbol && accessToken));
 
   return (
     <CompanyNews

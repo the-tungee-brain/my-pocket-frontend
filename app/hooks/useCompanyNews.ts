@@ -147,32 +147,34 @@ export function useCompanyNews(
     if (!key || !accessToken || !enabled) return;
 
     const memoryCached = newsCache.get(key);
-    const sessionCached = memoryCached ?? readSessionCache(key);
-    const hasCached = Boolean(sessionCached);
-    const clientFresh =
-      memoryCached != null &&
-      Date.now() - memoryCached.fetchedAt < CLIENT_FRESH_MS;
+    const cached = memoryCached ?? readSessionCache(key);
+    const hasCached = cached != null;
+    const cacheIsFresh =
+      hasCached && Date.now() - cached.fetchedAt < CLIENT_FRESH_MS;
 
-    if (sessionCached) {
+    if (cached) {
       if (!memoryCached) {
-        newsCache.set(key, sessionCached);
+        newsCache.set(key, cached);
       }
-      setAnalytics(sessionCached.data);
-      setLastUpdated(sessionCached.fetchedAt);
+      setAnalytics(cached.data);
+      setLastUpdated(cached.fetchedAt);
       setError(null);
       setIsLoading(false);
     }
 
-    if (clientFresh) {
+    // Fresh session or memory cache: no background refetch on tab mount.
+    if (cacheIsFresh) {
       return;
     }
 
     let cancelled = false;
+    const showInitialLoading = !hasCached;
 
     let entry = inFlightNews.get(key);
     if (entry) {
-      if (!hasCached) setIsLoading(true);
-      else setIsRefreshing(true);
+      if (showInitialLoading) {
+        setIsLoading(true);
+      }
 
       const listener: Listener = (data, err) => {
         if (cancelled) return;
@@ -200,11 +202,9 @@ export function useCompanyNews(
     entry = { listeners: new Set<Listener>() };
     inFlightNews.set(key, entry);
 
-    if (!hasCached) {
+    if (showInitialLoading) {
       setIsLoading(true);
       setError(null);
-    } else {
-      setIsRefreshing(true);
     }
 
     const listener: Listener = (data, err) => {
@@ -224,6 +224,7 @@ export function useCompanyNews(
 
     entry.listeners.add(listener);
 
+    // Stale cache: revalidate silently (no "Updating…" unless user taps refresh).
     (async () => {
       try {
         const data = await fetchCompanyNews(key, accessToken, false);

@@ -19,9 +19,12 @@ import {
 } from "@/lib/dividendHistory";
 import { formatExpenseRatio } from "@/lib/etfHoldings";
 import { cn } from "@/lib/utils";
-import { PageSplit } from "@/components/PageShell";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+
+/** Matched height for dividend history and recent-payments panels. */
+export const DIVIDEND_HISTORY_PANEL_MIN_CLASS = "min-h-[34rem]";
+export const RECENT_PAYMENTS_ROW_COUNT = 16;
 
 const BAR_FILL = "#34d399";
 const BAR_FILL_PARTIAL = "#6ee7b7";
@@ -113,6 +116,51 @@ function buildScenarioControlsSummary(options: {
   return parts.join(" · ");
 }
 
+const SNOWBALL_CURRENCY_STEP = 100;
+
+function parseSnowballInputNumber(text: string): number | null {
+  const trimmed = text.trim();
+  if (trimmed === "") return null;
+  const next = Number(trimmed);
+  return Number.isFinite(next) ? next : null;
+}
+
+function shouldApplyFixedCurrencyStep(diff: number, _step: number): boolean {
+  if (!Number.isFinite(diff) || diff === 0) return false;
+  return Math.abs(diff) < 1;
+}
+
+function resolveFixedStepValue(
+  current: number,
+  proposed: number,
+  step: number,
+  min?: number,
+  max?: number,
+  allowZero = false,
+): number {
+  const diff = proposed - current;
+  let next = proposed;
+  if (shouldApplyFixedCurrencyStep(diff, step)) {
+    const direction = diff > 0 ? 1 : -1;
+    next = current + direction * step;
+  }
+  if (min != null) next = Math.max(min, next);
+  if (max != null) next = Math.min(max, next);
+  if (!allowZero && next <= 0) next = 0.01;
+  return roundSnowball(next);
+}
+
+function formatSnowballInputValue(
+  value: number | null | undefined,
+  allowZero: boolean,
+): string {
+  if (value == null || !Number.isFinite(value)) return "";
+  if (allowZero && value >= 0) {
+    return value > 0 ? String(roundSnowball(value)) : "0";
+  }
+  return value > 0 ? String(roundSnowball(value)) : "";
+}
+
 type SnowballNumericInputProps = {
   value: number | null | undefined;
   onCommit: (value: number) => void;
@@ -120,6 +168,9 @@ type SnowballNumericInputProps = {
   min?: number;
   max?: number;
   step?: number;
+  fixedStep?: number;
+  disabled?: boolean;
+  allowZero?: boolean;
   className?: string;
 };
 
@@ -130,52 +181,156 @@ function SnowballNumericInput({
   min,
   max,
   step,
+  fixedStep,
+  disabled = false,
+  allowZero = false,
   className,
 }: SnowballNumericInputProps) {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const stepSize = fixedStep ?? step;
 
   useEffect(() => {
     if (isFocused) return;
-    setText(value != null && value > 0 ? String(roundSnowball(value)) : "");
-  }, [value, isFocused]);
+    setText(formatSnowballInputValue(value, allowZero));
+  }, [value, isFocused, allowZero]);
+
+  const isCommitValue = (next: number) =>
+    Number.isFinite(next) && (allowZero ? next >= 0 : next > 0);
+
+  const commitValue = (next: number) => {
+    if (!isCommitValue(next)) return;
+    onCommit(next);
+    setText(formatSnowballInputValue(next, allowZero));
+  };
+
+  const adjustByStep = (direction: 1 | -1) => {
+    const parsed = parseSnowballInputNumber(text);
+    const current =
+      parsed != null ? parsed : value != null && Number.isFinite(value) ? value : 0;
+    if (!stepSize || stepSize <= 0) return;
+    const next = resolveFixedStepValue(
+      current,
+      current + direction * stepSize,
+      stepSize,
+      min,
+      max,
+      allowZero,
+    );
+    commitValue(next);
+  };
 
   return (
     <input
       type="number"
       min={min}
       max={max}
-      step={step}
+      step={stepSize}
+      disabled={disabled}
       value={text}
-      onFocus={() => setIsFocused(true)}
+      onFocus={() => {
+        if (disabled) return;
+        setIsFocused(true);
+      }}
       onBlur={() => {
+        if (disabled) return;
         setIsFocused(false);
         const trimmed = text.trim();
         if (trimmed === "") {
           onClear?.();
-          setText("");
+          setText(allowZero ? "0" : "");
           return;
         }
         const next = Number(trimmed);
-        if (Number.isFinite(next) && next > 0) {
-          onCommit(next);
-          setText(String(roundSnowball(next)));
+        if (isCommitValue(next)) {
+          commitValue(next);
           return;
         }
-        setText(value != null && value > 0 ? String(roundSnowball(value)) : "");
+        setText(formatSnowballInputValue(value, allowZero));
+      }}
+      onKeyDown={(event) => {
+        if (disabled || !stepSize || stepSize <= 0) return;
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          adjustByStep(1);
+        } else if (event.key === "ArrowDown") {
+          event.preventDefault();
+          adjustByStep(-1);
+        }
       }}
       onChange={(event) => {
+        if (disabled) return;
         const nextText = event.target.value;
         setText(nextText);
         const trimmed = nextText.trim();
         if (trimmed === "") return;
-        const next = Number(trimmed);
-        if (Number.isFinite(next) && next > 0) {
+        const proposed = Number(trimmed);
+        if (!Number.isFinite(proposed)) return;
+
+        const parsed = parseSnowballInputNumber(text);
+        const current =
+          parsed != null
+            ? parsed
+            : value != null && Number.isFinite(value)
+              ? value
+              : 0;
+
+        const next =
+          fixedStep != null && fixedStep > 0
+            ? resolveFixedStepValue(
+                current,
+                proposed,
+                fixedStep,
+                min,
+                max,
+                allowZero,
+              )
+            : proposed;
+
+        if (isCommitValue(next)) {
           onCommit(next);
         }
       }}
-      className={className}
+      className={cn(
+        disabled && "cursor-not-allowed opacity-70",
+        className,
+      )}
     />
+  );
+}
+
+function SnowballCurrencyInput({
+  value,
+  onCommit,
+  onClear,
+  min,
+  max,
+  step = SNOWBALL_CURRENCY_STEP,
+  disabled,
+  allowZero,
+  className,
+}: SnowballNumericInputProps) {
+  return (
+    <div className="relative flex min-w-0 items-center">
+      <span
+        className="pointer-events-none absolute left-2.5 text-sm tabular-nums text-muted"
+        aria-hidden
+      >
+        $
+      </span>
+      <SnowballNumericInput
+        value={value}
+        onCommit={onCommit}
+        onClear={onClear}
+        min={min}
+        max={max}
+        step={step}
+        fixedStep={step}
+        disabled={disabled}
+        allowZero={allowZero}
+        className={cn("pl-6", className)}
+      />
+    </div>
   );
 }
 
@@ -197,13 +352,13 @@ function buildScenarioParams(
 ): DividendScenarioParams {
   const sharePrice = values.sharePrice ?? base?.sharePrice ?? null;
   const reinvestDividends =
-    values.reinvestDividends ?? base?.reinvestDividends ?? false;
+    values.reinvestDividends ?? base?.reinvestDividends ?? true;
   const priceCagrPct = values.priceCagrPct ?? base?.priceCagrPct ?? null;
   const projectYears = values.projectYears ?? base?.projectYears ?? 10;
   const dividendCagrPct =
     values.dividendCagrPct ?? base?.dividendCagrPct ?? null;
   const annualContributionUsd =
-    values.annualContributionUsd ?? base?.annualContributionUsd ?? null;
+    values.annualContributionUsd ?? base?.annualContributionUsd ?? 0;
 
   if (sharePrice != null && sharePrice > 0) {
     if (source === "shares" && values.shares != null && values.shares > 0) {
@@ -258,10 +413,10 @@ function mergeScenarioParams(
     projectYears: next.projectYears ?? base?.projectYears ?? 10,
     dividendCagrPct: next.dividendCagrPct ?? base?.dividendCagrPct ?? null,
     reinvestDividends:
-      next.reinvestDividends ?? base?.reinvestDividends ?? false,
+      next.reinvestDividends ?? base?.reinvestDividends ?? true,
     priceCagrPct: next.priceCagrPct ?? base?.priceCagrPct ?? null,
     annualContributionUsd:
-      next.annualContributionUsd ?? base?.annualContributionUsd ?? null,
+      next.annualContributionUsd ?? base?.annualContributionUsd ?? 0,
   };
 }
 
@@ -862,11 +1017,8 @@ export function DividendSnowballScenarioCard({
   const scenario = history.scenario;
   if (!scenario) return null;
 
-  const [lastEdited, setLastEdited] =
-    useState<SnowballInputSource>("investment");
-
   const sharePrice = scenarioParams?.sharePrice ?? scenario.sharePrice ?? null;
-  const reinvestDividends = scenarioParams?.reinvestDividends ?? false;
+  const reinvestDividends = scenarioParams?.reinvestDividends ?? true;
   const projectYears =
     scenarioParams?.projectYears ?? scenario.projectYears ?? 10;
   const { currentYear, endYear } = dividendProjectionWindow(projectYears);
@@ -882,11 +1034,7 @@ export function DividendSnowballScenarioCard({
         : sharePrice != null && sharePrice > 0 && shares > 0
           ? roundSnowball(shares * sharePrice)
           : null;
-  const annualContributionUsd =
-    scenarioParams?.annualContributionUsd != null &&
-    scenarioParams.annualContributionUsd >= 0
-      ? scenarioParams.annualContributionUsd
-      : 0;
+  const annualContributionUsd = scenarioParams?.annualContributionUsd ?? 0;
   const advanced =
     advancedMetrics ??
     resolveSnowballAdvancedMetrics(history, {
@@ -921,7 +1069,6 @@ export function DividendSnowballScenarioCard({
     },
   ) {
     if (!onScenarioChange) return;
-    setLastEdited(source);
     onScenarioChange(buildScenarioParams(scenarioParams, source, values));
   }
 
@@ -960,10 +1107,10 @@ export function DividendSnowballScenarioCard({
         <div className="grid gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="space-y-1 text-xs text-muted">
             Investment
-            <SnowballNumericInput
-              min={0.01}
+            <SnowballCurrencyInput
+              min={0}
               max={100000000}
-              step={0.01}
+              step={SNOWBALL_CURRENCY_STEP}
               value={investmentUsd}
               onCommit={(next) => {
                 emitScenario("investment", {
@@ -975,39 +1122,18 @@ export function DividendSnowballScenarioCard({
                   annualContributionUsd,
                 });
               }}
-              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+              className="w-full rounded-md border border-border bg-background py-1.5 pr-2 text-sm tabular-nums text-foreground"
             />
           </label>
           <label className="space-y-1 text-xs text-muted">
             Share price
-            <SnowballNumericInput
+            <SnowballCurrencyInput
               min={0.01}
               max={1000000}
-              step={0.01}
               value={sharePrice}
-              onCommit={(next) => {
-                const roundedPrice = roundSnowball(next);
-                if (lastEdited === "shares" && shares > 0) {
-                  emitScenario("shares", {
-                    shares,
-                    sharePrice: roundedPrice,
-                    projectYears,
-                    reinvestDividends,
-                    priceCagrPct: scenarioParams?.priceCagrPct ?? null,
-                    annualContributionUsd,
-                  });
-                  return;
-                }
-                emitScenario("investment", {
-                  investmentUsd,
-                  sharePrice: roundedPrice,
-                  projectYears,
-                  reinvestDividends,
-                  priceCagrPct: scenarioParams?.priceCagrPct ?? null,
-                  annualContributionUsd,
-                });
-              }}
-              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+              disabled
+              onCommit={() => {}}
+              className="w-full rounded-md border border-border bg-muted-bg/40 py-1.5 pr-2 text-sm tabular-nums text-foreground"
             />
           </label>
           <label className="space-y-1 text-xs text-muted">
@@ -1031,17 +1157,18 @@ export function DividendSnowballScenarioCard({
             />
           </label>
           <label className="space-y-1 text-xs text-muted">
-            New cash / year
-            <SnowballNumericInput
+            Annual contribution
+            <SnowballCurrencyInput
               min={0}
               max={100000000}
-              step={100}
-              value={annualContributionUsd > 0 ? annualContributionUsd : null}
+              step={SNOWBALL_CURRENCY_STEP}
+              allowZero
+              value={annualContributionUsd}
               onCommit={(next) => {
                 updateScenario({ annualContributionUsd: next });
               }}
               onClear={() => updateScenario({ annualContributionUsd: 0 })}
-              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+              className="w-full rounded-md border border-border bg-background py-1.5 pr-2 text-sm tabular-nums text-foreground"
             />
           </label>
         </div>
@@ -1240,37 +1367,43 @@ export function DividendSnowballScenarioCard({
 
 export function DividendRecentPaymentsTable({
   payments,
+  limit = RECENT_PAYMENTS_ROW_COUNT,
 }: {
   payments: DividendPaymentItem[];
+  limit?: number;
 }) {
-  if (payments.length === 0) {
+  const rows = payments.slice(0, limit);
+
+  if (rows.length === 0) {
     return (
       <p className="text-sm text-muted">No recent payments were returned.</p>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-left text-xs">
-        <thead className="text-muted">
-          <tr>
-            <th className="pb-2 pr-4 font-medium">Payment date</th>
-            <th className="pb-2 font-medium">Amount / share</th>
-          </tr>
-        </thead>
-        <tbody>
-          {payments.map((payment) => (
-            <tr key={payment.date} className="border-t border-border">
-              <td className="py-2 pr-4 text-foreground">
-                {formatDate(payment.date)}
-              </td>
-              <td className="py-2 tabular-nums text-foreground">
-                ${payment.amountPerShare.toFixed(4)}
-              </td>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-dark">
+        <table className="min-w-full text-left text-xs">
+          <thead className="sticky top-0 z-10 bg-surface-elevated/95 text-muted backdrop-blur-sm">
+            <tr>
+              <th className="pb-2 pr-4 font-medium">Payment date</th>
+              <th className="pb-2 font-medium">Amount / share</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((payment) => (
+              <tr key={payment.date} className="border-t border-border">
+                <td className="py-2 pr-4 text-foreground">
+                  {formatDate(payment.date)}
+                </td>
+                <td className="py-2 tabular-nums text-foreground">
+                  ${payment.amountPerShare.toFixed(4)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1290,36 +1423,47 @@ export function DividendSnowballSkeleton() {
 }
 
 export function DividendsPageSkeleton() {
-  return (
-    <PageSplit
-      main={
-        <>
-          <ResearchSectionCard
-            title="Dividend history"
-            description="How annual totals and each payout per share have changed over time"
-            icon={LineChart}
-          >
-            <Skeleton className="h-56 rounded-xl" />
-          </ResearchSectionCard>
+  const panelClass = cn(
+    "flex flex-col",
+    DIVIDEND_HISTORY_PANEL_MIN_CLASS,
+  );
+  const panelBodyClass = "flex min-h-0 flex-1 flex-col";
 
-          <ResearchSectionCard
-            title="Dividend snowball"
-            description="Historic payout growth and cash income on your share count"
-            icon={TrendingUp}
-          >
-            <DividendSnowballSkeleton />
-          </ResearchSectionCard>
-        </>
-      }
-      aside={
+  return (
+    <div className="app-stack w-full max-w-none">
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
+        <ResearchSectionCard
+          title="Dividend history"
+          description="How annual totals and each payout per share have changed over time"
+          icon={LineChart}
+          className={panelClass}
+          bodyClassName={panelBodyClass}
+        >
+          <Skeleton className="h-full min-h-[28rem] rounded-xl" />
+        </ResearchSectionCard>
+
         <ResearchSectionCard
           title="Recent payments"
           description="Latest dividend payments per share"
           icon={History}
+          className={panelClass}
+          bodyClassName={panelBodyClass}
         >
-          <SkeletonList rows={6} rowClassName="h-10 rounded-lg" />
+          <SkeletonList
+            rows={RECENT_PAYMENTS_ROW_COUNT}
+            rowClassName="h-9 shrink-0 rounded-lg"
+          />
         </ResearchSectionCard>
-      }
-    />
+      </div>
+
+      <ResearchSectionCard
+        title="Dividend snowball"
+        description="Historic payout growth and cash income on your share count"
+        icon={TrendingUp}
+        className="w-full max-w-none"
+      >
+        <DividendSnowballSkeleton />
+      </ResearchSectionCard>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type {
   EnrichedNewsItem,
   StockNewsView,
@@ -203,6 +203,46 @@ function NewsHeadlineIcon({ item }: { item: EnrichedNewsItem }) {
   );
 }
 
+/** Fixed 2-line slots (title shorter than description). */
+const NEWS_HEADLINE_TITLE_SLOT = "h-10";
+const NEWS_HEADLINE_SUMMARY_SLOT = "h-12";
+
+const NEWS_HEADLINE_CLAMP =
+  "line-clamp-2 w-full min-w-0 max-w-full overflow-hidden break-words text-sm [overflow-wrap:anywhere]";
+
+function NewsHeadlineClampedText({
+  children,
+  className,
+  href,
+  slotClass = NEWS_HEADLINE_SUMMARY_SLOT,
+}: {
+  children: ReactNode;
+  className?: string;
+  href?: string | null;
+  slotClass?: string;
+}) {
+  const textClass = cn(NEWS_HEADLINE_CLAMP, className);
+
+  return (
+    <div
+      className={cn(slotClass, "w-full min-w-0 shrink-0 overflow-hidden")}
+    >
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(textClass, "hover:underline", className)}
+        >
+          {children}
+        </a>
+      ) : (
+        <p className={cn(textClass, className)}>{children}</p>
+      )}
+    </div>
+  );
+}
+
 function NewsHeadlineCard({
   item,
   view,
@@ -210,30 +250,18 @@ function NewsHeadlineCard({
   item: EnrichedNewsItem;
   view: HeadlinesView;
 }) {
-  const headlineClass =
-    "line-clamp-2 max-w-full overflow-hidden break-words text-sm font-semibold leading-snug text-foreground group-hover:text-accent-strong";
-  const summaryClass =
-    "line-clamp-2 max-w-full overflow-hidden break-words text-sm leading-relaxed text-muted";
-
   const cardInner = (
     <>
       <NewsHeadlineIcon item={item} />
-      <div className="min-w-0 w-full max-w-full flex-1 space-y-1.5 overflow-hidden">
+      <div className="flex min-h-0 w-full max-w-full flex-1 flex-col gap-1.5 overflow-hidden">
         <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-2">
-          {item.url ? (
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn("block w-full min-w-0 max-w-full hover:underline", headlineClass)}
-            >
-              {item.headline}
-            </a>
-          ) : (
-            <p className={cn("w-full min-w-0 max-w-full", headlineClass)}>
-              {item.headline}
-            </p>
-          )}
+          <NewsHeadlineClampedText
+            href={item.url || null}
+            slotClass={NEWS_HEADLINE_TITLE_SLOT}
+            className="font-semibold leading-snug text-foreground group-hover:text-accent-strong"
+          >
+            {item.headline}
+          </NewsHeadlineClampedText>
           <span
             className={cn(
               "inline-flex max-w-full shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
@@ -244,7 +272,12 @@ function NewsHeadlineCard({
           </span>
         </div>
 
-        <p className={summaryClass}>{item.summary}</p>
+        <NewsHeadlineClampedText
+          slotClass={NEWS_HEADLINE_SUMMARY_SLOT}
+          className="leading-relaxed text-muted"
+        >
+          {item.summary || "\u00a0"}
+        </NewsHeadlineClampedText>
 
         <div className="flex min-w-0 max-w-full flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted">
           <time dateTime={item.datetime}>
@@ -598,7 +631,7 @@ export default function NewsAnalytics({
                       className={cn(
                         "min-w-0 w-full max-w-full",
                         headlinesView === "grid"
-                          ? "grid w-full grid-cols-1 gap-3 min-[480px]:grid-cols-2"
+                          ? "grid w-full auto-rows-fr grid-cols-1 gap-3 min-[480px]:grid-cols-2"
                           : "flex w-full flex-col gap-3",
                       )}
                     >

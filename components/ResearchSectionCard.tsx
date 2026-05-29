@@ -12,6 +12,7 @@ type ResearchSectionCardProps = {
   titleHref?: string;
   children: React.ReactNode;
   className?: string;
+  bodyClassName?: string;
 };
 
 export function ResearchSectionCard({
@@ -22,6 +23,7 @@ export function ResearchSectionCard({
   titleHref,
   children,
   className,
+  bodyClassName,
 }: ResearchSectionCardProps) {
   const titleNode = titleHref ? (
     <Link
@@ -50,7 +52,9 @@ export function ResearchSectionCard({
         />
         {action ? <div className="flex shrink-0 items-center">{action}</div> : null}
       </CardHeader>
-      <CardBody spacious>{children}</CardBody>
+      <CardBody spacious className={bodyClassName}>
+        {children}
+      </CardBody>
     </Card>
   );
 }
