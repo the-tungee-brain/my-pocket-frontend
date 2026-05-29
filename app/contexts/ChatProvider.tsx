@@ -24,3 +24,8 @@ export function useChatContext() {
   }
   return ctx;
 }
+
+/** Alias used by portfolio shell consumers. */
+export function useAppChatContext() {
+  return useChatContext();
+}

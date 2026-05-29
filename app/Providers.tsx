@@ -10,11 +10,15 @@ import {
 } from "react";
 import { useSession } from "next-auth/react";
 import type { PositionsContextValue } from "@/app/contexts/positionsContextTypes";
+import type { PortfolioContextValue } from "@/app/contexts/portfolioContextTypes";
+import {
+  PortfolioContextProvider,
+  usePortfolioContext,
+} from "@/app/contexts/PortfolioContext";
+import { ChatProvider, useChatContext } from "@/app/contexts/ChatProvider";
 import { useAccountPositionsQuery } from "@/app/hooks/useAccountPositionsQuery";
-import { useChatState } from "@/app/hooks/useChatState";
 import { parsePositionsSyncedAt } from "@/lib/dataFreshness";
 import { summarizeCspCashReserves } from "@/lib/cspReservedCash";
-import type { PositionMap } from "@/components/AccountPositionList";
 import type { SchwabReauthDetail } from "@/lib/schwabReauth";
 import { Position } from "./types/schwab";
 import { MainView } from "@/components/NavList";
@@ -28,6 +32,7 @@ export type {
   SymbolChatState,
 } from "@/app/contexts/positionsContextTypes";
 export type { ChatContextValue } from "@/app/contexts/chatContextTypes";
+export type { PortfolioContextValue } from "@/app/contexts/portfolioContextTypes";
 
 export function usePositionsContext() {
   const ctx = useContext(PositionsContext);
@@ -36,6 +41,25 @@ export function usePositionsContext() {
       "usePositionsContext must be used within PositionsProvider",
     );
   return ctx;
+}
+
+function PositionsContextBridge({ children }: { children: React.ReactNode }) {
+  const portfolio = usePortfolioContext();
+  const chat = useChatContext();
+
+  const value: PositionsContextValue = useMemo(
+    () => ({
+      ...portfolio,
+      ...chat,
+    }),
+    [portfolio, chat],
+  );
+
+  return (
+    <PositionsContext.Provider value={value}>
+      {children}
+    </PositionsContext.Provider>
+  );
 }
 
 export function PositionsProvider({ children }: { children: React.ReactNode }) {
@@ -126,6 +150,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     },
     [refreshPositions],
   );
+
   useEffect(() => {
     if (!pathname) return;
 
@@ -154,12 +179,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     return positionMap[selectedSymbol] ?? null;
   }, [selectedView, selectedSymbol, positionMap, allPositions]);
 
-  const chat = useChatState({
-    accessToken,
-    chatUserId,
-    account,
-  });
-  const value: PositionsContextValue = useMemo(
+  const portfolioValue: PortfolioContextValue = useMemo(
     () => ({
       sessionAccessToken: accessToken,
       loading,
@@ -172,7 +192,6 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       selectedView,
       setSelectedView,
       positionsForSelectedSymbol,
-      ...chat,
       account,
       cashSecuredPutSummary,
       assignmentRiskSummary,
@@ -197,7 +216,6 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
       selectedSymbol,
       selectedView,
       positionsForSelectedSymbol,
-      chat,
       account,
       cashSecuredPutSummary,
       assignmentRiskSummary,
@@ -214,8 +232,14 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <PositionsContext.Provider value={value}>
-      {children}
-    </PositionsContext.Provider>
+    <PortfolioContextProvider value={portfolioValue}>
+      <ChatProvider
+        accessToken={accessToken}
+        chatUserId={chatUserId}
+        account={account}
+      >
+        <PositionsContextBridge>{children}</PositionsContextBridge>
+      </ChatProvider>
+    </PortfolioContextProvider>
   );
 }

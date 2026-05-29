@@ -2,7 +2,9 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { FileText, Info, RefreshCw } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
+import { overviewBundleEtagKey, writeOverviewBundleEtag } from "@/lib/overviewBundleCache";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useSession } from "next-auth/react";
 import { fetchResearchOverviewBundle } from "@/lib/apiClient";
@@ -40,17 +42,43 @@ export function SummarySection({ symbol, className }: SummarySectionProps) {
     return cachedResearchToStockSummary(cached);
   }, [intelligence?.cachedResearch]);
 
+  const queryClient = useQueryClient();
+  const fullSummaryQueryKey = [
+    "research-overview",
+    symbolUpper,
+    accessToken ?? "",
+    "with-summary",
+  ] as const;
+
   const fullSummaryQuery = useQuery({
-    queryKey: [
-      "research-overview",
-      symbolUpper,
-      accessToken ?? "",
-      "with-summary",
-    ],
-    queryFn: () =>
-      fetchResearchOverviewBundle(accessToken!, symbolUpper, {
-        includeSummary: true,
-      }),
+    queryKey: fullSummaryQueryKey,
+    queryFn: async () => {
+      const result = await fetchResearchOverviewBundle(
+        accessToken!,
+        symbolUpper,
+        { includeSummary: true },
+      );
+      if (result.status === "ok") {
+        return result.bundle;
+      }
+
+      const cached =
+        queryClient.getQueryData<ResearchOverviewBundle>(fullSummaryQueryKey);
+      if (cached) {
+        return cached;
+      }
+
+      writeOverviewBundleEtag(overviewBundleEtagKey(symbolUpper, true), null);
+      const retry = await fetchResearchOverviewBundle(
+        accessToken!,
+        symbolUpper,
+        { includeSummary: true, skipEtag: true },
+      );
+      if (retry.status !== "ok") {
+        throw new Error("Failed to load full research summary");
+      }
+      return retry.bundle;
+    },
     enabled: Boolean(requestFullSummary && accessToken && symbolUpper),
     staleTime: 10 * 60_000,
   });

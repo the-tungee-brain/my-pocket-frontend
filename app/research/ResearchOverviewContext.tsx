@@ -6,8 +6,9 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchResearchOverviewBundle } from "@/lib/apiClient";
+import { overviewBundleEtagKey, writeOverviewBundleEtag } from "@/lib/overviewBundleCache";
 import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
 import { seedResearchOverviewCaches } from "@/lib/researchOverviewSeeds";
 
@@ -28,10 +29,36 @@ export function ResearchOverviewProvider({
   children,
 }: Props) {
   const symbolUpper = symbol.toUpperCase();
+  const queryClient = useQueryClient();
+  const queryKey = ["research-overview", symbolUpper, accessToken ?? ""] as const;
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["research-overview", symbolUpper, accessToken ?? ""],
-    queryFn: () => fetchResearchOverviewBundle(accessToken!, symbolUpper),
+    queryKey,
+    queryFn: async () => {
+      const result = await fetchResearchOverviewBundle(
+        accessToken!,
+        symbolUpper,
+      );
+      if (result.status === "ok") {
+        return result.bundle;
+      }
+
+      const cached = queryClient.getQueryData<ResearchOverviewBundle>(queryKey);
+      if (cached) {
+        return cached;
+      }
+
+      writeOverviewBundleEtag(overviewBundleEtagKey(symbolUpper, false), null);
+      const retry = await fetchResearchOverviewBundle(
+        accessToken!,
+        symbolUpper,
+        { skipEtag: true },
+      );
+      if (retry.status !== "ok") {
+        throw new Error("Failed to load research overview");
+      }
+      return retry.bundle;
+    },
     enabled: Boolean(symbolUpper && accessToken),
     staleTime: 2 * 60_000,
   });

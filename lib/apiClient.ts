@@ -11,6 +11,13 @@ import type {
 } from "@/app/types/intelligence";
 import type { PortfolioNewsResponse } from "@/app/types/portfolioNews";
 import type { PressReleasesResponse } from "@/app/types/pressReleases";
+import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
+import {
+  overviewBundleEtagKey,
+  parseEtagHeader,
+  readOverviewBundleEtag,
+  writeOverviewBundleEtag,
+} from "@/lib/overviewBundleCache";
 import type {
   InvestmentStrategy,
   JourneyStepStatus,
@@ -667,27 +674,50 @@ export async function fetchAccountPlan(
   return res.json() as Promise<AccountPlan>;
 }
 
+export type ResearchOverviewBundleFetchResult =
+  | { status: "ok"; bundle: ResearchOverviewBundle }
+  | { status: "not_modified" };
+
 export async function fetchResearchOverviewBundle(
   accessToken: string,
   symbol: string,
-  options: { holdingsLimit?: number; includeSummary?: boolean } = {},
-): Promise<import("@/app/types/researchOverview").ResearchOverviewBundle> {
+  options: {
+    holdingsLimit?: number;
+    includeSummary?: boolean;
+    skipEtag?: boolean;
+  } = {},
+): Promise<ResearchOverviewBundleFetchResult> {
+  const symbolUpper = symbol.toUpperCase();
+  const includeSummary = options.includeSummary ?? false;
+  const etagKey = overviewBundleEtagKey(symbolUpper, includeSummary);
+  const storedEtag = options.skipEtag ? null : readOverviewBundleEtag(etagKey);
+
   const res = await apiFetch(
     `/research/overview-bundle${buildQuery({
-      symbol: symbol.toUpperCase(),
+      symbol: symbolUpper,
       holdings_limit: options.holdingsLimit,
-      include_summary: options.includeSummary ? true : undefined,
+      include_summary: includeSummary ? true : undefined,
     })}`,
-    { method: "GET", accessToken },
+    {
+      method: "GET",
+      accessToken,
+      headers: storedEtag ? { "If-None-Match": `"${storedEtag}"` } : undefined,
+    },
   );
+
+  if (res.status === 304) {
+    return { status: "not_modified" };
+  }
 
   if (!res.ok) {
     throw new Error(`Failed to load research overview (${res.status})`);
   }
 
-  return res.json() as Promise<
-    import("@/app/types/researchOverview").ResearchOverviewBundle
-  >;
+  const etag = parseEtagHeader(res.headers.get("ETag"));
+  writeOverviewBundleEtag(etagKey, etag);
+
+  const bundle = (await res.json()) as ResearchOverviewBundle;
+  return { status: "ok", bundle };
 }
 
 export async function deleteAccount(accessToken: string): Promise<void> {
