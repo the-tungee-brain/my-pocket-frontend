@@ -15,13 +15,22 @@ import {
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { appCalloutClass } from "@/lib/appUi";
+import { appCalloutClass, appTabBarClass, appTabLinkClass } from "@/lib/appUi";
+import { newsHeadlineIconPalette } from "@/lib/newsHeadlineIcon";
 import { cn } from "@/lib/utils";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
-import { Activity, List, Newspaper, RefreshCw, Sparkles } from "lucide-react";
+import {
+  Activity,
+  LayoutGrid,
+  List,
+  Newspaper,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
 
 type SentimentFilter = "all" | Sentiment;
+type HeadlinesView = "list" | "grid";
 
 function sentimentColor(sentiment: Sentiment) {
   switch (sentiment) {
@@ -176,74 +185,137 @@ function FilterChip({
   );
 }
 
-function NewsArticleRow({ item }: { item: EnrichedNewsItem }) {
-  const imageUrl = item.image?.toString();
-  const headlineClass =
-    "text-sm font-medium leading-snug text-foreground hover:text-accent-strong";
+function NewsHeadlineIcon({ item }: { item: EnrichedNewsItem }) {
+  const palette = newsHeadlineIconPalette(`${item.id}:${item.source}:${item.headline}`);
 
   return (
-    <li className="py-4 first:pt-0 last:pb-0">
-      <div className="flex gap-3">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt=""
-            className="mt-0.5 h-10 w-10 shrink-0 rounded-md object-cover"
-            loading="lazy"
-          />
-        ) : null}
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex flex-wrap items-start gap-2">
-            {item.url ? (
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn("min-w-0 flex-1 hover:underline", headlineClass)}
-              >
-                {item.headline}
-              </a>
-            ) : (
-              <p className={cn("min-w-0 flex-1", headlineClass)}>{item.headline}</p>
-            )}
-            <span
-              className={cn(
-                "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-                sentimentColor(item.sentiment),
-              )}
-            >
-              {sentimentLabel(item.sentiment)}
-            </span>
-          </div>
+    <div
+      className={cn(
+        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border",
+        palette.bg,
+        palette.border,
+        palette.text,
+      )}
+      aria-hidden
+    >
+      <Newspaper className="h-4 w-4" />
+    </div>
+  );
+}
 
-          <p className="text-[11px] text-muted">
-            <time dateTime={item.datetime}>
-              {new Date(item.datetime).toLocaleString(undefined, {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </time>
-            {item.source ? <span> · {item.source}</span> : null}
-          </p>
+function NewsHeadlineCard({
+  item,
+  view,
+}: {
+  item: EnrichedNewsItem;
+  view: HeadlinesView;
+}) {
+  const headlineClass =
+    "text-sm font-semibold leading-snug text-foreground group-hover:text-accent-strong";
 
-          <p className="text-sm leading-relaxed text-muted">{item.summary}</p>
-
-          {(item.topics.length > 0 || item.confidence > 0) && (
-            <p className="text-[11px] text-muted">
-              {item.confidence > 0 ? (
-                <span>Confidence {(item.confidence * 100).toFixed(0)}%</span>
-              ) : null}
-              {item.confidence > 0 && item.topics.length > 0 ? <span> · </span> : null}
-              {item.topics.length > 0 ? (
-                <span>{item.topics.map((t) => t.replace(/_/g, " ")).join(" · ")}</span>
-              ) : null}
-            </p>
+  const cardInner = (
+    <>
+      <NewsHeadlineIcon item={item} />
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <div
+          className={cn(
+            "flex gap-2",
+            view === "grid" ? "flex-col items-start" : "flex-wrap items-start",
           )}
+        >
+          {item.url ? (
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn("min-w-0 hover:underline", headlineClass)}
+            >
+              {item.headline}
+            </a>
+          ) : (
+            <p className={cn("min-w-0", headlineClass)}>{item.headline}</p>
+          )}
+          <span
+            className={cn(
+              "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+              sentimentColor(item.sentiment),
+            )}
+          >
+            {sentimentLabel(item.sentiment)}
+          </span>
         </div>
+
+        <p className="line-clamp-2 text-sm leading-relaxed text-muted">
+          {item.summary}
+        </p>
+
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted">
+          <time dateTime={item.datetime}>
+            {new Date(item.datetime).toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </time>
+          {item.source ? <span className="truncate">{item.source}</span> : null}
+          {item.confidence > 0 ? (
+            <span className="tabular-nums">
+              {(item.confidence * 100).toFixed(0)}% conf.
+            </span>
+          ) : null}
+        </div>
+
+        {item.topics.length > 0 ? (
+          <p className="line-clamp-1 text-[11px] text-muted">
+            {item.topics.map((t) => t.replace(/_/g, " ")).join(" · ")}
+          </p>
+        ) : null}
       </div>
-    </li>
+    </>
+  );
+
+  return (
+    <article
+      className={cn(
+        "group flex h-full gap-3 rounded-xl border border-border bg-background/60 p-3 transition-colors",
+        "hover:border-accent/30 hover:bg-surface-elevated/50",
+        view === "grid" ? "flex-col items-start" : "flex-row items-start",
+      )}
+    >
+      {cardInner}
+    </article>
+  );
+}
+
+function HeadlinesViewToggle({
+  view,
+  onChange,
+}: {
+  view: HeadlinesView;
+  onChange: (view: HeadlinesView) => void;
+}) {
+  return (
+    <div className={cn(appTabBarClass, "shrink-0")} role="group" aria-label="Headlines layout">
+      <button
+        type="button"
+        onClick={() => onChange("list")}
+        className={appTabLinkClass(view === "list")}
+        aria-pressed={view === "list"}
+      >
+        <List className="h-3.5 w-3.5" aria-hidden />
+        List
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("grid")}
+        className={appTabLinkClass(view === "grid")}
+        aria-pressed={view === "grid"}
+      >
+        <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
+        Grid
+      </button>
+    </div>
   );
 }
 
@@ -264,17 +336,26 @@ function NewsOverviewSkeleton() {
   );
 }
 
-function NewsHeadlinesSkeleton() {
-  return (
-    <div className="divide-y divide-border">
-      {[1, 2, 3, 4].map((row) => (
-        <div key={row} className="space-y-2 py-4 first:pt-0">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-3 w-1/3" />
-          <Skeleton className="h-4 w-full" />
-        </div>
-      ))}
+function NewsHeadlinesSkeleton({ view }: { view: HeadlinesView }) {
+  const card = (
+    <div className="flex gap-3 rounded-xl border border-border bg-background/40 p-3">
+      <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <Skeleton className="h-4 w-4/5" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-2/5" />
+      </div>
     </div>
+  );
+
+  return view === "grid" ? (
+    <div className="grid gap-3 sm:grid-cols-2">{[1, 2, 3, 4].map((row) => (
+      <div key={row}>{card}</div>
+    ))}</div>
+  ) : (
+    <div className="flex flex-col gap-3">{[1, 2, 3, 4].map((row) => (
+      <div key={row}>{card}</div>
+    ))}</div>
   );
 }
 
@@ -364,6 +445,7 @@ export default function NewsAnalytics({
 }: Props) {
   const data = analytics;
   const [filter, setFilter] = useState<SentimentFilter>("all");
+  const [headlinesView, setHeadlinesView] = useState<HeadlinesView>("grid");
 
   const counts = useMemo(
     () => (data ? countBySentiment(data.items) : null),
@@ -466,46 +548,62 @@ export default function NewsAnalytics({
               icon={List}
             >
               {isLoading && !data ? (
-                <NewsHeadlinesSkeleton />
+                <NewsHeadlinesSkeleton view={headlinesView} />
               ) : data ? (
                 <div className="app-stack">
-                  <div
-                    className="flex flex-wrap gap-1.5"
-                    role="group"
-                    aria-label="Filter by sentiment"
-                  >
-                    <FilterChip
-                      active={filter === "all"}
-                      label="All"
-                      count={data.items.length}
-                      onClick={() => setFilter("all")}
-                    />
-                    <FilterChip
-                      active={filter === "bullish"}
-                      label="Bullish"
-                      count={counts?.bullish ?? 0}
-                      onClick={() => setFilter("bullish")}
-                    />
-                    <FilterChip
-                      active={filter === "neutral"}
-                      label="Neutral"
-                      count={counts?.neutral ?? 0}
-                      onClick={() => setFilter("neutral")}
-                    />
-                    <FilterChip
-                      active={filter === "bearish"}
-                      label="Bearish"
-                      count={counts?.bearish ?? 0}
-                      onClick={() => setFilter("bearish")}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div
+                      className="flex flex-wrap gap-1.5"
+                      role="group"
+                      aria-label="Filter by sentiment"
+                    >
+                      <FilterChip
+                        active={filter === "all"}
+                        label="All"
+                        count={data.items.length}
+                        onClick={() => setFilter("all")}
+                      />
+                      <FilterChip
+                        active={filter === "bullish"}
+                        label="Bullish"
+                        count={counts?.bullish ?? 0}
+                        onClick={() => setFilter("bullish")}
+                      />
+                      <FilterChip
+                        active={filter === "neutral"}
+                        label="Neutral"
+                        count={counts?.neutral ?? 0}
+                        onClick={() => setFilter("neutral")}
+                      />
+                      <FilterChip
+                        active={filter === "bearish"}
+                        label="Bearish"
+                        count={counts?.bearish ?? 0}
+                        onClick={() => setFilter("bearish")}
+                      />
+                    </div>
+                    <HeadlinesViewToggle
+                      view={headlinesView}
+                      onChange={setHeadlinesView}
                     />
                   </div>
 
                   {filteredItems.length > 0 ? (
-                    <ul className="m-0 list-none divide-y divide-border p-0">
+                    <div
+                      className={cn(
+                        headlinesView === "grid"
+                          ? "grid gap-3 sm:grid-cols-2"
+                          : "flex flex-col gap-3",
+                      )}
+                    >
                       {filteredItems.map((item) => (
-                        <NewsArticleRow key={item.id} item={item} />
+                        <NewsHeadlineCard
+                          key={item.id}
+                          item={item}
+                          view={headlinesView}
+                        />
                       ))}
-                    </ul>
+                    </div>
                   ) : (
                     <p className="text-sm text-muted">
                       No {filter === "all" ? "" : `${filter} `}headlines in this
