@@ -16,6 +16,7 @@ export function SymbolNewsContent({ symbol }: Props) {
   const {
     analytics,
     isLoading,
+    isRefreshing,
     error,
     lastUpdated,
     refresh,
@@ -26,6 +27,7 @@ export function SymbolNewsContent({ symbol }: Props) {
       symbol={symbol}
       analytics={analytics}
       isLoading={isLoading}
+      isRefreshing={isRefreshing}
       error={error}
       lastUpdated={lastUpdated}
       onRetry={refresh}

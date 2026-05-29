@@ -18,6 +18,7 @@ import {
   BarChart3,
   type LucideIcon,
 } from "lucide-react";
+import { appTabBarClass, appTabLinkClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import type { AssetType } from "@/app/types/research";
 
@@ -138,12 +139,7 @@ function tabsForAssetType(
 }
 
 function tabLinkClassName(isActive: boolean) {
-  return cn(
-    "relative flex flex-none items-center gap-1.5 rounded-md border px-3 py-1.5 whitespace-nowrap transition-all",
-    isActive
-      ? "border-border bg-secondary text-foreground shadow-sm"
-      : "border-transparent text-muted hover:bg-muted-bg/60 hover:text-foreground",
-  );
+  return appTabLinkClass(isActive);
 }
 
 function computeVisibleCount(
@@ -211,7 +207,7 @@ function ResearchTabLink({
         )}
         aria-hidden="true"
       />
-      <span className="text-xs font-medium">{tab.label}</span>
+      <span>{tab.label}</span>
     </Link>
   );
 }
@@ -397,7 +393,7 @@ export function ResearchTabBar({
   return (
     <div ref={containerRef} className={cn("relative min-w-0", className)}>
       <nav
-        className="flex min-w-0 gap-1 rounded-lg bg-muted-bg/50 p-0.5"
+        className={cn("flex min-w-0", appTabBarClass)}
         aria-label="Research sections"
       >
         {visibleTabs.map((tab) => (

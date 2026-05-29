@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   analytics: StockNewsView | null;
   isLoading: boolean;
+  isRefreshing?: boolean;
   error: string | null;
   lastUpdated?: number | null;
   onRetry: () => void;
@@ -21,6 +22,7 @@ type Props = {
 export function CompanyNews({
   analytics,
   isLoading,
+  isRefreshing = false,
   error,
   lastUpdated = null,
   onRetry,
@@ -38,6 +40,7 @@ export function CompanyNews({
         <NewsAnalytics
           analytics={analytics}
           isLoading={isLoading}
+          isRefreshing={isRefreshing}
           lastUpdated={lastUpdated}
           onRefresh={onRefresh}
         />

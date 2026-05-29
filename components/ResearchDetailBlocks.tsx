@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { splitIntoParagraphs } from "@/lib/bigPictureArticle";
+import { appEyebrowClass, appHighlightClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 export function ResearchAtAGlanceBox({
@@ -13,10 +14,8 @@ export function ResearchAtAGlanceBox({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent-strong">
-        {title}
-      </h3>
+    <div className={appHighlightClass}>
+      <h3 className={cn("mb-2", appEyebrowClass)}>{title}</h3>
       {children}
     </div>
   );
@@ -55,7 +54,7 @@ export function ResearchBulletList({
     return (
       <div>
         {!hideTitle && title && (
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+          <h3 className={cn("mb-2 font-mono text-xs font-semibold uppercase tracking-wide text-muted")}>
             {title}
           </h3>
         )}
@@ -81,7 +80,7 @@ export function ResearchBulletList({
   return (
     <div>
       {!hideTitle && title && (
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+        <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wide text-muted">
           {title}
         </h3>
       )}
@@ -127,7 +126,7 @@ export function ResearchAsideCard({
       as="div"
       surface={tone === "default" ? "subtle" : "accent"}
       className={cn(
-        "mx-0 rounded-xl shadow-sm",
+        "mx-0",
         tone === "watch" && "border-accent/20 bg-accent-muted/20",
         tone === "accent" && "border-accent/25 bg-accent-muted/30",
         className,
@@ -164,7 +163,7 @@ export function ResearchTextBlock({
 }: ResearchTextBlockProps) {
   return (
     <div className={className}>
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+      <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wide text-muted">
         {title}
       </h3>
       <div className="text-sm leading-relaxed text-foreground">{children}</div>

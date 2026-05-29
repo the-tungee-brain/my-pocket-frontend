@@ -349,6 +349,7 @@ function NewsAnalysisAside({ data }: { data: StockNewsView }) {
 type Props = {
   analytics: StockNewsView | null;
   isLoading: boolean;
+  isRefreshing?: boolean;
   lastUpdated?: number | null;
   onRefresh?: () => void;
 };
@@ -356,6 +357,7 @@ type Props = {
 export default function NewsAnalytics({
   analytics,
   isLoading,
+  isRefreshing = false,
   lastUpdated = null,
   onRefresh,
 }: Props) {
@@ -400,17 +402,17 @@ export default function NewsAnalytics({
     <div className="flex shrink-0 items-center gap-2">
       {sentimentAction}
       <span className="hidden text-[11px] text-muted sm:inline">
-        {isLoading ? "Updating…" : updatedLabel}
+        {isLoading || isRefreshing ? "Updating…" : updatedLabel}
       </span>
       {onRefresh ? (
         <IconButton
           size="sm"
           onClick={onRefresh}
-          disabled={isLoading}
+          disabled={isLoading || isRefreshing}
           aria-label="Refresh news"
         >
           <RefreshCw
-            className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}
+            className={cn("h-3.5 w-3.5", (isLoading || isRefreshing) && "animate-spin")}
             aria-hidden
           />
         </IconButton>

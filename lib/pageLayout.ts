@@ -28,13 +28,14 @@ export const pageArticleClass = "mx-auto w-full max-w-3xl";
 /** Drop per-card max-width when a section sits inside {@link pageShellClass}. */
 export const pageSectionClass = "mx-0 w-full max-w-none";
 
+import { appMainClass, appSplitClass, appStackClass } from "@/lib/appUi";
+
 /** Primary + sidebar split — stacks on mobile/tablet, side-by-side from lg. */
-export const pageSplitClass =
-  "grid gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1.62fr)_minmax(220px,1fr)] lg:items-start";
+export const pageSplitClass = appSplitClass;
 
 /** Horizontal scroll wrapper for wide data tables. */
 export const responsiveTableScrollClass = "overflow-x-auto scrollbar-dark";
 
-export const pageMainClass = "min-w-0 space-y-4";
+export const pageMainClass = appMainClass;
 
-export const pageAsideClass = "min-w-0 space-y-4 lg:max-w-sm xl:max-w-none";
+export const pageAsideClass = `min-w-0 ${appStackClass} lg:max-w-sm xl:max-w-none`;

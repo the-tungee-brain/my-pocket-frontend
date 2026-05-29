@@ -1,4 +1,11 @@
 import type { HTMLAttributes, ReactNode } from "react";
+import {
+  appPanelBodyClass,
+  appPanelBodyLgClass,
+  appPanelClass,
+  appPanelHeaderClass,
+  appPanelSubtleClass,
+} from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type CardSurface = "default" | "subtle" | "marketing" | "accent" | "accentSoft";
@@ -11,11 +18,14 @@ type CardProps = HTMLAttributes<HTMLElement> & {
 };
 
 const surfaceClass: Record<CardSurface, string> = {
-  default: "bg-secondary shadow-sm",
-  subtle: "bg-secondary/60 shadow-sm",
-  marketing: "bg-background/40 shadow-none",
-  accent: "border-accent/30 bg-accent-muted/20 shadow-sm",
-  accentSoft: "border-accent/20 bg-accent-muted/40 shadow-sm",
+  default: appPanelClass,
+  subtle: appPanelSubtleClass,
+  marketing:
+    "w-full max-w-none overflow-hidden rounded-2xl border border-border bg-background/40 shadow-none",
+  accent:
+    "w-full max-w-none overflow-hidden rounded-lg border border-accent/30 bg-accent-muted/20 shadow-sm",
+  accentSoft:
+    "w-full max-w-none overflow-hidden rounded-lg border border-accent/20 bg-accent-muted/40 shadow-sm",
 };
 
 export function Card({
@@ -29,10 +39,9 @@ export function Card({
   return (
     <Tag
       className={cn(
-        "mx-auto w-full overflow-hidden rounded-2xl border border-border",
         surfaceClass[surface],
         interactive &&
-          "transition-colors hover:border-accent/30 hover:bg-background/60",
+          "transition-colors hover:border-accent/35 hover:bg-surface-elevated/80",
         className,
       )}
       {...props}
@@ -50,7 +59,7 @@ type CardHeaderProps = {
 };
 
 const headerToneClass = {
-  default: "border-border bg-surface-elevated/50",
+  default: "",
   danger: "border-danger/30 bg-danger/5",
   warning: "border-warning/20 bg-warning-muted",
 };
@@ -64,8 +73,10 @@ export function CardHeader({
   return (
     <div
       className={cn(
-        "flex items-start justify-between gap-3 px-4 py-3",
-        bordered && cn("border-b", headerToneClass[tone]),
+        appPanelHeaderClass,
+        bordered && "border-b",
+        bordered && tone === "default" && "border-border/50",
+        tone !== "default" && headerToneClass[tone],
         className,
       )}
     >
@@ -78,11 +89,24 @@ type CardBodyProps = {
   children: ReactNode;
   className?: string;
   flush?: boolean;
+  spacious?: boolean;
 };
 
-export function CardBody({ children, className, flush = false }: CardBodyProps) {
+export function CardBody({
+  children,
+  className,
+  flush = false,
+  spacious = false,
+}: CardBodyProps) {
   return (
-    <div className={cn(!flush && "px-4 py-3", className)}>{children}</div>
+    <div
+      className={cn(
+        !flush && (spacious ? appPanelBodyLgClass : appPanelBodyClass),
+        className,
+      )}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -106,11 +130,13 @@ export function CardTitle({
       {icon}
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <Heading className="text-sm font-semibold text-foreground">{title}</Heading>
+          <Heading className="font-mono text-xs font-semibold uppercase tracking-wide text-foreground">
+            {title}
+          </Heading>
           {badge}
         </div>
         {description != null && description !== "" && (
-          <div className="text-xs text-muted">{description}</div>
+          <p className="mt-0.5 text-xs leading-snug text-muted">{description}</p>
         )}
       </div>
     </div>

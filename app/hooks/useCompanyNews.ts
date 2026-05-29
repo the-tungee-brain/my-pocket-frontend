@@ -47,6 +47,7 @@ type CachedNews = {
 type UseCompanyNewsResult = {
   analytics: StockNewsView | null;
   isLoading: boolean;
+  isRefreshing: boolean;
   error: string | null;
   lastUpdated: number | null;
   refetch: () => void;
@@ -54,6 +55,10 @@ type UseCompanyNewsResult = {
 };
 
 const newsCache = new Map<string, CachedNews>();
+const SESSION_CACHE_TTL_MS = 60 * 60 * 1000;
+/** In-memory hits younger than this skip a background refetch (server Redis may still be warm). */
+const CLIENT_FRESH_MS = 15 * 60 * 1000;
+const SESSION_STORAGE_PREFIX = "company-news:v1:";
 
 type Listener = (data?: StockNewsView, error?: string) => void;
 
@@ -66,7 +71,40 @@ const inFlightNews = new Map<string, InFlightNewsEntry>();
 function cacheNews(key: string, data: StockNewsView): number {
   const fetchedAt = Date.now();
   newsCache.set(key, { data, fetchedAt });
+  persistSessionCache(key, data, fetchedAt);
   return fetchedAt;
+}
+
+function persistSessionCache(
+  key: string,
+  data: StockNewsView,
+  fetchedAt: number,
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(
+      `${SESSION_STORAGE_PREFIX}${key}`,
+      JSON.stringify({ data, fetchedAt } satisfies CachedNews),
+    );
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function readSessionCache(key: string): CachedNews | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(`${SESSION_STORAGE_PREFIX}${key}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedNews;
+    if (Date.now() - parsed.fetchedAt > SESSION_CACHE_TTL_MS) {
+      sessionStorage.removeItem(`${SESSION_STORAGE_PREFIX}${key}`);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 function buildCompanyNewsUrl(symbol: string, refresh = false): string {
@@ -99,6 +137,7 @@ export function useCompanyNews(
 ): UseCompanyNewsResult {
   const [analytics, setAnalytics] = useState<StockNewsView | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
 
@@ -107,12 +146,24 @@ export function useCompanyNews(
   useEffect(() => {
     if (!key || !accessToken || !enabled) return;
 
-    const cached = newsCache.get(key);
-    if (cached) {
-      setAnalytics(cached.data);
-      setLastUpdated(cached.fetchedAt);
+    const memoryCached = newsCache.get(key);
+    const sessionCached = memoryCached ?? readSessionCache(key);
+    const hasCached = Boolean(sessionCached);
+    const clientFresh =
+      memoryCached != null &&
+      Date.now() - memoryCached.fetchedAt < CLIENT_FRESH_MS;
+
+    if (sessionCached) {
+      if (!memoryCached) {
+        newsCache.set(key, sessionCached);
+      }
+      setAnalytics(sessionCached.data);
+      setLastUpdated(sessionCached.fetchedAt);
       setError(null);
       setIsLoading(false);
+    }
+
+    if (clientFresh) {
       return;
     }
 
@@ -120,18 +171,21 @@ export function useCompanyNews(
 
     let entry = inFlightNews.get(key);
     if (entry) {
-      setIsLoading(true);
+      if (!hasCached) setIsLoading(true);
+      else setIsRefreshing(true);
 
       const listener: Listener = (data, err) => {
         if (cancelled) return;
         if (err) {
           setError(err);
           setIsLoading(false);
+          setIsRefreshing(false);
         } else if (data) {
           setAnalytics(data);
           setLastUpdated(newsCache.get(key)?.fetchedAt ?? null);
           setError(null);
           setIsLoading(false);
+          setIsRefreshing(false);
         }
       };
 
@@ -146,19 +200,25 @@ export function useCompanyNews(
     entry = { listeners: new Set<Listener>() };
     inFlightNews.set(key, entry);
 
-    setIsLoading(true);
-    setError(null);
+    if (!hasCached) {
+      setIsLoading(true);
+      setError(null);
+    } else {
+      setIsRefreshing(true);
+    }
 
     const listener: Listener = (data, err) => {
       if (cancelled) return;
       if (err) {
         setError(err);
         setIsLoading(false);
+        setIsRefreshing(false);
       } else if (data) {
         setAnalytics(data);
         setLastUpdated(newsCache.get(key)?.fetchedAt ?? null);
         setError(null);
         setIsLoading(false);
+        setIsRefreshing(false);
       }
     };
 
@@ -172,8 +232,9 @@ export function useCompanyNews(
         for (const l of entry!.listeners) {
           l(data);
         }
-      } catch (e: any) {
-        const msg = e?.message ?? "Error fetching news analytics";
+      } catch (e: unknown) {
+        const msg =
+          e instanceof Error ? e.message : "Error fetching news analytics";
         for (const l of entry!.listeners) {
           l(undefined, msg);
         }
@@ -189,13 +250,20 @@ export function useCompanyNews(
   }, [key, accessToken, enabled]);
 
   const refresh = () => {
-    if (!key || !accessToken || isLoading) return;
+    if (!key || !accessToken || isLoading || isRefreshing) return;
 
     newsCache.delete(key);
     inFlightNews.delete(key);
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem(`${SESSION_STORAGE_PREFIX}${key}`);
+      } catch {
+        // ignore
+      }
+    }
 
     void (async () => {
-      setIsLoading(true);
+      setIsRefreshing(true);
       setError(null);
 
       try {
@@ -203,13 +271,16 @@ export function useCompanyNews(
         const fetchedAt = cacheNews(key, data);
         setAnalytics(data);
         setLastUpdated(fetchedAt);
-      } catch (e: any) {
-        setError(e?.message ?? "Error fetching news analytics");
-      } finally {
         setIsLoading(false);
+      } catch (e: unknown) {
+        setError(
+          e instanceof Error ? e.message : "Error fetching news analytics",
+        );
+      } finally {
+        setIsRefreshing(false);
       }
     })();
   };
 
-  return { analytics, isLoading, error, lastUpdated, refetch: refresh, refresh };
+  return { analytics, isLoading, isRefreshing, error, lastUpdated, refetch: refresh, refresh };
 }

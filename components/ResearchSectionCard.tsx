@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { appIconBoxClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type ResearchSectionCardProps = {
@@ -41,7 +42,7 @@ export function ResearchSectionCard({
           description={description}
           icon={
             Icon ? (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <div className={appIconBoxClass}>
                 <Icon className="h-4 w-4" aria-hidden="true" />
               </div>
             ) : undefined
@@ -49,7 +50,7 @@ export function ResearchSectionCard({
         />
         {action ? <div className="flex shrink-0 items-center">{action}</div> : null}
       </CardHeader>
-      <CardBody className="py-4">{children}</CardBody>
+      <CardBody spacious>{children}</CardBody>
     </Card>
   );
 }

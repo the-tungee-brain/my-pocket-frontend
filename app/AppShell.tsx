@@ -15,6 +15,7 @@ import { useToast } from "./contexts/ToastContext";
 import { usePositionsContext } from "./Providers";
 import { researchTabLabel } from "@/components/ResearchTabBar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { appCanvasClass, appChromeClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import { resolveActiveChatKey } from "@/lib/chatKeys";
 import type { QuickActionMode } from "@/lib/quickActions";
@@ -380,7 +381,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
 
         <section className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <div className="sticky top-0 z-30 border-b border-border bg-secondary/80 backdrop-blur-md">
+          <div
+            className={cn(
+              "sticky top-0 z-30 border-b",
+              appChromeClass,
+            )}
+          >
             {/* Mobile: title + actions, then full-width search */}
             <div className="flex flex-col gap-2.5 px-4 py-2.5 md:hidden">
               <div className="flex items-center gap-3">
@@ -393,12 +399,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Menu className="h-4 w-4" aria-hidden="true" />
                 </IconButton>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold leading-tight text-foreground">
-                    {headerLabel}
-                  </div>
-                  <div className="truncate text-[11px] leading-snug text-muted">
-                    {headerSubtitle}
-                  </div>
+                <div className="truncate font-mono text-xs font-semibold uppercase tracking-wide text-foreground">
+                  {headerLabel}
+                </div>
+                <div className="truncate font-mono text-[10px] uppercase tracking-wider text-muted">
+                  {headerSubtitle}
+                </div>
                 </div>
                 <HeaderActions />
               </div>
@@ -411,10 +417,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {/* Desktop: equal side columns so search sits in the header center */}
             <div className="hidden min-h-14 grid-cols-[1fr_minmax(14rem,24rem)_1fr] items-center gap-x-4 px-4 md:grid">
               <div className="min-w-0 justify-self-start">
-                <div className="truncate text-sm font-semibold leading-tight text-foreground">
+                <div className="truncate font-mono text-xs font-semibold uppercase tracking-wide text-foreground">
                   {headerLabel}
                 </div>
-                <div className="truncate text-[11px] leading-snug text-muted">
+                <div className="truncate font-mono text-[10px] uppercase tracking-wider text-muted">
                   {headerSubtitle}
                 </div>
               </div>
@@ -432,7 +438,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div
               id="main-content"
               className={cn(
-                "min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pt-3 pb-2 sm:px-6",
+                appCanvasClass,
+                "relative overflow-x-hidden overflow-y-auto px-4 pt-3 pb-2 sm:px-6",
                 "max-md:pb-20",
               )}
             >

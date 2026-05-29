@@ -3,7 +3,9 @@
 import { NavList, MainView } from "@/components/NavList";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
 
+import { appSidebarClass } from "@/lib/appUi";
 import type { SymbolAlertSummary } from "@/lib/intelligence";
+import { cn } from "@/lib/utils";
 
 interface DesktopNavProps {
   loading: boolean;
@@ -25,8 +27,13 @@ export function DesktopNav({
   symbolAlertMap,
 }: DesktopNavProps) {
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r border-border bg-secondary p-3 text-sm text-foreground md:flex">
-      <div className="mb-3 rounded-xl border border-border bg-background/60 px-3 py-3">
+    <aside
+      className={cn(
+        "sticky top-0 hidden h-screen w-64 flex-col border-r p-3 font-mono text-sm text-foreground md:flex",
+        appSidebarClass,
+      )}
+    >
+      <div className="app-panel mb-3 px-3 py-3">
         <TomcrestLogo size="md" showSubtitle />
       </div>
 
