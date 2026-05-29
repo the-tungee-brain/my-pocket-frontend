@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 type Props = {
   flow: StrategyFlowDefinition;
   className?: string;
+  /** Strategy Playbook: always show the wide serpentine layout (no sm: breakpoint swap). */
+  fixedWideLayout?: boolean;
 };
 
 type PlacedNode = {
@@ -61,7 +63,14 @@ function hasLeftColumnLoop(nodes: StrategyFlowNode[]) {
   return nodes.length >= 2 && nodes.length % 2 === 0;
 }
 
-export function StrategyFlowDiagram({ flow, className }: Props) {
+const widePairGridClass =
+  "grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-2";
+
+export function StrategyFlowDiagram({
+  flow,
+  className,
+  fixedWideLayout = false,
+}: Props) {
   const rows = buildSerpentineRows(flow.nodes);
   const showLoop = flow.repeats && hasLeftColumnLoop(flow.nodes);
 
@@ -72,7 +81,12 @@ export function StrategyFlowDiagram({ flow, className }: Props) {
           <div key={`row-${rowIndex}`}>
             {row.kind === "pair" ? (
               <>
-                <div className="hidden items-stretch gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                <div
+                  className={cn(
+                    widePairGridClass,
+                    !fixedWideLayout && "hidden sm:grid",
+                  )}
+                >
                   {row.direction === "ltr" ? (
                     <>
                       <FlowNodeCard {...row.nodes[0]} />
@@ -87,15 +101,17 @@ export function StrategyFlowDiagram({ flow, className }: Props) {
                     </>
                   )}
                 </div>
-                <div className="flex flex-col items-stretch gap-2 sm:hidden">
-                  <FlowNodeCard
-                    {...(row.direction === "ltr" ? row.nodes[0] : row.nodes[1])}
-                  />
-                  <FlowArrowVertical direction="down" align="center" />
-                  <FlowNodeCard
-                    {...(row.direction === "ltr" ? row.nodes[1] : row.nodes[0])}
-                  />
-                </div>
+                {!fixedWideLayout && (
+                  <div className="flex flex-col items-stretch gap-2 sm:hidden">
+                    <FlowNodeCard
+                      {...(row.direction === "ltr" ? row.nodes[0] : row.nodes[1])}
+                    />
+                    <FlowArrowVertical direction="down" align="center" />
+                    <FlowNodeCard
+                      {...(row.direction === "ltr" ? row.nodes[1] : row.nodes[0])}
+                    />
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex justify-center px-6">
@@ -107,7 +123,13 @@ export function StrategyFlowDiagram({ flow, className }: Props) {
 
             {rowIndex < rows.length - 1 &&
               (showLoop && rowIndex === 0 ? (
-                <div className="hidden py-1 sm:grid sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                <div
+                  className={cn(
+                    "py-1",
+                    widePairGridClass,
+                    !fixedWideLayout && "hidden sm:grid",
+                  )}
+                >
                   <FlowArrowVertical direction="up" inline />
                   <div />
                   <FlowArrowVertical direction="down" inline />

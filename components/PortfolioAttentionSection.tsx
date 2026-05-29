@@ -293,7 +293,7 @@ export function PortfolioAttentionSection({
           {visibleQueue.length > 0 && (
             <div>
               <p className={appSectionLabelClass}>Priority queue</p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 {visibleQueue.map((item) => {
                   const actionId = item.action;
                   const quickAction = findQuickAction(actionId);
@@ -349,7 +349,7 @@ export function PortfolioAttentionSection({
           {visibleAlerts.length > 0 && (
             <div>
               <p className={appSectionLabelClass}>Suggested actions</p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 {visibleAlerts.map((alert) => {
                   const actionId = alertToQuickActionId(alert);
                   const quickAction = findQuickAction(actionId);
@@ -388,7 +388,7 @@ export function PortfolioAttentionSection({
               {visibleAlerts.length === 0 && (
                 <p className={appSectionLabelClass}>From recent trades</p>
               )}
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 {visibleSuggestions.map((item) => (
                   <AlertChip
                     key={`${item.action}-${item.priority}`}

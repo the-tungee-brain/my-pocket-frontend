@@ -51,6 +51,12 @@ export const appChipClass = "app-chip";
 
 export const appStatGridClass = "app-stat-grid";
 
+/** Portfolio Today: morning brief + strategy playbook (stacks below md). */
+export const portfolioTodayPairGridClass = "grid grid-cols-1 gap-5";
+
+export const portfolioTodayPairGridPairedClass =
+  "lg:grid-cols-2 lg:items-start";
+
 export const appListClass = "app-list";
 
 export const appListRowClass = "app-list-row";

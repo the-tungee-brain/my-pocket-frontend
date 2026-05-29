@@ -51,9 +51,14 @@ import type { StrategyNextAction } from "@/app/types/strategy";
 import {
   playbookActionAskable,
 } from "@/lib/strategyPlaybook";
-import { appStackClass } from "@/lib/appUi";
+import {
+  appStackClass,
+  portfolioTodayPairGridClass,
+  portfolioTodayPairGridPairedClass,
+} from "@/lib/appUi";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { PageShell, PageSplit } from "@/components/PageShell";
+import { cn } from "@/lib/utils";
 
 const sectionClass = pageSectionClass;
 
@@ -343,7 +348,12 @@ export default function PortfolioPage() {
     setShowStrategySetup(true);
   }, []);
 
-  const strategyPlaybook = showStrategyJourney && strategyProfile?.primaryStrategy && (
+  const hasStrategyPlaybook =
+    showStrategyJourney && !!strategyProfile?.primaryStrategy;
+  const showPlaybookColumn = hasStrategyPlaybook || !showStrategyJourney;
+  const briefPlaybookPaired = showBriefSection && showPlaybookColumn;
+
+  const strategyPlaybook = hasStrategyPlaybook && strategyProfile?.primaryStrategy && (
     <StrategyPlaybookPanel
       className={sectionClass}
       strategy={strategyProfile.primaryStrategy}
@@ -425,22 +435,27 @@ export default function PortfolioPage() {
           </div>
 
           {activeSection === "today" && (
-            <PageSplit
-              main={
-                <div className={appStackClass}>
-                  <PortfolioAttentionSection
-                    className={sectionClass}
-                    taxItems={taxItems}
-                    alerts={mergedAlerts}
-                    attentionItems={attentionQueue}
-                    suggestedActions={recentActivity?.suggestedActions ?? []}
-                    onRunAlert={handleRunAlert}
-                    onRunAttentionItem={handleRunAttentionItem}
-                    onDismissAttention={handleDismissAttention}
-                    onRunTax={handleTaxAlert}
-                    onRunActionId={handleSuggestedAction}
-                  />
+            <div className={appStackClass}>
+              <PortfolioAttentionSection
+                className={sectionClass}
+                taxItems={taxItems}
+                alerts={mergedAlerts}
+                attentionItems={attentionQueue}
+                suggestedActions={recentActivity?.suggestedActions ?? []}
+                onRunAlert={handleRunAlert}
+                onRunAttentionItem={handleRunAttentionItem}
+                onDismissAttention={handleDismissAttention}
+                onRunTax={handleTaxAlert}
+                onRunActionId={handleSuggestedAction}
+              />
 
+              {(showBriefSection || strategyPlaybook || !showStrategyJourney) && (
+                <div
+                  className={cn(
+                    portfolioTodayPairGridClass,
+                    briefPlaybookPaired && portfolioTodayPairGridPairedClass,
+                  )}
+                >
                   {showBriefSection && (
                     <PortfolioBriefSection
                       className={sectionClass}
@@ -457,33 +472,29 @@ export default function PortfolioPage() {
                     />
                   )}
 
-                  {!showStrategyJourney && (
-                    <PortfolioOnboarding className={sectionClass} />
-                  )}
-
-                  <AnalysisPanel
-                    mode="portfolio"
-                    portfolioView="analysis"
-                    positions={allPositions}
-                    positionMap={positionMap}
-                    liquidationValue={
-                      account?.securitiesAccount.currentBalances.liquidationValue
-                    }
-                    symbolAlertMap={symbolAlertMap}
-                    autoStart={pendingPortfolioAnalysis}
-                    portfolioNavigation={portfolioNavigation}
-                    onLoadingChange={setPortfolioAnalysisLoading}
-                    onAskFollowUp={() => scrollToChat()}
-                    className={sectionClass}
-                  />
+                  {strategyPlaybook ??
+                    (!showStrategyJourney ? (
+                      <PortfolioOnboarding className={sectionClass} />
+                    ) : null)}
                 </div>
-              }
-              aside={
-                strategyPlaybook ? (
-                  <div className={appStackClass}>{strategyPlaybook}</div>
-                ) : undefined
-              }
-            />
+              )}
+
+              <AnalysisPanel
+                mode="portfolio"
+                portfolioView="analysis"
+                positions={allPositions}
+                positionMap={positionMap}
+                liquidationValue={
+                  account?.securitiesAccount.currentBalances.liquidationValue
+                }
+                symbolAlertMap={symbolAlertMap}
+                autoStart={pendingPortfolioAnalysis}
+                portfolioNavigation={portfolioNavigation}
+                onLoadingChange={setPortfolioAnalysisLoading}
+                onAskFollowUp={() => scrollToChat()}
+                className={sectionClass}
+              />
+            </div>
           )}
 
           {activeSection === "news" && sessionAccessToken && (

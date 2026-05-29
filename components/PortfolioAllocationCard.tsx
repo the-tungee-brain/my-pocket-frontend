@@ -148,7 +148,7 @@ export function PortfolioAllocationCard({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="grid auto-rows-fr gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid auto-rows-fr grid-cols-1 gap-2 lg:grid-cols-4">
         <MetricChip
           label="Cash to invest"
           value={formatUsd(cashMap.deployableCash, {
@@ -254,7 +254,7 @@ export function PortfolioAllocationCard({
                   Trim oversized positions
                 </p>
               </div>
-              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
+              <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2 text-xs">
                 {trimPlan.map((item) => (
                   <li
                     key={item.symbol}
@@ -289,7 +289,7 @@ export function PortfolioAllocationCard({
                   Where to invest next
                 </p>
               </div>
-              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
+              <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2 text-xs">
                 {deployPlan.map((item) => (
                   <li
                     key={item.symbol}

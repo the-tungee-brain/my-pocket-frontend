@@ -44,7 +44,7 @@ function SnapshotSkeleton({ className }: { className?: string }) {
           <Skeleton className="mt-2 h-3 w-48" />
         </CardHeader>
         <CardBody spacious>
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="space-y-2">
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-10 w-40" />
@@ -175,7 +175,7 @@ export function PortfolioSnapshot({
       )}
 
       <CardBody spacious className="space-y-5">
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <KpiStat
             variant="hero"
             label="Total value"

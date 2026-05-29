@@ -163,7 +163,7 @@ export function StrategyPlaybookPanel({
         {symbolStatuses.length > 0 ? (
           <div>
             <p className={cn(appSectionLabelClass, "mb-3")}>Your symbols</p>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
               {symbolStatuses.map((status) => (
                 <PlaybookSymbolCard
                   key={status.symbol}
@@ -209,7 +209,7 @@ export function StrategyPlaybookPanel({
               </span>
             )}
           </div>
-          <StrategyFlowDiagram flow={flow} />
+          <StrategyFlowDiagram flow={flow} fixedWideLayout />
         </div>
       </CardBody>
     </Card>

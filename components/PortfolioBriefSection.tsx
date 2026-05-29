@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   AlertTriangle,
   CalendarDays,
-  ExternalLink,
   GitCompareArrows,
   Newspaper,
   PieChart,
@@ -170,7 +169,7 @@ export function PortfolioBriefSection({
       };
 
   return (
-    <Card className={className} aria-label="Portfolio brief">
+    <Card className={cn(className)} aria-label="Portfolio brief">
       <CardHeader>
         <CardTitle
           title="Morning brief"
@@ -368,23 +367,20 @@ export function PortfolioBriefSection({
                             </span>
                           )}
                         </div>
-                        <div className="mt-1 flex items-start justify-between gap-3">
-                          <p className="min-w-0 flex-1 text-sm leading-relaxed text-foreground">
+                        {item.url ? (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 block text-sm font-medium leading-relaxed text-foreground underline-offset-2 hover:text-accent-strong hover:underline"
+                          >
+                            {item.headline}
+                          </a>
+                        ) : (
+                          <p className="mt-1 text-sm leading-relaxed text-foreground">
                             {item.headline}
                           </p>
-                          {item.url && (
-                            <a
-                              href={item.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-accent-strong hover:underline"
-                            >
-                              Read article
-                              <ExternalLink className="h-3 w-3" aria-hidden />
-                              <span className="sr-only"> (opens in new tab)</span>
-                            </a>
-                          )}
-                        </div>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -434,7 +430,7 @@ export function PortfolioBriefSection({
                   <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
                     Suggested actions
                   </p>
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                     {alerts.map((alert) => (
                       <AlertChip
                         key={`${alert.action}-${alert.symbol ?? "portfolio"}-${alert.priority}`}
