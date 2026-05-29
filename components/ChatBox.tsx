@@ -121,15 +121,17 @@ export function ChatBox({
   }, [modelMenuOpen]);
 
   return (
-    <div className="bg-linear-to-t from-background via-background px-4 pb-4 pt-2 scrollbar-dark">
-      <Card
-        as="div"
-        surface="subtle"
-        className={cn(
-          "flex flex-col gap-3 overflow-visible p-3 shadow-lg shadow-black/10 backdrop-blur",
-          pageShellClass,
-        )}
-      >
+    <div className="relative w-full px-5 pb-4 pt-3 sm:px-8 md:pb-5 md:pt-4">
+      <div className={pageShellClass}>
+        <Card
+          as="div"
+          surface="subtle"
+          className={cn(
+            "mx-0 w-full max-w-none flex flex-col gap-3 overflow-visible rounded-2xl border border-border/70 p-3",
+            "shadow-[0_12px_40px_-12px_rgba(0,0,0,0.55)] backdrop-blur-md",
+            "[box-shadow:0_12px_40px_-12px_rgba(0,0,0,0.55)]",
+          )}
+        >
         <CardBody flush className="flex flex-col gap-3 p-0">
         <div className="flex flex-wrap items-center justify-between gap-2 px-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -282,6 +284,7 @@ export function ChatBox({
         </form>
         </CardBody>
       </Card>
+      </div>
     </div>
   );
 }

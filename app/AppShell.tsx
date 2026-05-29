@@ -434,12 +434,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div
+            className={cn(
+              appCanvasClass,
+              "flex min-h-0 min-w-0 flex-1 flex-col",
+            )}
+          >
             <div
               id="main-content"
               className={cn(
-                appCanvasClass,
-                "relative overflow-x-hidden overflow-y-auto px-5 pt-4 pb-4 sm:px-8",
+                "relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pt-4 pb-4 sm:px-8",
                 "max-md:pb-20",
               )}
             >
@@ -477,7 +481,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             {showChat && (
-              <div className="sticky bottom-14 z-20 md:hidden md:bottom-0">
+              <div className="sticky bottom-14 z-20 shrink-0 md:hidden md:bottom-0">
                 {!mobileChatExpanded ? (
                   <button
                     type="button"
@@ -503,7 +507,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
 
             {showChat && (
-              <div className="sticky bottom-0 z-20 hidden bg-background md:block">
+              <div className="sticky bottom-0 z-20 hidden shrink-0 md:block">
                 <ChatBox {...chatBoxProps} />
               </div>
             )}
