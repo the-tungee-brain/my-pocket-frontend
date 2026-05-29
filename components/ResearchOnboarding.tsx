@@ -48,8 +48,8 @@ export function ResearchOnboarding() {
     () => [
       {
         id: "search",
-        label: "Search a ticker",
-        description: "Type a symbol above and open its company snapshot.",
+        label: "Search ticker or company name",
+        description: "Open a symbol from search to view its research hub.",
         done: hasOpenedSymbol,
       },
       {

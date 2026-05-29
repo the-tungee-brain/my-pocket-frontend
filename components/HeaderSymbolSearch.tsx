@@ -121,7 +121,7 @@ export function HeaderSymbolSearch({
   return (
     <div ref={rootRef} className={cn("relative min-w-0", className)}>
       <label htmlFor={`${listboxId}-input`} className="sr-only">
-        Search ticker symbol
+        Search ticker or company name
       </label>
       <div className="relative">
         <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-muted">
@@ -138,7 +138,7 @@ export function HeaderSymbolSearch({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search ticker…"
+          placeholder="Ticker or company name"
           autoComplete="off"
           spellCheck={false}
           role="combobox"

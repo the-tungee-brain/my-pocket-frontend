@@ -107,7 +107,8 @@ export default function ResearchPage() {
               Research
             </h1>
             <p className="mt-1 text-sm text-muted">
-              Search a ticker to open its research hub — stocks, ETFs, and more.
+              Search ticker or company name to open its research hub — stocks,
+              ETFs, and more.
               <span className="hidden sm:inline"> Press </span>
               <kbd className="mx-1 hidden rounded border border-border bg-muted-bg px-1.5 py-0.5 font-mono text-[10px] text-muted sm:inline">
                 /
@@ -134,7 +135,7 @@ export default function ResearchPage() {
               onKeyDown={handleInputKeyDown}
               placeholder="Search symbol or company, e.g. NVDA"
               role="combobox"
-              aria-label="Search ticker symbol"
+              aria-label="Search ticker or company name"
               aria-autocomplete="list"
               aria-expanded={hasResults}
               aria-controls={hasResults ? listboxId : undefined}
@@ -152,7 +153,7 @@ export default function ResearchPage() {
               <EmptyState
                 icon={Search}
                 title="Find a symbol to research"
-                description="Search by ticker above, or open a holding from your portfolio to dig into fundamentals, holdings, and news."
+                description="Search by ticker or company name, or open a holding from your portfolio to dig into fundamentals, holdings, and news."
                 variant="solid"
                 className="py-6"
                 action={

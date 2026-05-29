@@ -280,7 +280,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       : selectedView === "research" && researchSymbol
         ? `Stock research · ${researchTabLabel(pathname.split("/")[3])}`
         : selectedView === "research"
-          ? "Search a ticker in the header"
+          ? "Search ticker or company name"
           : "Position details and assistant context";
 
   const showConversation =
