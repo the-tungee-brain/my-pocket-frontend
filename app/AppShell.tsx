@@ -87,23 +87,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const currentChat =
     activeChatKey === "__NONE__" ? undefined : chatBySymbol[activeChatKey];
 
+  // Mobile chat stays collapsed until the user expands it or OPEN_CHAT_EVENT fires
+  // (e.g. Ask AI, playbook, scrollToChat).
   useEffect(() => {
-    if (researchSymbol) {
-      setMobileChatExpanded(true);
-      return;
-    }
-
-    if ((currentChat?.messages.length ?? 0) > 0 || currentChat?.loading) {
-      setMobileChatExpanded(true);
-    } else {
-      setMobileChatExpanded(false);
-    }
-  }, [
-    researchSymbol,
-    currentChat?.loading,
-    currentChat?.messages.length,
-    activeChatKey,
-  ]);
+    setMobileChatExpanded(false);
+  }, [activeChatKey]);
 
   useEffect(() => {
     const openChat = () => {
