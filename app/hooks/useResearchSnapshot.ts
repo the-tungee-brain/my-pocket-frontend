@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ResearchSnapshot } from "@/lib/researchSnapshot";
-import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
+import { useOverviewBundleGate } from "@/app/research/ResearchOverviewContext";
 import { fetchResearchSnapshot } from "@/lib/researchSnapshot";
 
 type UseResearchSnapshotOptions = {
@@ -13,10 +13,10 @@ export function useResearchSnapshot(
   symbol: string | null,
   { accessToken }: UseResearchSnapshotOptions = {},
 ) {
-  const overviewBundle = useResearchOverviewBundle();
+  const { bundle: overviewBundle, waitForBundle } = useOverviewBundleGate(symbol);
   const [snapshot, setSnapshot] = useState<ResearchSnapshot | null>(() => {
     const key = symbol?.toUpperCase().trim();
-    if (key && overviewBundle?.symbol === key && overviewBundle.snapshot) {
+    if (key && overviewBundle?.snapshot) {
       return overviewBundle.snapshot;
     }
     return null;
@@ -32,7 +32,12 @@ export function useResearchSnapshot(
 
   useEffect(() => {
     const key = symbol?.toUpperCase().trim();
-    if (key && overviewBundle?.symbol === key && overviewBundle.snapshot) {
+    if (waitForBundle) {
+      setIsLoading(true);
+      setError(null);
+      return;
+    }
+    if (key && overviewBundle?.snapshot) {
       setSnapshot(overviewBundle.snapshot);
       setIsLoading(false);
       setError(null);
@@ -76,7 +81,7 @@ export function useResearchSnapshot(
     return () => {
       cancelled = true;
     };
-  }, [symbol, accessToken, overviewBundle]);
+  }, [symbol, accessToken, overviewBundle, waitForBundle]);
 
   return { snapshot, isLoading, error };
 }

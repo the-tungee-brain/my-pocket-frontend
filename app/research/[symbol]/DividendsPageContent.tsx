@@ -9,7 +9,7 @@ import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import { useStockData } from "@/app/hooks/useStockData";
-import { usePositionsContext } from "@/app/Providers";
+import { usePortfolioContext } from "@/app/contextSelectors";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import type { Position } from "@/app/types/schwab";
 import type { DividendScenarioParams } from "@/app/types/research";
@@ -106,7 +106,7 @@ export function DividendsPageContent({ symbol }: Props) {
   const { isPaid, plan } = useAccountPlan(session?.accessToken);
   const snowballAllowed = hasProFeature(isPaid, "dividendSnowball", plan);
   const { isEtf } = useResearchAssetTypeContext();
-  const { positionMap } = usePositionsContext();
+  const { positionMap } = usePortfolioContext();
   const symbolUpper = symbol.toUpperCase();
   const heldShares = useMemo(
     () => equityShareCount(positionMap[symbolUpper]),

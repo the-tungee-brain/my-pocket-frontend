@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { WatchlistButton } from "@/components/WatchlistButton";
 import { WatchlistHint } from "@/components/WatchlistHint";
 import { iconButtonClass } from "@/components/ui/IconButton";
-import { usePositionsContext } from "@/app/Providers";
+import { usePortfolioContext } from "@/app/contextSelectors";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
@@ -46,7 +46,7 @@ function formatPL(value: number) {
 export function CompanySnapshot({ symbol, compact = false }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
-  const { positionMap } = usePositionsContext();
+  const { positionMap } = usePortfolioContext();
   const upperSymbol = symbol.toUpperCase();
   const userPositions = positionMap[upperSymbol];
 

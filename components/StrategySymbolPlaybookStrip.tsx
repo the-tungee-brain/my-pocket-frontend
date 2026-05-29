@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback } from "react";
 import { ArrowRight, BarChart3 } from "lucide-react";
-import { usePositionsContext } from "@/app/Providers";
+import { useAppChatContext } from "@/app/contextSelectors";
 import { useSession } from "next-auth/react";
 import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useStrategyContext } from "@/app/contexts/StrategyContext";
@@ -34,7 +34,7 @@ export function StrategySymbolPlaybookStrip({ symbol, className }: Props) {
   const { isPaid, plan } = useAccountPlan(session?.accessToken);
   const backtestAllowed = hasProFeature(isPaid, "wheelBacktest", plan);
   const { profile, recommendations } = useStrategyContext();
-  const { sendPlaybookAsk } = usePositionsContext();
+  const { sendPlaybookAsk } = useAppChatContext();
   const { connect, connecting } = useSchwabConnect();
 
   const upperSymbol = symbol.trim().toUpperCase();

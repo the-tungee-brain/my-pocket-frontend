@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import type { AssetType } from "@/app/types/research";
-import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
+import {
+  useResearchOverviewBundle,
+  useResearchOverviewLoading,
+} from "@/app/research/ResearchOverviewContext";
 import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import {
   fetchAssetType,
@@ -21,6 +24,7 @@ export function useResearchAssetType(
 ) {
   const symbolUpper = symbol?.trim().toUpperCase() ?? null;
   const overviewBundle = useResearchOverviewBundle();
+  const overviewLoading = useResearchOverviewLoading();
 
   const [assetType, setAssetType] = useState<AssetType | null>(() => {
     if (
@@ -38,10 +42,21 @@ export function useResearchAssetType(
     return getCachedAssetType(symbolUpper) === undefined;
   });
 
+  const bundleResolvesAssetType =
+    symbolUpper &&
+    overviewBundle?.symbol === symbolUpper &&
+    overviewBundle.assetType != null;
+
   const { holdings: etfHoldings } = useEtfHoldings(symbolUpper, {
     accessToken,
     limit: 1,
-    enabled: Boolean(symbolUpper && accessToken && !isEtfAssetType(assetType)),
+    enabled: Boolean(
+      symbolUpper &&
+        accessToken &&
+        !overviewLoading &&
+        !bundleResolvesAssetType &&
+        !isEtfAssetType(assetType),
+    ),
   });
 
   useEffect(() => {

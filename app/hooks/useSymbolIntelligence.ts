@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchSymbolIntelligence } from "@/lib/apiClient";
 import type { SymbolIntelligence } from "@/app/types/intelligence";
-import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
+import { useOverviewBundleGate } from "@/app/research/ResearchOverviewContext";
 
 const cache = new Map<string, SymbolIntelligence>();
 
@@ -26,7 +26,7 @@ export function useSymbolIntelligence(
   options: Options = {},
 ) {
   const { accessToken, enabled = true, includeOptions = true } = options;
-  const overviewBundle = useResearchOverviewBundle();
+  const { bundle: overviewBundle, waitForBundle } = useOverviewBundleGate(symbol);
   const key = symbol?.toUpperCase().trim() ?? "";
 
   const [intelligence, setIntelligence] = useState<SymbolIntelligence | null>(
@@ -40,14 +40,16 @@ export function useSymbolIntelligence(
       if (!key || !accessToken || !enabled) return;
 
       if (!forceRefresh) {
-        if (
-          overviewBundle?.symbol === key &&
-          overviewBundle.intelligence &&
-          !includeOptions
-        ) {
+        if (waitForBundle) {
+          setLoading(true);
+          setError(null);
+          return;
+        }
+        if (overviewBundle?.intelligence) {
           cache.set(key, overviewBundle.intelligence);
           setIntelligence(overviewBundle.intelligence);
           setError(null);
+          setLoading(false);
           return;
         }
         const cached = cache.get(key);
@@ -85,7 +87,7 @@ export function useSymbolIntelligence(
         setLoading(false);
       }
     },
-    [accessToken, enabled, includeOptions, key, overviewBundle],
+    [accessToken, enabled, includeOptions, key, overviewBundle, waitForBundle],
   );
 
   useEffect(() => {

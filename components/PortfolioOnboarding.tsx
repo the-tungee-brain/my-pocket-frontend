@@ -15,7 +15,7 @@ import {
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
 import { useRecentSymbols } from "@/app/hooks/useRecentSymbols";
 import { useWatchlist } from "@/app/hooks/useWatchlist";
-import { usePositionsContext } from "@/app/Providers";
+import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import {
@@ -37,8 +37,8 @@ const CORE_STEP_IDS = ["connect", "holdings", "assistant"] as const;
 export function PortfolioOnboarding({ className }: { className?: string }) {
   const { authorized: schwabAuthorized, loading: schwabLoading } =
     useSchwabStatus();
-  const { allPositions, chatBySymbol, loading: positionsLoading } =
-    usePositionsContext();
+  const { allPositions, loading: positionsLoading } = usePortfolioContext();
+  const { chatBySymbol } = useAppChatContext();
   const { symbols: watchlist } = useWatchlist();
   const { symbols: recentSymbols } = useRecentSymbols();
   const [dismissed, setDismissed] = useState(true);

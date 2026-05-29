@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
-import { usePositionsContext } from "@/app/Providers";
+import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import { SymbolIntelligencePanel } from "@/components/SymbolIntelligencePanel";
 import type { IntelligenceSignal } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
@@ -15,7 +15,8 @@ type Props = {
 export function SymbolIntelligenceSection({ symbol }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
-  const { positionMap, sendQuickAction, sendPrompt } = usePositionsContext();
+  const { positionMap } = usePortfolioContext();
+  const { sendQuickAction, sendPrompt } = useAppChatContext();
   const symbolUpper = symbol.toUpperCase();
   const chatKey = symbolChatKey(symbolUpper) ?? symbolUpper;
 

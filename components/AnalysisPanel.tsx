@@ -8,29 +8,16 @@ import {
   Filter,
   Lightbulb,
   LockKeyhole,
-  MessageSquare,
   RefreshCw,
 } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
-import { formatInsightsAnalyzedAt } from "@/lib/insightsCache";
-import { AnalyzePrompt } from "@/components/AnalyzePrompt";
-import { StructuredAnalysisView } from "@/components/StructuredAnalysisView";
-import {
-  ComparePathsCard,
-  ComparePathsIntro,
-} from "@/components/ComparePathsCard";
-import {
-  PortfolioAllocationCard,
-  PortfolioAllocationIntro,
-} from "@/components/PortfolioAllocationCard";
 import { inferRecommendedComparePath } from "@/lib/inferRecommendedComparePath";
+import { AnalysisPanelAnalyzeSection } from "@/components/analysis/analysisPanelAnalyzeSection";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import { AlertBadge } from "@/components/AlertBadge";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { KpiStat } from "@/components/ui/KpiStat";
-import { ConversationalMarkdown } from "@/components/ui/ConversationalMarkdown";
-import { usePositionsContext } from "@/app/Providers";
+import { usePortfolioContext } from "@/app/contextSelectors";
 import { useInsights } from "@/app/hooks/useInsights";
 import { Position } from "@/app/types/schwab";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
@@ -179,7 +166,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const symbol = isPortfolio ? null : props.symbol.toUpperCase();
   const positions = props.positions;
 
-  const { account, sessionAccessToken } = usePositionsContext();
+  const { account, sessionAccessToken } = usePortfolioContext();
   const portfolioHeaderActionsEl = useContext(
     PortfolioSnapshotHeaderActionsContext,
   );
@@ -393,7 +380,8 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const showAnalyzePrompt =
     showPortfolioAnalysis && !error && (isAnalyzing || !analysisReady);
   const analyzeButtonLoading = isAnalyzing;
-  const showAnalysisOutput = showPortfolioAnalysis && (error || analysisReady);
+  const showAnalysisOutput =
+    showPortfolioAnalysis && !!(error || analysisReady);
 
   const totalValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
   const openPL = sumOpenProfitLoss(positions);
@@ -451,105 +439,30 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       : null;
 
   const analysisBlock = (
-    <>
-      {showAnalyzePrompt && (
-        <AnalyzePrompt
-          isPortfolio={isPortfolio}
-          symbol={symbol}
-          label={analyzeLabel}
-          loading={analyzeButtonLoading}
-          onClick={handleStart}
-        />
-      )}
-
-      {showAnalysisOutput && (
-        <div className="border-t border-border/70 px-4 py-4">
-          {error && (
-            <ErrorBanner message={error} onRetry={refetch} className="mb-3" />
-          )}
-
-          {analysisReady && (
-            <div
-              className={cn(
-                "text-sm leading-relaxed text-foreground",
-                loading && "opacity-90",
-              )}
-            >
-              <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted">
-                AI analysis
-              </p>
-              {showPortfolioAllocation && portfolioPrecomputed && (
-                <div className="mb-4 space-y-3">
-                  <PortfolioAllocationIntro />
-                  <PortfolioAllocationCard precomputed={portfolioPrecomputed} />
-                </div>
-              )}
-              {displayAnalysis ? (
-                <StructuredAnalysisView
-                  analysis={displayAnalysis}
-                  loading={loading}
-                  hideDetailLabel={showPortfolioAllocation}
-                />
-              ) : (
-                content && (
-                  <ConversationalMarkdown
-                    content={content}
-                    isStreaming={loading}
-                  />
-                )
-              )}
-              {showComparePaths && (
-                <div className="mt-4 space-y-4 border-t border-border/70 pt-4">
-                  <ComparePathsIntro />
-                  {precomputed?.heldOptionOutcomes?.map((outcome, index) => (
-                    <ComparePathsCard
-                      key={`${outcome.currentLeg.strike}-${outcome.currentLeg.expiration}-${index}`}
-                      symbol={symbol ?? precomputed.symbol}
-                      outcome={outcome}
-                      recommendedPath={recommendedComparePath}
-                      rollSuggestions={precomputed.rollSuggestions}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {requested && !isAnalyzing && !error && !analysisReady && (
-            <div className="space-y-3 py-4 text-center">
-              <p className="text-sm text-muted">
-                Analysis unavailable right now.
-              </p>
-              <button
-                type="button"
-                onClick={refetch}
-                className="text-sm font-medium text-accent-strong hover:underline"
-              >
-                Try again
-              </button>
-            </div>
-          )}
-
-          {analysisReady && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3">
-              <p className="text-[11px] text-muted">
-                {analyzedAt
-                  ? `Analyzed ${formatInsightsAnalyzedAt(analyzedAt)} · from your Schwab holdings`
-                  : "Generated from your Schwab holdings"}
-              </p>
-              <button
-                type="button"
-                onClick={handleFollowUp}
-                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-accent-strong transition hover:underline"
-              >
-                <MessageSquare className="h-3.5 w-3.5" aria-hidden />
-                Ask a follow-up in chat
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </>
+    <AnalysisPanelAnalyzeSection
+      isPortfolio={isPortfolio}
+      symbol={symbol}
+      analyzeLabel={analyzeLabel}
+      showAnalyzePrompt={showAnalyzePrompt}
+      showAnalysisOutput={showAnalysisOutput}
+      analyzeButtonLoading={analyzeButtonLoading}
+      loading={loading}
+      error={error}
+      analysisReady={analysisReady}
+      content={content}
+      displayAnalysis={displayAnalysis}
+      showPortfolioAllocation={showPortfolioAllocation}
+      portfolioPrecomputed={portfolioPrecomputed}
+      showComparePaths={showComparePaths}
+      precomputed={precomputed}
+      recommendedComparePath={recommendedComparePath}
+      analyzedAt={analyzedAt}
+      requested={requested}
+      isAnalyzing={isAnalyzing}
+      onStart={handleStart}
+      onRefetch={refetch}
+      onFollowUp={handleFollowUp}
+    />
   );
 
   if (embedded && isPortfolio && showPortfolioAnalysis) {

@@ -7,7 +7,7 @@ import { useToast } from "@/app/contexts/ToastContext";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import { useSchwabDisconnect } from "@/app/hooks/useSchwabDisconnect";
 import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
-import { usePositionsContext } from "@/app/Providers";
+import { usePortfolioContext } from "@/app/contextSelectors";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 export function SchwabConnectionSettings() {
   const { showToast } = useToast();
-  const { clearPortfolioData } = usePositionsContext();
+  const { clearPortfolioData } = usePortfolioContext();
   const {
     authorized,
     loading: statusLoading,

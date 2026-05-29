@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { usePositionsContext } from "../Providers";
+import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import {
   usePortfolioSection,
   type PortfolioSectionId,
@@ -80,12 +80,15 @@ export default function PortfolioPage() {
     positionsDataFreshness,
     refreshPositions,
     sessionAccessToken,
+    schwabReauth,
+  } = usePortfolioContext();
+
+  const {
     sendQuickAction,
     sendPrompt,
     sendPlaybookAsk,
-    schwabReauth,
     closeAllChatModelMenus,
-  } = usePositionsContext();
+  } = useAppChatContext();
   const { activeSection, setActiveSection } = usePortfolioSection();
   const searchParams = useSearchParams();
   const { showToast } = useToast();

@@ -9,8 +9,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { fetchResearchOverviewBundle } from "@/lib/apiClient";
 import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
-import { rememberAssetType } from "@/lib/researchAssetType";
-import { seedSymbolIntelligenceCache } from "@/app/hooks/useSymbolIntelligence";
+import { seedResearchOverviewCaches } from "@/lib/researchOverviewSeeds";
 
 const ResearchOverviewContext = createContext<ResearchOverviewBundle | null>(
   null,
@@ -39,10 +38,7 @@ export function ResearchOverviewProvider({
 
   useEffect(() => {
     if (!data) return;
-    seedSymbolIntelligenceCache(data.symbol, data.intelligence);
-    if (data.assetType) {
-      rememberAssetType(data.symbol, data.assetType);
-    }
+    seedResearchOverviewCaches(data);
   }, [data]);
 
   return (
@@ -62,4 +58,21 @@ export function useResearchOverviewBundle() {
 
 export function useResearchOverviewLoading() {
   return useContext(ResearchOverviewLoadingContext);
+}
+
+export function useResearchDataAsOf(): string | null {
+  const bundle = useResearchOverviewBundle();
+  return bundle?.asOf ?? null;
+}
+
+/** Avoid parallel fetches while the overview bundle request is in flight. */
+export function useOverviewBundleGate(symbol: string | null | undefined) {
+  const bundle = useResearchOverviewBundle();
+  const overviewLoading = useResearchOverviewLoading();
+  const key = symbol?.toUpperCase().trim() ?? "";
+
+  return {
+    bundle: key && bundle?.symbol === key ? bundle : null,
+    waitForBundle: Boolean(key && overviewLoading),
+  };
 }

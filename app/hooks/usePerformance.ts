@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
-import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
+import { useOverviewBundleGate } from "@/app/research/ResearchOverviewContext";
 
 export type PerformanceSnapshot = {
   oneMonth: string;
@@ -14,6 +14,14 @@ export type PerformanceSnapshot = {
 
 const performanceCache = new Map<string, PerformanceSnapshot>();
 
+export function seedPerformanceCache(
+  symbol: string,
+  performance: PerformanceSnapshot,
+) {
+  const key = symbol.toUpperCase().trim();
+  if (key) performanceCache.set(key, performance);
+}
+
 type UsePerformanceSnapshotOptions = {
   accessToken?: string | null;
 };
@@ -22,7 +30,7 @@ export function usePerformanceSnapshot(
   symbol: string | null,
   { accessToken }: UsePerformanceSnapshotOptions = {},
 ) {
-  const overviewBundle = useResearchOverviewBundle();
+  const { bundle: overviewBundle, waitForBundle } = useOverviewBundleGate(symbol);
   const [performance, setPerformance] = useState<PerformanceSnapshot | null>(
     null,
   );
@@ -32,7 +40,13 @@ export function usePerformanceSnapshot(
   useEffect(() => {
     const key = symbol?.toUpperCase().trim();
 
-    if (key && overviewBundle?.symbol === key && overviewBundle.performance) {
+    if (waitForBundle) {
+      setIsLoading(true);
+      setError(null);
+      return;
+    }
+
+    if (key && overviewBundle?.performance) {
       performanceCache.set(key, overviewBundle.performance);
       setPerformance(overviewBundle.performance);
       setIsLoading(false);
@@ -103,7 +117,7 @@ export function usePerformanceSnapshot(
     return () => {
       cancelled = true;
     };
-  }, [symbol, accessToken, overviewBundle]);
+  }, [symbol, accessToken, overviewBundle, waitForBundle]);
 
   return { performance, isLoading, error };
 }

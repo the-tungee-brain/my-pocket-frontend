@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { usePositionsContext } from "@/app/Providers";
+import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import { SymbolAlertStrip } from "@/components/SymbolAlertStrip";
 import type { ProactiveAlert } from "@/app/types/intelligence";
 import { alertToQuickActionId, mergeDisplayAlerts } from "@/lib/intelligence";
@@ -11,12 +11,8 @@ type Props = {
 };
 
 export function SymbolResearchAlertsSection({ symbol }: Props) {
-  const {
-    positionMap,
-    proactiveAlerts,
-    portfolioBrief,
-    sendQuickAction,
-  } = usePositionsContext();
+  const { positionMap, proactiveAlerts, portfolioBrief } = usePortfolioContext();
+  const { sendQuickAction } = useAppChatContext();
 
   const symbolUpper = symbol.toUpperCase();
   const hasPosition = (positionMap[symbolUpper]?.length ?? 0) > 0;

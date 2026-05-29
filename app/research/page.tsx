@@ -9,7 +9,7 @@ import { History, Search, SearchX, Star, TrendingUp } from "lucide-react";
 import { TickerSymbolItem, useSymbolSearch } from "../hooks/useSymbolSearch";
 import { useRecentSymbols } from "../hooks/useRecentSymbols";
 import { useWatchlist } from "../hooks/useWatchlist";
-import { usePositionsContext } from "../Providers";
+import { usePortfolioContext } from "@/app/contextSelectors";
 import { rememberAssetType } from "@/lib/researchAssetType";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Card } from "@/components/ui/Card";
@@ -27,7 +27,7 @@ export default function ResearchPage() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { symbols: portfolioSymbols } = usePositionsContext();
+  const { symbols: portfolioSymbols } = usePortfolioContext();
 
   const { symbols: watchlist } = useWatchlist();
   const { symbols: recentSymbols, clear: clearRecentSymbols } =

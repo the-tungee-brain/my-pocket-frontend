@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
-import { usePositionsContext } from "@/app/Providers";
+import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import { AnalysisPanel } from "@/components/AnalysisPanel";
 import { TaxWashSaleStrip } from "@/components/TaxWashSaleStrip";
 import { OptionsTabPrompt } from "@/components/OptionsTabPrompt";
@@ -30,14 +30,9 @@ type Props = {
 };
 
 export function SymbolPositionContent({ symbol }: Props) {
-  const {
-    error,
-    positionMap,
-    proactiveAlerts,
-    portfolioBrief,
-    recentActivity,
-    sendQuickAction,
-  } = usePositionsContext();
+  const { error, positionMap, proactiveAlerts, portfolioBrief, recentActivity } =
+    usePortfolioContext();
+  const { sendQuickAction } = useAppChatContext();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
   const symbolUpper = symbol.toUpperCase();

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { EtfHoldingsContext } from "@/app/types/research";
-import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
+import { useOverviewBundleGate } from "@/app/research/ResearchOverviewContext";
 import { fetchEtfHoldings, getCachedEtfHoldings } from "@/lib/etfHoldings";
 
 type UseEtfHoldingsOptions = {
@@ -19,7 +19,7 @@ export function useEtfHoldings(
     enabled = true,
   }: UseEtfHoldingsOptions = {},
 ) {
-  const overviewBundle = useResearchOverviewBundle();
+  const { bundle: overviewBundle, waitForBundle } = useOverviewBundleGate(symbol);
   const [holdings, setHoldings] = useState<EtfHoldingsContext | null>(() => {
     if (!symbol || !enabled) return null;
     return getCachedEtfHoldings(symbol, limit);
@@ -50,11 +50,13 @@ export function useEtfHoldings(
       return;
     }
 
-    if (
-      limit === 8 &&
-      overviewBundle?.symbol === key &&
-      overviewBundle.etfHoldings
-    ) {
+    if (waitForBundle) {
+      setIsLoading(true);
+      setError(null);
+      return;
+    }
+
+    if (overviewBundle?.etfHoldings) {
       setHoldings(overviewBundle.etfHoldings);
       setIsLoading(false);
       setError(null);
@@ -95,7 +97,7 @@ export function useEtfHoldings(
     return () => {
       cancelled = true;
     };
-  }, [symbol, accessToken, limit, enabled, retryCount, overviewBundle]);
+  }, [symbol, accessToken, limit, enabled, retryCount, overviewBundle, waitForBundle]);
 
   return { holdings, isLoading, error, refetch };
 }

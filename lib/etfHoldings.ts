@@ -187,6 +187,21 @@ export function normalizeEtfHoldingsContext(
   };
 }
 
+export function seedEtfHoldingsCache(
+  symbol: string,
+  holdings: EtfHoldingsContext,
+): void {
+  const key = cacheKey(symbol);
+  if (!key) return;
+  const normalized = normalizeEtfHoldingsContext(
+    holdings,
+    MAX_ETF_HOLDINGS_FETCH,
+  );
+  if (normalized) {
+    memoryCache.set(key, normalized);
+  }
+}
+
 export function getCachedEtfHoldings(
   symbol: string,
   limit = MAX_ETF_HOLDINGS_FETCH,

@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Target } from "lucide-react";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
-import { usePositionsContext } from "@/app/Providers";
+import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
 import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
 import { SymbolOptionsWorkspace } from "@/components/SymbolIntelligencePanel";
@@ -25,13 +25,9 @@ type Props = {
 };
 
 export function SymbolOptionsContent({ symbol }: Props) {
-  const {
-    error,
-    positionMap,
-    account,
-    assignmentRiskSummary,
-    sendPrompt,
-  } = usePositionsContext();
+  const { error, positionMap, account, assignmentRiskSummary } =
+    usePortfolioContext();
+  const { sendPrompt } = useAppChatContext();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
   const symbolUpper = symbol.toUpperCase();

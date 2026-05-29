@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
-import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
+import { useOverviewBundleGate } from "@/app/research/ResearchOverviewContext";
 import type { EtfFundsSnapshot } from "@/app/hooks/etfFundsTypes";
 
 type EtfFundsResponse = {
@@ -10,6 +10,11 @@ type EtfFundsResponse = {
 };
 
 const etfFundsCache = new Map<string, EtfFundsSnapshot | null>();
+
+export function seedEtfFundsCache(symbol: string, funds: EtfFundsSnapshot | null) {
+  const key = symbol.toUpperCase().trim();
+  if (key) etfFundsCache.set(key, funds);
+}
 
 type UseEtfFundsOptions = {
   accessToken?: string | null;
@@ -20,7 +25,7 @@ export function useEtfFunds(
   symbol: string | null,
   { accessToken, enabled = true }: UseEtfFundsOptions = {},
 ) {
-  const overviewBundle = useResearchOverviewBundle();
+  const { bundle: overviewBundle, waitForBundle } = useOverviewBundleGate(symbol);
   const [funds, setFunds] = useState<EtfFundsSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +40,13 @@ export function useEtfFunds(
       return;
     }
 
-    if (overviewBundle?.symbol === key && overviewBundle.etfFunds !== undefined) {
+    if (waitForBundle) {
+      setIsLoading(true);
+      setError(null);
+      return;
+    }
+
+    if (overviewBundle?.etfFunds !== undefined) {
       etfFundsCache.set(key, overviewBundle.etfFunds);
       setFunds(overviewBundle.etfFunds);
       setIsLoading(false);
@@ -85,7 +96,7 @@ export function useEtfFunds(
     return () => {
       cancelled = true;
     };
-  }, [key, accessToken, enabled, overviewBundle]);
+  }, [key, accessToken, enabled, overviewBundle, waitForBundle]);
 
   return { funds, isLoading, error };
 }

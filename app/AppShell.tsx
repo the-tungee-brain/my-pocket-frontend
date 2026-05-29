@@ -12,7 +12,7 @@ import { HeaderActions } from "@/components/HeaderActions";
 import { HeaderSymbolSearch } from "@/components/HeaderSymbolSearch";
 import { IconButton } from "@/components/ui/IconButton";
 import { useToast } from "./contexts/ToastContext";
-import { usePositionsContext } from "./Providers";
+import { useAppChatContext, usePortfolioContext } from "./contextSelectors";
 import { researchTabLabel } from "@/components/ResearchTabBar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { appCanvasClass, appChromeClass } from "@/lib/appUi";
@@ -40,6 +40,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     positionsForSelectedSymbol,
     allPositions,
     positionMap,
+    proactiveAlerts,
+    portfolioBrief,
+    recentActivity,
+    sessionAccessToken,
+  } = usePortfolioContext();
+
+  const {
     chatBySymbol,
     setChatBySymbol,
     ensureSymbolChatState,
@@ -51,11 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     clearChatHistory,
     restoreChatSession,
     startNewChatSession,
-    proactiveAlerts,
-    portfolioBrief,
-    recentActivity,
-    sessionAccessToken,
-  } = usePositionsContext();
+  } = useAppChatContext();
 
   const symbolAlertMap = useMemo(
     () =>

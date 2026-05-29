@@ -1,8 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPressReleases } from "@/lib/apiClient";
 import type { PressReleaseHeadline } from "@/app/types/pressReleases";
+
+export const pressReleasesQueryKey = (
+  accessToken: string,
+  symbol: string,
+  lookbackDays: number,
+) => ["press-releases", accessToken, symbol.toUpperCase(), lookbackDays] as const;
 
 type Options = {
   enabled?: boolean;
@@ -15,39 +22,33 @@ export function usePressReleases(
   options: Options = {},
 ) {
   const { enabled = true, lookbackDays = 90 } = options;
-  const [items, setItems] = useState<PressReleaseHeadline[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const symbolUpper = symbol?.toUpperCase().trim() ?? "";
+  const queryClient = useQueryClient();
 
-  const load = useCallback(async () => {
-    if (!symbol || !accessToken || !enabled) return;
+  const query = useQuery({
+    queryKey: pressReleasesQueryKey(accessToken ?? "", symbolUpper, lookbackDays),
+    queryFn: () =>
+      fetchPressReleases(accessToken!, symbolUpper, { lookbackDays }),
+    enabled: Boolean(accessToken && symbolUpper && enabled),
+    staleTime: 10 * 60_000,
+  });
 
-    setIsLoading(true);
-    setError(null);
+  const error = query.isError ? "Could not load official announcements." : null;
 
-    try {
-      const data = await fetchPressReleases(accessToken, symbol, {
-        lookbackDays,
-      });
-      setItems(data.items);
-      setLastUpdated(Date.now());
-    } catch {
-      setError("Could not load official announcements.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [accessToken, enabled, lookbackDays, symbol]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const refetch = useCallback(async () => {
+    if (!accessToken || !symbolUpper) return;
+    await queryClient.fetchQuery({
+      queryKey: pressReleasesQueryKey(accessToken, symbolUpper, lookbackDays),
+      queryFn: () =>
+        fetchPressReleases(accessToken, symbolUpper, { lookbackDays }),
+    });
+  }, [accessToken, lookbackDays, queryClient, symbolUpper]);
 
   return {
-    items,
-    isLoading,
+    items: query.data?.items ?? ([] as PressReleaseHeadline[]),
+    isLoading: query.isLoading || query.isFetching,
     error,
-    lastUpdated,
-    refetch: load,
+    lastUpdated: query.dataUpdatedAt > 0 ? query.dataUpdatedAt : null,
+    refetch,
   };
 }

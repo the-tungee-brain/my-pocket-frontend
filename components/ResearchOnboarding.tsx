@@ -8,7 +8,7 @@ import {
   Star,
   X,
 } from "lucide-react";
-import { usePositionsContext } from "@/app/Providers";
+import { useAppChatContext } from "@/app/contextSelectors";
 import { useWatchlist } from "@/app/hooks/useWatchlist";
 import { useRecentSymbols } from "@/app/hooks/useRecentSymbols";
 import { IconButton } from "@/components/ui/IconButton";
@@ -28,7 +28,7 @@ type Step = {
 export function ResearchOnboarding() {
   const { symbols: watchlist } = useWatchlist();
   const { symbols: recentSymbols } = useRecentSymbols();
-  const { chatBySymbol } = usePositionsContext();
+  const { chatBySymbol } = useAppChatContext();
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {

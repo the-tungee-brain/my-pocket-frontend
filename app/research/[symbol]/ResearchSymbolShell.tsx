@@ -12,14 +12,18 @@ import { track } from "@/lib/analytics";
 import { addRecentSymbol } from "@/lib/recentSymbols";
 import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
-import { usePositionsContext } from "@/app/Providers";
+import { usePortfolioContext } from "@/app/contextSelectors";
 import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import { symbolHubPath } from "@/lib/symbolRoutes";
-import { shouldShowOptionsTab } from "@/lib/symbolOptions";
+import {
+  shouldShowOptionsTab,
+  symbolHasOptionPositions,
+} from "@/lib/symbolOptions";
 import { appStackClass, appStackSmClass } from "@/lib/appUi";
 import { pageShellClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 import { ResearchOverviewProvider } from "@/app/research/ResearchOverviewContext";
+import { ResearchDataAsOfLabel } from "@/app/research/ResearchDataAsOfLabel";
 import {
   ResearchAssetTypeProvider,
   useResearchAssetTypeContext,
@@ -34,7 +38,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
-  const { positionMap } = usePositionsContext();
+  const { positionMap } = usePortfolioContext();
   const { profile } = useStrategyContext();
   const { assetType, isEtf } = useResearchAssetTypeContext();
   const [scrollCollapsed, setScrollCollapsed] = useState(false);
@@ -44,9 +48,14 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
   const symbolUpper = symbol.toUpperCase();
   const activeTab = pathname.split("/")[3] ?? "overview";
   const hasPosition = (positionMap[symbolUpper]?.length ?? 0) > 0;
-  const { intelligence } = useSymbolIntelligence(symbol, { accessToken });
+  const userPositions = positionMap[symbolUpper];
+  const { intelligence } = useSymbolIntelligence(symbol, {
+    accessToken,
+    includeOptions:
+      activeTab === "options" || symbolHasOptionPositions(userPositions),
+  });
   const showOptionsTab = shouldShowOptionsTab(
-    positionMap[symbolUpper],
+    userPositions,
     intelligence,
     activeTab,
   );
@@ -145,7 +154,17 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
         </div>
       </div>
 
-      <div className={cn("mt-8", appStackClass)}>{children}</div>
+      <div
+        id={`research-tabpanel-${activeTab}`}
+        role="tabpanel"
+        aria-labelledby={`research-tab-${activeTab}`}
+        className={cn("mt-8", appStackClass)}
+      >
+        {activeTab !== "overview" ? (
+          <ResearchDataAsOfLabel className="-mt-4 mb-1" />
+        ) : null}
+        {children}
+      </div>
     </div>
   );
 }

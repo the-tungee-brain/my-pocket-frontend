@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
-import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
+import { useOverviewBundleGate } from "@/app/research/ResearchOverviewContext";
 import type { StreetAnalysisSnapshot } from "@/app/hooks/streetAnalysisTypes";
 
 type StreetAnalysisResponse = {
@@ -10,6 +10,14 @@ type StreetAnalysisResponse = {
 };
 
 const streetCache = new Map<string, StreetAnalysisSnapshot | null>();
+
+export function seedStreetAnalysisCache(
+  symbol: string,
+  street: StreetAnalysisSnapshot | null,
+) {
+  const key = symbol.toUpperCase().trim();
+  if (key) streetCache.set(key, street);
+}
 
 type UseStreetAnalysisOptions = {
   accessToken?: string | null;
@@ -20,7 +28,7 @@ export function useStreetAnalysis(
   symbol: string | null,
   { accessToken, enabled = true }: UseStreetAnalysisOptions = {},
 ) {
-  const overviewBundle = useResearchOverviewBundle();
+  const { bundle: overviewBundle, waitForBundle } = useOverviewBundleGate(symbol);
   const [street, setStreet] = useState<StreetAnalysisSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +43,13 @@ export function useStreetAnalysis(
       return;
     }
 
-    if (overviewBundle?.symbol === key && overviewBundle.streetAnalysis !== undefined) {
+    if (waitForBundle) {
+      setIsLoading(true);
+      setError(null);
+      return;
+    }
+
+    if (overviewBundle?.streetAnalysis !== undefined) {
       streetCache.set(key, overviewBundle.streetAnalysis);
       setStreet(overviewBundle.streetAnalysis);
       setIsLoading(false);
@@ -85,7 +99,7 @@ export function useStreetAnalysis(
     return () => {
       cancelled = true;
     };
-  }, [key, accessToken, enabled, overviewBundle]);
+  }, [key, accessToken, enabled, overviewBundle, waitForBundle]);
 
   return { street, isLoading, error };
 }

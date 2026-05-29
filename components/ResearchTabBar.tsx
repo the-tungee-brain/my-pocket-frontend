@@ -195,9 +195,14 @@ function ResearchTabLink({
   return (
     <Link
       href={href}
+      id={measure ? undefined : `research-tab-${tab.id}`}
+      role={measure ? undefined : "tab"}
+      aria-controls={measure ? undefined : `research-tabpanel-${tab.id}`}
       data-tab-measure={measure ? "" : undefined}
       onClick={onNavigate}
       className={cn(tabLinkClassName(isActive), className)}
+      aria-selected={measure ? undefined : isActive}
+      tabIndex={measure ? undefined : isActive ? 0 : -1}
       aria-current={isActive ? "page" : undefined}
     >
       <Icon
@@ -394,6 +399,7 @@ export function ResearchTabBar({
     <div ref={containerRef} className={cn("relative min-w-0", className)}>
       <nav
         className={cn("flex min-w-0", appTabBarClass)}
+        role="tablist"
         aria-label="Research sections"
       >
         {visibleTabs.map((tab) => (
