@@ -15,7 +15,6 @@ import type {
 } from "@/app/types/schwab";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
 import { sumOpenProfitLoss } from "@/lib/positionMetrics";
-import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 import {
   appIconBoxClass,
   appPanelFooterClass,
@@ -30,7 +29,7 @@ type Props = {
   account: SchwabAccounts | null;
   cashSecuredPutSummary?: CashSecuredPutSummary | null;
   portfolioMetrics?: PortfolioMetrics | null;
-  lastSyncedAt?: number | null;
+  briefLine?: string | null;
   children?: ReactNode;
   className?: string;
 };
@@ -72,7 +71,7 @@ export function PortfolioSnapshot({
   account,
   cashSecuredPutSummary,
   portfolioMetrics,
-  lastSyncedAt = null,
+  briefLine = null,
   children,
   className,
 }: Props) {
@@ -129,11 +128,11 @@ export function PortfolioSnapshot({
           description={
             <>
               {`${symbols.length} ${symbols.length === 1 ? "symbol" : "symbols"} · ${allPositions.length} ${allPositions.length === 1 ? "position" : "positions"}`}
-              {lastSyncedAt != null && (
+              {briefLine ? (
                 <span className="mt-0.5 block text-[10px] text-muted">
-                  Synced {formatRelativeUpdatedAt(lastSyncedAt)}
+                  {briefLine}
                 </span>
-              )}
+              ) : null}
             </>
           }
           icon={

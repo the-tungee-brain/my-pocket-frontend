@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ResearchSnapshot } from "@/lib/researchSnapshot";
+import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
 import { fetchResearchSnapshot } from "@/lib/researchSnapshot";
 
 type UseResearchSnapshotOptions = {
@@ -12,12 +13,31 @@ export function useResearchSnapshot(
   symbol: string | null,
   { accessToken }: UseResearchSnapshotOptions = {},
 ) {
-  const [snapshot, setSnapshot] = useState<ResearchSnapshot | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(!!symbol);
+  const overviewBundle = useResearchOverviewBundle();
+  const [snapshot, setSnapshot] = useState<ResearchSnapshot | null>(() => {
+    const key = symbol?.toUpperCase().trim();
+    if (key && overviewBundle?.symbol === key && overviewBundle.snapshot) {
+      return overviewBundle.snapshot;
+    }
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    const key = symbol?.toUpperCase().trim();
+    if (key && overviewBundle?.symbol === key && overviewBundle.snapshot) {
+      return false;
+    }
+    return !!symbol;
+  });
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const key = symbol?.toUpperCase().trim();
+    if (key && overviewBundle?.symbol === key && overviewBundle.snapshot) {
+      setSnapshot(overviewBundle.snapshot);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
     if (!key || !accessToken) {
       setSnapshot(null);
       setIsLoading(false);
@@ -56,7 +76,7 @@ export function useResearchSnapshot(
     return () => {
       cancelled = true;
     };
-  }, [symbol, accessToken]);
+  }, [symbol, accessToken, overviewBundle]);
 
   return { snapshot, isLoading, error };
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
+import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
 import type { StreetAnalysisSnapshot } from "@/app/hooks/streetAnalysisTypes";
 
 type StreetAnalysisResponse = {
@@ -19,6 +20,7 @@ export function useStreetAnalysis(
   symbol: string | null,
   { accessToken, enabled = true }: UseStreetAnalysisOptions = {},
 ) {
+  const overviewBundle = useResearchOverviewBundle();
   const [street, setStreet] = useState<StreetAnalysisSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +30,14 @@ export function useStreetAnalysis(
   useEffect(() => {
     if (!key || !accessToken || !enabled) {
       setStreet(null);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
+    if (overviewBundle?.symbol === key && overviewBundle.streetAnalysis !== undefined) {
+      streetCache.set(key, overviewBundle.streetAnalysis);
+      setStreet(overviewBundle.streetAnalysis);
       setIsLoading(false);
       setError(null);
       return;
@@ -75,7 +85,7 @@ export function useStreetAnalysis(
     return () => {
       cancelled = true;
     };
-  }, [key, accessToken, enabled]);
+  }, [key, accessToken, enabled, overviewBundle]);
 
   return { street, isLoading, error };
 }

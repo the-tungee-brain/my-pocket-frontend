@@ -19,6 +19,7 @@ import { shouldShowOptionsTab } from "@/lib/symbolOptions";
 import { appStackClass, appStackSmClass } from "@/lib/appUi";
 import { pageShellClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
+import { ResearchOverviewProvider } from "@/app/research/ResearchOverviewContext";
 import {
   ResearchAssetTypeProvider,
   useResearchAssetTypeContext,
@@ -151,13 +152,21 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
 
 export function ResearchSymbolShell({ symbol, children }: Props) {
   const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
 
-  return (
-    <ResearchAssetTypeProvider
-      symbol={symbol}
-      accessToken={session?.accessToken}
-    >
+  const inner = (
+    <ResearchAssetTypeProvider symbol={symbol} accessToken={accessToken}>
       <ResearchSymbolShellInner symbol={symbol}>{children}</ResearchSymbolShellInner>
     </ResearchAssetTypeProvider>
+  );
+
+  if (!accessToken) {
+    return inner;
+  }
+
+  return (
+    <ResearchOverviewProvider symbol={symbol} accessToken={accessToken}>
+      {inner}
+    </ResearchOverviewProvider>
   );
 }

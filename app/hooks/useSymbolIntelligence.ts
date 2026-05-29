@@ -3,8 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchSymbolIntelligence } from "@/lib/apiClient";
 import type { SymbolIntelligence } from "@/app/types/intelligence";
+import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
 
 const cache = new Map<string, SymbolIntelligence>();
+
+export function seedSymbolIntelligenceCache(
+  symbol: string,
+  intelligence: SymbolIntelligence,
+) {
+  const key = symbol.toUpperCase().trim();
+  if (key) cache.set(key, intelligence);
+}
 
 type Options = {
   accessToken?: string | null;
@@ -17,6 +26,7 @@ export function useSymbolIntelligence(
   options: Options = {},
 ) {
   const { accessToken, enabled = true, includeOptions = true } = options;
+  const overviewBundle = useResearchOverviewBundle();
   const key = symbol?.toUpperCase().trim() ?? "";
 
   const [intelligence, setIntelligence] = useState<SymbolIntelligence | null>(
@@ -30,6 +40,16 @@ export function useSymbolIntelligence(
       if (!key || !accessToken || !enabled) return;
 
       if (!forceRefresh) {
+        if (
+          overviewBundle?.symbol === key &&
+          overviewBundle.intelligence &&
+          !includeOptions
+        ) {
+          cache.set(key, overviewBundle.intelligence);
+          setIntelligence(overviewBundle.intelligence);
+          setError(null);
+          return;
+        }
         const cached = cache.get(key);
         if (cached) {
           setIntelligence(cached);
@@ -65,7 +85,7 @@ export function useSymbolIntelligence(
         setLoading(false);
       }
     },
-    [accessToken, enabled, includeOptions, key],
+    [accessToken, enabled, includeOptions, key, overviewBundle],
   );
 
   useEffect(() => {

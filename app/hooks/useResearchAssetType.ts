@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import type { AssetType } from "@/app/types/research";
+import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
 import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import {
   fetchAssetType,
   getCachedAssetType,
   isEtfAssetType,
+  rememberAssetType,
 } from "@/lib/researchAssetType";
 
 type UseResearchAssetTypeOptions = {
@@ -18,8 +20,16 @@ export function useResearchAssetType(
   { accessToken }: UseResearchAssetTypeOptions = {},
 ) {
   const symbolUpper = symbol?.trim().toUpperCase() ?? null;
+  const overviewBundle = useResearchOverviewBundle();
 
   const [assetType, setAssetType] = useState<AssetType | null>(() => {
+    if (
+      symbolUpper &&
+      overviewBundle?.symbol === symbolUpper &&
+      overviewBundle.assetType
+    ) {
+      return overviewBundle.assetType;
+    }
     if (!symbolUpper) return null;
     return getCachedAssetType(symbolUpper) ?? null;
   });
@@ -37,6 +47,16 @@ export function useResearchAssetType(
   useEffect(() => {
     if (!symbolUpper) {
       setAssetType(null);
+      setIsLoading(false);
+      return;
+    }
+
+    if (
+      overviewBundle?.symbol === symbolUpper &&
+      overviewBundle.assetType
+    ) {
+      rememberAssetType(symbolUpper, overviewBundle.assetType);
+      setAssetType(overviewBundle.assetType);
       setIsLoading(false);
       return;
     }
@@ -69,7 +89,7 @@ export function useResearchAssetType(
     return () => {
       cancelled = true;
     };
-  }, [symbolUpper, accessToken]);
+  }, [symbolUpper, accessToken, overviewBundle]);
 
   const isEtf =
     isEtfAssetType(assetType) ||

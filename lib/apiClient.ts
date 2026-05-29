@@ -667,6 +667,29 @@ export async function fetchAccountPlan(
   return res.json() as Promise<AccountPlan>;
 }
 
+export async function fetchResearchOverviewBundle(
+  accessToken: string,
+  symbol: string,
+  options: { holdingsLimit?: number; includeSummary?: boolean } = {},
+): Promise<import("@/app/types/researchOverview").ResearchOverviewBundle> {
+  const res = await apiFetch(
+    `/research/overview-bundle${buildQuery({
+      symbol: symbol.toUpperCase(),
+      holdings_limit: options.holdingsLimit,
+      include_summary: options.includeSummary ? true : undefined,
+    })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load research overview (${res.status})`);
+  }
+
+  return res.json() as Promise<
+    import("@/app/types/researchOverview").ResearchOverviewBundle
+  >;
+}
+
 export async function deleteAccount(accessToken: string): Promise<void> {
   const res = await apiFetch("/account", {
     method: "DELETE",

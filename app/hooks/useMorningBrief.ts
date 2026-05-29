@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { track } from "@/lib/analytics";
 import { fetchMorningBrief } from "@/lib/apiClient";
 import type { MorningBrief, PortfolioIntelligence } from "@/app/types/intelligence";
+
+export const morningBriefQueryKey = (accessToken: string) =>
+  ["morning-brief", accessToken] as const;
 
 type Options = {
   enabled?: boolean;
@@ -15,12 +19,29 @@ export function useMorningBrief(
   options: Options = {},
 ) {
   const { enabled = true, initialBrief = null } = options;
-  const [morningBrief, setMorningBrief] = useState<MorningBrief | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
-  const initialBriefRef = useRef(initialBrief);
-  initialBriefRef.current = initialBrief;
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: morningBriefQueryKey(accessToken ?? ""),
+    queryFn: async () => {
+      try {
+        return await fetchMorningBrief(accessToken!, { refresh: false });
+      } catch (err) {
+        const status =
+          err instanceof Error && "status" in err
+            ? (err as Error & { status?: number }).status
+            : undefined;
+        if ((status === 404 || status === 401) && initialBrief) {
+          return null;
+        }
+        throw err;
+      }
+    },
+    enabled: Boolean(accessToken && enabled),
+    staleTime: 60_000,
+  });
+
+  const morningBrief = query.data ?? null;
 
   const portfolioBrief = useMemo<PortfolioIntelligence | null>(() => {
     if (morningBrief) {
@@ -33,53 +54,27 @@ export function useMorningBrief(
     return initialBrief;
   }, [initialBrief, morningBrief]);
 
-  const load = useCallback(
-    async (forceRefresh = false) => {
-      if (!accessToken || !enabled) return;
+  const error =
+    query.isError && !initialBrief
+      ? "Morning brief is not available yet."
+      : null;
 
-      setLoading(true);
-      setError(null);
-
-      try {
-        const data = await fetchMorningBrief(accessToken, {
-          refresh: forceRefresh,
-        });
-        setMorningBrief(data);
-        setLastUpdated(Date.now());
-        track("morning_brief_viewed", {
-          alert_count: data.topAlerts?.length ?? 0,
-          refreshed: forceRefresh,
-        });
-      } catch (err) {
-        const status =
-          err instanceof Error && "status" in err
-            ? (err as Error & { status?: number }).status
-            : undefined;
-
-        if ((status === 404 || status === 401) && initialBriefRef.current) {
-          setMorningBrief(null);
-          setError(null);
-          return;
-        }
-
-        setError("Morning brief is not available yet.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [accessToken, enabled],
-  );
-
-  useEffect(() => {
-    void load(false);
-  }, [load]);
+  const refetch = useCallback(async () => {
+    if (!accessToken || !enabled) return;
+    const data = await fetchMorningBrief(accessToken, { refresh: true });
+    queryClient.setQueryData(morningBriefQueryKey(accessToken), data);
+    track("morning_brief_viewed", {
+      alert_count: data.topAlerts?.length ?? 0,
+      refreshed: true,
+    });
+  }, [accessToken, enabled, queryClient]);
 
   return {
     morningBrief,
     portfolioBrief,
-    loading,
+    loading: query.isLoading || query.isFetching,
     error,
-    lastUpdated,
-    refetch: () => load(true),
+    lastUpdated: morningBrief ? Date.now() : null,
+    refetch,
   };
 }

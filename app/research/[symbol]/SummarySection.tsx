@@ -1,8 +1,12 @@
 "use client";
 
-import { FileText, Info } from "lucide-react";
-import { useStockSummary } from "@/app/hooks/useStockSummary";
+import { useCallback, useMemo, useState } from "react";
+import { FileText, Info, RefreshCw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useSession } from "next-auth/react";
+import { fetchResearchOverviewBundle } from "@/lib/apiClient";
+import { cn } from "@/lib/utils";
 import {
   BigPictureArticle,
   BigPictureOverviewSkeleton,
@@ -10,6 +14,10 @@ import {
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  cachedResearchToStockSummary,
+  hasCachedResearchContent,
+} from "@/lib/cachedResearchSummary";
 
 type SummarySectionProps = {
   symbol: string;
@@ -20,40 +28,70 @@ export function SummarySection({ symbol, className }: SummarySectionProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
   const symbolUpper = symbol.toUpperCase();
-
-  const { summary, isLoading, error } = useStockSummary(symbol, {
+  const [requestFullSummary, setRequestFullSummary] = useState(false);
+  const { intelligence } = useSymbolIntelligence(symbol, {
     accessToken,
+    includeOptions: false,
   });
 
-  if (isLoading && !summary) {
+  const cachedSummary = useMemo(() => {
+    const cached = intelligence?.cachedResearch;
+    if (!hasCachedResearchContent(cached) || !cached) return null;
+    return cachedResearchToStockSummary(cached);
+  }, [intelligence?.cachedResearch]);
+
+  const fullSummaryQuery = useQuery({
+    queryKey: [
+      "research-overview",
+      symbolUpper,
+      accessToken ?? "",
+      "with-summary",
+    ],
+    queryFn: () =>
+      fetchResearchOverviewBundle(accessToken!, symbolUpper, {
+        includeSummary: true,
+      }),
+    enabled: Boolean(requestFullSummary && accessToken && symbolUpper),
+    staleTime: 10 * 60_000,
+  });
+
+  const summary = requestFullSummary
+    ? (fullSummaryQuery.data?.summary ?? null)
+    : cachedSummary;
+  const loading =
+    requestFullSummary && fullSummaryQuery.isLoading && !summary;
+
+  const loadFullSummary = useCallback(() => {
+    setRequestFullSummary(true);
+  }, []);
+
+  const sectionMeta = {
+    title: "Big picture",
+    description: requestFullSummary
+      ? "AI overview — thesis, valuation, strengths, and risks"
+      : "Research snapshot — expand for a fresh AI deep dive",
+    icon: Info,
+  };
+
+  if (loading && !summary) {
     return (
-      <ResearchSectionCard
-        className={className}
-        title="Big picture"
-        description="AI overview — thesis, valuation, strengths, and risks"
-        icon={Info}
-      >
+      <ResearchSectionCard className={className} {...sectionMeta}>
         <BigPictureOverviewSkeleton />
       </ResearchSectionCard>
     );
   }
 
-  if (error && !summary) {
+  if (requestFullSummary && fullSummaryQuery.isError && !summary) {
     return (
       <div className={className}>
-        <ErrorBanner message={error} />
+        <ErrorBanner message="Could not load AI overview." />
       </div>
     );
   }
 
   if (!summary) {
     return (
-      <ResearchSectionCard
-        className={className}
-        title="Big picture"
-        description="AI overview — thesis, valuation, strengths, and risks"
-        icon={Info}
-      >
+      <ResearchSectionCard className={className} {...sectionMeta}>
         <EmptyState
           icon={FileText}
           title="Summary unavailable"
@@ -61,15 +99,46 @@ export function SummarySection({ symbol, className }: SummarySectionProps) {
           variant="solid"
           className="py-4"
         />
+        {accessToken ? (
+          <button
+            type="button"
+            onClick={loadFullSummary}
+            className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-accent-strong hover:underline"
+          >
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+            Generate AI overview
+          </button>
+        ) : null}
       </ResearchSectionCard>
     );
   }
 
   return (
-    <BigPictureArticle
-      summary={summary}
-      symbol={symbolUpper}
-      className={className}
-    />
+    <>
+      {!requestFullSummary && accessToken ? (
+        <div className={className}>
+          <button
+            type="button"
+            onClick={loadFullSummary}
+            disabled={fullSummaryQuery.isFetching}
+            className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted transition hover:text-foreground disabled:opacity-60"
+          >
+            <RefreshCw
+              className={cn(
+                "h-3 w-3",
+                fullSummaryQuery.isFetching && "animate-spin",
+              )}
+              aria-hidden
+            />
+            Refresh with full AI analysis
+          </button>
+        </div>
+      ) : null}
+      <BigPictureArticle
+        summary={summary}
+        symbol={symbolUpper}
+        className={className}
+      />
+    </>
   );
 }

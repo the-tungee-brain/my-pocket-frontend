@@ -24,6 +24,8 @@ import { symbolHubPath } from "@/lib/symbolRoutes";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { AssetTypeBadge } from "@/components/AssetTypeBadge";
 import { StrategySymbolBadge } from "@/components/StrategySymbolBadge";
+import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
+import { formatResearchDataAsOf } from "@/lib/formatDataAsOf";
 import {
   formatSnapshotSizeLabel,
   formatSnapshotSubtitle,
@@ -48,9 +50,11 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
   const upperSymbol = symbol.toUpperCase();
   const userPositions = positionMap[upperSymbol];
 
+  const overviewBundle = useResearchOverviewBundle();
   const { snapshot, isLoading, error } = useResearchSnapshot(upperSymbol, {
     accessToken,
   });
+  const dataAsOfLabel = formatResearchDataAsOf(overviewBundle?.asOf);
   const { assetType, isEtf } = useResearchAssetTypeContext();
   const researchLabel = isEtf ? "ETF research" : "Stock research";
   const { holdings: etfHoldings } = useEtfHoldings(upperSymbol, {
@@ -228,6 +232,9 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
         </div>
         <WatchlistHint symbol={upperSymbol} />
         <p className="text-sm text-muted">{subtitle}</p>
+        {dataAsOfLabel ? (
+          <p className="text-[11px] text-muted">Data as of {dataAsOfLabel}</p>
+        ) : null}
       </div>
 
       <div className={cn(appInsetClass, "text-sm")}>

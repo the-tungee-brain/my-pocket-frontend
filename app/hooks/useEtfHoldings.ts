@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { EtfHoldingsContext } from "@/app/types/research";
+import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
 import { fetchEtfHoldings, getCachedEtfHoldings } from "@/lib/etfHoldings";
 
 type UseEtfHoldingsOptions = {
@@ -18,6 +19,7 @@ export function useEtfHoldings(
     enabled = true,
   }: UseEtfHoldingsOptions = {},
 ) {
+  const overviewBundle = useResearchOverviewBundle();
   const [holdings, setHoldings] = useState<EtfHoldingsContext | null>(() => {
     if (!symbol || !enabled) return null;
     return getCachedEtfHoldings(symbol, limit);
@@ -45,6 +47,17 @@ export function useEtfHoldings(
     if (!accessToken) {
       setHoldings(null);
       setIsLoading(false);
+      return;
+    }
+
+    if (
+      limit === 8 &&
+      overviewBundle?.symbol === key &&
+      overviewBundle.etfHoldings
+    ) {
+      setHoldings(overviewBundle.etfHoldings);
+      setIsLoading(false);
+      setError(null);
       return;
     }
 
@@ -82,7 +95,7 @@ export function useEtfHoldings(
     return () => {
       cancelled = true;
     };
-  }, [symbol, accessToken, limit, enabled, retryCount]);
+  }, [symbol, accessToken, limit, enabled, retryCount, overviewBundle]);
 
   return { holdings, isLoading, error, refetch };
 }

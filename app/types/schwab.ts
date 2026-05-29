@@ -273,6 +273,12 @@ export type RecentOrdersResponse = {
   activityBySymbol: Record<string, number>;
 };
 
+export type PositionsDataFreshness = {
+  positionsSyncedAt: string;
+  positionsSource: "schwab";
+  briefStatus: "ready" | "cached" | "pending";
+};
+
 export type AccountPositionsResponse = {
   schwab_positions: Record<string, Position[]>;
   account: SchwabAccounts;
@@ -282,4 +288,5 @@ export type AccountPositionsResponse = {
   proactiveAlerts?: ProactiveAlert[];
   portfolioBrief?: PortfolioIntelligence | null;
   portfolioMetrics?: PortfolioMetrics | null;
+  dataFreshness?: PositionsDataFreshness | null;
 };

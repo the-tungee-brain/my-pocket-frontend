@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
+import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
 
 export type PerformanceSnapshot = {
   oneMonth: string;
@@ -21,6 +22,7 @@ export function usePerformanceSnapshot(
   symbol: string | null,
   { accessToken }: UsePerformanceSnapshotOptions = {},
 ) {
+  const overviewBundle = useResearchOverviewBundle();
   const [performance, setPerformance] = useState<PerformanceSnapshot | null>(
     null,
   );
@@ -29,6 +31,14 @@ export function usePerformanceSnapshot(
 
   useEffect(() => {
     const key = symbol?.toUpperCase().trim();
+
+    if (key && overviewBundle?.symbol === key && overviewBundle.performance) {
+      performanceCache.set(key, overviewBundle.performance);
+      setPerformance(overviewBundle.performance);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
 
     if (!key) {
       setPerformance(null);
@@ -93,7 +103,7 @@ export function usePerformanceSnapshot(
     return () => {
       cancelled = true;
     };
-  }, [symbol, accessToken]);
+  }, [symbol, accessToken, overviewBundle]);
 
   return { performance, isLoading, error };
 }

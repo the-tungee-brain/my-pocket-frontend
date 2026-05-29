@@ -6,6 +6,7 @@ import { SessionProvider } from "next-auth/react";
 import { PostHogInit } from "@/components/PostHogInit";
 import { PostHogPageView } from "@/components/PostHogPageView";
 import { ProductAnalytics } from "@/components/ProductAnalytics";
+import { QueryProvider } from "./QueryProvider";
 import { PositionsProvider } from "./Providers";
 import { ToastProvider } from "./contexts/ToastContext";
 import { StrategyProvider } from "./contexts/StrategyContext";
@@ -19,9 +20,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       </Suspense>
       <ProductAnalytics />
       <ToastProvider>
-        <PositionsProvider>
-          <StrategyProvider>{children}</StrategyProvider>
-        </PositionsProvider>
+        <QueryProvider>
+          <PositionsProvider>
+            <StrategyProvider>{children}</StrategyProvider>
+          </PositionsProvider>
+        </QueryProvider>
       </ToastProvider>
     </SessionProvider>
   );

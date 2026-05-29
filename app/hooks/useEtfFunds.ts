@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
+import { useResearchOverviewBundle } from "@/app/research/ResearchOverviewContext";
 import type { EtfFundsSnapshot } from "@/app/hooks/etfFundsTypes";
 
 type EtfFundsResponse = {
@@ -19,6 +20,7 @@ export function useEtfFunds(
   symbol: string | null,
   { accessToken, enabled = true }: UseEtfFundsOptions = {},
 ) {
+  const overviewBundle = useResearchOverviewBundle();
   const [funds, setFunds] = useState<EtfFundsSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +30,14 @@ export function useEtfFunds(
   useEffect(() => {
     if (!key || !accessToken || !enabled) {
       setFunds(null);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
+    if (overviewBundle?.symbol === key && overviewBundle.etfFunds !== undefined) {
+      etfFundsCache.set(key, overviewBundle.etfFunds);
+      setFunds(overviewBundle.etfFunds);
       setIsLoading(false);
       setError(null);
       return;
@@ -75,7 +85,7 @@ export function useEtfFunds(
     return () => {
       cancelled = true;
     };
-  }, [key, accessToken, enabled]);
+  }, [key, accessToken, enabled, overviewBundle]);
 
   return { funds, isLoading, error };
 }

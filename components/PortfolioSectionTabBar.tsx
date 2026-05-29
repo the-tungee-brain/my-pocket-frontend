@@ -38,7 +38,10 @@ export function PortfolioSectionTabBar({
             key={section.id}
             type="button"
             role="tab"
+            id={`portfolio-tab-${section.id}`}
+            aria-controls={`portfolio-panel-${section.id}`}
             aria-selected={active}
+            tabIndex={active ? 0 : -1}
             onClick={() => onChange(section.id)}
             className={cn(
               appTabLinkClass(active),

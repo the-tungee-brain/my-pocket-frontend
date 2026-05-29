@@ -56,6 +56,7 @@ import {
   portfolioTodayPairGridClass,
   portfolioTodayPairGridPairedClass,
 } from "@/lib/appUi";
+import { briefFreshnessLabel } from "@/lib/dataFreshness";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { PageShell, PageSplit } from "@/components/PageShell";
 import { cn } from "@/lib/utils";
@@ -76,6 +77,7 @@ export default function PortfolioPage() {
     proactiveAlerts,
     portfolioBrief: accountBrief,
     portfolioMetrics,
+    positionsDataFreshness,
     refreshPositions,
     sessionAccessToken,
     sendQuickAction,
@@ -87,7 +89,6 @@ export default function PortfolioPage() {
   const { activeSection, setActiveSection } = usePortfolioSection();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
-  const defaultTabApplied = useRef(false);
   const schwabSuccessNotifiedRef = useRef(false);
   const [showStrategySetup, setShowStrategySetup] = useState(false);
   const [strategyDismissed, setStrategyDismissed] = useState(true);
@@ -323,25 +324,6 @@ export default function PortfolioPage() {
 
   const activityBadgeCount = recentActivity?.recentOrderCount ?? 0;
 
-  useEffect(() => {
-    if (defaultTabApplied.current || loading || allPositions.length === 0) return;
-    if (searchParams.get("section")) {
-      defaultTabApplied.current = true;
-      return;
-    }
-    if (todayBadgeCount === 0 && activityBadgeCount > 0) {
-      setActiveSection("activity");
-    }
-    defaultTabApplied.current = true;
-  }, [
-    activityBadgeCount,
-    allPositions.length,
-    loading,
-    searchParams,
-    setActiveSection,
-    todayBadgeCount,
-  ]);
-
   const openStrategySetup = useCallback(() => {
     clearStrategyOnboardingDismissed();
     setStrategyDismissed(false);
@@ -411,6 +393,10 @@ export default function PortfolioPage() {
           account={account}
           cashSecuredPutSummary={cashSecuredPutSummary}
           portfolioMetrics={portfolioMetrics}
+          briefLine={briefFreshnessLabel(
+            positionsDataFreshness,
+            briefLoading && !displayBrief,
+          )}
         />
       )}
 
@@ -435,7 +421,12 @@ export default function PortfolioPage() {
           </div>
 
           {activeSection === "today" && (
-            <div className={appStackClass}>
+            <div
+              id="portfolio-panel-today"
+              role="tabpanel"
+              aria-labelledby="portfolio-tab-today"
+              className={appStackClass}
+            >
               <PortfolioAttentionSection
                 className={sectionClass}
                 taxItems={taxItems}
@@ -498,6 +489,11 @@ export default function PortfolioPage() {
           )}
 
           {activeSection === "news" && sessionAccessToken && (
+            <div
+              id="portfolio-panel-news"
+              role="tabpanel"
+              aria-labelledby="portfolio-tab-news"
+            >
             <PortfolioNewsSection
               className={sectionClass}
               items={portfolioNewsItems}
@@ -506,9 +502,15 @@ export default function PortfolioPage() {
               lastUpdated={portfolioNewsLastUpdated}
               onRefresh={() => void refetchPortfolioNews()}
             />
+            </div>
           )}
 
           {activeSection === "holdings" && (
+            <div
+              id="portfolio-panel-holdings"
+              role="tabpanel"
+              aria-labelledby="portfolio-tab-holdings"
+            >
             <PageSplit
               main={
                 <AnalysisPanel
@@ -534,9 +536,15 @@ export default function PortfolioPage() {
                 />
               }
             />
+            </div>
           )}
 
           {activeSection === "activity" && sessionAccessToken && (
+            <div
+              id="portfolio-panel-activity"
+              role="tabpanel"
+              aria-labelledby="portfolio-tab-activity"
+            >
             <RecentActivitySection
               className={sectionClass}
               accessToken={sessionAccessToken}
@@ -546,6 +554,7 @@ export default function PortfolioPage() {
               onRunSuggestedAction={handleSuggestedAction}
               hideSuggestedActions
             />
+            </div>
           )}
         </>
       )}

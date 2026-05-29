@@ -1,8 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPortfolioNews } from "@/lib/apiClient";
 import type { PortfolioHoldingsNewsItem } from "@/app/types/portfolioNews";
+
+export const portfolioNewsQueryKey = (accessToken: string) =>
+  ["portfolio-news", accessToken] as const;
 
 type Options = {
   enabled?: boolean;
@@ -13,49 +17,36 @@ export function usePortfolioNews(
   options: Options = {},
 ) {
   const { enabled = true } = options;
-  const [items, setItems] = useState<PortfolioHoldingsNewsItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const queryClient = useQueryClient();
 
-  const load = useCallback(
-    async (forceRefresh = false) => {
-      if (!accessToken || !enabled) return;
+  const query = useQuery({
+    queryKey: portfolioNewsQueryKey(accessToken ?? ""),
+    queryFn: () => fetchPortfolioNews(accessToken!),
+    enabled: Boolean(accessToken && enabled),
+    staleTime: 5 * 60_000,
+  });
 
-      setLoading(true);
-      setError(null);
+  const error = query.isError
+    ? query.error instanceof Error &&
+      "status" in query.error &&
+      (query.error as Error & { status?: number }).status === 404
+      ? "Portfolio news is not available yet."
+      : "Could not load portfolio news."
+    : null;
 
-      try {
-        const data = await fetchPortfolioNews(accessToken);
-        setItems(data.items);
-        setLastUpdated(Date.now());
-      } catch (err) {
-        const status =
-          err instanceof Error && "status" in err
-            ? (err as Error & { status?: number }).status
-            : undefined;
-
-        if (status === 404) {
-          setError("Portfolio news is not available yet.");
-        } else {
-          setError("Could not load portfolio news.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    },
-    [accessToken, enabled],
-  );
-
-  useEffect(() => {
-    void load(false);
-  }, [load]);
+  const refetch = useCallback(async () => {
+    if (!accessToken) return;
+    await queryClient.fetchQuery({
+      queryKey: portfolioNewsQueryKey(accessToken),
+      queryFn: () => fetchPortfolioNews(accessToken),
+    });
+  }, [accessToken, queryClient]);
 
   return {
-    items,
-    loading,
+    items: query.data?.items ?? ([] as PortfolioHoldingsNewsItem[]),
+    loading: query.isLoading || query.isFetching,
     error,
-    lastUpdated,
-    refetch: () => load(true),
+    lastUpdated: query.dataUpdatedAt > 0 ? query.dataUpdatedAt : null,
+    refetch,
   };
 }
