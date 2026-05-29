@@ -142,8 +142,10 @@ function PlanFeatureList({
       )}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="text-xs font-medium text-muted">{price}</p>
+        <p className="min-w-0 text-sm font-semibold text-foreground">{title}</p>
+        <p className="shrink-0 whitespace-nowrap text-xs font-medium text-muted">
+          {price}
+        </p>
       </div>
       <ul className="mt-2 space-y-1.5">
         {features.map((feature) => (
@@ -218,14 +220,16 @@ export function LandingPricingSection() {
               Early access
             </Badge>
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-lg font-semibold">Pro</h3>
                 <p className="mt-1 text-sm text-muted">
                   Deep Research AI plus snowball, backtest, and Advanced chat
                   models.
                 </p>
               </div>
-              <p className="text-sm font-medium text-muted">Invite only</p>
+              <p className="shrink-0 whitespace-nowrap text-sm font-medium text-muted">
+                Invite only
+              </p>
             </div>
             <ul className="mt-5 space-y-2">
               {PRO_FEATURES.map((feature) => (
