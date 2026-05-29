@@ -7,7 +7,7 @@ import {
 } from "@/components/ResearchDetailBlocks";
 import type { FundamentalsOverview } from "@/app/hooks/useFundamentals";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { appHighlightClass } from "@/lib/appUi";
+import { appCalloutClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type FundamentalOverviewSectionProps = {
@@ -73,7 +73,7 @@ export function FundamentalOverviewSection({
 export function FundamentalOverviewSkeleton() {
   return (
     <div className="app-stack">
-      <div className={cn(appHighlightClass, "space-y-2")}>
+      <div className={cn(appCalloutClass, "space-y-2")}>
         <Skeleton className="h-3 w-20" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-[80%]" />

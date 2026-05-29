@@ -17,7 +17,7 @@ import {
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { buildBusinessAtAGlance } from "@/lib/businessArticle";
-import { appHighlightClass } from "@/lib/appUi";
+import { appCalloutClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type BusinessSectionProps = {
@@ -27,7 +27,7 @@ type BusinessSectionProps = {
 function BusinessOverviewSkeleton() {
   return (
     <div className="app-stack">
-      <div className={cn(appHighlightClass, "space-y-2")}>
+      <div className={cn(appCalloutClass, "space-y-2")}>
         <Skeleton className="h-3 w-20" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-4/5" />

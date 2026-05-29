@@ -1,7 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { appHighlightClass } from "@/lib/appUi";
+import { appCalloutClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import {
   buildBigPictureSections,
@@ -47,7 +47,7 @@ function sentimentBadge(sentiment: StockSummary["sentiment"]) {
 export function BigPictureOverviewSkeleton() {
   return (
     <div className="app-stack">
-      <div className={cn(appHighlightClass, "space-y-2")}>
+      <div className={cn(appCalloutClass, "space-y-2")}>
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-4/5" />

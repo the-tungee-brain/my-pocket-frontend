@@ -37,6 +37,12 @@ export const appSectionLabelClass = "app-section-label";
 
 export const appHighlightClass = "app-highlight";
 
+/** Muted callout — matches Strategy playbook “Next up”. */
+export const appCalloutClass = "rounded-xl bg-muted-bg/60 px-3 py-3";
+
+export const appCalloutLabelClass =
+  "text-[11px] font-semibold uppercase tracking-wide text-muted";
+
 export const appInsetClass = "app-inset";
 
 export const appKpiClass = "app-kpi";

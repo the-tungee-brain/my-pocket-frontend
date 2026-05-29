@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { splitIntoParagraphs } from "@/lib/bigPictureArticle";
 import {
-  appEyebrowClass,
-  appHighlightClass,
+  appCalloutClass,
+  appCalloutLabelClass,
   appListClass,
   appListRowClass,
   appSectionLabelClass,
@@ -20,9 +20,9 @@ export function ResearchAtAGlanceBox({
   children: ReactNode;
 }) {
   return (
-    <div className={appHighlightClass}>
-      <h3 className={cn("mb-2", appEyebrowClass)}>{title}</h3>
-      {children}
+    <div className={appCalloutClass}>
+      <p className={appCalloutLabelClass}>{title}</p>
+      <div className="mt-1">{children}</div>
     </div>
   );
 }

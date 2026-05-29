@@ -143,11 +143,8 @@ export default function PortfolioPage() {
     chooseStrategy,
     completeOnboarding,
     saveProfile,
-    refreshRecommendations,
   } = useStrategyContext();
   const { connect: connectSchwab, connecting: connectingSchwab } = useSchwabConnect();
-  const [refreshingPlaybook, setRefreshingPlaybook] = useState(false);
-
   const showStrategyWizard =
     !!sessionAccessToken &&
     !strategyLoading &&
@@ -186,15 +183,6 @@ export default function PortfolioPage() {
     mergedAlerts,
     recentActivity?.suggestedActions ?? [],
   );
-
-  const handlePlaybookRefresh = useCallback(async () => {
-    setRefreshingPlaybook(true);
-    try {
-      await refreshRecommendations();
-    } finally {
-      setRefreshingPlaybook(false);
-    }
-  }, [refreshRecommendations]);
 
   const handlePlaybookAsk = useCallback(
     (action: StrategyNextAction) => {
@@ -355,15 +343,12 @@ export default function PortfolioPage() {
       wheelDteDays={30}
       recommendations={strategyRecommendations}
       loading={strategyLoading}
-      refreshing={refreshingPlaybook}
-      onRefresh={() => void handlePlaybookRefresh()}
       catalogItem={
         catalog.find((item) => item.id === strategyProfile.primaryStrategy) ?? null
       }
       onRunAction={handlePlaybookAsk}
       onConnectSchwab={() => void connectSchwab()}
       connectingSchwab={connectingSchwab}
-      defaultCollapsed={todayBadgeCount > 0}
     />
   );
 
@@ -432,6 +417,19 @@ export default function PortfolioPage() {
             <PageSplit
               main={
                 <div className={appStackClass}>
+                  <PortfolioAttentionSection
+                    className={sectionClass}
+                    taxItems={taxItems}
+                    alerts={mergedAlerts}
+                    attentionItems={attentionQueue}
+                    suggestedActions={recentActivity?.suggestedActions ?? []}
+                    onRunAlert={handleRunAlert}
+                    onRunAttentionItem={handleRunAttentionItem}
+                    onDismissAttention={handleDismissAttention}
+                    onRunTax={handleTaxAlert}
+                    onRunActionId={handleSuggestedAction}
+                  />
+
                   {showBriefSection && (
                     <PortfolioBriefSection
                       className={sectionClass}
@@ -470,21 +468,9 @@ export default function PortfolioPage() {
                 </div>
               }
               aside={
-                <div className={appStackClass}>
-                  <PortfolioAttentionSection
-                    className={sectionClass}
-                    taxItems={taxItems}
-                    alerts={mergedAlerts}
-                    attentionItems={attentionQueue}
-                    suggestedActions={recentActivity?.suggestedActions ?? []}
-                    onRunAlert={handleRunAlert}
-                    onRunAttentionItem={handleRunAttentionItem}
-                    onDismissAttention={handleDismissAttention}
-                    onRunTax={handleTaxAlert}
-                    onRunActionId={handleSuggestedAction}
-                  />
-                  {strategyPlaybook}
-                </div>
+                strategyPlaybook ? (
+                  <div className={appStackClass}>{strategyPlaybook}</div>
+                ) : undefined
               }
             />
           )}
@@ -505,17 +491,14 @@ export default function PortfolioPage() {
                 />
               }
               aside={
-                <div className={appStackClass}>
-                  <PortfolioRiskSection
-                    cashSecuredPutSummary={cashSecuredPutSummary}
-                    assignmentRiskSummary={assignmentRiskSummary}
-                    cashBalance={
-                      account?.securitiesAccount.currentBalances.cashBalance
-                    }
-                    className={sectionClass}
-                  />
-                  {strategyPlaybook}
-                </div>
+                <PortfolioRiskSection
+                  cashSecuredPutSummary={cashSecuredPutSummary}
+                  assignmentRiskSummary={assignmentRiskSummary}
+                  cashBalance={
+                    account?.securitiesAccount.currentBalances.cashBalance
+                  }
+                  className={sectionClass}
+                />
               }
             />
           )}

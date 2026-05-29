@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Target } from "lucide-react";
-import { appHighlightClass, appIconBoxClass } from "@/lib/appUi";
+import { appIconBoxClass, appInsetClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -15,7 +15,7 @@ export function PortfolioStrategyNudge({ onStart, className }: Props) {
   return (
     <div
       className={cn(
-        appHighlightClass,
+        appInsetClass,
         "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}

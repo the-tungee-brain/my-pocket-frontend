@@ -15,7 +15,7 @@ import {
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { appHighlightClass } from "@/lib/appUi";
+import { appCalloutClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 import { Activity, List, Newspaper, RefreshCw, Sparkles } from "lucide-react";
@@ -250,7 +250,7 @@ function NewsArticleRow({ item }: { item: EnrichedNewsItem }) {
 function NewsOverviewSkeleton() {
   return (
     <div className="app-stack">
-      <div className={cn(appHighlightClass, "space-y-2")}>
+      <div className={cn(appCalloutClass, "space-y-2")}>
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-4/5" />

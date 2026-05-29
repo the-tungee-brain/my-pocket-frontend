@@ -15,6 +15,7 @@ import {
   type EarningsEvent,
 } from "@/app/hooks/useEarnings";
 import {
+  ResearchAtAGlanceBox,
   ResearchBulletList,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
@@ -285,9 +286,11 @@ function EarningsDetailPanel({
             <p>{analysis.whatSurprised}</p>
           </ResearchTextBlock>
 
-          <ResearchTextBlock title="Investor takeaway">
-            <p>{analysis.investorTakeaway}</p>
-          </ResearchTextBlock>
+          <ResearchAtAGlanceBox title="Investor takeaway">
+            <p className="text-sm font-medium leading-relaxed text-foreground">
+              {analysis.investorTakeaway}
+            </p>
+          </ResearchAtAGlanceBox>
         </div>
       ) : null}
 
