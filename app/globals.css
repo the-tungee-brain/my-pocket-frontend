@@ -395,13 +395,16 @@ body {
   color: var(--muted);
 }
 
+.app-tab-bar-surface {
+  border: 1px solid var(--app-border-subtle);
+  background: color-mix(in oklab, var(--muted-bg) 70%, transparent);
+}
+
 .app-tab-bar {
   display: flex;
   min-width: 0;
   gap: 0.25rem;
   border-radius: var(--app-radius);
-  border: 1px solid var(--app-border-subtle);
-  background: color-mix(in oklab, var(--muted-bg) 70%, transparent);
   padding: 0.25rem;
 }
 

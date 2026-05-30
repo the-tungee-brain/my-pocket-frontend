@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Layers } from "lucide-react";
+import { appTabBarSurfaceClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import { finnhubStockLogoUrl, resolveResearchLogoUrl } from "@/lib/logoUrl";
 
@@ -34,7 +35,8 @@ function stockLogoTileClassName(
   className?: string,
 ) {
   return cn(
-    "flex shrink-0 items-center justify-center ring-1 ring-white/10",
+    "flex shrink-0 items-center justify-center",
+    appTabBarSurfaceClass,
     stockTileClasses[size],
     className,
   );
@@ -53,7 +55,7 @@ function StockLogoFallback({
     <div
       className={cn(
         stockLogoTileClassName(size, className),
-        "bg-surface-elevated font-semibold uppercase text-muted",
+        "font-semibold uppercase text-muted",
         size === "sm" ? "text-[10px]" : "text-xs",
       )}
       aria-hidden

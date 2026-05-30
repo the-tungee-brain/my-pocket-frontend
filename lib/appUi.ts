@@ -61,7 +61,9 @@ export const appListClass = "app-list";
 
 export const appListRowClass = "app-list-row";
 
-export const appTabBarClass = "app-tab-bar";
+export const appTabBarSurfaceClass = "app-tab-bar-surface";
+
+export const appTabBarClass = `app-tab-bar ${appTabBarSurfaceClass}`;
 
 export const appTabLinkClass = (active: boolean) =>
   active ? "app-tab-link app-tab-link--active" : "app-tab-link";
