@@ -59,12 +59,22 @@ export type DividendAdvancedSnowballScenario = {
   totalProjectedDividends?: number;
 };
 
+export type DividendBacktestYearRow = {
+  year: number;
+  dps: number;
+  shares: number;
+  dividendIncome: number;
+  sharePrice: number;
+  dividendYieldPct: number;
+};
+
 export type DividendHistoricalBacktest = {
   startYear: number;
   endYear: number;
   initialShares: number;
   cashCollected: number;
   cashCollectedAnnual: number;
+  yearlyBreakdown: DividendBacktestYearRow[];
   drip?: DividendAdvancedSnowballScenario | null;
 };
 

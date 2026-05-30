@@ -17,6 +17,7 @@ import {
   completedDividendYears,
   dividendProjectionWindow,
   historyStartYearForLookback,
+  resolveBacktestYearlyBreakdown,
   resolveCurrentYieldPct,
 } from "@/lib/dividendHistory";
 import { formatExpenseRatio } from "@/lib/etfHoldings";
@@ -1369,12 +1370,14 @@ export function DividendHistoricalBacktestCard({
   const draftStartYear =
     backtestParams?.historyStartYear ?? backtest.startYear;
   const draftWindowYears = Math.max(1, endYear - draftStartYear + 1);
-  const annualRows = history.annualIncome.filter(
-    (row) =>
-      !row.isPartialYear &&
-      row.year >= backtest.startYear &&
-      row.year <= backtest.endYear,
-  );
+  const yearlyRows = resolveBacktestYearlyBreakdown(history, backtest, {
+    reinvestDividends,
+    shares: backtestShares,
+    sharePriceAtStart: drip?.sharePriceAtStart ?? startSharePrice,
+    currentSharePrice: drip?.sharePriceLatest ?? null,
+    priceCagrPct: drip?.priceCagrPct ?? backtestParams?.priceCagrPct,
+    annualContributionUsd,
+  });
 
   function updateLookbackYears(lookbackYears: number) {
     if (!onBacktestChange) return;
@@ -1558,34 +1561,45 @@ export function DividendHistoricalBacktestCard({
         </div>
       ) : null}
 
-      {annualRows.length > 0 ? (
+      {yearlyRows.length > 0 ? (
         <div className="overflow-hidden rounded-xl border border-border">
           <table className="min-w-full text-left text-xs text-foreground">
             <thead className="bg-surface-elevated/40">
               <tr className="border-b border-border">
                 <th className="px-3 py-2 font-normal">Year</th>
                 <th className="px-3 py-2 font-normal tabular-nums">DPS</th>
+                <th className="px-3 py-2 font-normal tabular-nums">Shares</th>
                 <th className="px-3 py-2 font-normal tabular-nums">
-                  Income on {formatSnowballShares(backtestShares)} sh
+                  Dividend received
                 </th>
+                <th className="px-3 py-2 font-normal tabular-nums">Yield</th>
               </tr>
             </thead>
             <tbody>
-              {annualRows.map((row) => (
+              {yearlyRows.map((row) => (
                 <tr key={row.year} className="border-t border-border/70">
                   <td className="px-3 py-2">{row.year}</td>
                   <td className="px-3 py-2 tabular-nums">
-                    {formatPerShare(row.totalPerShare)}
+                    {formatPerShare(row.dps)}
                   </td>
                   <td className="px-3 py-2 tabular-nums">
-                    {formatUsd(row.totalPerShare * backtestShares, {
-                      maximumFractionDigits: 2,
-                    })}
+                    {formatSnowballShares(row.shares)}
+                  </td>
+                  <td className="px-3 py-2 tabular-nums">
+                    {formatUsd(row.dividendIncome, { maximumFractionDigits: 0 })}
+                  </td>
+                  <td className="px-3 py-2 tabular-nums">
+                    {formatPct(row.dividendYieldPct)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <p className="border-t border-border/70 px-3 py-2 text-[11px] text-muted">
+            {drip
+              ? "Shares and dividend cash reflect modeled contributions, DRIP, and year-end reinvestment. Yield uses annual DPS ÷ modeled share price that year."
+              : "Dividend received uses your starting share count each year. Yield uses annual DPS ÷ modeled share price that year."}
+          </p>
         </div>
       ) : null}
 

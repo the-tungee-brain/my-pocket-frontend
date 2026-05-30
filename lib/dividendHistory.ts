@@ -2,13 +2,14 @@ import { apiFetch } from "@/lib/apiClient";
 import type {
   DividendAdvancedSnowballScenario,
   DividendBacktestParams,
+  DividendBacktestYearRow,
   DividendHistoryContext,
   DividendPositionParams,
   DividendSnowballParams,
 } from "@/app/types/research";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const STORAGE_KEY = "powerpocket-dividend-history:v10";
+const STORAGE_KEY = "powerpocket-dividend-history:v11";
 const MAX_PERSISTENT_CACHE_ENTRIES = 40;
 const DEFAULT_SHARES = 100;
 
@@ -233,6 +234,35 @@ function normalizeAdvancedScenario(
   };
 }
 
+function normalizeBacktestYearRow(raw: unknown): DividendBacktestYearRow | null {
+  if (!raw || typeof raw !== "object") return null;
+  const item = raw as Record<string, unknown>;
+  const year = readNumber(item.year);
+  const dps = readNumber(item.dps);
+  const shares = readNumber(item.shares);
+  const dividendIncome = readNumber(item.dividendIncome ?? item.dividend_income);
+  const sharePrice = readNumber(item.sharePrice ?? item.share_price);
+  const dividendYieldPct =
+    readNumber(item.dividendYieldPct ?? item.dividend_yield_pct) ?? 0;
+  if (
+    year == null ||
+    dps == null ||
+    shares == null ||
+    dividendIncome == null ||
+    sharePrice == null
+  ) {
+    return null;
+  }
+  return {
+    year,
+    dps,
+    shares,
+    dividendIncome,
+    sharePrice,
+    dividendYieldPct,
+  };
+}
+
 function normalizeHistoricalBacktest(
   raw: unknown,
 ): DividendHistoryContext["historicalBacktest"] {
@@ -257,12 +287,22 @@ function normalizeHistoricalBacktest(
     return null;
   }
 
+  const yearlyBreakdownRaw = item.yearlyBreakdown ?? item.yearly_breakdown;
+  const yearlyBreakdown: DividendBacktestYearRow[] = [];
+  if (Array.isArray(yearlyBreakdownRaw)) {
+    for (const row of yearlyBreakdownRaw) {
+      const normalized = normalizeBacktestYearRow(row);
+      if (normalized) yearlyBreakdown.push(normalized);
+    }
+  }
+
   return {
     startYear,
     endYear,
     initialShares,
     cashCollected,
     cashCollectedAnnual,
+    yearlyBreakdown,
     drip: normalizeAdvancedScenario(item.drip),
   };
 }
@@ -335,6 +375,164 @@ export function needsProjectionRefetch(
 
 function roundScenarioValue(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+function modeledSharePriceForYear(
+  sharePriceAtStart: number,
+  priceCagrPct: number,
+  startYear: number,
+  year: number,
+): number {
+  if (sharePriceAtStart <= 0) return sharePriceAtStart;
+  const yearsFromStart = Math.max(0, year - startYear);
+  const rate = priceCagrPct / 100;
+  return roundScenarioValue(sharePriceAtStart * (1 + rate) ** yearsFromStart);
+}
+
+function annualDpsByYear(history: DividendHistoryContext): Map<number, number> {
+  const totals = new Map<number, number>();
+  for (const row of history.annualIncome) {
+    if (!row.isPartialYear) {
+      totals.set(row.year, row.totalPerShare);
+    }
+  }
+  return totals;
+}
+
+/** Year-by-year backtest rows from API data, or a client-side replay when missing. */
+export function resolveBacktestYearlyBreakdown(
+  history: DividendHistoryContext,
+  backtest: NonNullable<DividendHistoryContext["historicalBacktest"]>,
+  options: {
+    reinvestDividends?: boolean;
+    shares?: number | null;
+    sharePriceAtStart?: number | null;
+    currentSharePrice?: number | null;
+    priceCagrPct?: number | null;
+    annualContributionUsd?: number | null;
+  } = {},
+): DividendBacktestYearRow[] {
+  if (backtest.yearlyBreakdown.length > 0) {
+    return backtest.yearlyBreakdown;
+  }
+
+  const { startYear, endYear } = backtest;
+  const annualTotals = annualDpsByYear(history);
+  const drip = backtest.drip;
+  const reinvestDividends = options.reinvestDividends ?? Boolean(drip);
+  const contribution = Math.max(options.annualContributionUsd ?? 0, 0);
+
+  let shares =
+    options.shares != null && options.shares > 0
+      ? options.shares
+      : backtest.initialShares > 0
+        ? backtest.initialShares
+        : drip?.initialShares ?? 0;
+  if (shares <= 0) return [];
+
+  const currentSharePrice =
+    options.currentSharePrice ??
+    drip?.sharePriceLatest ??
+    history.scenario?.sharePrice ??
+    null;
+
+  let sharePriceAtStart =
+    options.sharePriceAtStart ??
+    drip?.sharePriceAtStart ??
+    null;
+
+  const priceCagrPct =
+    options.priceCagrPct ??
+    drip?.priceCagrPct ??
+    resolveSnowballPriceCagrPct(history) ??
+    0;
+
+  if (
+    (sharePriceAtStart == null || sharePriceAtStart <= 0) &&
+    currentSharePrice != null &&
+    currentSharePrice > 0
+  ) {
+    sharePriceAtStart = deriveSharePriceAtStart(
+      currentSharePrice,
+      priceCagrPct,
+      endYear - startYear,
+    );
+  }
+
+  const resolvedStartPrice =
+    sharePriceAtStart != null && sharePriceAtStart > 0
+      ? sharePriceAtStart
+      : currentSharePrice ?? 0;
+
+  const rows: DividendBacktestYearRow[] = [];
+
+  if (
+    reinvestDividends &&
+    resolvedStartPrice > 0 &&
+    currentSharePrice != null &&
+    currentSharePrice > 0 &&
+    startYear < endYear
+  ) {
+    let price = resolvedStartPrice;
+    let shareCount = shares;
+    const rate = priceCagrPct / 100;
+
+    for (let year = startYear; year <= endYear; year += 1) {
+      if (year > startYear && contribution > 0 && price > 0) {
+        shareCount += contribution / price;
+      }
+
+      const dps = annualTotals.get(year) ?? 0;
+      const dividendIncome = dps > 0 ? dps * shareCount : 0;
+      const yieldPct = price > 0 && dps > 0 ? (dps / price) * 100 : 0;
+
+      rows.push({
+        year,
+        dps: roundScenarioValue(dps),
+        shares: roundScenarioValue(shareCount),
+        dividendIncome: roundScenarioValue(dividendIncome),
+        sharePrice: roundScenarioValue(price),
+        dividendYieldPct: roundScenarioValue(yieldPct),
+      });
+
+      if (dps > 0 && year < endYear && price > 0) {
+        shareCount += dividendIncome / price;
+      }
+
+      if (year < endYear) {
+        price *= 1 + rate;
+      }
+    }
+
+    return rows;
+  }
+
+  for (let year = startYear; year <= endYear; year += 1) {
+    const dps = annualTotals.get(year) ?? 0;
+    const yearPrice =
+      resolvedStartPrice > 0
+        ? modeledSharePriceForYear(
+            resolvedStartPrice,
+            priceCagrPct,
+            startYear,
+            year,
+          )
+        : 0;
+    const dividendIncome = dps * shares;
+    const yieldPct =
+      yearPrice > 0 && dps > 0 ? (dps / yearPrice) * 100 : 0;
+
+    rows.push({
+      year,
+      dps: roundScenarioValue(dps),
+      shares: roundScenarioValue(shares),
+      dividendIncome: roundScenarioValue(dividendIncome),
+      sharePrice: roundScenarioValue(yearPrice),
+      dividendYieldPct: roundScenarioValue(yieldPct),
+    });
+  }
+
+  return rows;
 }
 
 /** Modeled share price at the start of a historic backtest window. */
