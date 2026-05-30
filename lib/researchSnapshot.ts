@@ -18,7 +18,7 @@ export type ResearchSnapshot = {
   expenseRatioPct?: number | null;
 };
 
-const STORAGE_KEY = "powerpocket-research-snapshots-v3";
+const STORAGE_KEY = "powerpocket-research-snapshots-v5";
 const LEGACY_SESSION_KEY = "powerpocket-research-snapshots";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
