@@ -57,6 +57,7 @@ export type DividendAdvancedSnowballScenario = {
   totalDividendsReinvested: number;
   totalAnnualContributionsUsd?: number;
   totalProjectedDividends?: number;
+  usesHistoricalSharePrices?: boolean;
 };
 
 export type DividendBacktestYearRow = {

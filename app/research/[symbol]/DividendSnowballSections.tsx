@@ -54,6 +54,12 @@ function formatSnowballShares(value: number): string {
   });
 }
 
+function backtestUsesHistoricalPrices(
+  drip?: DividendAdvancedSnowballScenario | null,
+): boolean {
+  return drip?.usesHistoricalSharePrices === true;
+}
+
 function roundSnowball(value: number): number {
   return Math.round(value * 100) / 100;
 }
@@ -1566,7 +1572,10 @@ export function DividendHistoricalBacktestCard({
               {formatUsd(drip.portfolioValueLatest, { maximumFractionDigits: 0 })}
             </p>
             <p className="mt-1 text-[11px] text-muted">
-              If DRIP ran from {backtest.startYear} at modeled prices
+              If DRIP ran from {backtest.startYear} at{" "}
+              {backtestUsesHistoricalPrices(drip)
+                ? "actual year-end prices"
+                : "modeled prices"}
             </p>
           </div>
           <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
@@ -1595,8 +1604,14 @@ export function DividendHistoricalBacktestCard({
               drip.totalAnnualContributionsUsd > 0
                 ? `${formatUsd(drip.totalAnnualContributionsUsd, {
                     maximumFractionDigits: 0,
-                  })} new cash · ${drip.priceCagrPct.toFixed(1)}% avg price growth / yr`
-                : `${drip.priceCagrPct.toFixed(1)}% avg modeled price growth / yr`}
+                  })} new cash · ${
+                    backtestUsesHistoricalPrices(drip)
+                      ? "actual year-end prices"
+                      : `${drip.priceCagrPct.toFixed(1)}% avg modeled price growth / yr`
+                  }`
+                : backtestUsesHistoricalPrices(drip)
+                  ? "Reinvested at actual year-end prices"
+                  : `${drip.priceCagrPct.toFixed(1)}% avg modeled price growth / yr`}
             </p>
           </div>
         </div>
@@ -1638,16 +1653,20 @@ export function DividendHistoricalBacktestCard({
           </table>
           <p className="border-t border-border/70 px-3 py-2 text-[11px] text-muted">
             {drip
-              ? "Shares and dividend cash reflect modeled contributions, DRIP, and year-end reinvestment. Yield uses annual DPS ÷ modeled share price that year."
-              : "Dividend received uses your starting share count each year. Yield uses annual DPS ÷ modeled share price that year."}
+              ? backtestUsesHistoricalPrices(drip)
+                ? "Shares and dividend cash use actual year-end adjusted closes for DRIP and yield each year."
+                : "Shares and dividend cash reflect modeled contributions, DRIP, and year-end reinvestment. Yield uses annual DPS ÷ modeled share price that year."
+              : "Dividend received uses your starting share count each year. Yield uses annual DPS ÷ share price that year."}
           </p>
         </div>
       ) : null}
 
       <p className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2 text-xs text-muted">
         Backtest uses recorded dividend amounts with{" "}
-        {formatSnowballShares(backtestShares)} shares at modeled{" "}
-        {backtest.startYear} prices
+        {formatSnowballShares(backtestShares)} shares at{" "}
+        {backtestUsesHistoricalPrices(drip)
+          ? `actual ${backtest.startYear} year-end prices`
+          : `modeled ${backtest.startYear} prices`}
         {investmentUsd != null && investmentUsd > 0
           ? ` (${formatUsd(investmentUsd, { maximumFractionDigits: 0 })} invested)`
           : ""}
@@ -1658,7 +1677,9 @@ export function DividendHistoricalBacktestCard({
             })} of new cash at the start of each year after ${backtest.startYear}. `
           : " "}
         {drip
-          ? ` DRIP assumes ${drip.priceCagrPct.toFixed(1)}% annual price growth and reinvestment at year-end modeled prices.`
+          ? backtestUsesHistoricalPrices(drip)
+            ? " DRIP reinvests at each year's actual year-end adjusted close."
+            : ` DRIP assumes ${drip.priceCagrPct.toFixed(1)}% annual price growth and reinvestment at year-end modeled prices.`
           : reinvestDividends
             ? " Enable share price to model DRIP reinvestment."
             : " DRIP is off — cash totals exclude reinvestment."}{" "}

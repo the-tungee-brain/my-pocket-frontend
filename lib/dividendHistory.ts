@@ -9,7 +9,7 @@ import type {
 } from "@/app/types/research";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const STORAGE_KEY = "powerpocket-dividend-history:v11";
+const STORAGE_KEY = "powerpocket-dividend-history:v12";
 const MAX_PERSISTENT_CACHE_ENTRIES = 40;
 const DEFAULT_SHARES = 100;
 
@@ -231,6 +231,9 @@ function normalizeAdvancedScenario(
     portfolioValueLatest,
     totalDividendsReinvested,
     totalAnnualContributionsUsd: totalAnnualContributionsUsd ?? 0,
+    usesHistoricalSharePrices: Boolean(
+      item.usesHistoricalSharePrices ?? item.uses_historical_share_prices,
+    ),
   };
 }
 
