@@ -50,7 +50,7 @@ export type DividendBacktestPdfInput = {
 
 export type DividendBacktestPdfResult = {
   cashCollected: number;
-  cashCollectedAnnual: number;
+  endYearAnnualIncome?: number | null;
   drip?: DividendAdvancedSnowballScenario | null;
   yearlyRows: DividendBacktestYearRow[];
 };
@@ -133,9 +133,14 @@ export function downloadDividendBacktestPdf(
 
   pdfSectionTitle(ctx, "Summary results");
   const summaryRows: [string, string][] = [
-    ["Cash collected", formatPdfUsd(result.cashCollected, 0)],
-    ["Annual totals", formatPdfUsd(result.cashCollectedAnnual, 0)],
+    ["Total dividend income", formatPdfUsd(result.cashCollected, 0)],
   ];
+  if (result.endYearAnnualIncome != null && result.endYearAnnualIncome > 0) {
+    summaryRows.push([
+      `Annual income · ${input.endYear}`,
+      formatPdfUsd(result.endYearAnnualIncome, 0),
+    ]);
+  }
   if (drip) {
     summaryRows.push(
       ["Portfolio value (DRIP)", formatPdfUsd(drip.portfolioValueLatest, 0)],
@@ -169,7 +174,7 @@ export function downloadDividendBacktestPdf(
     pdfSectionTitle(ctx, `Year by year (${result.yearlyRows.length} years)`);
     pdfDataTable(
       ctx,
-      ["Year", "DPS", "Shares", "Dividend received", "Yield"],
+      ["Year", "DPS", "Shares", "Annual income", "Yield"],
       result.yearlyRows.map((row) => [
         String(row.year),
         formatPerShare(row.dps),

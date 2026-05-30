@@ -1387,6 +1387,8 @@ export function DividendHistoricalBacktestCard({
     priceCagrPct: drip?.priceCagrPct ?? backtestParams?.priceCagrPct,
     annualContributionUsd,
   });
+  const endYearAnnualIncome =
+    drip?.annualIncomeLatestDrip ?? yearlyRows.at(-1)?.dividendIncome ?? null;
 
   function updateLookbackYears(lookbackYears: number) {
     if (!onBacktestChange) return;
@@ -1416,7 +1418,7 @@ export function DividendHistoricalBacktestCard({
   };
   const pdfResult = {
     cashCollected: backtest.cashCollected,
-    cashCollectedAnnual: backtest.cashCollectedAnnual,
+    endYearAnnualIncome,
     drip,
     yearlyRows,
   };
@@ -1534,30 +1536,34 @@ export function DividendHistoricalBacktestCard({
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Cash collected
+            Total dividend income
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
             {formatUsd(backtest.cashCollected, { maximumFractionDigits: 0 })}
           </p>
           <p className="mt-1 text-xs text-muted">
             {drip
-              ? "Total dividend cash over the window (simulated share count with DRIP)"
-              : "Sum of actual dividend payments in the window"}
+              ? "All dividend cash received over the window (growing share count with DRIP)"
+              : "Sum of calendar-year dividend income across the window"}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Annual totals
+            Annual income · {backtest.endYear}
           </p>
           <p className="mt-1 text-xl font-semibold tabular-nums">
-            {formatUsd(backtest.cashCollectedAnnual, {
-              maximumFractionDigits: 0,
-            })}
+            {endYearAnnualIncome != null
+              ? formatUsd(endYearAnnualIncome, { maximumFractionDigits: 0 })
+              : "—"}
           </p>
           <p className="mt-1 text-xs text-muted">
             {drip
-              ? "Same total as cash collected when DRIP is on"
-              : "Calendar-year DPS × shares for each year in the window"}
+              ? `${formatSnowballShares(drip.finalShares)} shares × ${formatPerShare(
+                  yearlyRows.at(-1)?.dps ?? 0,
+                )} DPS at year-end`
+              : `${formatSnowballShares(backtestShares)} shares × ${formatPerShare(
+                  yearlyRows.at(-1)?.dps ?? 0,
+                )} DPS`}
           </p>
         </div>
       </div>
@@ -1626,7 +1632,7 @@ export function DividendHistoricalBacktestCard({
                 <th className="px-3 py-2 font-normal tabular-nums">DPS</th>
                 <th className="px-3 py-2 font-normal tabular-nums">Shares</th>
                 <th className="px-3 py-2 font-normal tabular-nums">
-                  Dividend received
+                  Annual income
                 </th>
                 <th className="px-3 py-2 font-normal tabular-nums">Yield</th>
               </tr>
@@ -1654,9 +1660,9 @@ export function DividendHistoricalBacktestCard({
           <p className="border-t border-border/70 px-3 py-2 text-[11px] text-muted">
             {drip
               ? backtestUsesHistoricalPrices(drip)
-                ? "Shares and dividend cash use actual year-end adjusted closes for DRIP and yield each year."
-                : "Shares and dividend cash reflect modeled contributions, DRIP, and year-end reinvestment. Yield uses annual DPS ÷ modeled share price that year."
-              : "Dividend received uses your starting share count each year. Yield uses annual DPS ÷ share price that year."}
+                ? "Annual income is DPS × shares at year-end after contributions and DRIP. Yield uses that year's actual close."
+                : "Annual income is DPS × shares at year-end after contributions and DRIP. Yield uses annual DPS ÷ share price that year."
+              : "Annual income is calendar-year DPS × your starting share count. Yield uses annual DPS ÷ share price that year."}
           </p>
         </div>
       ) : null}
