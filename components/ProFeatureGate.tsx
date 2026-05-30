@@ -55,8 +55,8 @@ export function ProFeatureGate({
           </p>
           <p className="mt-2 text-xs text-muted">
             Free includes portfolio analysis, research data, assistant chat on
-            free-tier models, and strategy playbooks. AI earnings, news, and
-            financial synthesis require Pro.
+            free-tier models, and strategy playbooks. AI earnings, news,
+            business, big picture, and financial synthesis require Pro.
           </p>
           <Link
             href="/settings?tab=account"

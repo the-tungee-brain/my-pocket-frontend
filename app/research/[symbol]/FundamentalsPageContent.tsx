@@ -47,67 +47,6 @@ export function FundamentalsPageContent({
     proFinancialAnalysis: financialStrengthAllowed,
   });
 
-  const keyMetricsCard = (
-    <ResearchScrollSpySection id="fundamentals-metrics" label="Metrics">
-      <ResearchSectionCard
-        title={isEtf ? "Fund metrics" : "Key metrics"}
-        description={
-          isEtf
-            ? "Expense ratio, dividend yield, and other ETF-specific metrics"
-            : "Valuation, profitability, and balance sheet highlights"
-        }
-        icon={BarChart3}
-      >
-        {isLoading ? (
-          <KeyMetricsGridSkeleton />
-        ) : fundamentals ? (
-          <KeyMetricsGrid metrics={fundamentals.metrics} />
-        ) : (
-          <EmptyState
-            icon={BarChart3}
-            title="Metrics unavailable"
-            description="Fundamental metrics aren't available for this symbol right now."
-            variant="solid"
-            className="py-4"
-          />
-        )}
-      </ResearchSectionCard>
-    </ResearchScrollSpySection>
-  );
-
-  const ownershipCard =
-    isLoading || hasStreetOwnership(fundamentals?.streetAnalysis) ? (
-      <ResearchScrollSpySection id="fundamentals-ownership" label="Ownership">
-        <ResearchSectionCard
-          title="Ownership & insiders"
-          description="Institutional holders and insider transaction history"
-          icon={Users}
-        >
-          <StreetOwnershipSection
-            ownership={fundamentals?.streetAnalysis?.ownership}
-            dataAsOf={fundamentals?.streetAnalysis?.dataAsOf}
-            isLoading={isLoading}
-          />
-        </ResearchSectionCard>
-      </ResearchScrollSpySection>
-    ) : null;
-
-  const profileCard =
-    isLoading || hasEtfFunds(fundamentals?.etfFunds) ? (
-      <ResearchScrollSpySection id="fundamentals-profile" label="Profile">
-        <ResearchSectionCard
-          title="Fund profile"
-          description="Composition, sectors, and cost from Yahoo Finance"
-          icon={PieChart}
-        >
-          <EtfFundsSection
-            funds={fundamentals?.etfFunds}
-            isLoading={isLoading}
-          />
-        </ResearchSectionCard>
-      </ResearchScrollSpySection>
-    ) : null;
-
   return (
     <ResearchScrollSpy className="app-stack">
       {error && <ErrorBanner message={error} />}
@@ -118,8 +57,8 @@ export function FundamentalsPageContent({
           description={
             financialStrengthAllowed
               ? isEtf
-                ? "AI-generated snapshot focused on cost, yield, and composition"
-                : "AI-generated snapshot from SEC filings and market data"
+                ? "AI snapshot focused on cost, yield, and composition"
+                : "AI read on valuation, strengths, and what to watch in the numbers"
               : "Pro — AI snapshot from SEC filings and market data"
           }
           icon={FileSpreadsheet}
@@ -149,18 +88,53 @@ export function FundamentalsPageContent({
         </ResearchSectionCard>
       </ResearchScrollSpySection>
 
+      <ResearchScrollSpySection id="fundamentals-metrics" label="Metrics">
+        <ResearchSectionCard
+          title={isEtf ? "Fund metrics" : "Key metrics"}
+          description={
+            isEtf
+              ? "Expense ratio, dividend yield, and other fund-specific figures"
+              : "Valuation, profitability, growth, and balance sheet highlights"
+          }
+          icon={BarChart3}
+        >
+          {isLoading ? (
+            <KeyMetricsGridSkeleton grouped={!isEtf} />
+          ) : fundamentals ? (
+            <KeyMetricsGrid metrics={fundamentals.metrics} grouped={!isEtf} />
+          ) : (
+            <EmptyState
+              icon={BarChart3}
+              title="Metrics unavailable"
+              description="Fundamental metrics aren't available for this symbol right now."
+              variant="solid"
+              className="py-4"
+            />
+          )}
+        </ResearchSectionCard>
+      </ResearchScrollSpySection>
+
       {isEtf ? (
-        <>
-          {keyMetricsCard}
-          {profileCard}
-        </>
+        isLoading || hasEtfFunds(fundamentals?.etfFunds) ? (
+          <ResearchScrollSpySection id="fundamentals-profile" label="Profile">
+            <ResearchSectionCard
+              title="Fund profile"
+              description="Composition, sectors, and cost from Yahoo Finance"
+              icon={PieChart}
+            >
+              <EtfFundsSection
+                funds={fundamentals?.etfFunds}
+                isLoading={isLoading}
+              />
+            </ResearchSectionCard>
+          </ResearchScrollSpySection>
+        ) : null
       ) : (
         <>
-          {ownershipCard}
           <ResearchScrollSpySection id="fundamentals-street" label="Street">
             <ResearchSectionCard
               title="Wall Street analysis"
-              description="Analyst ratings, targets, and estimates"
+              description="Analyst consensus, price targets, and estimate trends"
               icon={Target}
             >
               <StreetAnalysisSection
@@ -169,7 +143,23 @@ export function FundamentalsPageContent({
               />
             </ResearchSectionCard>
           </ResearchScrollSpySection>
-          {keyMetricsCard}
+
+          {isLoading || hasStreetOwnership(fundamentals?.streetAnalysis) ? (
+            <ResearchScrollSpySection id="fundamentals-ownership" label="Ownership">
+              <ResearchSectionCard
+                title="Ownership & insiders"
+                description="Institutional holders and insider transaction history"
+                icon={Users}
+              >
+                <StreetOwnershipSection
+                  ownership={fundamentals?.streetAnalysis?.ownership}
+                  dataAsOf={fundamentals?.streetAnalysis?.dataAsOf}
+                  isLoading={isLoading}
+                />
+              </ResearchSectionCard>
+            </ResearchScrollSpySection>
+          ) : null}
+
           <ResearchScrollSpySection id="fundamentals-sec" label="SEC">
             <ResearchSectionCard
               title="SEC company profile"

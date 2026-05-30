@@ -6,7 +6,9 @@ export type ProFeatureId =
   | "dividendSnowball"
   | "newsAi"
   | "financialStrength"
-  | "earningsAi";
+  | "earningsAi"
+  | "business"
+  | "bigPicture";
 
 const API_FEATURE_KEYS: Record<ProFeatureId, string> = {
   wheelBacktest: "wheel_backtest",
@@ -14,6 +16,8 @@ const API_FEATURE_KEYS: Record<ProFeatureId, string> = {
   newsAi: "news_ai",
   financialStrength: "financial_strength",
   earningsAi: "earnings_ai",
+  business: "business",
+  bigPicture: "big_picture",
 };
 
 export const PRO_FEATURE_LABELS: Record<
@@ -44,6 +48,16 @@ export const PRO_FEATURE_LABELS: Record<
     title: "AI earnings analysis",
     description:
       "Quarterly earnings summaries, highlights, guidance takeaways, and investor-oriented analysis on Research Earnings.",
+  },
+  business: {
+    title: "AI business overview",
+    description:
+      "How the company works, competes, and grows — segments, moat, revenue model, and business risks on Research Business.",
+  },
+  bigPicture: {
+    title: "Big picture AI",
+    description:
+      "AI investment thesis, valuation context, key strengths, risks, and what to watch on Research Overview.",
   },
 };
 

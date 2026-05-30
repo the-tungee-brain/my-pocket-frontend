@@ -6,6 +6,8 @@ import {
   type BusinessBlock,
 } from "@/app/hooks/useBusinessDetails";
 import { useSession } from "next-auth/react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
+import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import {
   ResearchAtAGlanceBox,
@@ -16,6 +18,7 @@ import {
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { buildBusinessAtAGlance } from "@/lib/businessArticle";
+import { hasProFeature } from "@/lib/planFeatures";
 import { appCalloutClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
@@ -47,26 +50,39 @@ function BusinessOverviewSkeleton() {
 export function BusinessSection({ symbol }: BusinessSectionProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
+  const { isPaid, plan } = useAccountPlan(accessToken);
+  const businessAllowed = hasProFeature(isPaid, "business", plan);
   const { business, isLoading, error } = useBusinessDetails(symbol, {
     accessToken,
+    enabled: businessAllowed,
   });
 
   return (
     <div className="app-stack">
-      {error && !business ? <ErrorBanner message={error} /> : null}
+      {error && businessAllowed && !business ? (
+        <ErrorBanner message={error} />
+      ) : null}
 
       <ResearchSectionCard
         title="Business"
-        description="How the company works, competes, and grows"
+        description={
+          businessAllowed
+            ? "How the company works, competes, and grows"
+            : "Pro — AI overview of the business model, moat, and risks"
+        }
         icon={BriefcaseBusiness}
       >
-        {isLoading && !business ? (
-          <BusinessOverviewSkeleton />
-        ) : !business ? (
-          <p className="text-sm text-muted">Business details are not available.</p>
-        ) : (
-          <BusinessOverviewContent business={business} />
-        )}
+        <ProFeatureGate feature="business" allowed={businessAllowed}>
+          {isLoading && !business ? (
+            <BusinessOverviewSkeleton />
+          ) : !business ? (
+            <p className="text-sm text-muted">
+              Business details are not available.
+            </p>
+          ) : (
+            <BusinessOverviewContent business={business} />
+          )}
+        </ProFeatureGate>
       </ResearchSectionCard>
     </div>
   );

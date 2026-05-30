@@ -105,9 +105,9 @@ export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
           icon={BarChart3}
         >
           {isLoading ? (
-            <KeyMetricsGridSkeleton />
+            <KeyMetricsGridSkeleton grouped />
           ) : fundamentals?.metrics.length ? (
-            <KeyMetricsGrid metrics={fundamentals.metrics} />
+            <KeyMetricsGrid metrics={fundamentals.metrics} grouped />
           ) : (
             <p className="text-sm text-muted">Metrics unavailable.</p>
           )}

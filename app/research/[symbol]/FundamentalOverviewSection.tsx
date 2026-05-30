@@ -26,7 +26,7 @@ export function FundamentalOverviewSection({
 
     return (
       <div className="app-stack">
-        <ResearchAtAGlanceBox>
+        <ResearchAtAGlanceBox title="At a glance">
           <p className="text-sm font-medium leading-relaxed text-foreground">
             {overview.atAGlance}
           </p>

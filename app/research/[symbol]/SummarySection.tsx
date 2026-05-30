@@ -7,12 +7,14 @@ import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
 import { overviewBundleEtagKey, writeOverviewBundleEtag } from "@/lib/overviewBundleCache";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useSession } from "next-auth/react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { fetchResearchOverviewBundle } from "@/lib/apiClient";
 import { cn } from "@/lib/utils";
 import {
   BigPictureArticle,
   BigPictureOverviewSkeleton,
 } from "@/components/BigPictureArticle";
+import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -20,6 +22,7 @@ import {
   cachedResearchToStockSummary,
   hasCachedResearchContent,
 } from "@/lib/cachedResearchSummary";
+import { hasProFeature } from "@/lib/planFeatures";
 
 type SummarySectionProps = {
   symbol: string;
@@ -29,6 +32,8 @@ type SummarySectionProps = {
 export function SummarySection({ symbol, className }: SummarySectionProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
+  const { isPaid, plan } = useAccountPlan(accessToken);
+  const bigPictureAllowed = hasProFeature(isPaid, "bigPicture", plan);
   const symbolUpper = symbol.toUpperCase();
   const [requestFullSummary, setRequestFullSummary] = useState(false);
   const { intelligence } = useSymbolIntelligence(symbol, {
@@ -37,10 +42,11 @@ export function SummarySection({ symbol, className }: SummarySectionProps) {
   });
 
   const cachedSummary = useMemo(() => {
+    if (!bigPictureAllowed) return null;
     const cached = intelligence?.cachedResearch;
     if (!hasCachedResearchContent(cached) || !cached) return null;
     return cachedResearchToStockSummary(cached);
-  }, [intelligence?.cachedResearch]);
+  }, [bigPictureAllowed, intelligence?.cachedResearch]);
 
   const queryClient = useQueryClient();
   const fullSummaryQueryKey = [
@@ -79,27 +85,45 @@ export function SummarySection({ symbol, className }: SummarySectionProps) {
       }
       return retry.bundle;
     },
-    enabled: Boolean(requestFullSummary && accessToken && symbolUpper),
+    enabled: Boolean(
+      bigPictureAllowed && requestFullSummary && accessToken && symbolUpper,
+    ),
     staleTime: 10 * 60_000,
   });
 
-  const summary = requestFullSummary
-    ? (fullSummaryQuery.data?.summary ?? null)
-    : cachedSummary;
+  const summary = bigPictureAllowed
+    ? requestFullSummary
+      ? (fullSummaryQuery.data?.summary ?? null)
+      : cachedSummary
+    : null;
   const loading =
-    requestFullSummary && fullSummaryQuery.isLoading && !summary;
+    bigPictureAllowed &&
+    requestFullSummary &&
+    fullSummaryQuery.isLoading &&
+    !summary;
 
   const loadFullSummary = useCallback(() => {
+    if (!bigPictureAllowed) return;
     setRequestFullSummary(true);
-  }, []);
+  }, [bigPictureAllowed]);
 
   const sectionMeta = {
     title: "Big picture",
-    description: requestFullSummary
-      ? "AI overview — thesis, valuation, strengths, and risks"
-      : "Research snapshot — expand for a fresh AI deep dive",
+    description: bigPictureAllowed
+      ? requestFullSummary
+        ? "AI overview — thesis, valuation, strengths, and risks"
+        : "Research snapshot — expand for a fresh AI deep dive"
+      : "Pro — AI thesis, valuation, strengths, and risks",
     icon: Info,
   };
+
+  if (!bigPictureAllowed) {
+    return (
+      <ResearchSectionCard className={className} {...sectionMeta}>
+        <ProFeatureGate feature="bigPicture" allowed={false} />
+      </ResearchSectionCard>
+    );
+  }
 
   if (loading && !summary) {
     return (

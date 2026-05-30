@@ -11,10 +11,13 @@ import {
   resolveSnowballPriceCagrPct,
   scenarioCacheKey,
   type DividendFetchParams,
+  type DividendHistoryVariant,
 } from "@/lib/dividendHistory";
 
 type UseDividendHistoryOptions = DividendFetchParams & {
   accessToken?: string | null;
+  enabled?: boolean;
+  variant?: DividendHistoryVariant;
 };
 
 export function useDividendHistory(
@@ -23,6 +26,8 @@ export function useDividendHistory(
 ) {
   const {
     accessToken,
+    enabled = true,
+    variant = "snowball",
     investmentUsd,
     sharePrice,
     reinvestDividends,
@@ -31,6 +36,7 @@ export function useDividendHistory(
     projectYears,
     dividendCagrPct,
     annualContributionUsd,
+    historyStartYear,
   } = options;
 
   const fetchParams = useMemo<DividendFetchParams>(
@@ -43,6 +49,7 @@ export function useDividendHistory(
       projectYears,
       dividendCagrPct,
       annualContributionUsd,
+      historyStartYear,
     }),
     [
       investmentUsd,
@@ -53,20 +60,21 @@ export function useDividendHistory(
       projectYears,
       dividendCagrPct,
       annualContributionUsd,
+      historyStartYear,
     ],
   );
 
   const resolvedShares = resolveDividendScenarioShares(fetchParams);
-  const cacheKey = symbol ? scenarioCacheKey(symbol, fetchParams) : "";
+  const cacheKey = symbol ? scenarioCacheKey(symbol, fetchParams, variant) : "";
   const symbolKey = symbol?.toUpperCase().trim() ?? "";
 
   const [history, setHistory] = useState<DividendHistoryContext | null>(() => {
-    if (!symbolKey) return null;
-    return getCachedDividendHistory(symbolKey, fetchParams);
+    if (!symbolKey || !enabled) return null;
+    return getCachedDividendHistory(symbolKey, fetchParams, variant);
   });
   const [isLoading, setIsLoading] = useState<boolean>(() => {
-    if (!symbolKey) return false;
-    return getCachedDividendHistory(symbolKey, fetchParams) === null;
+    if (!symbolKey || !enabled) return false;
+    return getCachedDividendHistory(symbolKey, fetchParams, variant) === null;
   });
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +111,14 @@ export function useDividendHistory(
       return;
     }
 
+    if (!enabled) {
+      setHistory(null);
+      setIsLoading(false);
+      setIsFetching(false);
+      setError(null);
+      return;
+    }
+
     if (!accessToken) {
       setHistory(null);
       setIsLoading(false);
@@ -111,15 +127,24 @@ export function useDividendHistory(
       return;
     }
 
-    const cached = getCachedDividendHistory(symbolKey, fetchParams);
+    const cached = getCachedDividendHistory(symbolKey, fetchParams, variant);
     const hasFetchSharePrice =
       fetchParams.sharePrice != null && fetchParams.sharePrice > 0;
     if (
       cached &&
       retryCount === 0 &&
+      variant === "snowball" &&
       !hasFetchSharePrice &&
       !needsProjectionRefetch(cached, fetchParams)
     ) {
+      setHistory(mergeHistory(cached, historyRef.current));
+      setIsLoading(false);
+      setIsFetching(false);
+      setError(null);
+      return;
+    }
+
+    if (cached && retryCount === 0 && variant !== "snowball") {
       setHistory(mergeHistory(cached, historyRef.current));
       setIsLoading(false);
       setIsFetching(false);
@@ -140,7 +165,12 @@ export function useDividendHistory(
       setError(null);
 
       try {
-        const data = await fetchDividendHistory(symbolKey, accessToken!, fetchParams);
+        const data = await fetchDividendHistory(
+          symbolKey,
+          accessToken!,
+          fetchParams,
+          variant,
+        );
         if (cancelled) return;
 
         if (!data) {
@@ -174,7 +204,15 @@ export function useDividendHistory(
     return () => {
       cancelled = true;
     };
-  }, [symbolKey, accessToken, cacheKey, fetchParams, retryCount]);
+  }, [
+    symbolKey,
+    accessToken,
+    cacheKey,
+    fetchParams,
+    retryCount,
+    enabled,
+    variant,
+  ]);
 
   return {
     history,

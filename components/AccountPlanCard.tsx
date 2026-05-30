@@ -33,6 +33,7 @@ const PRO_FEATURES = [
   "AI earnings analysis (quarterly summaries & takeaways)",
   "AI news research (brief, sentiment, coverage analysis)",
   "Financial strength & fundamental AI on Research",
+  "Big picture & business AI on Research Overview and Business",
   "Income snowball (DRIP projections & contributions)",
   "Wheel backtest with trade log and PDF export",
   "Advanced chat models (gpt-5.1, gpt-4o, gpt-5.4, o3, and more)",
@@ -42,7 +43,7 @@ function freePlanFootnote(freeModel: string): string {
   return (
     "Portfolio and position analysis are included. Assistant chat uses efficient " +
     `free-tier models (default ${freeModel}). Research data—headlines, filings, ` +
-    "and earnings history—is free; AI-generated earnings, news, and financial " +
+    "and earnings history—is free; AI-generated earnings, news, business, big picture, and financial " +
     "analysis require Pro."
   );
 }

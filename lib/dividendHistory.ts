@@ -1,17 +1,24 @@
 import { apiFetch } from "@/lib/apiClient";
 import type {
   DividendAdvancedSnowballScenario,
+  DividendBacktestParams,
   DividendHistoryContext,
-  DividendScenarioParams,
+  DividendPositionParams,
+  DividendSnowballParams,
 } from "@/app/types/research";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const STORAGE_KEY = "powerpocket-dividend-history:v7";
+const STORAGE_KEY = "powerpocket-dividend-history:v10";
 const MAX_PERSISTENT_CACHE_ENTRIES = 40;
 const DEFAULT_SHARES = 100;
 
-export type DividendFetchParams = DividendScenarioParams & {
+export type DividendHistoryVariant = "base" | "snowball" | "backtest";
+
+export type DividendFetchParams = DividendPositionParams & {
   shares?: number | null;
+  projectYears?: number | null;
+  dividendCagrPct?: number | null;
+  historyStartYear?: number | null;
 };
 
 type StoredEntry = {
@@ -45,48 +52,59 @@ export function resolveDividendScenarioShares(params: DividendFetchParams): numb
   return DEFAULT_SHARES;
 }
 
-export function scenarioCacheKey(symbol: string, params: DividendFetchParams): string {
+export function scenarioCacheKey(
+  symbol: string,
+  params: DividendFetchParams,
+  variant: DividendHistoryVariant = "snowball",
+): string {
   const base = normalizeKey(symbol);
   const shares = resolveDividendScenarioShares(params).toFixed(2);
+  const prefix =
+    variant === "base"
+      ? "base"
+      : variant === "backtest"
+        ? "backtest"
+        : "snowball";
+
+  if (variant === "base") {
+    return `${base}|${prefix}|shares:${shares}`;
+  }
+
+  const parts = [base, prefix, `shares:${shares}`];
 
   if (hasInvestment(params)) {
-    return [
-      base,
-      `inv:${params.investmentUsd!.toFixed(2)}`,
-      `px:${params.sharePrice!.toFixed(2)}`,
-      `shares:${shares}`,
-      `years:${params.projectYears ?? 10}`,
-      params.reinvestDividends ? "drip" : "cash",
-      params.priceCagrPct != null ? `pcagr:${params.priceCagrPct}` : "pcagr:auto",
-      params.dividendCagrPct != null ? `dcagr:${params.dividendCagrPct}` : "dcagr:auto",
-      params.annualContributionUsd != null && params.annualContributionUsd > 0
-        ? `contrib:${params.annualContributionUsd.toFixed(2)}`
-        : "contrib:0",
-    ].join("|");
+    parts.push(`inv:${params.investmentUsd!.toFixed(2)}`);
+    parts.push(`px:${params.sharePrice!.toFixed(2)}`);
+  } else if (params.sharePrice != null && params.sharePrice > 0) {
+    parts.push(`px:${params.sharePrice.toFixed(2)}`);
   }
 
-  if (params.sharePrice != null && params.sharePrice > 0) {
-    return [
-      base,
-      `shares:${shares}`,
-      `px:${params.sharePrice.toFixed(2)}`,
-      `years:${params.projectYears ?? 10}`,
-      params.reinvestDividends ? "drip" : "cash",
-      params.annualContributionUsd != null && params.annualContributionUsd > 0
-        ? `contrib:${params.annualContributionUsd.toFixed(2)}`
-        : "contrib:0",
-    ].join("|");
-  }
-
-  return [
-    base,
-    `shares:${shares}`,
-    `years:${params.projectYears ?? 10}`,
-    params.reinvestDividends ? "drip" : "cash",
+  parts.push(params.reinvestDividends ? "drip" : "cash");
+  parts.push(
+    params.priceCagrPct != null ? `pcagr:${params.priceCagrPct}` : "pcagr:auto",
+  );
+  parts.push(
     params.annualContributionUsd != null && params.annualContributionUsd > 0
       ? `contrib:${params.annualContributionUsd.toFixed(2)}`
       : "contrib:0",
-  ].join("|");
+  );
+
+  if (variant === "snowball") {
+    parts.push(`years:${params.projectYears ?? 10}`);
+    parts.push(
+      params.dividendCagrPct != null ? `dcagr:${params.dividendCagrPct}` : "dcagr:auto",
+    );
+  }
+
+  if (variant === "backtest") {
+    parts.push(
+      params.historyStartYear != null
+        ? `hist:${Math.round(params.historyStartYear)}`
+        : "hist:auto",
+    );
+  }
+
+  return parts.join("|");
 }
 
 function prunePersistentStore(
@@ -226,6 +244,10 @@ function normalizeHistoricalBacktest(
   const cashCollectedAnnual = readNumber(
     item.cashCollectedAnnual ?? item.cash_collected_annual,
   );
+  const initialShares =
+    readNumber(item.initialShares ?? item.initial_shares) ??
+    normalizeAdvancedScenario(item.drip)?.initialShares ??
+    0;
   if (
     startYear == null ||
     endYear == null ||
@@ -238,6 +260,7 @@ function normalizeHistoricalBacktest(
   return {
     startYear,
     endYear,
+    initialShares,
     cashCollected,
     cashCollectedAnnual,
     drip: normalizeAdvancedScenario(item.drip),
@@ -314,31 +337,94 @@ function roundScenarioValue(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-/** Fill share price, investment, and shares before fetch or display. */
-export function resolveEffectiveScenarioParams(
-  params: DividendScenarioParams,
+/** Modeled share price at the start of a historic backtest window. */
+export function deriveSharePriceAtStart(
+  currentSharePrice: number,
+  priceCagrPct: number,
+  yearsElapsed: number,
+): number {
+  if (yearsElapsed <= 0 || currentSharePrice <= 0) {
+    return roundScenarioValue(currentSharePrice);
+  }
+  const rate = priceCagrPct / 100;
+  const denominator = (1 + rate) ** yearsElapsed;
+  if (denominator <= 0) {
+    return roundScenarioValue(currentSharePrice);
+  }
+  return roundScenarioValue(currentSharePrice / denominator);
+}
+
+export function resolveBacktestDisplayParams(
+  params: DividendBacktestParams,
   options: {
     marketSharePrice?: number | null;
     heldShares?: number;
-    scenario?: DividendHistoryContext["scenario"] | null;
-  } = {},
-): DividendScenarioParams {
-  const { marketSharePrice = null, heldShares = 0, scenario = null } = options;
-  const sharePrice =
-    params.sharePrice ?? scenario?.sharePrice ?? marketSharePrice ?? null;
+    priceCagrPct?: number | null;
+    startYear: number;
+    endYear: number;
+    modeledSharePriceAtStart?: number | null;
+  },
+): DividendBacktestParams {
+  const effective = resolveEffectiveBacktestParams(params, {
+    marketSharePrice: options.marketSharePrice,
+    heldShares: options.heldShares ?? 0,
+  });
 
-  let investmentUsd = params.investmentUsd ?? scenario?.investmentUsd ?? null;
+  const latestPrice =
+    options.marketSharePrice ?? effective.sharePrice ?? null;
+  if (latestPrice == null || latestPrice <= 0) {
+    return effective;
+  }
+
+  const yearsElapsed = Math.max(0, options.endYear - options.startYear);
+  const priceCagrPct = options.priceCagrPct ?? effective.priceCagrPct ?? 0;
+  const startPrice =
+    options.modeledSharePriceAtStart ??
+    deriveSharePriceAtStart(latestPrice, priceCagrPct, yearsElapsed);
+
+  const investmentUsd = effective.investmentUsd;
+  let shares = effective.shares;
+  if (investmentUsd != null && investmentUsd > 0 && startPrice > 0) {
+    shares = roundScenarioValue(investmentUsd / startPrice);
+  }
+
+  return {
+    ...effective,
+    sharePrice: startPrice,
+    shares,
+  };
+}
+
+/** Fill share price, investment, and shares before fetch or display. */
+export function resolveEffectivePositionParams<T extends DividendPositionParams>(
+  params: T,
+  options: {
+    marketSharePrice?: number | null;
+    heldShares?: number;
+    fallbackShares?: number | null;
+    fallbackInvestmentUsd?: number | null;
+  } = {},
+): T {
+  const {
+    marketSharePrice = null,
+    heldShares = 0,
+    fallbackShares = null,
+    fallbackInvestmentUsd = null,
+  } = options;
+  const sharePrice = params.sharePrice ?? marketSharePrice ?? null;
+
+  let investmentUsd = params.investmentUsd ?? fallbackInvestmentUsd ?? null;
   if ((investmentUsd == null || investmentUsd <= 0) && sharePrice != null && sharePrice > 0) {
     if (params.shares != null && params.shares > 0) {
       investmentUsd = roundScenarioValue(params.shares * sharePrice);
-    } else if (scenario?.shares != null && scenario.shares > 0) {
-      investmentUsd = roundScenarioValue(scenario.shares * sharePrice);
+    } else if (fallbackShares != null && fallbackShares > 0) {
+      investmentUsd = roundScenarioValue(fallbackShares * sharePrice);
     } else {
       investmentUsd = defaultDividendInvestmentUsd(heldShares, sharePrice);
     }
   }
 
-  let shares = params.shares ?? scenario?.shares ?? null;
+  let shares = params.shares ?? fallbackShares ?? null;
   if ((shares == null || shares <= 0) && sharePrice != null && sharePrice > 0) {
     if (investmentUsd != null && investmentUsd > 0) {
       shares = roundScenarioValue(investmentUsd / sharePrice);
@@ -353,6 +439,139 @@ export function resolveEffectiveScenarioParams(
     investmentUsd,
     shares,
   };
+}
+
+export function resolveEffectiveSnowballParams(
+  params: DividendSnowballParams,
+  options: {
+    marketSharePrice?: number | null;
+    heldShares?: number;
+    scenario?: DividendHistoryContext["scenario"] | null;
+  } = {},
+): DividendSnowballParams {
+  const { scenario = null, ...rest } = options;
+  return resolveEffectivePositionParams(params, {
+    ...rest,
+    fallbackShares: scenario?.shares ?? null,
+    fallbackInvestmentUsd: scenario?.investmentUsd ?? null,
+  });
+}
+
+export function resolveEffectiveBacktestParams(
+  params: DividendBacktestParams,
+  options: {
+    marketSharePrice?: number | null;
+    heldShares?: number;
+  } = {},
+): DividendBacktestParams {
+  return resolveEffectivePositionParams(params, options);
+}
+
+export function snowballParamsMatch(
+  draft: DividendSnowballParams,
+  applied: DividendSnowballParams,
+  options: {
+    marketSharePrice?: number | null;
+    heldShares?: number;
+  } = {},
+): boolean {
+  const left = resolveEffectiveSnowballParams(draft, options);
+  const right = resolveEffectiveSnowballParams(applied, options);
+  return (
+    left.investmentUsd === right.investmentUsd &&
+    left.shares === right.shares &&
+    (left.sharePrice ?? null) === (right.sharePrice ?? null) &&
+    (left.reinvestDividends ?? true) === (right.reinvestDividends ?? true) &&
+    (left.projectYears ?? 10) === (right.projectYears ?? 10) &&
+    (left.annualContributionUsd ?? 0) === (right.annualContributionUsd ?? 0) &&
+    (left.priceCagrPct ?? null) === (right.priceCagrPct ?? null)
+  );
+}
+
+export function backtestParamsMatch(
+  draft: DividendBacktestParams,
+  applied: DividendBacktestParams,
+  options: {
+    marketSharePrice?: number | null;
+    heldShares?: number;
+  } = {},
+): boolean {
+  const left = resolveEffectiveBacktestParams(draft, options);
+  const right = resolveEffectiveBacktestParams(applied, options);
+  return (
+    left.investmentUsd === right.investmentUsd &&
+    left.shares === right.shares &&
+    (left.sharePrice ?? null) === (right.sharePrice ?? null) &&
+    (left.reinvestDividends ?? true) === (right.reinvestDividends ?? true) &&
+    (left.annualContributionUsd ?? 0) === (right.annualContributionUsd ?? 0) &&
+    (left.priceCagrPct ?? null) === (right.priceCagrPct ?? null) &&
+    (left.historyStartYear ?? null) === (right.historyStartYear ?? null)
+  );
+}
+
+export function resolveDraftBacktestDisplayParams(
+  draft: DividendBacktestParams,
+  options: {
+    marketSharePrice?: number | null;
+    heldShares?: number;
+    priceCagrPct?: number | null;
+    completedYears: number[];
+    appliedBacktest?: DividendHistoryContext["historicalBacktest"] | null;
+  },
+): DividendBacktestParams {
+  const endYear =
+    options.completedYears.at(-1) ?? options.appliedBacktest?.endYear ?? null;
+  if (endYear == null) {
+    return resolveEffectiveBacktestParams(draft, options);
+  }
+
+  const startYear =
+    draft.historyStartYear ??
+    options.appliedBacktest?.startYear ??
+    historyStartYearForLookback(options.completedYears, 10) ??
+    endYear;
+
+  const modeledSharePriceAtStart =
+    options.appliedBacktest &&
+    startYear === options.appliedBacktest.startYear
+      ? (options.appliedBacktest.drip?.sharePriceAtStart ?? null)
+      : null;
+
+  return resolveBacktestDisplayParams(draft, {
+    marketSharePrice: options.marketSharePrice,
+    heldShares: options.heldShares,
+    priceCagrPct: options.priceCagrPct,
+    startYear,
+    endYear,
+    modeledSharePriceAtStart,
+  });
+}
+
+export function dividendScenarioInputsValid(
+  params: DividendPositionParams,
+  marketSharePrice?: number | null,
+): boolean {
+  const sharePrice = params.sharePrice ?? marketSharePrice ?? null;
+  if (sharePrice == null || sharePrice <= 0) return false;
+
+  const investmentUsd = params.investmentUsd ?? null;
+  const shares = params.shares ?? null;
+  return (
+    (investmentUsd != null && investmentUsd > 0) ||
+    (shares != null && shares > 0)
+  );
+}
+
+/** @deprecated Use resolveEffectiveSnowballParams or resolveEffectiveBacktestParams */
+export function resolveEffectiveScenarioParams(
+  params: DividendFetchParams,
+  options: {
+    marketSharePrice?: number | null;
+    heldShares?: number;
+    scenario?: DividendHistoryContext["scenario"] | null;
+  } = {},
+): DividendFetchParams {
+  return resolveEffectiveSnowballParams(params, options);
 }
 
 /** Client-side projection so portfolio metrics stay in sync with DRIP toggle. */
@@ -403,6 +622,7 @@ export function resolveSnowballAdvancedMetrics(
   let shareCount = shares;
   let totalReinvested = 0;
   let totalContributions = 0;
+  let totalProjectedDividends = 0;
 
   for (let offset = 0; offset <= projectYears; offset += 1) {
     if (offset > 0 && contribution > 0 && price > 0) {
@@ -412,6 +632,7 @@ export function resolveSnowballAdvancedMetrics(
 
     const yearDps = baseDps * (1 + divRate) ** offset;
     const dividendCash = yearDps * shareCount;
+    totalProjectedDividends += dividendCash;
 
     if (reinvestDividends && offset < projectYears && price > 0) {
       shareCount += dividendCash / price;
@@ -436,6 +657,7 @@ export function resolveSnowballAdvancedMetrics(
     portfolioValueLatest: roundSnowballMetric(shareCount * price),
     totalDividendsReinvested: roundSnowballMetric(totalReinvested),
     totalAnnualContributionsUsd: roundSnowballMetric(totalContributions),
+    totalProjectedDividends: roundSnowballMetric(totalProjectedDividends),
   };
 }
 
@@ -556,8 +778,9 @@ export function normalizeDividendHistoryContext(
 export function getCachedDividendHistory(
   symbol: string,
   params: DividendFetchParams = {},
+  variant: DividendHistoryVariant = "snowball",
 ): DividendHistoryContext | null {
-  const key = scenarioCacheKey(symbol, params);
+  const key = scenarioCacheKey(symbol, params, variant);
   const memory = memoryCache.get(key);
   if (memory) return memory;
 
@@ -615,11 +838,19 @@ export function resolveCurrentYieldPct(
   return null;
 }
 
-function buildQueryParams(symbol: string, params: DividendFetchParams): URLSearchParams {
+function buildQueryParams(
+  symbol: string,
+  params: DividendFetchParams,
+  variant: DividendHistoryVariant,
+): URLSearchParams {
   const query = new URLSearchParams({
     symbol: normalizeKey(symbol),
     shares: String(resolveDividendScenarioShares(params)),
   });
+
+  if (variant === "base") {
+    return query;
+  }
 
   if (params.sharePrice != null && params.sharePrice > 0) {
     query.set("share_price", String(params.sharePrice));
@@ -633,18 +864,30 @@ function buildQueryParams(symbol: string, params: DividendFetchParams): URLSearc
   if (params.priceCagrPct != null && Number.isFinite(params.priceCagrPct)) {
     query.set("price_cagr_pct", String(params.priceCagrPct));
   }
-  if (params.projectYears != null && Number.isFinite(params.projectYears)) {
-    query.set("project_years", String(Math.round(params.projectYears)));
-  }
-  if (params.dividendCagrPct != null && Number.isFinite(params.dividendCagrPct)) {
-    query.set("dividend_cagr_pct", String(params.dividendCagrPct));
-  }
   if (
     params.annualContributionUsd != null &&
     Number.isFinite(params.annualContributionUsd) &&
     params.annualContributionUsd > 0
   ) {
     query.set("annual_contribution_usd", String(params.annualContributionUsd));
+  }
+
+  if (variant === "snowball") {
+    if (params.projectYears != null && Number.isFinite(params.projectYears)) {
+      query.set("project_years", String(Math.round(params.projectYears)));
+    }
+    if (params.dividendCagrPct != null && Number.isFinite(params.dividendCagrPct)) {
+      query.set("dividend_cagr_pct", String(params.dividendCagrPct));
+    }
+  }
+
+  if (variant === "backtest") {
+    if (
+      params.historyStartYear != null &&
+      Number.isFinite(params.historyStartYear)
+    ) {
+      query.set("history_start_year", String(Math.round(params.historyStartYear)));
+    }
   }
 
   return query;
@@ -654,9 +897,10 @@ async function fetchDividendHistoryFromApi(
   symbol: string,
   accessToken: string,
   params: DividendFetchParams,
+  variant: DividendHistoryVariant,
 ): Promise<DividendHistoryContext | null> {
   try {
-    const query = buildQueryParams(symbol, params);
+    const query = buildQueryParams(symbol, params, variant);
     const res = await apiFetch(`/research/dividends?${query.toString()}`, {
       method: "GET",
       accessToken,
@@ -673,7 +917,7 @@ async function fetchDividendHistoryFromApi(
       throw new Error("Dividend history response was invalid.");
     }
 
-    const key = scenarioCacheKey(symbol, params);
+    const key = scenarioCacheKey(symbol, params, variant);
     memoryCache.set(key, data);
 
     const store = readPersistentStore();
@@ -693,15 +937,16 @@ export async function fetchDividendHistory(
   symbol: string,
   accessToken: string,
   params: DividendFetchParams = {},
+  variant: DividendHistoryVariant = "snowball",
 ): Promise<DividendHistoryContext | null> {
-  const key = scenarioCacheKey(symbol, params);
-  const cached = getCachedDividendHistory(symbol, params);
+  const key = scenarioCacheKey(symbol, params, variant);
+  const cached = getCachedDividendHistory(symbol, params, variant);
   if (cached) return cached;
 
   const inflight = inflightRequests.get(key);
   if (inflight) return inflight;
 
-  const request = fetchDividendHistoryFromApi(symbol, accessToken, params).finally(
+  const request = fetchDividendHistoryFromApi(symbol, accessToken, params, variant).finally(
     () => {
       inflightRequests.delete(key);
     },
@@ -731,4 +976,31 @@ export function defaultDividendInvestmentUsd(
     return Math.round(DEFAULT_SHARES * sharePrice);
   }
   return 10_000;
+}
+
+export function completedDividendYears(
+  history: DividendHistoryContext,
+): number[] {
+  return history.annualIncome
+    .filter((row) => !row.isPartialYear)
+    .map((row) => row.year)
+    .sort((left, right) => left - right);
+}
+
+export function defaultHistoryStartYear(completedYears: number[]): number | null {
+  if (completedYears.length === 0) return null;
+  const endYear = completedYears[completedYears.length - 1];
+  const firstYear = completedYears[0];
+  return Math.max(firstYear, endYear - 9);
+}
+
+export function historyStartYearForLookback(
+  completedYears: number[],
+  lookbackYears: number,
+): number | null {
+  if (completedYears.length === 0) return null;
+  const endYear = completedYears[completedYears.length - 1];
+  const firstYear = completedYears[0];
+  const span = Math.max(1, Math.round(lookbackYears));
+  return Math.max(firstYear, endYear - (span - 1));
 }

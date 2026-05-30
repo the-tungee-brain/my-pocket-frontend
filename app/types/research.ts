@@ -56,11 +56,13 @@ export type DividendAdvancedSnowballScenario = {
   portfolioValueLatest: number;
   totalDividendsReinvested: number;
   totalAnnualContributionsUsd?: number;
+  totalProjectedDividends?: number;
 };
 
 export type DividendHistoricalBacktest = {
   startYear: number;
   endYear: number;
+  initialShares: number;
   cashCollected: number;
   cashCollectedAnnual: number;
   drip?: DividendAdvancedSnowballScenario | null;
@@ -82,17 +84,31 @@ export type DividendSnowballScenario = {
 
 export const DIVIDEND_PROJECTION_YEAR_PRESETS = [5, 10, 15, 20, 25, 30] as const;
 
-export type DividendScenarioParams = {
+/** Historic replay windows — capped by typical dividend history depth. */
+export const DIVIDEND_BACKTEST_YEAR_PRESETS = [5, 10, 15] as const;
+
+export type DividendPositionParams = {
   investmentUsd?: number | null;
   sharePrice?: number | null;
   shares?: number | null;
-  projectYears?: number | null;
-  dividendCagrPct?: number | null;
   reinvestDividends?: boolean;
   priceCagrPct?: number | null;
-  /** New cash added at the start of each year after the first (projection). */
+  /** New cash added at the start of each year after the first. */
   annualContributionUsd?: number | null;
 };
+
+export type DividendSnowballParams = DividendPositionParams & {
+  projectYears?: number | null;
+  dividendCagrPct?: number | null;
+};
+
+export type DividendBacktestParams = DividendPositionParams & {
+  /** First year for the historical dividend backtest window. */
+  historyStartYear?: number | null;
+};
+
+/** @deprecated Use DividendSnowballParams or DividendBacktestParams */
+export type DividendScenarioParams = DividendSnowballParams & DividendBacktestParams;
 
 export type DividendHistoryContext = {
   ticker: string;

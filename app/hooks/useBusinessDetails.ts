@@ -19,11 +19,12 @@ const businessDetailsCache = new Map<string, BusinessBlock>();
 
 type UseBusinessDetailsOptions = {
   accessToken?: string | null;
+  enabled?: boolean;
 };
 
 export function useBusinessDetails(
   symbol: string | null,
-  { accessToken }: UseBusinessDetailsOptions = {},
+  { accessToken, enabled = true }: UseBusinessDetailsOptions = {},
 ) {
   const [business, setBusiness] = useState<BusinessBlock | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(!!symbol);
@@ -40,6 +41,13 @@ export function useBusinessDetails(
     }
 
     const symbolKey = key;
+
+    if (!enabled) {
+      setBusiness(null);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
 
     if (!accessToken) {
       setBusiness(null);
@@ -102,7 +110,7 @@ export function useBusinessDetails(
     return () => {
       controller.abort();
     };
-  }, [symbol, accessToken]);
+  }, [symbol, accessToken, enabled]);
 
   return { business, isLoading, error };
 }
