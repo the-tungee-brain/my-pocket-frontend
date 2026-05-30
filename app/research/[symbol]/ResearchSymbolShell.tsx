@@ -24,6 +24,7 @@ import { pageShellClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 import { ResearchOverviewProvider } from "@/app/research/ResearchOverviewContext";
 import { ResearchDataAsOfLabel } from "@/app/research/ResearchDataAsOfLabel";
+import { TickerKeyStats } from "@/components/TickerKeyStats";
 import {
   ResearchAssetTypeProvider,
   useResearchAssetTypeContext,
@@ -71,6 +72,11 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
       has_position: hasPosition,
     });
   }, [symbol, symbolUpper, activeTab, hasPosition]);
+
+  useEffect(() => {
+    const root = document.getElementById("main-content");
+    root?.scrollTo({ top: 0 });
+  }, [pathname]);
 
   useEffect(() => {
     const root = document.getElementById("main-content");
@@ -132,6 +138,9 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
             showOptionsTab={showOptionsTab}
             showWheelBacktestTab={showWheelBacktestTab}
           />
+          {!collapsed && activeTab !== "overview" ? (
+            <TickerKeyStats symbol={symbol} compact />
+          ) : null}
           {scrollCollapsed ? (
             <button
               type="button"

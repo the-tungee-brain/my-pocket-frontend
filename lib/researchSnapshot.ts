@@ -8,12 +8,17 @@ export type ResearchSnapshot = {
   price: number;
   changePct: number;
   marketCap: string;
-  range52w: string;
+  range52w?: string | null;
   logo?: string;
   weburl?: string;
+  dividendYieldPct?: number | null;
+  peRatio?: number | null;
+  volume?: number | null;
+  avgVolume?: number | null;
+  expenseRatioPct?: number | null;
 };
 
-const STORAGE_KEY = "powerpocket-research-snapshots";
+const STORAGE_KEY = "powerpocket-research-snapshots-v2";
 const LEGACY_SESSION_KEY = "powerpocket-research-snapshots";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -43,6 +48,41 @@ function readPersistentStore(): Record<string, StoredEntry> {
   } catch {
     return {};
   }
+}
+
+function readNumber(value: unknown): number | null {
+  if (value == null) return null;
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeSnapshot(data: Record<string, unknown>): ResearchSnapshot {
+  return {
+    symbol: String(data.symbol ?? ""),
+    name: String(data.name ?? ""),
+    sector: String(data.sector ?? ""),
+    country: String(data.country ?? ""),
+    price: readNumber(data.price) ?? 0,
+    changePct: readNumber(data.changePct ?? data.change_pct) ?? 0,
+    marketCap: String(data.marketCap ?? data.market_cap ?? "N/A"),
+    range52w:
+      typeof data.range52w === "string"
+        ? data.range52w
+        : typeof data.range_52w === "string"
+          ? data.range_52w
+          : null,
+    logo: typeof data.logo === "string" ? data.logo : undefined,
+    weburl: typeof data.weburl === "string" ? data.weburl : undefined,
+    dividendYieldPct: readNumber(
+      data.dividendYieldPct ?? data.dividend_yield_pct,
+    ),
+    peRatio: readNumber(data.peRatio ?? data.pe_ratio),
+    volume: readNumber(data.volume),
+    avgVolume: readNumber(data.avgVolume ?? data.avg_volume),
+    expenseRatioPct: readNumber(
+      data.expenseRatioPct ?? data.expense_ratio_pct,
+    ),
+  };
 }
 
 function migrateLegacySessionStore(): Record<string, StoredEntry> {
@@ -112,6 +152,16 @@ export function getCachedResearchSnapshot(
   return null;
 }
 
+export function seedResearchSnapshotCache(
+  symbol: string,
+  snapshot: ResearchSnapshot,
+): void {
+  const key = normalizeKey(symbol);
+  if (!key) return;
+  memoryCache.set(key, snapshot);
+  savePersistentEntry(key, snapshot);
+}
+
 async function fetchResearchSnapshotFromApi(
   key: string,
   accessToken: string,
@@ -127,7 +177,12 @@ async function fetchResearchSnapshotFromApi(
 
     if (!res.ok) return null;
 
-    const data: ResearchSnapshot = await res.json();
+    const raw: unknown = await res.json();
+    const data = normalizeSnapshot(
+      raw && typeof raw === "object" && !Array.isArray(raw)
+        ? (raw as Record<string, unknown>)
+        : {},
+    );
     memoryCache.set(key, data);
     savePersistentEntry(key, data);
     return data;

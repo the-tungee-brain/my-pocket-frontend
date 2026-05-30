@@ -5,6 +5,7 @@ import { seedEtfHoldingsCache } from "@/lib/etfHoldings";
 import { seedPerformanceCache } from "@/app/hooks/usePerformance";
 import { seedStreetAnalysisCache } from "@/app/hooks/useStreetAnalysis";
 import { seedEtfFundsCache } from "@/app/hooks/useEtfFunds";
+import { seedResearchSnapshotCache } from "@/lib/researchSnapshot";
 
 export function seedResearchOverviewCaches(bundle: ResearchOverviewBundle) {
   const key = bundle.symbol.toUpperCase();
@@ -25,5 +26,8 @@ export function seedResearchOverviewCaches(bundle: ResearchOverviewBundle) {
   }
   if (bundle.etfHoldings) {
     seedEtfHoldingsCache(key, bundle.etfHoldings);
+  }
+  if (bundle.snapshot) {
+    seedResearchSnapshotCache(key, bundle.snapshot);
   }
 }

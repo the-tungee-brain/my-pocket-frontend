@@ -26,6 +26,9 @@ type ScrollSpyContextValue = {
 
 const ScrollSpyContext = createContext<ScrollSpyContextValue | null>(null);
 
+/** Match sticky research header + in-page sub-nav offset. */
+const ACTIVE_SECTION_OFFSET_PX = 120;
+
 type ResearchScrollSpyProps = {
   children: ReactNode;
   className?: string;
@@ -43,7 +46,7 @@ export function ResearchScrollSpy({
   const navId = useId();
   const [sections, setSections] = useState<ScrollSpySection[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const sectionElementsRef = useRef<Map<string, HTMLElement>>(new Map());
+  const sectionsRef = useRef<ScrollSpySection[]>([]);
 
   const register = useCallback((section: ScrollSpySection) => {
     setSections((prev) => {
@@ -54,7 +57,6 @@ export function ResearchScrollSpy({
 
   const unregister = useCallback((id: string) => {
     setSections((prev) => prev.filter((item) => item.id !== id));
-    sectionElementsRef.current.delete(id);
   }, []);
 
   const contextValue = useMemo(
@@ -62,54 +64,59 @@ export function ResearchScrollSpy({
     [register, unregister],
   );
 
+  sectionsRef.current = sections;
+
+  const syncActiveSection = useCallback(() => {
+    const currentSections = sectionsRef.current;
+    if (currentSections.length === 0) return;
+
+    const root = document.getElementById(scrollRootId);
+    const rootTop = root?.getBoundingClientRect().top ?? 0;
+    const triggerY = rootTop + ACTIVE_SECTION_OFFSET_PX;
+
+    let nextActive = currentSections[0].id;
+    for (const section of currentSections) {
+      const element = document.getElementById(section.id);
+      if (!element) continue;
+      if (element.getBoundingClientRect().top <= triggerY) {
+        nextActive = section.id;
+      }
+    }
+
+    setActiveId(nextActive);
+  }, [scrollRootId]);
+
+  useEffect(() => {
+    if (sections.length === 0) {
+      setActiveId(null);
+      return;
+    }
+
+    setActiveId((current) =>
+      current != null && sections.some((section) => section.id === current)
+        ? current
+        : sections[0].id,
+    );
+  }, [sections]);
+
   useEffect(() => {
     const root = document.getElementById(scrollRootId);
     if (!root || sections.length === 0) return;
 
-    const visible = new Map<string, number>();
+    const runSync = () => syncActiveSection();
+    runSync();
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const id = entry.target.id;
-          if (!id) continue;
-          if (entry.isIntersecting) {
-            visible.set(id, entry.intersectionRatio);
-          } else {
-            visible.delete(id);
-          }
-        }
+    root.addEventListener("scroll", runSync, { passive: true });
+    window.addEventListener("resize", runSync);
 
-        if (visible.size === 0) return;
+    const frame = window.requestAnimationFrame(runSync);
 
-        let bestId: string | null = null;
-        let bestRatio = -1;
-        for (const [id, ratio] of visible) {
-          if (ratio > bestRatio) {
-            bestRatio = ratio;
-            bestId = id;
-          }
-        }
-
-        if (bestId) setActiveId(bestId);
-      },
-      {
-        root,
-        rootMargin: "-20% 0px -55% 0px",
-        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
-      },
-    );
-
-    for (const section of sections) {
-      const element = document.getElementById(section.id);
-      if (element) {
-        sectionElementsRef.current.set(section.id, element);
-        observer.observe(element);
-      }
-    }
-
-    return () => observer.disconnect();
-  }, [scrollRootId, sections]);
+    return () => {
+      root.removeEventListener("scroll", runSync);
+      window.removeEventListener("resize", runSync);
+      window.cancelAnimationFrame(frame);
+    };
+  }, [scrollRootId, sections, syncActiveSection]);
 
   const scrollToSection = (id: string) => {
     const target = document.getElementById(id);
