@@ -80,6 +80,9 @@ export function getChatModelOptions(
 }
 
 export function getDefaultChatModel(plan?: AccountPlan | null): string {
+  if (plan?.isPaid) {
+    return plan.defaultModel ?? "gpt-5.4";
+  }
   return plan?.freeModel ?? DEFAULT_CHAT_MODEL;
 }
 

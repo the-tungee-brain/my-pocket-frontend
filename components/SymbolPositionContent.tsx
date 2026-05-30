@@ -22,8 +22,9 @@ import { symbolChatKey } from "@/lib/chatKeys";
 import { scrollToChat } from "@/lib/scrollToChat";
 import { shouldShowOptionsTab } from "@/lib/symbolOptions";
 import { BriefcaseBusiness } from "lucide-react";
+import { appStackClass } from "@/lib/appUi";
 import { pageSectionClass } from "@/lib/pageLayout";
-import { PageSplit } from "@/components/PageShell";
+import { cn } from "@/lib/utils";
 
 type Props = {
   symbol: string;
@@ -116,59 +117,54 @@ export function SymbolPositionContent({ symbol }: Props) {
     );
   }
 
+  const panelClass = cn(pageSectionClass, "w-full max-w-none");
+  const showAside = taxItems.length > 0 || symbolAlerts.length > 0;
+
   return (
-    <>
-      {error && <ErrorBanner message={error} className="mb-3" />}
+    <div className={cn(appStackClass, "w-full max-w-none")}>
+      {error && <ErrorBanner message={error} />}
 
-      <PageSplit
-        main={
-          <>
-            {showOptionsPrompt && (
-              <OptionsTabPrompt
-                symbol={symbolUpper}
-                className={pageSectionClass}
-              />
-            )}
-
-            <AnalysisPanel
-              mode="symbol"
-              symbol={symbolUpper}
-              positions={positionsForSelectedSymbol}
-              className={pageSectionClass}
-              onAskFollowUp={handleAskFollowUp}
+      {showAside ? (
+        <>
+          {taxItems.length > 0 && (
+            <TaxWashSaleStrip
+              className={panelClass}
+              items={taxItems}
+              onRun={handleTaxAlert}
             />
+          )}
 
-            {accessToken && (
-              <RecentActivitySection
-                className={pageSectionClass}
-                accessToken={accessToken}
-                symbol={symbolUpper}
-                onRunSuggestedAction={handleSuggestedAction}
-              />
-            )}
-          </>
-        }
-        aside={
-          taxItems.length > 0 || symbolAlerts.length > 0 ? (
-            <>
-              {taxItems.length > 0 && (
-                <TaxWashSaleStrip
-                  className={pageSectionClass}
-                  items={taxItems}
-                  onRun={handleTaxAlert}
-                />
-              )}
+          {symbolAlerts.length > 0 && (
+            <SymbolAlertStrip
+              className={panelClass}
+              symbol={symbolUpper}
+              alerts={symbolAlerts}
+              onRunAlert={handleRunAlert}
+            />
+          )}
+        </>
+      ) : null}
 
-              <SymbolAlertStrip
-                className={pageSectionClass}
-                symbol={symbolUpper}
-                alerts={symbolAlerts}
-                onRunAlert={handleRunAlert}
-              />
-            </>
-          ) : undefined
-        }
+      {showOptionsPrompt && (
+        <OptionsTabPrompt symbol={symbolUpper} className={panelClass} />
+      )}
+
+      <AnalysisPanel
+        mode="symbol"
+        symbol={symbolUpper}
+        positions={positionsForSelectedSymbol}
+        className={panelClass}
+        onAskFollowUp={handleAskFollowUp}
       />
-    </>
+
+      {accessToken && (
+        <RecentActivitySection
+          className={panelClass}
+          accessToken={accessToken}
+          symbol={symbolUpper}
+          onRunSuggestedAction={handleSuggestedAction}
+        />
+      )}
+    </div>
   );
 }
