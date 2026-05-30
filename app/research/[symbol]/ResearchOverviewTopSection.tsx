@@ -11,7 +11,7 @@ import {
 import { PageSplit } from "@/components/PageShell";
 import type { IntelligenceSignal } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
-import { pageSectionClass } from "@/lib/pageLayout";
+import { pageSectionClass, pageOverviewAsideClass, pageOverviewMainClass, pageOverviewSplitClass } from "@/lib/pageLayout";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
@@ -65,6 +65,9 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
   return (
     <div className="space-y-6">
       <PageSplit
+        splitClassName={pageOverviewSplitClass}
+        mainClassName={pageOverviewMainClass}
+        asideClassName={pageOverviewAsideClass}
         main={
           <>
             <ResearchStockChart symbol={symbol} />

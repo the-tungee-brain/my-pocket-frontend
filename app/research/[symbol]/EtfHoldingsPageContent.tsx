@@ -129,6 +129,7 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
             holdingsLimit={limit}
             showHoldingsFooter={false}
             stacked
+            sectorDonutVariant="interactive"
           />
           {holdings.holdings.length < holdings.total_holdings ? (
             <p className="mt-4 border-t border-border pt-3 text-xs text-muted">

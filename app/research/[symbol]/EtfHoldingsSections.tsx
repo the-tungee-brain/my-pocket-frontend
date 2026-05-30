@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { EtfHoldingItem, EtfHoldingsContext } from "@/app/types/research";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
@@ -89,7 +90,17 @@ function buildSectorSlices(
   }));
 }
 
-function EtfSectorDonut({ slices }: { slices: SectorSlice[] }) {
+type SectorDonutVariant = "preview" | "interactive";
+
+function EtfSectorDonut({
+  slices,
+  variant = "preview",
+}: {
+  slices: SectorSlice[];
+  variant?: SectorDonutVariant;
+}) {
+  const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
+  const isLarge = variant === "interactive";
   const total = slices.reduce((sum, slice) => sum + slice.weight, 0);
   const cx = 50;
   const cy = 50;
@@ -113,53 +124,113 @@ function EtfSectorDonut({ slices }: { slices: SectorSlice[] }) {
     ];
   });
 
-  const largest = slices[0];
+  const defaultSlice = slices[0];
+  const activeSlice =
+    slices.find((slice) => slice.label === hoveredLabel) ?? defaultSlice;
 
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-      <div className="relative shrink-0">
+      <div
+        className="relative shrink-0"
+        onMouseLeave={() => setHoveredLabel(null)}
+      >
         <svg
           viewBox="0 0 100 100"
-          className="h-32 w-32"
-          role="img"
-          aria-label="Sector allocation chart"
+          className={isLarge ? "h-56 w-56 sm:h-64 sm:w-64" : "h-40 w-40"}
+          role="group"
+          aria-label="Sector allocation chart. Hover slices for details."
         >
-          {paths.map((slice) => (
-            <path
-              key={slice.label}
-              d={slice.d}
-              fill={slice.color}
-              stroke="var(--background)"
-              strokeWidth="0.75"
-            />
-          ))}
+          {paths.map((slice) => {
+            const isActive = hoveredLabel === slice.label;
+            const isDimmed = hoveredLabel != null && !isActive;
+
+            return (
+              <path
+                key={slice.label}
+                d={slice.d}
+                fill={slice.color}
+                stroke="var(--background)"
+                strokeWidth={isActive ? 1 : 0.75}
+                opacity={isDimmed ? 0.35 : 1}
+                className="cursor-pointer transition-[opacity,stroke-width] duration-150 ease-out"
+                onMouseEnter={() => setHoveredLabel(slice.label)}
+                onFocus={() => setHoveredLabel(slice.label)}
+                onBlur={() => setHoveredLabel(null)}
+                tabIndex={0}
+                role="button"
+                aria-label={`${slice.label}, ${slice.weight.toFixed(2)} percent`}
+              />
+            );
+          })}
         </svg>
-        {largest ? (
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
-            <span className="max-w-[4.5rem] truncate text-[9px] font-medium text-muted">
-              {largest.label}
+        {activeSlice ? (
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center",
+              isLarge ? "px-8" : "px-5",
+            )}
+          >
+            <span
+              className={cn(
+                "truncate font-medium text-muted",
+                isLarge
+                  ? "max-w-[7.5rem] text-xs"
+                  : "max-w-[5.5rem] text-[10px]",
+              )}
+            >
+              {activeSlice.label}
             </span>
-            <span className="text-sm font-semibold tabular-nums text-foreground">
-              {largest.weight.toFixed(1)}%
+            <span
+              className={cn(
+                "font-semibold tabular-nums text-foreground",
+                isLarge ? "text-xl" : "text-base",
+              )}
+            >
+              {activeSlice.weight.toFixed(hoveredLabel ? 2 : 1)}%
             </span>
           </div>
         ) : null}
+        <p className="sr-only" aria-live="polite">
+          {activeSlice
+            ? `${activeSlice.label}, ${activeSlice.weight.toFixed(2)} percent`
+            : ""}
+        </p>
       </div>
       <ul className="min-w-0 flex-1 space-y-1.5">
-        {slices.map((slice) => (
-          <li key={slice.label} className="flex items-center gap-2 text-xs">
-            <span
-              className="h-2 w-2 shrink-0 rounded-full"
-              style={{ backgroundColor: slice.color }}
-            />
-            <span className="min-w-0 flex-1 truncate text-foreground">
-              {slice.label}
-            </span>
-            <span className="shrink-0 tabular-nums text-muted">
-              {slice.weight.toFixed(2)}%
-            </span>
-          </li>
-        ))}
+        {slices.map((slice) => {
+          const isActive = hoveredLabel === slice.label;
+
+          return (
+            <li
+              key={slice.label}
+              className={cn(
+                "flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-xs transition-colors duration-150",
+                isActive && "bg-muted-bg/70",
+              )}
+              onMouseEnter={() => setHoveredLabel(slice.label)}
+              onMouseLeave={() => setHoveredLabel(null)}
+            >
+              <span
+                className={cn(
+                  "h-2 w-2 shrink-0 rounded-full transition-transform duration-150",
+                  isActive && "scale-125",
+                )}
+                style={{ backgroundColor: slice.color }}
+              />
+              <span
+                className={cn(
+                  "min-w-0 flex-1 truncate text-foreground",
+                  !isActive && "text-foreground/90",
+                )}
+              >
+                {slice.label}
+              </span>
+              <span className="shrink-0 tabular-nums text-muted">
+                {slice.weight.toFixed(2)}%
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -220,9 +291,14 @@ function EtfWeightBarList({ items }: { items: WeightBarItem[] }) {
 type SectorProps = {
   breakdown: Record<string, number>;
   limit?: number;
+  variant?: SectorDonutVariant;
 };
 
-export function EtfSectorBreakdown({ breakdown, limit = 8 }: SectorProps) {
+export function EtfSectorBreakdown({
+  breakdown,
+  limit = 8,
+  variant = "preview",
+}: SectorProps) {
   const slices = buildSectorSlices(breakdown, limit);
 
   if (slices.length === 0) {
@@ -231,7 +307,7 @@ export function EtfSectorBreakdown({ breakdown, limit = 8 }: SectorProps) {
     );
   }
 
-  return <EtfSectorDonut slices={slices} />;
+  return <EtfSectorDonut slices={slices} variant={variant} />;
 }
 
 type HoldingsProps = {
@@ -287,6 +363,7 @@ type CompositionColumnsProps = {
   holdingsLimit?: number;
   showHoldingsFooter?: boolean;
   stacked?: boolean;
+  sectorDonutVariant?: SectorDonutVariant;
 };
 
 export function EtfCompositionSectionLabel({
@@ -309,6 +386,7 @@ export function EtfCompositionColumns({
   holdingsLimit = 8,
   showHoldingsFooter = true,
   stacked = false,
+  sectorDonutVariant = "preview",
 }: CompositionColumnsProps) {
   return (
     <div
@@ -319,7 +397,11 @@ export function EtfCompositionColumns({
     >
       <div className="min-w-0">
         <EtfCompositionSectionLabel>Sector breakdown</EtfCompositionSectionLabel>
-        <EtfSectorBreakdown breakdown={sectorBreakdown} limit={sectorLimit} />
+        <EtfSectorBreakdown
+          breakdown={sectorBreakdown}
+          limit={sectorLimit}
+          variant={sectorDonutVariant}
+        />
       </div>
       <div className="min-w-0">
         <EtfCompositionSectionLabel>Top holdings</EtfCompositionSectionLabel>

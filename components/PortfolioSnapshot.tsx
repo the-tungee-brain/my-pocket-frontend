@@ -173,7 +173,7 @@ export function PortfolioSnapshot({
       </CardHeader>
 
       {isInCall && (
-        <div className="border-b border-danger/30 bg-danger/5 px-5 py-3 text-sm text-danger">
+        <div className="border-y border-danger/30 bg-danger/5 px-5 py-3 text-sm text-danger">
           {maintenanceCall > 0 && (
             <p>Maintenance call: {formatUsd(maintenanceCall)}</p>
           )}

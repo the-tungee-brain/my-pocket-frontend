@@ -27,6 +27,7 @@ type SplitProps = {
   className?: string;
   mainClassName?: string;
   asideClassName?: string;
+  splitClassName?: string;
 };
 
 export function PageSplit({
@@ -35,15 +36,16 @@ export function PageSplit({
   className,
   mainClassName,
   asideClassName,
+  splitClassName,
 }: SplitProps) {
   if (!aside) {
     return <div className={cn(pageMainClass, className)}>{main}</div>;
   }
 
   return (
-    <div className={cn(pageSplitClass, className)}>
-      <div className={cn(pageMainClass, mainClassName)}>{main}</div>
-      <aside className={cn(pageAsideClass, asideClassName)}>{aside}</aside>
+    <div className={cn(splitClassName ?? pageSplitClass, className)}>
+      <div className={cn(mainClassName ?? pageMainClass)}>{main}</div>
+      <aside className={cn(asideClassName ?? pageAsideClass)}>{aside}</aside>
     </div>
   );
 }

@@ -37,7 +37,7 @@ export function ResearchSectionCard({
   );
 
   return (
-    <Card surface="subtle" className={className}>
+    <Card surface="subtle" className={cn("w-full max-w-none", className)}>
       <CardHeader>
         <CardTitle
           title={titleNode}
