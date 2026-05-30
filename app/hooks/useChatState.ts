@@ -27,8 +27,8 @@ import {
 } from "@/lib/chatModelMenu";
 import {
   clampChatModelForPlan,
-  getDefaultChatModel,
   normalizeChatModelId,
+  resolveChatModelForPlan,
 } from "@/lib/chatModels";
 import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import {
@@ -75,7 +75,7 @@ export function useChatState({
   const resolveChatModel = useCallback(
     (model: string | undefined | null) => {
       if (planLoading) return normalizeChatModelId(model, plan);
-      return clampChatModelForPlan(model, plan);
+      return resolveChatModelForPlan(model, plan);
     },
     [plan, planLoading],
   );
@@ -96,7 +96,9 @@ export function useChatState({
     (activeChatKey: string, model: string) => {
       if (activeChatKey === "__NONE__") return;
 
-      const resolvedModel = resolveChatModel(model);
+      const resolvedModel = planLoading
+        ? normalizeChatModelId(model, plan)
+        : clampChatModelForPlan(model, plan);
       clearModelMenuOpenBlock();
 
       setChatBySymbol((prev) => {
@@ -201,9 +203,9 @@ export function useChatState({
       const next = { ...prev };
 
       for (const [key, state] of Object.entries(prev)) {
-        const clamped = clampChatModelForPlan(state.model, plan);
-        if (state.model !== clamped) {
-          next[key] = { ...state, model: clamped };
+        const resolved = resolveChatModelForPlan(state.model, plan);
+        if (state.model !== resolved) {
+          next[key] = { ...state, model: resolved };
           changed = true;
         }
       }

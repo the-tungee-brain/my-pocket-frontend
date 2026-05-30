@@ -17,8 +17,8 @@ import { cn } from "@/lib/utils";
 import { pageShellClass } from "@/lib/pageLayout";
 import { ASSISTANT_CHAT_INPUT_CLASS } from "@/lib/scrollToChat";
 import {
-  getDefaultChatModel,
   getModelButtonLabel,
+  resolveChatModelForPlan,
 } from "@/lib/chatModels";
 import {
   lockMainContentWhileModelMenuOpen,
@@ -83,7 +83,7 @@ export function ChatBox({
   const isChatLoading = !!currentChat?.loading;
   const isBusy = isChatLoading || disabled;
   const canSend = !isBusy && inputValue.trim().length > 0;
-  const selectedModel = currentChat?.model || getDefaultChatModel(plan);
+  const selectedModel = resolveChatModelForPlan(currentChat?.model, plan);
   const modelMenuOpen = !!currentChat?.modelMenuOpen;
   const modelButtonLabel = getModelButtonLabel(selectedModel, plan);
   const modelMenuRef = useRef<HTMLDivElement>(null);

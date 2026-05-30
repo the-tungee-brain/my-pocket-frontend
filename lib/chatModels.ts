@@ -159,6 +159,29 @@ export function normalizeChatModelId(
     : fallback;
 }
 
+export function isLegacyFreeDefaultModel(
+  modelId: string,
+  plan?: AccountPlan | null,
+): boolean {
+  const freeDefault = plan?.freeModel ?? DEFAULT_CHAT_MODEL;
+  return modelId === freeDefault || modelId === DEFAULT_CHAT_MODEL;
+}
+
+/** Pick a chat model from saved state + `/account/plan`, upgrading free defaults for Pro. */
+export function resolveChatModelForPlan(
+  modelId: string | undefined | null,
+  plan?: AccountPlan | null,
+): string {
+  if (plan?.isPaid) {
+    const proDefault = getDefaultChatModel(plan);
+    const trimmed = modelId?.trim();
+    if (!trimmed || isLegacyFreeDefaultModel(trimmed, plan)) {
+      return proDefault;
+    }
+  }
+  return clampChatModelForPlan(modelId, plan);
+}
+
 /** Clamp to server allowlists from `/account/plan`. */
 export function clampChatModelForPlan(
   modelId: string | undefined | null,
