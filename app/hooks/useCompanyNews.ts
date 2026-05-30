@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
 
 export type Sentiment = "bullish" | "bearish" | "neutral";
@@ -37,30 +37,34 @@ export type StockNewsView = {
   investorTakeaway?: string | null;
   deepAnalysis?: string | null;
   items: EnrichedNewsItem[];
-  /** False when the server returned headlines only (free tier). */
+  /** False until the user runs Analyze news (or a cached analysis is returned). */
   aiEnrichment?: boolean;
 };
 
 type CachedNews = {
   data: StockNewsView;
   fetchedAt: number;
+  analyzedAt: number | null;
 };
 
 type UseCompanyNewsResult = {
   analytics: StockNewsView | null;
   isLoading: boolean;
   isRefreshing: boolean;
+  isAnalyzing: boolean;
   error: string | null;
   lastUpdated: number | null;
+  lastAnalyzedAt: number | null;
   refetch: () => void;
   refresh: () => void;
+  analyzeNews: (options?: { refresh?: boolean }) => void;
 };
 
 const newsCache = new Map<string, CachedNews>();
 const SESSION_CACHE_TTL_MS = 60 * 60 * 1000;
 /** In-memory hits younger than this skip a background refetch (server Redis may still be warm). */
 const CLIENT_FRESH_MS = 15 * 60 * 1000;
-const SESSION_STORAGE_PREFIX = "company-news:v1:";
+const SESSION_STORAGE_PREFIX = "company-news:v2:";
 
 type Listener = (data?: StockNewsView, error?: string) => void;
 
@@ -70,10 +74,10 @@ type InFlightNewsEntry = {
 
 const inFlightNews = new Map<string, InFlightNewsEntry>();
 
-function cacheNews(key: string, data: StockNewsView): number {
+function cacheNews(key: string, data: StockNewsView, analyzedAt: number | null): number {
   const fetchedAt = Date.now();
-  newsCache.set(key, { data, fetchedAt });
-  persistSessionCache(key, data, fetchedAt);
+  newsCache.set(key, { data, fetchedAt, analyzedAt });
+  persistSessionCache(key, data, fetchedAt, analyzedAt);
   return fetchedAt;
 }
 
@@ -81,12 +85,13 @@ function persistSessionCache(
   key: string,
   data: StockNewsView,
   fetchedAt: number,
+  analyzedAt: number | null,
 ): void {
   if (typeof window === "undefined") return;
   try {
     sessionStorage.setItem(
       `${SESSION_STORAGE_PREFIX}${key}`,
-      JSON.stringify({ data, fetchedAt } satisfies CachedNews),
+      JSON.stringify({ data, fetchedAt, analyzedAt } satisfies CachedNews),
     );
   } catch {
     // ignore quota / private mode
@@ -117,6 +122,14 @@ function buildCompanyNewsUrl(symbol: string, refresh = false): string {
   return `/get-company-news?${params.toString()}`;
 }
 
+function buildAnalyzeNewsUrl(symbol: string, refresh = false): string {
+  const params = new URLSearchParams({ symbol });
+  if (refresh) {
+    params.set("refresh", "true");
+  }
+  return `/analyze-company-news?${params.toString()}`;
+}
+
 async function fetchCompanyNews(
   symbol: string,
   accessToken: string,
@@ -127,7 +140,22 @@ async function fetchCompanyNews(
     accessToken,
   });
 
-  if (!res.ok) throw new Error("Failed to fetch news analytics");
+  if (!res.ok) throw new Error("Failed to fetch news");
+
+  return res.json();
+}
+
+async function analyzeCompanyNews(
+  symbol: string,
+  accessToken: string,
+  refresh = false,
+): Promise<StockNewsView> {
+  const res = await apiFetch(buildAnalyzeNewsUrl(symbol, refresh), {
+    method: "POST",
+    accessToken,
+  });
+
+  if (!res.ok) throw new Error("Failed to analyze news");
 
   return res.json();
 }
@@ -140,10 +168,12 @@ export function useCompanyNews(
   const [analytics, setAnalytics] = useState<StockNewsView | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [lastAnalyzedAt, setLastAnalyzedAt] = useState<number | null>(null);
 
-  const key = symbol?.toUpperCase();
+  const key = symbol?.trim().toUpperCase();
 
   useEffect(() => {
     if (!key || !accessToken || !enabled) return;
@@ -160,11 +190,11 @@ export function useCompanyNews(
       }
       setAnalytics(cached.data);
       setLastUpdated(cached.fetchedAt);
+      setLastAnalyzedAt(cached.analyzedAt);
       setError(null);
       setIsLoading(false);
     }
 
-    // Fresh session or memory cache: no background refetch on tab mount.
     if (cacheIsFresh) {
       return;
     }
@@ -185,8 +215,10 @@ export function useCompanyNews(
           setIsLoading(false);
           setIsRefreshing(false);
         } else if (data) {
+          const stored = newsCache.get(key);
           setAnalytics(data);
-          setLastUpdated(newsCache.get(key)?.fetchedAt ?? null);
+          setLastUpdated(stored?.fetchedAt ?? null);
+          setLastAnalyzedAt(stored?.analyzedAt ?? null);
           setError(null);
           setIsLoading(false);
           setIsRefreshing(false);
@@ -216,8 +248,10 @@ export function useCompanyNews(
         setIsLoading(false);
         setIsRefreshing(false);
       } else if (data) {
+        const stored = newsCache.get(key);
         setAnalytics(data);
-        setLastUpdated(newsCache.get(key)?.fetchedAt ?? null);
+        setLastUpdated(stored?.fetchedAt ?? null);
+        setLastAnalyzedAt(stored?.analyzedAt ?? null);
         setError(null);
         setIsLoading(false);
         setIsRefreshing(false);
@@ -226,18 +260,17 @@ export function useCompanyNews(
 
     entry.listeners.add(listener);
 
-    // Stale cache: revalidate silently (no "Updating…" unless user taps refresh).
     (async () => {
       try {
         const data = await fetchCompanyNews(key, accessToken, false);
-        cacheNews(key, data);
+        const analyzedAt = data.aiEnrichment ? Date.now() : null;
+        cacheNews(key, data, analyzedAt);
 
         for (const l of entry!.listeners) {
           l(data);
         }
       } catch (e: unknown) {
-        const msg =
-          e instanceof Error ? e.message : "Error fetching news analytics";
+        const msg = e instanceof Error ? e.message : "Error fetching news";
         for (const l of entry!.listeners) {
           l(undefined, msg);
         }
@@ -252,8 +285,8 @@ export function useCompanyNews(
     };
   }, [key, accessToken, enabled]);
 
-  const refresh = () => {
-    if (!key || !accessToken || isLoading || isRefreshing) return;
+  const refresh = useCallback(() => {
+    if (!key || !accessToken || isLoading || isRefreshing || isAnalyzing) return;
 
     newsCache.delete(key);
     inFlightNews.delete(key);
@@ -271,19 +304,59 @@ export function useCompanyNews(
 
       try {
         const data = await fetchCompanyNews(key, accessToken, true);
-        const fetchedAt = cacheNews(key, data);
+        const analyzedAt = data.aiEnrichment ? Date.now() : null;
+        const fetchedAt = cacheNews(key, data, analyzedAt);
         setAnalytics(data);
         setLastUpdated(fetchedAt);
+        setLastAnalyzedAt(analyzedAt);
         setIsLoading(false);
       } catch (e: unknown) {
-        setError(
-          e instanceof Error ? e.message : "Error fetching news analytics",
-        );
+        setError(e instanceof Error ? e.message : "Error fetching news");
       } finally {
         setIsRefreshing(false);
       }
     })();
-  };
+  }, [accessToken, isAnalyzing, isLoading, isRefreshing, key]);
 
-  return { analytics, isLoading, isRefreshing, error, lastUpdated, refetch: refresh, refresh };
+  const analyzeNews = useCallback(
+    (options?: { refresh?: boolean }) => {
+      if (!key || !accessToken || isAnalyzing) return;
+
+      void (async () => {
+        setIsAnalyzing(true);
+        setError(null);
+
+        try {
+          const data = await analyzeCompanyNews(
+            key,
+            accessToken,
+            options?.refresh ?? false,
+          );
+          const analyzedAt = Date.now();
+          const fetchedAt = cacheNews(key, data, analyzedAt);
+          setAnalytics(data);
+          setLastUpdated(fetchedAt);
+          setLastAnalyzedAt(analyzedAt);
+        } catch (e: unknown) {
+          setError(e instanceof Error ? e.message : "Error analyzing news");
+        } finally {
+          setIsAnalyzing(false);
+        }
+      })();
+    },
+    [accessToken, isAnalyzing, key],
+  );
+
+  return {
+    analytics,
+    isLoading,
+    isRefreshing,
+    isAnalyzing,
+    error,
+    lastUpdated,
+    lastAnalyzedAt,
+    refetch: refresh,
+    refresh,
+    analyzeNews,
+  };
 }

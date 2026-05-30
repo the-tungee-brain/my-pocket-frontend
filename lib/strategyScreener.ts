@@ -1,6 +1,5 @@
 import type { InvestmentStrategy, StrategyScreenerFilters } from "@/app/types/strategy";
 
-/** All GICS sectors supported by Yahoo Finance equity screener. */
 export const ALL_SCREENER_SECTORS = [
   "Basic Materials",
   "Communication Services",

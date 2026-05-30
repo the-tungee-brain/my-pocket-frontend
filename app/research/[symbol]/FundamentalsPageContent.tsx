@@ -119,7 +119,7 @@ export function FundamentalsPageContent({
           <ResearchScrollSpySection id="fundamentals-profile" label="Profile">
             <ResearchSectionCard
               title="Fund profile"
-              description="Composition, sectors, and cost from Yahoo Finance"
+              description="Composition, sectors, and cost"
               icon={PieChart}
             >
               <EtfFundsSection

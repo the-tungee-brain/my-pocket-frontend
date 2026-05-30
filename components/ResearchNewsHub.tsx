@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   ArrowRight,
@@ -15,6 +15,7 @@ import { usePressReleases } from "@/app/hooks/usePressReleases";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { hasProFeature } from "@/lib/planFeatures";
 import NewsAnalytics, {
+  AnalyzeNewsPrompt,
   NewsAsideSections,
   NewsOverviewContent,
 } from "@/components/NewsAnalytics";
@@ -133,15 +134,18 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
   const [scope, setScope] = useState<NewsFeedScope>("all");
   const { data: session } = useSession();
   const { isPaid, plan } = useAccountPlan(session?.accessToken ?? accessToken);
-  const newsAiPlanAllowed = hasProFeature(isPaid, "newsAi", plan);
+  const newsAiAllowed = hasProFeature(isPaid, "newsAi", plan);
 
   const {
     analytics,
     isLoading: coverageLoading,
     isRefreshing: coverageRefreshing,
+    isAnalyzing: coverageAnalyzing,
     error: coverageError,
     lastUpdated: coverageUpdated,
+    lastAnalyzedAt: coverageAnalyzedAt,
     refresh: refreshCoverage,
+    analyzeNews,
   } = useCompanyNews(symbol, accessToken, Boolean(symbol && accessToken));
 
   const {
@@ -149,14 +153,12 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
     isLoading: officialLoading,
     isRefreshing: officialRefreshing,
     error: officialError,
-    lastUpdated: officialUpdated,
     refetch: refetchOfficial,
   } = usePressReleases(symbol, accessToken, {
     enabled: Boolean(symbol && accessToken),
   });
 
-  const showAiNews =
-    newsAiPlanAllowed && (analytics?.aiEnrichment ?? true);
+  const hasAiAnalysis = analytics?.aiEnrichment === true;
 
   const coverageDisplay = useMemo(
     () => (analytics ? analytics.items.map(enrichedNewsItemToDisplay) : []),
@@ -174,54 +176,18 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
   const tabs: ScopeTab[] = useMemo(
     () => [
       { id: "all", label: "All", count: officialCount + coverageCount || null },
-      { id: "official", label: "From company", count: officialCount || null },
       {
         id: "coverage",
         label: "Market coverage",
         count: coverageCount || null,
       },
+      { id: "official", label: "From company", count: officialCount || null },
     ],
     [coverageCount, officialCount],
   );
 
-  const refreshAll = useCallback(() => {
-    refreshCoverage();
-    void refetchOfficial();
-  }, [refetchOfficial, refreshCoverage]);
-
-  const busy =
-    (coverageLoading && !analytics) ||
-    coverageRefreshing ||
-    (officialLoading && officialCount === 0) ||
-    officialRefreshing ||
-    (scope !== "coverage" && !accessToken);
-
-  const latestUpdated = useMemo(() => {
-    const times = [coverageUpdated, officialUpdated].filter(
-      (t): t is number => t != null,
-    );
-    if (!times.length) return null;
-    return Math.max(...times);
-  }, [coverageUpdated, officialUpdated]);
-
   const header = (
-    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <NewsFeedScopeTabs scope={scope} onChange={setScope} tabs={tabs} />
-      <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
-        <FreshnessLabel updatedAt={latestUpdated} pending={busy} />
-        <IconButton
-          size="sm"
-          onClick={refreshAll}
-          disabled={busy || !accessToken}
-          aria-label="Refresh news"
-        >
-          <RefreshCw
-            className={cn("h-3.5 w-3.5", busy && "animate-spin")}
-            aria-hidden
-          />
-        </IconButton>
-      </div>
-    </div>
+    <NewsFeedScopeTabs scope={scope} onChange={setScope} tabs={tabs} />
   );
 
   if (!accessToken) {
@@ -240,14 +206,31 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
         {coverageError ? (
           <ErrorBanner message={coverageError} onRetry={refreshCoverage} />
         ) : null}
-        <NewsAnalytics
-          analytics={analytics}
-          isLoading={coverageLoading}
-          isRefreshing={coverageRefreshing}
-          lastUpdated={coverageUpdated}
-          onRefresh={refreshCoverage}
-          headlinesOnly
-          showAiEnrichment={showAiNews}
+        <PageSplit
+          main={
+            <NewsAnalytics
+              analytics={analytics}
+              isLoading={coverageLoading}
+              isRefreshing={coverageRefreshing}
+              isAnalyzing={coverageAnalyzing}
+              lastUpdated={coverageUpdated}
+              lastAnalyzedAt={coverageAnalyzedAt}
+              onRefresh={refreshCoverage}
+              onAnalyzeNews={newsAiAllowed ? () => analyzeNews() : undefined}
+              headlinesOnly
+              showAiEnrichment={newsAiAllowed}
+            />
+          }
+          aside={
+            <NewsAsideSections
+              data={analytics}
+              loading={coverageLoading && !analytics}
+              refreshing={coverageRefreshing}
+              isAnalyzing={coverageAnalyzing}
+              hasAiAnalysis={hasAiAnalysis}
+              newsAiAllowed={newsAiAllowed}
+            />
+          }
         />
       </div>
     );
@@ -298,24 +281,61 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
             <ResearchSectionCard
               title="AI news brief"
               description={
-                showAiNews && analytics
+                hasAiAnalysis && analytics
                   ? `${coverageCount} stories analyzed`
-                  : showAiNews
-                    ? "Synthesizing recent headlines…"
+                  : newsAiAllowed
+                    ? "Run Analyze news for sentiment and a synthesized brief"
                     : "Pro — synthesized from recent headlines"
               }
               icon={Newspaper}
               bodyClassName="min-w-0"
+              action={
+                <div className="flex shrink-0 items-center gap-2">
+                  <FreshnessLabel
+                    updatedAt={coverageAnalyzedAt}
+                    pending={coverageAnalyzing}
+                    className="hidden sm:inline-flex"
+                  />
+                  <IconButton
+                    size="sm"
+                    onClick={() => analyzeNews({ refresh: true })}
+                    disabled={
+                      !newsAiAllowed ||
+                      !hasAiAnalysis ||
+                      coverageAnalyzing ||
+                      !analytics?.items.length
+                    }
+                    aria-label="Re-analyze news"
+                  >
+                    <RefreshCw
+                      className={cn(
+                        "h-3.5 w-3.5",
+                        coverageAnalyzing && "animate-spin",
+                      )}
+                      aria-hidden
+                    />
+                  </IconButton>
+                </div>
+              }
             >
-              <ProFeatureGate feature="newsAi" allowed={showAiNews}>
+              <ProFeatureGate feature="newsAi" allowed={newsAiAllowed}>
                 <LoadingSurface
-                  loading={showAiNews && coverageLoading && !analytics}
-                  refreshing={showAiNews && coverageRefreshing && !!analytics}
-                  hasContent={!!analytics}
+                  loading={coverageLoading && !analytics}
+                  refreshing={coverageAnalyzing}
+                  hasContent={Boolean(analytics && (hasAiAnalysis || coverageCount > 0))}
                   label="Loading news brief"
                   skeleton={<NewsOverviewLoading />}
                 >
-                  {analytics ? <NewsOverviewContent data={analytics} /> : null}
+                  {hasAiAnalysis && analytics ? (
+                    <NewsOverviewContent data={analytics} />
+                  ) : analytics ? (
+                    <AnalyzeNewsPrompt
+                      storyCount={coverageCount}
+                      isAnalyzing={coverageAnalyzing}
+                      lastAnalyzedAt={coverageAnalyzedAt}
+                      onAnalyze={() => analyzeNews()}
+                    />
+                  ) : null}
                 </LoadingSurface>
               </ProFeatureGate>
             </ResearchSectionCard>
@@ -324,7 +344,7 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
               <ResearchSectionCard
                 title="Market coverage"
                 description={
-                  showAiNews
+                  newsAiAllowed
                     ? "Headlines with AI sentiment and summaries"
                     : "Recent headlines from market coverage"
                 }
@@ -347,8 +367,8 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
                       itemLimit={FEED_PREVIEW_LIMIT}
                       defaultView="grid"
                       hideViewToggle
-                      showSentimentFilters={showAiNews}
-                      showSentiment={showAiNews}
+                      showSentimentFilters={hasAiAnalysis}
+                      showSentiment={hasAiAnalysis}
                       footer={
                         coverageCount > FEED_PREVIEW_LIMIT ? (
                           <ViewAllLink
@@ -406,15 +426,14 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
           </div>
         }
         aside={
-          showAiNews ? (
-            <NewsAsideSections
-              data={analytics}
-              loading={coverageLoading && !analytics}
-              refreshing={coverageRefreshing}
-            />
-          ) : (
-            <ProFeatureGate feature="newsAi" allowed={false} />
-          )
+          <NewsAsideSections
+            data={analytics}
+            loading={coverageLoading && !analytics}
+            refreshing={coverageRefreshing}
+            isAnalyzing={coverageAnalyzing}
+            hasAiAnalysis={hasAiAnalysis}
+            newsAiAllowed={newsAiAllowed}
+          />
         }
       />
     </div>

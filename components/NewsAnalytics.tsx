@@ -9,6 +9,7 @@ import {
   SentimentMixBar,
 } from "@/components/NewsHeadlinesFeed";
 import { PageSplit } from "@/components/PageShell";
+import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import {
   ResearchAtAGlanceBox,
@@ -22,7 +23,10 @@ import {
   NewsOverviewLoading,
 } from "@/components/ui/ContentLoading";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { appCalloutClass, appCalloutLabelClass } from "@/lib/appUi";
+import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 import {
   Activity,
@@ -74,6 +78,47 @@ function actionabilityTone(score: number | null | undefined) {
   if (score >= 4) return "text-success";
   if (score >= 3) return "text-accent-strong";
   return "text-muted";
+}
+
+export function AnalyzeNewsPrompt({
+  storyCount,
+  isAnalyzing = false,
+  lastAnalyzedAt = null,
+  onAnalyze,
+  className,
+}: {
+  storyCount: number;
+  isAnalyzing?: boolean;
+  lastAnalyzedAt?: number | null;
+  onAnalyze?: () => void;
+  className?: string;
+}) {
+  return (
+    <div className={cn(appCalloutClass, className)}>
+      <p className={appCalloutLabelClass}>Ready to analyze</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
+        {storyCount > 0
+          ? "Run AI analysis for sentiment, summaries, and a synthesized brief."
+          : "Headlines will appear above once loaded."}
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          onClick={onAnalyze}
+          disabled={!onAnalyze || isAnalyzing || storyCount === 0}
+          isLoading={isAnalyzing}
+        >
+          Analyze news
+        </Button>
+        {lastAnalyzedAt ? (
+          <span className="text-[11px] text-muted">
+            Last analyzed {formatRelativeUpdatedAt(lastAnalyzedAt)}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 export function NewsOverviewSkeleton() {
@@ -207,21 +252,26 @@ function hasCoverageAnalysis(data: StockNewsView) {
   );
 }
 
-/** Market context + coverage analysis aside — card chrome always visible while loading. */
+/** Market context + coverage analysis aside — card chrome always visible. */
 export function NewsAsideSections({
   data,
   loading,
   refreshing = false,
+  isAnalyzing = false,
+  hasAiAnalysis = false,
+  newsAiAllowed = true,
   className,
 }: {
   data: StockNewsView | null;
   loading: boolean;
   refreshing?: boolean;
+  isAnalyzing?: boolean;
+  hasAiAnalysis?: boolean;
+  newsAiAllowed?: boolean;
   className?: string;
 }) {
-  const hasContext = !!data;
-  const showAnalysisCard =
-    loading || refreshing || (data != null && hasCoverageAnalysis(data));
+  const pending = loading || isAnalyzing || refreshing;
+  const hasContext = newsAiAllowed && hasAiAnalysis && !!data;
 
   return (
     <div className={cn("app-stack", className)}>
@@ -231,35 +281,61 @@ export function NewsAsideSections({
         icon={Activity}
       >
         <LoadingSurface
-          loading={loading}
+          loading={newsAiAllowed && pending}
           refreshing={refreshing}
-          hasContent={hasContext}
+          hasContent={!newsAiAllowed || hasContext}
           label="Loading market context"
           skeleton={<NewsContextLoading />}
         >
-          {data ? <NewsContextAside data={data} /> : null}
+          {!newsAiAllowed ? (
+            <ProFeatureGate
+              feature="newsAi"
+              allowed={false}
+              title="Market context"
+              description="Dominant driver, impact horizon, and actionability from recent headlines."
+            />
+          ) : hasContext && data ? (
+            <NewsContextAside data={data} />
+          ) : (
+            <p className="text-sm leading-relaxed text-muted">
+              Dominant driver, impact horizon, and actionability appear here after
+              you run Analyze news.
+            </p>
+          )}
         </LoadingSurface>
       </ResearchSectionCard>
 
-      {showAnalysisCard ? (
-        <ResearchSectionCard
-          title="Coverage analysis"
-          description="Themes and risks from recent headlines"
-          icon={Sparkles}
+      <ResearchSectionCard
+        title="Coverage analysis"
+        description="Themes and risks from recent headlines"
+        icon={Sparkles}
+      >
+        <LoadingSurface
+          loading={newsAiAllowed && pending}
+          refreshing={refreshing}
+          hasContent={
+            !newsAiAllowed || (hasContext && !!data && hasCoverageAnalysis(data))
+          }
+          label="Loading coverage analysis"
+          skeleton={<NewsAnalysisLoading />}
         >
-          <LoadingSurface
-            loading={loading}
-            refreshing={refreshing}
-            hasContent={!!data && hasCoverageAnalysis(data)}
-            label="Loading coverage analysis"
-            skeleton={<NewsAnalysisLoading />}
-          >
-            {data && hasCoverageAnalysis(data) ? (
-              <NewsAnalysisAside data={data} />
-            ) : null}
-          </LoadingSurface>
-        </ResearchSectionCard>
-      ) : null}
+          {!newsAiAllowed ? (
+            <ProFeatureGate
+              feature="newsAi"
+              allowed={false}
+              title="Coverage analysis"
+              description="Key insights, risks, and deep analysis synthesized from recent headlines."
+            />
+          ) : hasContext && data && hasCoverageAnalysis(data) ? (
+            <NewsAnalysisAside data={data} />
+          ) : (
+            <p className="text-sm leading-relaxed text-muted">
+              Key insights, risks, and deep analysis appear here after you run
+              Analyze news.
+            </p>
+          )}
+        </LoadingSurface>
+      </ResearchSectionCard>
     </div>
   );
 }
@@ -268,8 +344,11 @@ type Props = {
   analytics: StockNewsView | null;
   isLoading: boolean;
   isRefreshing?: boolean;
+  isAnalyzing?: boolean;
+  lastAnalyzedAt?: number | null;
   lastUpdated?: number | null;
   onRefresh?: () => void;
+  onAnalyzeNews?: () => void;
   /** Headlines grid only—overview and aside live on the All tab. */
   headlinesOnly?: boolean;
   /** When false, hide AI sentiment UI (free tier headlines). */
@@ -280,12 +359,16 @@ export default function NewsAnalytics({
   analytics,
   isLoading,
   isRefreshing = false,
+  isAnalyzing = false,
+  lastAnalyzedAt = null,
   lastUpdated = null,
   onRefresh,
+  onAnalyzeNews,
   headlinesOnly = false,
   showAiEnrichment = true,
 }: Props) {
   const data = analytics;
+  const hasAiAnalysis = data?.aiEnrichment === true;
   const headlineItems = useMemo(
     () => (data ? data.items.map(enrichedNewsItemToDisplay) : []),
     [data],
@@ -294,7 +377,7 @@ export default function NewsAnalytics({
   if (!data && !isLoading) return null;
 
   const sentimentAction =
-    showAiEnrichment && data ? (
+    showAiEnrichment && hasAiAnalysis && data ? (
       <span
         className={cn(
           "inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-medium leading-none",
@@ -303,12 +386,26 @@ export default function NewsAnalytics({
       >
         {overallSentimentLabel(data.overall_sentiment)}
       </span>
-    ) : showAiEnrichment ? (
+    ) : showAiEnrichment && isAnalyzing ? (
       <Skeleton className="h-5 w-20 rounded-full" />
+    ) : null;
+
+  const analyzeAction =
+    showAiEnrichment && !hasAiAnalysis && onAnalyzeNews ? (
+      <Button
+        type="button"
+        size="sm"
+        onClick={onAnalyzeNews}
+        disabled={isAnalyzing || !data?.items.length}
+        isLoading={isAnalyzing}
+      >
+        Analyze news
+      </Button>
     ) : null;
 
   const refreshAction = (
     <div className="flex shrink-0 items-center gap-2">
+      {analyzeAction}
       {sentimentAction}
       <FreshnessLabel
         updatedAt={lastUpdated}
@@ -331,20 +428,22 @@ export default function NewsAnalytics({
     </div>
   );
 
+  const headlinesAction = sentimentAction ?? undefined;
+
   if (headlinesOnly) {
     return (
       <ResearchSectionCard
         title="Headlines"
         description={
           data
-            ? showAiEnrichment
+            ? hasAiAnalysis
               ? `${data.items.length} stories with AI sentiment and summaries`
-              : `${data.items.length} recent headlines`
+              : `${data.items.length} recent headline${data.items.length === 1 ? "" : "s"}`
             : "Loading headlines…"
         }
         icon={List}
         bodyClassName="min-w-0"
-        action={refreshAction}
+        action={headlinesAction}
       >
         <LoadingSurface
           loading={isLoading}
@@ -357,8 +456,8 @@ export default function NewsAnalytics({
             <NewsHeadlinesPanel
               items={headlineItems}
               defaultView="grid"
-              showSentimentFilters={showAiEnrichment}
-              showSentiment={showAiEnrichment}
+              showSentimentFilters={hasAiAnalysis}
+              showSentiment={hasAiAnalysis}
             />
           ) : null}
         </LoadingSurface>
@@ -415,6 +514,8 @@ export default function NewsAnalytics({
             data={data}
             loading={isLoading}
             refreshing={isRefreshing}
+            isAnalyzing={isAnalyzing}
+            hasAiAnalysis={hasAiAnalysis}
           />
         }
       />
