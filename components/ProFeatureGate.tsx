@@ -54,8 +54,9 @@ export function ProFeatureGate({
             {description ?? meta.description}
           </p>
           <p className="mt-2 text-xs text-muted">
-            Free includes portfolio sync, research headlines, dividend history,
-            Simple & Standard AI, and strategy playbooks.
+            Free includes portfolio analysis, research data, assistant chat on
+            free-tier models, and strategy playbooks. AI earnings, news, and
+            financial synthesis require Pro.
           </p>
           <Link
             href="/settings?tab=account"

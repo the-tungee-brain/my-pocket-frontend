@@ -246,8 +246,8 @@ export function ModelPicker({
       </div>
       {!isPaid && (
         <p className="shrink-0 border-t border-border px-3 py-2 text-[10px] leading-relaxed text-muted">
-          Free includes Simple and Standard models. Upgrade to Pro for the
-          Advanced tier.
+          Free chat uses free-tier models. Pro unlocks Advanced models and our
+          flagship model for research and portfolio analysis.
         </p>
       )}
     </div>

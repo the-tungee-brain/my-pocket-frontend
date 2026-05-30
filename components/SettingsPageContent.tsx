@@ -241,7 +241,7 @@ export function SettingsPageContent() {
           <SettingsSectionHeader
             id="settings-account-heading"
             title="Account & privacy"
-            description="Plan, security details, and session controls."
+            description="Your sign-in, Tomcrest plan, AI access, and session controls."
           />
 
           {accountEmail && (

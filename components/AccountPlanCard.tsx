@@ -22,19 +22,37 @@ type AccountPlanCardProps = {
 
 const FREE_FEATURES = [
   "Portfolio sync, morning brief, and strategy playbooks",
+  "Portfolio and position analysis with AI-powered insights",
   "Research essentials: quotes, SEC filings, earnings history, news headlines",
-  "Dividend history charts, allocation tools, and playbooks",
-  "AI chat with Simple & Standard models",
+  "Dividend history charts and allocation tools",
+  "Assistant chat on free-tier AI models",
 ] as const;
 
 const PRO_FEATURES = [
+  "Most capable AI model for research synthesis and portfolio analysis",
   "AI earnings analysis (quarterly summaries & takeaways)",
   "AI news research (brief, sentiment, coverage analysis)",
   "Financial strength & fundamental AI on Research",
   "Income snowball (DRIP projections & contributions)",
   "Wheel backtest with trade log and PDF export",
-  "Advanced AI models (gpt-5.1, gpt-4o, gpt-5.4, o3, and more)",
+  "Advanced chat models (gpt-5.1, gpt-4o, gpt-5.4, o3, and more)",
 ] as const;
+
+function freePlanFootnote(freeModel: string): string {
+  return (
+    "Portfolio and position analysis are included. Assistant chat uses efficient " +
+    `free-tier models (default ${freeModel}). Research data—headlines, filings, ` +
+    "and earnings history—is free; AI-generated earnings, news, and financial " +
+    "analysis require Pro."
+  );
+}
+
+function proPlanFootnote(backgroundModel: string): string {
+  return (
+    `Automated research and portfolio analysis use our flagship model (${backgroundModel}). ` +
+    "Billing is not wired yet—we enable Pro manually for early users."
+  );
+}
 
 export function AccountPlanCard({
   plan,
@@ -55,6 +73,7 @@ export function AccountPlanCard({
 
   const isPaid = plan?.isPaid ?? false;
   const freeModel = plan?.freeModel ?? "gpt-4.1-mini";
+  const backgroundModel = plan?.backgroundModel ?? "gpt-5.4";
 
   return (
     <Card surface="subtle" className={cn("mx-0", className)}>
@@ -64,9 +83,8 @@ export function AccountPlanCard({
             <p className="text-sm font-semibold text-foreground">Tomcrest plan</p>
             <p className="mt-0.5 text-sm text-muted">
               {isPaid
-                ? "You have access to every AI model in Tomcrest."
-                : "Free includes Simple and Standard models; default is " +
-                  `${freeModel}.`}
+                ? "You have access to every AI model and Pro research synthesis in Tomcrest."
+                : `Free includes portfolio analysis and assistant chat on efficient models (default ${freeModel}).`}
             </p>
           </div>
           <Badge variant={isPaid ? "accent" : "muted"}>
@@ -80,14 +98,14 @@ export function AccountPlanCard({
             price="$0"
             active={!isPaid}
             features={FREE_FEATURES}
-            footnote={`Simple & Standard models for chat and playbooks. Research headlines, filings, and earnings history are free; AI earnings, news, and financial strength are Pro. Defaults to ${freeModel}.`}
+            footnote={freePlanFootnote(freeModel)}
           />
           <PlanFeatureList
             title="Pro"
             price="Invite only"
             active={isPaid}
             features={PRO_FEATURES}
-            footnote="Billing is not wired yet — we enable Pro manually for early users."
+            footnote={proPlanFootnote(backgroundModel)}
           />
         </div>
 
@@ -95,9 +113,9 @@ export function AccountPlanCard({
           <div className="rounded-xl border border-border bg-background/50 px-3 py-3 text-sm text-muted">
             <p className="font-medium text-foreground">Want Advanced models?</p>
             <p className="mt-1 text-xs leading-relaxed">
-              Pro unlocks the Advanced tier (gpt-5.4, o3, and more). Reply from
-              Settings or email support to request access while billing is in
-              beta.
+              Pro unlocks our flagship model for research synthesis, Advanced chat
+              models, and deep Research AI. Request access from Settings while
+              billing is in beta.
             </p>
             <a
               href="mailto:support@tomcrest.com?subject=Tomcrest%20Pro%20access"
@@ -111,7 +129,8 @@ export function AccountPlanCard({
         {isPaid && (
           <p className="flex items-center gap-2 text-xs text-muted">
             <Sparkles className="h-3.5 w-3.5 text-accent-strong" aria-hidden />
-            Model picker includes Simple, Standard, and Advanced tiers.
+            Model picker includes all tiers; research and portfolio analysis use{" "}
+            {backgroundModel}.
           </p>
         )}
       </CardBody>
@@ -164,6 +183,9 @@ function PlanFeatureList({
 }
 
 export function LandingPricingSection() {
+  const freeModel = "gpt-4.1-mini";
+  const backgroundModel = "gpt-5.4";
+
   return (
     <MarketingSection id="pricing">
       <div className={pageShellStandaloneClass}>
@@ -176,9 +198,9 @@ export function LandingPricingSection() {
             Start free. Upgrade when you need more depth.
           </MarketingDisplayTitle>
           <MarketingLead className="mx-auto mt-4">
-            Free covers portfolio work and research essentials. Pro unlocks AI
-            earnings, news, and financial analysis, plus snowball, wheel
-            backtest, and Advanced AI models.
+            Free covers portfolio analysis, research essentials, and assistant
+            chat. Pro adds our flagship model for AI synthesis, deep Research
+            AI, snowball, wheel backtest, and Advanced chat models.
           </MarketingLead>
         </div>
 
@@ -188,8 +210,8 @@ export function LandingPricingSection() {
               <div>
                 <h3 className="text-lg font-semibold">Free</h3>
                 <p className="mt-1 text-sm text-muted">
-                  Portfolio, research essentials, playbooks, and Simple &
-                  Standard AI.
+                  Portfolio analysis, research essentials, playbooks, and
+                  assistant chat on free-tier AI.
                 </p>
               </div>
               <p className="text-2xl font-semibold tabular-nums">$0</p>
@@ -206,8 +228,7 @@ export function LandingPricingSection() {
               ))}
             </ul>
             <p className="mt-4 text-xs text-muted">
-              AI: Simple & Standard tiers (e.g. gpt-4.1-mini, gpt-4o-mini) —
-              portfolio-aware chat and analysis.
+              {freePlanFootnote(freeModel)}
             </p>
           </Card>
 
@@ -223,8 +244,8 @@ export function LandingPricingSection() {
               <div className="min-w-0">
                 <h3 className="text-lg font-semibold">Pro</h3>
                 <p className="mt-1 text-sm text-muted">
-                  Deep Research AI plus snowball, backtest, and Advanced chat
-                  models.
+                  Flagship AI for research synthesis and portfolio analysis, plus
+                  snowball, backtest, and Advanced chat models.
                 </p>
               </div>
               <p className="shrink-0 whitespace-nowrap text-sm font-medium text-muted">
@@ -243,8 +264,7 @@ export function LandingPricingSection() {
               ))}
             </ul>
             <p className="mt-4 text-xs text-muted">
-              Billing launches later. Existing users can request access from
-              Settings after sign-in.
+              {proPlanFootnote(backgroundModel)}
             </p>
           </Card>
         </div>

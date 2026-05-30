@@ -152,7 +152,7 @@ export function ChatBox({
             )}
             {!isPaid && (
               <Badge variant="muted" className="normal-case tracking-normal">
-                Free · Simple & Standard
+                Free · Free-tier chat
               </Badge>
             )}
           </div>
