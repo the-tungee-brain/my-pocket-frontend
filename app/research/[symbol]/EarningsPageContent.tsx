@@ -287,8 +287,8 @@ function EarningsDetailPanel({
   previewEvent: EarningsEvent;
 }) {
   const { data: session } = useSession();
-  const { isPaid, plan } = useAccountPlan(session?.accessToken);
-  const earningsAiAllowed = hasProFeature(isPaid, "earningsAi", plan);
+  const { plan } = useAccountPlan(session?.accessToken);
+  const earningsAiAllowed = hasProFeature(plan, "earningsAi");
   const { data, isLoading, error } = useEarningsDetail(
     symbol,
     previewEvent.reportDate,
@@ -433,8 +433,8 @@ function EarningsDetailPanel({
 
 export function EarningsPageContent({ symbol }: EarningsPageContentProps) {
   const { data: session } = useSession();
-  const { isPaid, plan } = useAccountPlan(session?.accessToken);
-  const earningsAiAllowed = hasProFeature(isPaid, "earningsAi", plan);
+  const { plan } = useAccountPlan(session?.accessToken);
+  const earningsAiAllowed = hasProFeature(plan, "earningsAi");
   const { data, isLoading, error } = useEarningsList(symbol, {
     accessToken: session?.accessToken,
   });

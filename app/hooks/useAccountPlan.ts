@@ -3,8 +3,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchAccountPlan } from "@/lib/apiClient";
 import type { AccountPlan } from "@/app/types/account";
+import {
+  hasProFeature,
+  resolveProFeatureAccess,
+  type ProFeatureId,
+} from "@/lib/planFeatures";
 
 const cache = new Map<string, AccountPlan>();
+
+export function clearAccountPlanCache(accessToken?: string) {
+  if (accessToken) {
+    cache.delete(accessToken);
+    return;
+  }
+  cache.clear();
+}
 
 export function useAccountPlan(accessToken: string | undefined) {
   const [plan, setPlan] = useState<AccountPlan | null>(() =>
@@ -39,11 +52,39 @@ export function useAccountPlan(accessToken: string | undefined) {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [accessToken, refresh]);
+
   return {
     plan,
     isPaid: plan?.isPaid ?? false,
     loading,
     error,
     refresh,
+  };
+}
+
+export function useProFeature(
+  accessToken: string | undefined,
+  feature: ProFeatureId,
+) {
+  const { plan, loading, error, refresh } = useAccountPlan(accessToken);
+  const access = resolveProFeatureAccess(plan, loading, feature);
+
+  return {
+    ...access,
+    error,
+    refresh,
+    hasProFeature: (id: ProFeatureId) => hasProFeature(plan, id),
   };
 }

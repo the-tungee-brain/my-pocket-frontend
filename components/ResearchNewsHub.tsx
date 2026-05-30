@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   ArrowRight,
@@ -9,11 +9,10 @@ import {
   Newspaper,
   RefreshCw,
 } from "lucide-react";
-import { useAccountPlan } from "@/app/hooks/useAccountPlan";
-import { useCompanyNews } from "@/app/hooks/useCompanyNews";
+import { useProFeature } from "@/app/hooks/useAccountPlan";
+import { invalidateCompanyNewsCache, useCompanyNews } from "@/app/hooks/useCompanyNews";
 import { usePressReleases } from "@/app/hooks/usePressReleases";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
-import { hasProFeature } from "@/lib/planFeatures";
 import NewsAnalytics, {
   AnalyzeNewsPrompt,
   NewsAsideSections,
@@ -133,8 +132,12 @@ function OfficialEmptyHint() {
 export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
   const [scope, setScope] = useState<NewsFeedScope>("all");
   const { data: session } = useSession();
-  const { isPaid, plan } = useAccountPlan(session?.accessToken ?? accessToken);
-  const newsAiAllowed = hasProFeature(isPaid, "newsAi", plan);
+  const token = session?.accessToken ?? accessToken;
+  const {
+    allowed: newsAiAllowed,
+    resolved: planResolved,
+  } = useProFeature(token, "newsAi");
+  const prevNewsAiAllowedRef = useRef<boolean | null>(null);
 
   const {
     analytics,
@@ -147,6 +150,17 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
     refresh: refreshCoverage,
     analyzeNews,
   } = useCompanyNews(symbol, accessToken, Boolean(symbol && accessToken));
+
+  useEffect(() => {
+    if (!planResolved) return;
+
+    const prev = prevNewsAiAllowedRef.current;
+    if (prev === false && newsAiAllowed) {
+      invalidateCompanyNewsCache(symbol);
+      refreshCoverage();
+    }
+    prevNewsAiAllowedRef.current = newsAiAllowed;
+  }, [newsAiAllowed, planResolved, refreshCoverage, symbol]);
 
   const {
     items: officialItems,
@@ -229,6 +243,7 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
               isAnalyzing={coverageAnalyzing}
               hasAiAnalysis={hasAiAnalysis}
               newsAiAllowed={newsAiAllowed}
+              planResolved={planResolved}
             />
           }
         />
@@ -318,26 +333,37 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
                 </div>
               }
             >
-              <ProFeatureGate feature="newsAi" allowed={newsAiAllowed}>
+              {!planResolved ? (
                 <LoadingSurface
-                  loading={coverageLoading && !analytics}
-                  refreshing={coverageAnalyzing}
-                  hasContent={Boolean(analytics && (hasAiAnalysis || coverageCount > 0))}
+                  loading
+                  hasContent={false}
                   label="Loading news brief"
                   skeleton={<NewsOverviewLoading />}
                 >
-                  {hasAiAnalysis && analytics ? (
-                    <NewsOverviewContent data={analytics} />
-                  ) : analytics ? (
-                    <AnalyzeNewsPrompt
-                      storyCount={coverageCount}
-                      isAnalyzing={coverageAnalyzing}
-                      lastAnalyzedAt={coverageAnalyzedAt}
-                      onAnalyze={() => analyzeNews()}
-                    />
-                  ) : null}
+                  {null}
                 </LoadingSurface>
-              </ProFeatureGate>
+              ) : (
+                <ProFeatureGate feature="newsAi" allowed={newsAiAllowed}>
+                  <LoadingSurface
+                    loading={coverageLoading && !analytics}
+                    refreshing={coverageAnalyzing}
+                    hasContent={Boolean(analytics && (hasAiAnalysis || coverageCount > 0))}
+                    label="Loading news brief"
+                    skeleton={<NewsOverviewLoading />}
+                  >
+                    {hasAiAnalysis && analytics ? (
+                      <NewsOverviewContent data={analytics} />
+                    ) : analytics ? (
+                      <AnalyzeNewsPrompt
+                        storyCount={coverageCount}
+                        isAnalyzing={coverageAnalyzing}
+                        lastAnalyzedAt={coverageAnalyzedAt}
+                        onAnalyze={() => analyzeNews()}
+                      />
+                    ) : null}
+                  </LoadingSurface>
+                </ProFeatureGate>
+              )}
             </ResearchSectionCard>
 
             {showCoverageBlock ? (
@@ -433,6 +459,7 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
             isAnalyzing={coverageAnalyzing}
             hasAiAnalysis={hasAiAnalysis}
             newsAiAllowed={newsAiAllowed}
+            planResolved={planResolved}
           />
         }
       />

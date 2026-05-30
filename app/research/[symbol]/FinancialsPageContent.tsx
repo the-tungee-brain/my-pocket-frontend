@@ -28,12 +28,8 @@ type FinancialsPageContentProps = {
 
 export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
   const { data: session } = useSession();
-  const { isPaid, plan } = useAccountPlan(session?.accessToken);
-  const financialStrengthAllowed = hasProFeature(
-    isPaid,
-    "financialStrength",
-    plan,
-  );
+  const { plan } = useAccountPlan(session?.accessToken);
+  const financialStrengthAllowed = hasProFeature(plan, "financialStrength");
   const [period, setPeriod] = useState<SecPeriod>("annual");
   const { fundamentals, isLoading, error } = useFundamentals(symbol, {
     accessToken: session?.accessToken,

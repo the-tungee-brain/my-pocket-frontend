@@ -32,8 +32,8 @@ type SummarySectionProps = {
 export function SummarySection({ symbol, className }: SummarySectionProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
-  const { isPaid, plan } = useAccountPlan(accessToken);
-  const bigPictureAllowed = hasProFeature(isPaid, "bigPicture", plan);
+  const { plan } = useAccountPlan(accessToken);
+  const bigPictureAllowed = hasProFeature(plan, "bigPicture");
   const symbolUpper = symbol.toUpperCase();
   const [requestFullSummary, setRequestFullSummary] = useState(false);
   const { intelligence } = useSymbolIntelligence(symbol, {

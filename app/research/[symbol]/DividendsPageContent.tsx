@@ -141,8 +141,8 @@ function mergeSnowballHistory(
 
 export function DividendsPageContent({ symbol }: Props) {
   const { data: session } = useSession();
-  const { isPaid, plan } = useAccountPlan(session?.accessToken);
-  const snowballAllowed = hasProFeature(isPaid, "dividendSnowball", plan);
+  const { plan } = useAccountPlan(session?.accessToken);
+  const snowballAllowed = hasProFeature(plan, "dividendSnowball");
   const { isEtf } = useResearchAssetTypeContext();
   const { positionMap } = usePortfolioContext();
   const symbolUpper = symbol.toUpperCase();

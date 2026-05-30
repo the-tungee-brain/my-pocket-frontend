@@ -23,8 +23,8 @@ export function WheelBacktestPageContent({ symbol }: Props) {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const { profile } = useStrategyContext();
-  const { isPaid, plan } = useAccountPlan(session?.accessToken);
-  const backtestAllowed = hasProFeature(isPaid, "wheelBacktest", plan);
+  const { plan } = useAccountPlan(session?.accessToken);
+  const backtestAllowed = hasProFeature(plan, "wheelBacktest");
   const accessToken = session?.accessToken as string | undefined;
 
   const upperSymbol = symbol.trim().toUpperCase();

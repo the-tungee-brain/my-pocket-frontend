@@ -20,8 +20,8 @@ type Props = {
 
 export function WheelBacktestPlaybookLink({ symbols, className }: Props) {
   const { data: session } = useSession();
-  const { isPaid, plan } = useAccountPlan(session?.accessToken);
-  const allowed = hasProFeature(isPaid, "wheelBacktest", plan);
+  const { plan } = useAccountPlan(session?.accessToken);
+  const allowed = hasProFeature(plan, "wheelBacktest");
   const choices = [...new Set(symbols.map((s) => s.trim().toUpperCase()).filter(Boolean))];
 
   if (choices.length === 0) {

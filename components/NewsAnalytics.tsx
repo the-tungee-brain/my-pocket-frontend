@@ -260,6 +260,7 @@ export function NewsAsideSections({
   isAnalyzing = false,
   hasAiAnalysis = false,
   newsAiAllowed = true,
+  planResolved = true,
   className,
 }: {
   data: StockNewsView | null;
@@ -268,10 +269,12 @@ export function NewsAsideSections({
   isAnalyzing?: boolean;
   hasAiAnalysis?: boolean;
   newsAiAllowed?: boolean;
+  planResolved?: boolean;
   className?: string;
 }) {
   const pending = loading || isAnalyzing || refreshing;
   const hasContext = newsAiAllowed && hasAiAnalysis && !!data;
+  const showProUpsell = planResolved && !newsAiAllowed;
 
   return (
     <div className={cn("app-stack", className)}>
@@ -281,13 +284,13 @@ export function NewsAsideSections({
         icon={Activity}
       >
         <LoadingSurface
-          loading={newsAiAllowed && pending}
+          loading={!planResolved || (newsAiAllowed && pending)}
           refreshing={refreshing}
-          hasContent={!newsAiAllowed || hasContext}
+          hasContent={showProUpsell || hasContext}
           label="Loading market context"
           skeleton={<NewsContextLoading />}
         >
-          {!newsAiAllowed ? (
+          {showProUpsell ? (
             <ProFeatureGate
               feature="newsAi"
               allowed={false}
@@ -311,15 +314,13 @@ export function NewsAsideSections({
         icon={Sparkles}
       >
         <LoadingSurface
-          loading={newsAiAllowed && pending}
+          loading={!planResolved || (newsAiAllowed && pending)}
           refreshing={refreshing}
-          hasContent={
-            !newsAiAllowed || (hasContext && !!data && hasCoverageAnalysis(data))
-          }
+          hasContent={showProUpsell || (hasContext && !!data && hasCoverageAnalysis(data))}
           label="Loading coverage analysis"
           skeleton={<NewsAnalysisLoading />}
         >
-          {!newsAiAllowed ? (
+          {showProUpsell ? (
             <ProFeatureGate
               feature="newsAi"
               allowed={false}

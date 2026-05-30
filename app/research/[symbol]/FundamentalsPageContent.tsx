@@ -35,12 +35,8 @@ export function FundamentalsPageContent({
   symbol,
 }: FundamentalsPageContentProps) {
   const { data: session } = useSession();
-  const { isPaid, plan } = useAccountPlan(session?.accessToken);
-  const financialStrengthAllowed = hasProFeature(
-    isPaid,
-    "financialStrength",
-    plan,
-  );
+  const { plan } = useAccountPlan(session?.accessToken);
+  const financialStrengthAllowed = hasProFeature(plan, "financialStrength");
   const { isEtf } = useResearchAssetTypeContext();
   const { fundamentals, isLoading, error } = useFundamentals(symbol, {
     accessToken: session?.accessToken,

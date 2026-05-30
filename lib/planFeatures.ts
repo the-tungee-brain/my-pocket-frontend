@@ -61,16 +61,39 @@ export const PRO_FEATURE_LABELS: Record<
   },
 };
 
+/** Read Pro access from backend `/account/plan` (features map preferred). */
 export function hasProFeature(
-  isPaid: boolean,
+  plan: AccountPlan | null | undefined,
   feature: ProFeatureId,
-  plan?: AccountPlan | null,
 ): boolean {
-  if (isPaid) return true;
+  if (!plan) return false;
+
   const key = API_FEATURE_KEYS[feature];
-  const features = plan?.features;
-  if (features && key in features) {
-    return Boolean(features[key]);
+  if (plan.features && key in plan.features) {
+    return Boolean(plan.features[key]);
   }
-  return false;
+
+  return Boolean(plan.isPaid);
+}
+
+export type ProFeatureAccess = {
+  allowed: boolean;
+  resolved: boolean;
+  loading: boolean;
+  plan: AccountPlan | null;
+};
+
+/** Gate UI only after backend plan has loaded — avoids flashing the wrong tier. */
+export function resolveProFeatureAccess(
+  plan: AccountPlan | null,
+  loading: boolean,
+  feature: ProFeatureId,
+): ProFeatureAccess {
+  const resolved = !loading && plan != null;
+  return {
+    plan,
+    loading,
+    resolved,
+    allowed: resolved && hasProFeature(plan, feature),
+  };
 }

@@ -160,6 +160,36 @@ async function analyzeCompanyNews(
   return res.json();
 }
 
+export function invalidateCompanyNewsCache(symbol?: string): void {
+  if (symbol) {
+    const key = symbol.trim().toUpperCase();
+    newsCache.delete(key);
+    inFlightNews.delete(key);
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem(`${SESSION_STORAGE_PREFIX}${key}`);
+      } catch {
+        // ignore
+      }
+    }
+    return;
+  }
+
+  newsCache.clear();
+  inFlightNews.clear();
+  if (typeof window === "undefined") return;
+  try {
+    for (let i = sessionStorage.length - 1; i >= 0; i -= 1) {
+      const storageKey = sessionStorage.key(i);
+      if (storageKey?.startsWith(SESSION_STORAGE_PREFIX)) {
+        sessionStorage.removeItem(storageKey);
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export function useCompanyNews(
   symbol: string | undefined,
   accessToken?: string,

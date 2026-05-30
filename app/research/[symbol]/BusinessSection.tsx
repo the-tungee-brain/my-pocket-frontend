@@ -50,8 +50,8 @@ function BusinessOverviewSkeleton() {
 export function BusinessSection({ symbol }: BusinessSectionProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
-  const { isPaid, plan } = useAccountPlan(accessToken);
-  const businessAllowed = hasProFeature(isPaid, "business", plan);
+  const { plan } = useAccountPlan(accessToken);
+  const businessAllowed = hasProFeature(plan, "business");
   const { business, isLoading, error } = useBusinessDetails(symbol, {
     accessToken,
     enabled: businessAllowed,

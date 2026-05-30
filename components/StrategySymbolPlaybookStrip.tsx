@@ -31,8 +31,8 @@ type Props = {
 
 export function StrategySymbolPlaybookStrip({ symbol, className }: Props) {
   const { data: session } = useSession();
-  const { isPaid, plan } = useAccountPlan(session?.accessToken);
-  const backtestAllowed = hasProFeature(isPaid, "wheelBacktest", plan);
+  const { plan } = useAccountPlan(session?.accessToken);
+  const backtestAllowed = hasProFeature(plan, "wheelBacktest");
   const { profile, recommendations } = useStrategyContext();
   const { sendPlaybookAsk } = useAppChatContext();
   const { connect, connecting } = useSchwabConnect();
