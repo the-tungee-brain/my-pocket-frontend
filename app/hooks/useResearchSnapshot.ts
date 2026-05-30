@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import type { ResearchSnapshot } from "@/lib/researchSnapshot";
 import { useOverviewBundleGate } from "@/app/research/ResearchOverviewContext";
-import { fetchResearchSnapshot } from "@/lib/researchSnapshot";
+import {
+  fetchResearchSnapshot,
+  snapshotMissingKeyStats,
+} from "@/lib/researchSnapshot";
 
 type UseResearchSnapshotOptions = {
   accessToken?: string | null;
@@ -17,7 +20,9 @@ export function useResearchSnapshot(
   const [snapshot, setSnapshot] = useState<ResearchSnapshot | null>(() => {
     const key = symbol?.toUpperCase().trim();
     if (key && overviewBundle?.snapshot) {
-      return overviewBundle.snapshot;
+      if (!snapshotMissingKeyStats(overviewBundle.snapshot)) {
+        return overviewBundle.snapshot;
+      }
     }
     return null;
   });
@@ -38,10 +43,12 @@ export function useResearchSnapshot(
       return;
     }
     if (key && overviewBundle?.snapshot) {
-      setSnapshot(overviewBundle.snapshot);
-      setIsLoading(false);
-      setError(null);
-      return;
+      if (!snapshotMissingKeyStats(overviewBundle.snapshot)) {
+        setSnapshot(overviewBundle.snapshot);
+        setIsLoading(false);
+        setError(null);
+        return;
+      }
     }
     if (!key || !accessToken) {
       setSnapshot(null);

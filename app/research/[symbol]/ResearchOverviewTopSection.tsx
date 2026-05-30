@@ -14,7 +14,6 @@ import { symbolChatKey } from "@/lib/chatKeys";
 import { pageSectionClass, pageOverviewAsideClass, pageOverviewMainClass, pageOverviewSplitClass } from "@/lib/pageLayout";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
 import { ResearchStockChart } from "./ResearchStockChart";
-import { TickerKeyStats } from "@/components/TickerKeyStats";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
 import { EtfFundsOverview } from "./EtfFundsOverview";
@@ -72,7 +71,6 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
         main={
           <>
             <ResearchStockChart symbol={symbol} />
-            <TickerKeyStats symbol={symbol} />
             <SymbolIntelligencePanel
               intelligence={intelligence}
               loading={loading}

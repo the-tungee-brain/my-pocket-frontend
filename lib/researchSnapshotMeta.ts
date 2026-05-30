@@ -39,14 +39,28 @@ export function formatSnapshotSizeLabel(
     etfHoldings?: EtfHoldingsContext | null;
   } = {},
 ): string {
+  const sizeValue = formatSnapshotSizeValue(snapshot, options);
+  const range = snapshot.range52w ? ` · 52-week: ${snapshot.range52w}` : "";
+
   if (options.isEtf) {
-    const aum = holdingsAumLabel(options.etfHoldings) ?? snapshot.marketCap;
-    const range = snapshot.range52w ? ` · 52-week: ${snapshot.range52w}` : "";
-    return `AUM: ${aum}${range}`;
+    return `AUM: ${sizeValue}${range}`;
   }
 
-  const range = snapshot.range52w ? ` · 52-week: ${snapshot.range52w}` : "";
-  return `Market cap: ${snapshot.marketCap}${range}`;
+  return `Market cap: ${sizeValue}${range}`;
+}
+
+export function formatSnapshotSizeValue(
+  snapshot: ResearchSnapshot,
+  options: {
+    isEtf?: boolean;
+    etfHoldings?: EtfHoldingsContext | null;
+  } = {},
+): string {
+  if (options.isEtf) {
+    return holdingsAumLabel(options.etfHoldings) ?? snapshot.marketCap;
+  }
+
+  return snapshot.marketCap;
 }
 
 function holdingsAumLabel(

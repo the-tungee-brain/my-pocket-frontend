@@ -2,7 +2,7 @@ import type { EtfHoldingsContext } from "@/app/types/research";
 import type { ResearchTabId } from "@/components/ResearchTabBar";
 import type { ResearchSnapshot } from "@/lib/researchSnapshot";
 import {
-  formatSnapshotSizeLabel,
+  formatSnapshotSizeValue,
   isUnknownLabel,
 } from "@/lib/researchSnapshotMeta";
 
@@ -44,6 +44,18 @@ function statValue(value: string | null | undefined): string {
   return value;
 }
 
+function displayPercentValue(
+  numeric: number | null | undefined,
+  formatted: string | null | undefined,
+  digits = 2,
+): string {
+  if (numeric != null && Number.isFinite(numeric)) {
+    return formatSnapshotPercent(numeric, digits);
+  }
+  if (formatted?.trim()) return formatted.trim();
+  return "—";
+}
+
 export function buildTickerKeyStats(
   snapshot: ResearchSnapshot,
   options: {
@@ -52,24 +64,30 @@ export function buildTickerKeyStats(
   } = {},
 ): TickerKeyStat[] {
   const isEtf = options.isEtf ?? false;
-  const sizeLabel = formatSnapshotSizeLabel(snapshot, options);
+  const sizeValue = statValue(formatSnapshotSizeValue(snapshot, options));
   const range52w = statValue(snapshot.range52w);
 
   if (isEtf) {
     return [
       {
         label: "AUM",
-        value: statValue(sizeLabel.replace(/^AUM:\s*/, "")),
+        value: sizeValue,
         hrefTab: "holdings",
       },
       {
         label: "Expense ratio",
-        value: formatSnapshotPercent(snapshot.expenseRatioPct),
+        value: displayPercentValue(
+          snapshot.expenseRatioPct,
+          options.etfHoldings?.expense_ratio,
+        ),
         hrefTab: "fundamentals",
       },
       {
         label: "Dividend yield",
-        value: formatSnapshotPercent(snapshot.dividendYieldPct),
+        value: displayPercentValue(
+          snapshot.dividendYieldPct,
+          options.etfHoldings?.dividend_yield,
+        ),
         hrefTab: "dividends",
       },
       { label: "52-week range", value: range52w },
@@ -84,7 +102,7 @@ export function buildTickerKeyStats(
   return [
     {
       label: "Market cap",
-      value: statValue(sizeLabel.replace(/^Market cap:\s*/, "").split(" · ")[0]),
+      value: sizeValue,
       hrefTab: "fundamentals",
     },
     {

@@ -29,6 +29,7 @@ import {
   ResearchAssetTypeProvider,
   useResearchAssetTypeContext,
 } from "./ResearchAssetTypeContext";
+import { ResearchSymbolHeaderProvider } from "./ResearchSymbolHeaderContext";
 
 type Props = {
   symbol: string;
@@ -138,9 +139,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
             showOptionsTab={showOptionsTab}
             showWheelBacktestTab={showWheelBacktestTab}
           />
-          {!collapsed && activeTab !== "overview" ? (
-            <TickerKeyStats symbol={symbol} compact />
-          ) : null}
+          {!collapsed ? <TickerKeyStats symbol={symbol} /> : null}
           {scrollCollapsed ? (
             <button
               type="button"
@@ -184,7 +183,9 @@ export function ResearchSymbolShell({ symbol, children }: Props) {
 
   const inner = (
     <ResearchAssetTypeProvider symbol={symbol} accessToken={accessToken}>
-      <ResearchSymbolShellInner symbol={symbol}>{children}</ResearchSymbolShellInner>
+      <ResearchSymbolHeaderProvider symbol={symbol} accessToken={accessToken}>
+        <ResearchSymbolShellInner symbol={symbol}>{children}</ResearchSymbolShellInner>
+      </ResearchSymbolHeaderProvider>
     </ResearchAssetTypeProvider>
   );
 

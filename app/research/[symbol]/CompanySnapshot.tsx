@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useResearchSnapshot } from "@/app/hooks/useResearchSnapshot";
-import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
+import { useResearchSymbolHeader } from "./ResearchSymbolHeaderContext";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -10,7 +9,6 @@ import {
   ExternalLink,
   BriefcaseBusiness,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { appInsetClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -44,24 +42,15 @@ function formatPL(value: number) {
 }
 
 export function CompanySnapshot({ symbol, compact = false }: Props) {
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken;
   const { positionMap } = usePortfolioContext();
   const upperSymbol = symbol.toUpperCase();
   const userPositions = positionMap[upperSymbol];
 
   const overviewBundle = useResearchOverviewBundle();
-  const { snapshot, isLoading, error } = useResearchSnapshot(upperSymbol, {
-    accessToken,
-  });
+  const { snapshot, etfHoldings, isLoading, error } = useResearchSymbolHeader();
   const dataAsOfLabel = formatResearchDataAsOf(overviewBundle?.asOf);
   const { assetType, isEtf } = useResearchAssetTypeContext();
   const researchLabel = isEtf ? "ETF research" : "Stock research";
-  const { holdings: etfHoldings } = useEtfHoldings(upperSymbol, {
-    accessToken,
-    limit: 8,
-    enabled: isEtf,
-  });
 
   if (isLoading) {
     if (compact) {

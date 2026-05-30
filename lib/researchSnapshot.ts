@@ -18,7 +18,7 @@ export type ResearchSnapshot = {
   expenseRatioPct?: number | null;
 };
 
-const STORAGE_KEY = "powerpocket-research-snapshots-v2";
+const STORAGE_KEY = "powerpocket-research-snapshots-v3";
 const LEGACY_SESSION_KEY = "powerpocket-research-snapshots";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -134,6 +134,11 @@ function savePersistentEntry(key: string, data: ResearchSnapshot): void {
   writePersistentStore(store);
 }
 
+export function snapshotMissingKeyStats(snapshot: ResearchSnapshot): boolean {
+  if (!snapshot.price || snapshot.price <= 0) return false;
+  return snapshot.volume == null && snapshot.avgVolume == null;
+}
+
 export function getCachedResearchSnapshot(
   symbol: string,
 ): ResearchSnapshot | null {
@@ -141,10 +146,10 @@ export function getCachedResearchSnapshot(
   if (!key) return null;
 
   const fromMemory = memoryCache.get(key);
-  if (fromMemory) return fromMemory;
+  if (fromMemory && !snapshotMissingKeyStats(fromMemory)) return fromMemory;
 
   const fromStorage = getValidPersistentEntry(key);
-  if (fromStorage) {
+  if (fromStorage && !snapshotMissingKeyStats(fromStorage)) {
     memoryCache.set(key, fromStorage);
     return fromStorage;
   }
@@ -157,7 +162,7 @@ export function seedResearchSnapshotCache(
   snapshot: ResearchSnapshot,
 ): void {
   const key = normalizeKey(symbol);
-  if (!key) return;
+  if (!key || snapshotMissingKeyStats(snapshot)) return;
   memoryCache.set(key, snapshot);
   savePersistentEntry(key, snapshot);
 }
