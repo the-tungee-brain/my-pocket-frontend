@@ -11,7 +11,7 @@ import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
-import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 
 type Props = {
   symbol: string;
@@ -24,7 +24,7 @@ export function OfficialAnnouncementsSection({
   accessToken,
   className,
 }: Props) {
-  const { items, isLoading, error, lastUpdated, refetch } = usePressReleases(
+  const { items, isLoading, isRefreshing, error, lastUpdated, refetch } = usePressReleases(
     symbol,
     accessToken,
     { enabled: Boolean(symbol && accessToken) },
@@ -35,23 +35,21 @@ export function OfficialAnnouncementsSection({
     [items],
   );
 
-  const updatedLabel = lastUpdated
-    ? formatRelativeUpdatedAt(lastUpdated)
-    : null;
-
   const refreshAction = accessToken ? (
     <div className="flex shrink-0 items-center gap-2">
-      {updatedLabel ? (
-        <span className="hidden text-[11px] text-muted sm:inline">{updatedLabel}</span>
-      ) : null}
+      <FreshnessLabel
+        updatedAt={lastUpdated}
+        pending={isLoading || isRefreshing}
+        className="hidden sm:inline-flex"
+      />
       <IconButton
         size="sm"
         onClick={() => void refetch()}
-        disabled={isLoading}
+        disabled={isLoading || isRefreshing}
         aria-label="Refresh official announcements"
       >
         <RefreshCw
-          className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}
+          className={cn("h-3.5 w-3.5", (isLoading || isRefreshing) && "animate-spin")}
           aria-hidden
         />
       </IconButton>
@@ -75,6 +73,7 @@ export function OfficialAnnouncementsSection({
       <NewsHeadlinesPanel
         items={displayItems}
         isLoading={isLoading}
+        isRefreshing={isRefreshing}
         showSentimentFilters={false}
         emptyMessage="No press releases available for this symbol right now."
       />

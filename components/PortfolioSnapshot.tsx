@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { KpiStat } from "@/components/ui/KpiStat";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { LoadingRegion } from "@/components/ui/LoadingRegion";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 import type {
   CashSecuredPutSummary,
   PortfolioMetrics,
@@ -29,14 +31,18 @@ type Props = {
   account: SchwabAccounts | null;
   cashSecuredPutSummary?: CashSecuredPutSummary | null;
   portfolioMetrics?: PortfolioMetrics | null;
-  briefLine?: string | null;
+  briefPending?: boolean;
+  positionsSyncedAt?: number | null;
   children?: ReactNode;
   className?: string;
 };
 
 function SnapshotSkeleton({ className }: { className?: string }) {
   return (
-    <section className={cn("mx-auto w-full", className)} aria-hidden>
+    <LoadingRegion
+      label="Loading portfolio"
+      className={cn("mx-auto w-full", className)}
+    >
       <Card>
         <CardHeader>
           <Skeleton className="h-5 w-32" />
@@ -60,7 +66,7 @@ function SnapshotSkeleton({ className }: { className?: string }) {
         </div>
         </CardBody>
       </Card>
-    </section>
+    </LoadingRegion>
   );
 }
 
@@ -71,7 +77,8 @@ export function PortfolioSnapshot({
   account,
   cashSecuredPutSummary,
   portfolioMetrics,
-  briefLine = null,
+  briefPending = false,
+  positionsSyncedAt = null,
   children,
   className,
 }: Props) {
@@ -128,11 +135,15 @@ export function PortfolioSnapshot({
           description={
             <>
               {`${symbols.length} ${symbols.length === 1 ? "symbol" : "symbols"} · ${allPositions.length} ${allPositions.length === 1 ? "position" : "positions"}`}
-              {briefLine ? (
-                <span className="mt-0.5 block text-[10px] text-muted">
-                  {briefLine}
+              {(briefPending || positionsSyncedAt != null) && (
+                <span className="mt-0.5 block">
+                  <FreshnessLabel
+                    updatedAt={positionsSyncedAt}
+                    pending={briefPending}
+                    pendingLabel="Morning brief · updating…"
+                  />
                 </span>
-              ) : null}
+              )}
             </>
           }
           icon={

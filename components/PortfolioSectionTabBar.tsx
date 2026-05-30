@@ -26,7 +26,11 @@ export function PortfolioSectionTabBar({
 }: Props) {
   return (
     <div
-      className={cn(appTabBarClass, "w-full", className)}
+      className={cn(
+        appTabBarClass,
+        "w-full overflow-x-auto scrollbar-dark snap-x snap-mandatory sm:overflow-x-visible",
+        className,
+      )}
       role="tablist"
       aria-label="Portfolio sections"
     >
@@ -45,7 +49,7 @@ export function PortfolioSectionTabBar({
             onClick={() => onChange(section.id)}
             className={cn(
               appTabLinkClass(active),
-              "flex-1 justify-center",
+              "min-w-[4.75rem] flex-none snap-start justify-center sm:min-w-0 sm:flex-1",
             )}
           >
             <span>{section.label}</span>

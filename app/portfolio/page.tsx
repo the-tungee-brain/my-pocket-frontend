@@ -56,7 +56,8 @@ import {
   portfolioTodayPairGridClass,
   portfolioTodayPairGridPairedClass,
 } from "@/lib/appUi";
-import { briefFreshnessLabel } from "@/lib/dataFreshness";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
+import { parsePositionsSyncedAt } from "@/lib/dataFreshness";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { PageShell, PageSplit } from "@/components/PageShell";
 import { cn } from "@/lib/utils";
@@ -306,6 +307,7 @@ export default function PortfolioPage() {
   const {
     items: portfolioNewsItems,
     loading: portfolioNewsLoading,
+    refreshing: portfolioNewsRefreshing,
     error: portfolioNewsError,
     lastUpdated: portfolioNewsLastUpdated,
     refetch: refetchPortfolioNews,
@@ -396,9 +398,13 @@ export default function PortfolioPage() {
           account={account}
           cashSecuredPutSummary={cashSecuredPutSummary}
           portfolioMetrics={portfolioMetrics}
-          briefLine={briefFreshnessLabel(
-            positionsDataFreshness,
-            briefLoading && !displayBrief,
+          briefPending={
+            briefLoading && !displayBrief
+              ? true
+              : positionsDataFreshness?.briefStatus === "pending"
+          }
+          positionsSyncedAt={parsePositionsSyncedAt(
+            positionsDataFreshness?.positionsSyncedAt,
           )}
         />
       )}
@@ -483,6 +489,7 @@ export default function PortfolioPage() {
                 }
                 symbolAlertMap={symbolAlertMap}
                 autoStart={pendingPortfolioAnalysis}
+                progressiveDisclosure
                 portfolioNavigation={portfolioNavigation}
                 onLoadingChange={setPortfolioAnalysisLoading}
                 onAskFollowUp={() => scrollToChat()}
@@ -501,6 +508,7 @@ export default function PortfolioPage() {
               className={sectionClass}
               items={portfolioNewsItems}
               loading={portfolioNewsLoading}
+              refreshing={portfolioNewsRefreshing}
               error={portfolioNewsError}
               lastUpdated={portfolioNewsLastUpdated}
               onRefresh={() => void refetchPortfolioNews()}

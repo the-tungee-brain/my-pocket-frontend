@@ -5,6 +5,10 @@ import { Layers, PieChart, Scale } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import {
+  ResearchScrollSpy,
+  ResearchScrollSpySection,
+} from "@/components/ResearchScrollSpy";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { symbolHubPath } from "@/lib/symbolRoutes";
@@ -27,7 +31,7 @@ function LoadingBlock() {
           <Skeleton key={index} className="h-16 rounded-xl" />
         ))}
       </div>
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+      <div className="grid gap-4">
         {Array.from({ length: 2 }).map((_, index) => (
           <div key={index} className="space-y-2">
             <Skeleton className="h-3 w-28" />
@@ -35,11 +39,7 @@ function LoadingBlock() {
           </div>
         ))}
       </div>
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
-        {Array.from({ length: 2 }).map((_, index) => (
-          <Skeleton key={index} className="h-52 rounded-xl" />
-        ))}
-      </div>
+      <Skeleton className="h-52 rounded-xl" />
     </div>
   );
 }
@@ -63,15 +63,17 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
 
   if (isLoading) {
     return (
-      <div className="app-stack">
-        <ResearchSectionCard
-          title="ETF composition"
-          description="Holdings, sectors, and fund stats"
-          icon={Layers}
-        >
-          <LoadingBlock />
-        </ResearchSectionCard>
-      </div>
+      <ResearchScrollSpy className="app-stack">
+        <ResearchScrollSpySection id="holdings-stats" label="Stats">
+          <ResearchSectionCard
+            title="Fund stats"
+            description="Size, cost, and income profile"
+            icon={Layers}
+          >
+            <LoadingBlock />
+          </ResearchSectionCard>
+        </ResearchScrollSpySection>
+      </ResearchScrollSpy>
     );
   }
 
@@ -95,56 +97,64 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
   }
 
   return (
-    <div className="app-stack">
-      <ResearchSectionCard
-        title="Fund stats"
-        description="Size, cost, and income profile"
-        icon={Layers}
-      >
-        <EtfFundStats holdings={holdings} />
-      </ResearchSectionCard>
+    <ResearchScrollSpy className="app-stack">
+      <ResearchScrollSpySection id="holdings-stats" label="Stats">
+        <ResearchSectionCard
+          title="Fund stats"
+          description="Size, cost, and income profile"
+          icon={Layers}
+        >
+          <EtfFundStats holdings={holdings} />
+        </ResearchSectionCard>
+      </ResearchScrollSpySection>
 
-      <ResearchSectionCard
-        title="Composition"
-        description="Sector allocation and largest positions"
-        icon={PieChart}
-        action={
-          holdings.dataAsOf ? (
-            <span className="text-[10px] text-muted">
-              As of {holdings.dataAsOf.slice(0, 10)}
-            </span>
-          ) : null
-        }
-      >
-        <EtfCompositionColumns
-          sectorBreakdown={holdings.sector_breakdown}
-          holdings={holdings.holdings}
-          totalHoldings={holdings.total_holdings}
-          sectorLimit={20}
-          holdingsLimit={limit}
-          showHoldingsFooter={false}
-        />
-        {holdings.holdings.length < holdings.total_holdings ? (
-          <p className="mt-4 border-t border-border pt-3 text-xs text-muted">
-            Showing {Math.min(holdings.holdings.length, limit)} of{" "}
-            {holdings.total_holdings.toLocaleString()} holdings.
-          </p>
-        ) : null}
-      </ResearchSectionCard>
+      <ResearchScrollSpySection id="holdings-composition" label="Composition">
+        <ResearchSectionCard
+          title="Composition"
+          description="Sector allocation and largest positions"
+          icon={PieChart}
+          action={
+            holdings.dataAsOf ? (
+              <span className="text-[10px] text-muted">
+                As of {holdings.dataAsOf.slice(0, 10)}
+              </span>
+            ) : null
+          }
+        >
+          <EtfCompositionColumns
+            sectorBreakdown={holdings.sector_breakdown}
+            holdings={holdings.holdings}
+            totalHoldings={holdings.total_holdings}
+            sectorLimit={20}
+            holdingsLimit={limit}
+            showHoldingsFooter={false}
+            stacked
+          />
+          {holdings.holdings.length < holdings.total_holdings ? (
+            <p className="mt-4 border-t border-border pt-3 text-xs text-muted">
+              Showing {Math.min(holdings.holdings.length, limit)} of{" "}
+              {holdings.total_holdings.toLocaleString()} holdings.
+            </p>
+          ) : null}
+        </ResearchSectionCard>
+      </ResearchScrollSpySection>
 
-      <ResearchSectionCard
-        title="Holdings quality"
-        description="Strongest and weakest names by Piotroski F-Score and Altman Z"
-        icon={Scale}
-      >
-        <EtfQualityHoldings
-          strongest={holdings.strongestHoldings}
-          weakest={holdings.weakestHoldings}
-          limit={5}
-        />
-        {QUALITY_FOOTNOTE}
-      </ResearchSectionCard>
-    </div>
+      <ResearchScrollSpySection id="holdings-quality" label="Quality">
+        <ResearchSectionCard
+          title="Holdings quality"
+          description="Strongest and weakest names by Piotroski F-Score and Altman Z"
+          icon={Scale}
+        >
+          <EtfQualityHoldings
+            strongest={holdings.strongestHoldings}
+            weakest={holdings.weakestHoldings}
+            limit={5}
+            stacked
+          />
+          {QUALITY_FOOTNOTE}
+        </ResearchSectionCard>
+      </ResearchScrollSpySection>
+    </ResearchScrollSpy>
   );
 }
 

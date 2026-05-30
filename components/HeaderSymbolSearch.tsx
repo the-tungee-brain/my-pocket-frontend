@@ -16,6 +16,7 @@ import { rememberAssetType } from "@/lib/researchAssetType";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import type { TickerSymbolItem } from "@/app/hooks/useSymbolSearch";
 import { cn } from "@/lib/utils";
+import { SkeletonList } from "@/components/ui/Skeleton";
 
 type HeaderSymbolSearchProps = {
   accessToken: string | null | undefined;
@@ -183,7 +184,12 @@ export function HeaderSymbolSearch({
           className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-y-auto rounded-lg border border-border bg-background py-1 text-sm shadow-lg scrollbar-dark"
         >
           {isLoading && (
-            <p className="px-3 py-2 text-xs text-muted">Searching…</p>
+            <SkeletonList
+              rows={3}
+              rowClassName="h-9 rounded-md mx-1"
+              className="p-2"
+              label="Searching symbols"
+            />
           )}
 
           {error && !isLoading && (

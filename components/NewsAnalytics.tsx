@@ -15,10 +15,15 @@ import {
   ResearchBulletList,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
+import {
+  LoadingSurface,
+  NewsAnalysisLoading,
+  NewsContextLoading,
+  NewsOverviewLoading,
+} from "@/components/ui/ContentLoading";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { appCalloutClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
-import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 import {
   Activity,
   CircleHelp,
@@ -72,20 +77,7 @@ function actionabilityTone(score: number | null | undefined) {
 }
 
 export function NewsOverviewSkeleton() {
-  return (
-    <div className="app-stack">
-      <div className={cn(appCalloutClass, "space-y-2")}>
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-4/5" />
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-3 w-28" />
-        <Skeleton className="h-1.5 w-full rounded-full" />
-        <Skeleton className="h-3 w-40" />
-      </div>
-    </div>
-  );
+  return <NewsOverviewLoading />;
 }
 
 export function NewsOverviewContent({ data }: { data: StockNewsView }) {
@@ -207,6 +199,71 @@ export function NewsAnalysisAside({ data }: { data: StockNewsView }) {
   );
 }
 
+function hasCoverageAnalysis(data: StockNewsView) {
+  return (
+    data.insights.length > 0 ||
+    data.risks.length > 0 ||
+    Boolean(data.deepAnalysis)
+  );
+}
+
+/** Market context + coverage analysis aside — card chrome always visible while loading. */
+export function NewsAsideSections({
+  data,
+  loading,
+  refreshing = false,
+  className,
+}: {
+  data: StockNewsView | null;
+  loading: boolean;
+  refreshing?: boolean;
+  className?: string;
+}) {
+  const hasContext = !!data;
+  const showAnalysisCard =
+    loading || refreshing || (data != null && hasCoverageAnalysis(data));
+
+  return (
+    <div className={cn("app-stack", className)}>
+      <ResearchSectionCard
+        title="Market context"
+        description="How recent news may affect the stock"
+        icon={Activity}
+      >
+        <LoadingSurface
+          loading={loading}
+          refreshing={refreshing}
+          hasContent={hasContext}
+          label="Loading market context"
+          skeleton={<NewsContextLoading />}
+        >
+          {data ? <NewsContextAside data={data} /> : null}
+        </LoadingSurface>
+      </ResearchSectionCard>
+
+      {showAnalysisCard ? (
+        <ResearchSectionCard
+          title="Coverage analysis"
+          description="Themes and risks from recent headlines"
+          icon={Sparkles}
+        >
+          <LoadingSurface
+            loading={loading}
+            refreshing={refreshing}
+            hasContent={!!data && hasCoverageAnalysis(data)}
+            label="Loading coverage analysis"
+            skeleton={<NewsAnalysisLoading />}
+          >
+            {data && hasCoverageAnalysis(data) ? (
+              <NewsAnalysisAside data={data} />
+            ) : null}
+          </LoadingSurface>
+        </ResearchSectionCard>
+      ) : null}
+    </div>
+  );
+}
+
 type Props = {
   analytics: StockNewsView | null;
   isLoading: boolean;
@@ -236,10 +293,6 @@ export default function NewsAnalytics({
 
   if (!data && !isLoading) return null;
 
-  const updatedLabel = lastUpdated
-    ? formatRelativeUpdatedAt(lastUpdated)
-    : null;
-
   const sentimentAction =
     showAiEnrichment && data ? (
       <span
@@ -257,9 +310,11 @@ export default function NewsAnalytics({
   const refreshAction = (
     <div className="flex shrink-0 items-center gap-2">
       {sentimentAction}
-      <span className="hidden text-[11px] text-muted sm:inline">
-        {isLoading || isRefreshing ? "Updating…" : updatedLabel}
-      </span>
+      <FreshnessLabel
+        updatedAt={lastUpdated}
+        pending={isLoading || isRefreshing}
+        className="hidden sm:inline-flex"
+      />
       {onRefresh ? (
         <IconButton
           size="sm"
@@ -291,16 +346,22 @@ export default function NewsAnalytics({
         bodyClassName="min-w-0"
         action={refreshAction}
       >
-        {isLoading && !data ? (
-          <NewsHeadlinesSkeleton view="grid" />
-        ) : data ? (
-          <NewsHeadlinesPanel
-            items={headlineItems}
-            defaultView="grid"
-            showSentimentFilters={showAiEnrichment}
-            showSentiment={showAiEnrichment}
-          />
-        ) : null}
+        <LoadingSurface
+          loading={isLoading}
+          refreshing={isRefreshing}
+          hasContent={!!data}
+          label="Loading headlines"
+          skeleton={<NewsHeadlinesSkeleton view="grid" />}
+        >
+          {data ? (
+            <NewsHeadlinesPanel
+              items={headlineItems}
+              defaultView="grid"
+              showSentimentFilters={showAiEnrichment}
+              showSentiment={showAiEnrichment}
+            />
+          ) : null}
+        </LoadingSurface>
       </ResearchSectionCard>
     );
   }
@@ -320,11 +381,15 @@ export default function NewsAnalytics({
               icon={Newspaper}
               action={refreshAction}
             >
-              {isLoading && !data ? (
-                <NewsOverviewSkeleton />
-              ) : data ? (
-                <NewsOverviewContent data={data} />
-              ) : null}
+              <LoadingSurface
+                loading={isLoading}
+                refreshing={isRefreshing}
+                hasContent={!!data}
+                label="Loading news overview"
+                skeleton={<NewsOverviewLoading />}
+              >
+                {data ? <NewsOverviewContent data={data} /> : null}
+              </LoadingSurface>
             </ResearchSectionCard>
 
             <ResearchSectionCard
@@ -333,43 +398,24 @@ export default function NewsAnalytics({
               icon={List}
               bodyClassName="min-w-0"
             >
-              {isLoading && !data ? (
-                <NewsHeadlinesSkeleton view="grid" />
-              ) : data ? (
-                <NewsHeadlinesPanel items={headlineItems} />
-              ) : null}
+              <LoadingSurface
+                loading={isLoading}
+                refreshing={isRefreshing}
+                hasContent={!!data && headlineItems.length > 0}
+                label="Loading headlines"
+                skeleton={<NewsHeadlinesSkeleton view="grid" />}
+              >
+                {data ? <NewsHeadlinesPanel items={headlineItems} /> : null}
+              </LoadingSurface>
             </ResearchSectionCard>
           </>
         }
         aside={
-          isLoading && !data ? (
-            <div className="app-stack" aria-hidden>
-              <Skeleton className="h-40 rounded-xl" />
-              <Skeleton className="h-48 rounded-xl" />
-            </div>
-          ) : data ? (
-            <>
-              <ResearchSectionCard
-                title="Market context"
-                description="How recent news may affect the stock"
-                icon={Activity}
-              >
-                <NewsContextAside data={data} />
-              </ResearchSectionCard>
-
-              {(data.insights.length > 0 ||
-                data.risks.length > 0 ||
-                data.deepAnalysis) && (
-                <ResearchSectionCard
-                  title="Coverage analysis"
-                  description="Themes and risks from recent headlines"
-                  icon={Sparkles}
-                >
-                  <NewsAnalysisAside data={data} />
-                </ResearchSectionCard>
-              )}
-            </>
-          ) : undefined
+          <NewsAsideSections
+            data={data}
+            loading={isLoading}
+            refreshing={isRefreshing}
+          />
         }
       />
     </div>

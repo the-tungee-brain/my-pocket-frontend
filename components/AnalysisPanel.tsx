@@ -4,18 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  Filter,
-  Lightbulb,
-  LockKeyhole,
-  RefreshCw,
-} from "lucide-react";
+import { Filter, Lightbulb, RefreshCw, Sparkles } from "lucide-react";
 import type { PositionMap } from "@/components/AccountPositionList";
 import { inferRecommendedComparePath } from "@/lib/inferRecommendedComparePath";
 import { AnalysisPanelAnalyzeSection } from "@/components/analysis/analysisPanelAnalyzeSection";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import { AlertBadge } from "@/components/AlertBadge";
-import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { KpiStat } from "@/components/ui/KpiStat";
 import { usePortfolioContext } from "@/app/contextSelectors";
 import { useInsights } from "@/app/hooks/useInsights";
@@ -90,6 +85,8 @@ type CommonProps = {
   onAskFollowUp?: () => void;
   onLoadingChange?: (loading: boolean) => void;
   autoStart?: boolean;
+  /** Collapse portfolio analysis until the user expands or navigates here. */
+  progressiveDisclosure?: boolean;
   /** Render only the analyze prompt/output block for embedding in another card. */
   embedded?: boolean;
   /** Hide held-option compare paths (e.g. on Positions tab). */
@@ -154,6 +151,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     onAskFollowUp,
     onLoadingChange,
     autoStart = false,
+    progressiveDisclosure = false,
     embedded = false,
     hideComparePaths = false,
   } = props;
@@ -172,12 +170,19 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   );
   const [requested, setRequested] = useState(autoStart);
   const [pendingAnalyze, setPendingAnalyze] = useState(false);
+  const [disclosureExpanded, setDisclosureExpanded] = useState(
+    autoStart || !progressiveDisclosure,
+  );
   const [sortKey, setSortKey] = useState<SortKey>("weight");
   const [alertsOnly, setAlertsOnly] = useState(false);
   const portfolioRescrollRef = useRef(false);
   const portfolioWaitForAnalyzeRef = useRef(false);
   const portfolioNavigation =
     isPortfolio ? (props.portfolioNavigation ?? null) : null;
+
+  const showProgressiveDisclosure =
+    isPortfolio && showPortfolioAnalysis && progressiveDisclosure;
+  const isDisclosureCollapsed = showProgressiveDisclosure && !disclosureExpanded;
 
   const symbolAlertMap = isPortfolio ? (props.symbolAlertMap ?? {}) : {};
   const positionMap = isPortfolio ? props.positionMap : null;
@@ -212,7 +217,10 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       positions,
       account,
       accessToken: sessionAccessToken || null,
-      enabled: requested && (!isPortfolio || showPortfolioAnalysis),
+      enabled:
+        requested &&
+        (!isPortfolio || showPortfolioAnalysis) &&
+        !isDisclosureCollapsed,
       structuredAnalyze: true,
       userDisplayMessage,
     },
@@ -244,9 +252,23 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
 
   useEffect(() => {
     if (hasCachedInsights && !requested) {
-      setRequested(true);
+      if (!showProgressiveDisclosure || disclosureExpanded) {
+        setRequested(true);
+      }
     }
-  }, [hasCachedInsights, requested]);
+  }, [hasCachedInsights, requested, showProgressiveDisclosure, disclosureExpanded]);
+
+  useEffect(() => {
+    if (autoStart) {
+      setDisclosureExpanded(true);
+    }
+  }, [autoStart]);
+
+  useEffect(() => {
+    if (portfolioNavigation?.token) {
+      setDisclosureExpanded(true);
+    }
+  }, [portfolioNavigation?.token]);
 
   useEffect(() => {
     if (autoStart) setRequested(true);
@@ -471,6 +493,55 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
         {headerReanalyzeButton}
         <div className={className}>{analysisBlock}</div>
       </>
+    );
+  }
+
+  const handleExpandDisclosure = () => {
+    setDisclosureExpanded(true);
+    setRequested(true);
+    scrollToAnalysisSection(PORTFOLIO_ANALYSIS_SECTION_ID);
+    if (!hasCachedInsights && !loading && !pendingAnalyze) {
+      setPendingAnalyze(true);
+      refetch();
+    }
+  };
+
+  if (isDisclosureCollapsed) {
+    return (
+      <Card
+        id={sectionId}
+        style={{ scrollMarginTop: "5.5rem" }}
+        surface="subtle"
+        className={className}
+      >
+        <CardBody spacious>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+                <Lightbulb className="h-4 w-4" aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-mono text-xs font-semibold uppercase tracking-wide text-foreground">
+                  Diversification analysis
+                </h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  {hasCachedInsights
+                    ? "Your latest AI diversification review is ready to view."
+                    : "AI review of sector concentration, cash deployment, and risk balance."}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleExpandDisclosure}
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-accent/35 bg-accent-muted/40 px-3.5 py-2 text-xs font-semibold text-accent-strong transition hover:border-accent/50 hover:bg-accent-muted/60"
+            >
+              <Sparkles className="h-3.5 w-3.5" aria-hidden />
+              {hasCachedInsights ? "View analysis" : "Run analysis"}
+            </button>
+          </div>
+        </CardBody>
+      </Card>
     );
   }
 

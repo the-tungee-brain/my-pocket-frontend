@@ -113,7 +113,11 @@ export default function ResearchPage() {
               <kbd className="mx-1 hidden rounded border border-border bg-muted-bg px-1.5 py-0.5 font-mono text-[10px] text-muted sm:inline">
                 /
               </kbd>
-              <span className="hidden sm:inline"> to focus search.</span>
+              <span className="hidden sm:inline"> or </span>
+              <kbd className="mx-0.5 hidden rounded border border-border bg-muted-bg px-1.5 py-0.5 font-mono text-[10px] text-muted sm:inline">
+                ⌘K
+              </kbd>
+              <span className="hidden sm:inline"> to search.</span>
             </p>
           </div>
         </div>

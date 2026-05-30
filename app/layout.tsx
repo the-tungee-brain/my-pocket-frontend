@@ -28,6 +28,12 @@ export const metadata: Metadata = {
   description: "AI portfolio intelligence by Tomcrest",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html

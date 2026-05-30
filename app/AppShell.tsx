@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronUp, Menu, Sparkles } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ChatSessionHistory } from "@/components/ChatSessionHistory";
@@ -447,7 +448,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               id="main-content"
               className={cn(
                 "relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pt-4 pb-4 sm:px-8",
-                "max-md:pb-20",
+                "max-md:pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
               )}
             >
               {children}
@@ -484,28 +485,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             {showChat && (
-              <div className="sticky bottom-14 z-20 shrink-0 md:hidden md:bottom-0">
-                {!mobileChatExpanded ? (
-                  <button
-                    type="button"
-                    onClick={() => setMobileChatExpanded(true)}
-                    className="flex w-full items-center justify-between gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-md"
-                  >
-                    <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
-                      <Sparkles
-                        className="h-4 w-4 shrink-0 text-accent-strong"
-                        aria-hidden="true"
+              <div className="safe-area-bottom sticky bottom-14 z-20 shrink-0 md:hidden md:bottom-0">
+                <AnimatePresence mode="wait" initial={false}>
+                  {!mobileChatExpanded ? (
+                    <motion.button
+                      key="collapsed"
+                      type="button"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.15 }}
+                      onClick={() => setMobileChatExpanded(true)}
+                      className="flex w-full items-center justify-between gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-md"
+                    >
+                      <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
+                        <Sparkles
+                          className="h-4 w-4 shrink-0 text-accent-strong"
+                          aria-hidden="true"
+                        />
+                        <span className="truncate">{mobileChatLabel}</span>
+                      </span>
+                      <ChevronUp className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                    </motion.button>
+                  ) : (
+                    <motion.div
+                      key="expanded"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 12 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      <ChatBox
+                        {...chatBoxProps}
+                        onCollapse={() => setMobileChatExpanded(false)}
                       />
-                      <span className="truncate">{mobileChatLabel}</span>
-                    </span>
-                    <ChevronUp className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
-                  </button>
-                ) : (
-                  <ChatBox
-                    {...chatBoxProps}
-                    onCollapse={() => setMobileChatExpanded(false)}
-                  />
-                )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
 

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { HTMLAttributes } from "react";
+import { LoadingRegion } from "./LoadingRegion";
 
 type SkeletonProps = HTMLAttributes<HTMLDivElement> & {
   className?: string;
@@ -8,7 +9,7 @@ type SkeletonProps = HTMLAttributes<HTMLDivElement> & {
 export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-muted-bg", className)}
+      className={cn("skeleton-shimmer rounded-md", className)}
       aria-hidden
       {...props}
     />
@@ -19,19 +20,21 @@ type SkeletonListProps = {
   rows?: number;
   rowClassName?: string;
   className?: string;
+  label?: string;
 };
 
 export function SkeletonList({
   rows = 3,
   rowClassName = "h-10 rounded-lg",
   className,
+  label = "Loading",
 }: SkeletonListProps) {
   return (
-    <div className={cn("space-y-2", className)} aria-hidden>
+    <LoadingRegion label={label} className={cn("space-y-2", className)}>
       {Array.from({ length: rows }, (_, index) => (
         <Skeleton key={index} className={rowClassName} />
       ))}
-    </div>
+    </LoadingRegion>
   );
 }
 
@@ -40,6 +43,7 @@ type ResearchSectionSkeletonProps = {
   rows?: number;
   rowClassName?: string;
   className?: string;
+  label?: string;
 };
 
 export function ResearchSectionSkeleton({
@@ -47,11 +51,14 @@ export function ResearchSectionSkeleton({
   rows = 3,
   rowClassName = "h-12 rounded-xl",
   className,
+  label = "Loading section",
 }: ResearchSectionSkeletonProps) {
   return (
-    <div className={cn("space-y-2", className)} aria-hidden>
+    <LoadingRegion label={label} className={cn("space-y-2", className)}>
       <Skeleton className={cn("h-4", headerWidth)} />
-      <SkeletonList rows={rows} rowClassName={rowClassName} className="space-y-2" />
-    </div>
+      {Array.from({ length: rows }, (_, index) => (
+        <Skeleton key={index} className={rowClassName} />
+      ))}
+    </LoadingRegion>
   );
 }

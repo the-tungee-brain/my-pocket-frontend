@@ -29,7 +29,7 @@ import {
   suggestedActionToQuickActionId,
 } from "@/lib/recentOrders";
 import { findQuickAction } from "@/lib/quickActions";
-import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
@@ -638,9 +638,11 @@ export function RecentActivitySection({
             <h2 className="text-sm font-semibold text-foreground">{title}</h2>
             <p className="text-[11px] text-muted">{subtitle}</p>
             {lastUpdated != null && symbol && (
-              <p className="mt-0.5 text-[10px] text-muted">
-                {formatRelativeUpdatedAt(lastUpdated)}
-              </p>
+              <FreshnessLabel
+                updatedAt={lastUpdated}
+                pending={loading}
+                className="mt-0.5"
+              />
             )}
           </div>
         </div>

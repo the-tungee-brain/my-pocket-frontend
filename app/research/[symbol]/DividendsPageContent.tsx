@@ -14,7 +14,12 @@ import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import type { Position } from "@/app/types/schwab";
 import type { DividendScenarioParams } from "@/app/types/research";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import {
+  ResearchScrollSpy,
+  ResearchScrollSpySection,
+} from "@/components/ResearchScrollSpy";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 import { appStackClass } from "@/lib/appUi";
 import { pageSectionClass } from "@/lib/pageLayout";
 import {
@@ -24,7 +29,6 @@ import {
   resolveSnowballPriceCagrPct,
 } from "@/lib/dividendHistory";
 import {
-  DIVIDEND_HISTORY_PANEL_MIN_CLASS,
   DividendHistoryCharts,
   DividendRecentPaymentsTable,
   DividendSnowballScenarioCard,
@@ -262,35 +266,30 @@ export function DividendsPageContent({ symbol }: Props) {
     return null;
   }
 
-  const matchedPanelClass = cn(
-    "flex flex-col",
-    DIVIDEND_HISTORY_PANEL_MIN_CLASS,
-  );
-  const matchedPanelBodyClass = "flex min-h-0 flex-1 flex-col";
-
   return (
-    <div className={cn(pageSectionClass, appStackClass, "w-full max-w-none")}>
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
+    <ResearchScrollSpy
+      className={cn(pageSectionClass, appStackClass, "w-full max-w-none")}
+    >
+      <ResearchScrollSpySection id="dividend-history" label="History">
         <ResearchSectionCard
           title="Dividend history"
           description="How annual totals and each payout per share have changed over time"
           icon={LineChart}
-          className={matchedPanelClass}
-          bodyClassName={matchedPanelBodyClass}
         >
           <DividendHistoryCharts history={history} />
         </ResearchSectionCard>
+      </ResearchScrollSpySection>
 
+      <ResearchScrollSpySection id="dividend-payments" label="Payments">
         <ResearchSectionCard
           title="Recent payments"
-          description={
-            history.dataAsOf
-              ? `Data as of ${new Date(history.dataAsOf).toLocaleDateString()}`
-              : "Latest dividend payments per share"
-          }
+          description="Latest dividend payments per share"
           icon={History}
-          className={matchedPanelClass}
-          bodyClassName={matchedPanelBodyClass}
+          action={
+            history.dataAsOf ? (
+              <FreshnessLabel dataAsOf={history.dataAsOf} variant="badge" />
+            ) : undefined
+          }
         >
           <DividendRecentPaymentsTable payments={history.recentPayments} />
           {history.cagr10yPct != null ? (
@@ -299,14 +298,15 @@ export function DividendsPageContent({ symbol }: Props) {
             </p>
           ) : null}
         </ResearchSectionCard>
-      </div>
+      </ResearchScrollSpySection>
 
-      <ResearchSectionCard
-        title="Dividend snowball"
-        description="Historic payout growth and cash income on your share count"
-        icon={TrendingUp}
-        className="w-full max-w-none"
-      >
+      <ResearchScrollSpySection id="dividend-snowball" label="Snowball">
+        <ResearchSectionCard
+          title="Dividend snowball"
+          description="Historic payout growth and cash income on your share count"
+          icon={TrendingUp}
+          className="w-full max-w-none"
+        >
         <div
           className={cn(
             "space-y-4 transition-opacity",
@@ -336,6 +336,7 @@ export function DividendsPageContent({ symbol }: Props) {
           </ProFeatureGate>
         </div>
       </ResearchSectionCard>
-    </div>
+      </ResearchScrollSpySection>
+    </ResearchScrollSpy>
   );
 }

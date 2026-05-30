@@ -12,6 +12,9 @@ export const ThinkingSpinner: FC<PropsWithChildren<ThinkingSpinnerProps>> = ({
 }) => {
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
       className={cn(
         "flex items-center gap-3 rounded-lg bg-muted-bg/50 px-3 py-2.5",
         className,
@@ -22,6 +25,7 @@ export const ThinkingSpinner: FC<PropsWithChildren<ThinkingSpinnerProps>> = ({
         <span className="relative h-2 w-2 rounded-full bg-accent-strong" />
       </div>
       <span className="text-sm text-muted">{message}</span>
+      <span className="sr-only">{message}</span>
       <span className="flex items-center gap-1 motion-reduce:hidden">
         <span className="h-1 w-1 animate-bounce rounded-full bg-muted [animation-delay:-0.3s]" />
         <span className="h-1 w-1 animate-bounce rounded-full bg-muted [animation-delay:-0.15s]" />

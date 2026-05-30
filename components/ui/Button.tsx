@@ -39,7 +39,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             "bg-foreground text-background hover:opacity-90",
           variant === "outline" &&
             "border border-border bg-background hover:bg-muted-bg hover:text-foreground",
-          variant === "ghost" && "hover:bg-accent hover:text-accent-foreground",
+          variant === "ghost" &&
+            "hover:bg-muted-bg hover:text-foreground active:bg-muted-bg/80",
           variant === "icon" &&
             cn(
               "border-0 bg-transparent text-muted",

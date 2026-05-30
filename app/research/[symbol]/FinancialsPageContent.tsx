@@ -7,8 +7,11 @@ import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useFundamentals } from "@/app/hooks/useFundamentals";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import {
+  ResearchScrollSpy,
+  ResearchScrollSpySection,
+} from "@/components/ResearchScrollSpy";
 import { hasProFeature } from "@/lib/planFeatures";
-import { PageSplit } from "@/components/PageShell";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import type { SecPeriod } from "@/lib/secUtils";
 import { SecPeriodToggle } from "./SecPeriodToggle";
@@ -43,90 +46,93 @@ export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
       : fundamentals?.annualFinancials;
 
   return (
-    <div className="app-stack">
+    <ResearchScrollSpy className="app-stack">
       {error && <ErrorBanner message={error} />}
 
       <div className="flex justify-end px-1">
         <SecPeriodToggle period={period} onChange={setPeriod} />
       </div>
 
-      <ResearchSectionCard
-        title="Financial strength"
-        description={
-          financialStrengthAllowed
-            ? "AI-assisted read on growth, margins, cash flow, and leverage"
-            : "Pro — score, strengths, risks, and narrative from filings & market data"
-        }
-        icon={Shield}
-      >
-        <ProFeatureGate
-          feature="financialStrength"
-          allowed={financialStrengthAllowed}
+      <ResearchScrollSpySection id="financial-strength" label="Strength">
+        <ResearchSectionCard
+          title="Financial strength"
+          description={
+            financialStrengthAllowed
+              ? "AI-assisted read on growth, margins, cash flow, and leverage"
+              : "Pro — score, strengths, risks, and narrative from filings & market data"
+          }
+          icon={Shield}
         >
-          <FinancialStrengthSection
-            strength={fundamentals?.strength}
-            isLoading={isLoading && financialStrengthAllowed}
+          <ProFeatureGate
+            feature="financialStrength"
+            allowed={financialStrengthAllowed}
+          >
+            <FinancialStrengthSection
+              strength={fundamentals?.strength}
+              isLoading={isLoading && financialStrengthAllowed}
+            />
+          </ProFeatureGate>
+        </ResearchSectionCard>
+      </ResearchScrollSpySection>
+
+      <ResearchScrollSpySection id="financial-statements" label="Statements">
+        <ResearchSectionCard
+          title="Financial statements"
+          description="Income, balance sheet, and cash flow"
+          icon={LineChart}
+        >
+          <YFinanceStatementsSection
+            snapshot={yfinanceSnapshot}
+            isLoading={isLoading}
           />
-        </ProFeatureGate>
-      </ResearchSectionCard>
+        </ResearchSectionCard>
+      </ResearchScrollSpySection>
 
-      <PageSplit
-        main={
-          <>
-            <ResearchSectionCard
-              title="Financial statements"
-              description="Income, balance sheet, and cash flow"
-              icon={LineChart}
-            >
-              <YFinanceStatementsSection
-                snapshot={yfinanceSnapshot}
-                isLoading={isLoading}
-              />
-            </ResearchSectionCard>
+      <ResearchScrollSpySection id="sec-trends" label="SEC trends">
+        <ResearchSectionCard
+          title="SEC financial trends"
+          description="Revenue, earnings, and cash flow from filed statements"
+          icon={LineChart}
+        >
+          <SecFinancialsTrendSection symbol={symbol} period={period} />
+        </ResearchSectionCard>
+      </ResearchScrollSpySection>
 
-            <ResearchSectionCard
-              title="SEC financial trends"
-              description="Revenue, earnings, and cash flow from filed statements"
-              icon={LineChart}
-            >
-              <SecFinancialsTrendSection symbol={symbol} period={period} />
-            </ResearchSectionCard>
-          </>
-        }
-        aside={
-          <>
-            <ResearchSectionCard
-              title="Key metrics"
-              description="Valuation, profitability, and balance sheet highlights"
-              icon={BarChart3}
-            >
-              {isLoading ? (
-                <KeyMetricsGridSkeleton />
-              ) : fundamentals?.metrics.length ? (
-                <KeyMetricsGrid metrics={fundamentals.metrics} />
-              ) : (
-                <p className="text-sm text-muted">Metrics unavailable.</p>
-              )}
-            </ResearchSectionCard>
+      <ResearchScrollSpySection id="key-metrics" label="Metrics">
+        <ResearchSectionCard
+          title="Key metrics"
+          description="Valuation, profitability, and balance sheet highlights"
+          icon={BarChart3}
+        >
+          {isLoading ? (
+            <KeyMetricsGridSkeleton />
+          ) : fundamentals?.metrics.length ? (
+            <KeyMetricsGrid metrics={fundamentals.metrics} />
+          ) : (
+            <p className="text-sm text-muted">Metrics unavailable.</p>
+          )}
+        </ResearchSectionCard>
+      </ResearchScrollSpySection>
 
-            <ResearchSectionCard
-              title="Profitability & returns"
-              description="Margins, ROE, free cash flow, and year-over-year growth (SEC)"
-              icon={LineChart}
-            >
-              <SecRatiosSection symbol={symbol} period={period} />
-            </ResearchSectionCard>
+      <ResearchScrollSpySection id="profitability" label="Returns">
+        <ResearchSectionCard
+          title="Profitability & returns"
+          description="Margins, ROE, free cash flow, and year-over-year growth (SEC)"
+          icon={LineChart}
+        >
+          <SecRatiosSection symbol={symbol} period={period} />
+        </ResearchSectionCard>
+      </ResearchScrollSpySection>
 
-            <ResearchSectionCard
-              title="SEC filings"
-              description="Recent 10-K, 10-Q, and other submitted documents"
-              icon={ScrollText}
-            >
-              <SecFilingsSection symbol={symbol} />
-            </ResearchSectionCard>
-          </>
-        }
-      />
-    </div>
+      <ResearchScrollSpySection id="sec-filings" label="Filings">
+        <ResearchSectionCard
+          title="SEC filings"
+          description="Recent 10-K, 10-Q, and other submitted documents"
+          icon={ScrollText}
+        >
+          <SecFilingsSection symbol={symbol} />
+        </ResearchSectionCard>
+      </ResearchScrollSpySection>
+    </ResearchScrollSpy>
   );
 }

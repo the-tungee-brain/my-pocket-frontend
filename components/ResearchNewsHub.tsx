@@ -3,13 +3,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
-  Activity,
   ArrowRight,
   FileText,
   List,
   Newspaper,
   RefreshCw,
-  Sparkles,
 } from "lucide-react";
 import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useCompanyNews } from "@/app/hooks/useCompanyNews";
@@ -17,24 +15,26 @@ import { usePressReleases } from "@/app/hooks/usePressReleases";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { hasProFeature } from "@/lib/planFeatures";
 import NewsAnalytics, {
-  NewsAnalysisAside,
-  NewsContextAside,
+  NewsAsideSections,
   NewsOverviewContent,
-  NewsOverviewSkeleton,
 } from "@/components/NewsAnalytics";
+import {
+  LoadingSurface,
+  NewsOverviewLoading,
+} from "@/components/ui/ContentLoading";
 import {
   enrichedNewsItemToDisplay,
   NewsHeadlinesPanel,
+  NewsHeadlinesSkeleton,
   pressReleaseToDisplay,
 } from "@/components/NewsHeadlinesFeed";
 import { PageSplit } from "@/components/PageShell";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { IconButton } from "@/components/ui/IconButton";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { appStackClass, appTabBarClass, appTabLinkClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
-import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 
 const FEED_PREVIEW_LIMIT = 4;
 
@@ -147,6 +147,7 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
   const {
     items: officialItems,
     isLoading: officialLoading,
+    isRefreshing: officialRefreshing,
     error: officialError,
     lastUpdated: officialUpdated,
     refetch: refetchOfficial,
@@ -189,28 +190,25 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
   }, [refetchOfficial, refreshCoverage]);
 
   const busy =
-    coverageLoading ||
+    (coverageLoading && !analytics) ||
     coverageRefreshing ||
-    officialLoading ||
+    (officialLoading && officialCount === 0) ||
+    officialRefreshing ||
     (scope !== "coverage" && !accessToken);
 
-  const updatedLabel = useMemo(() => {
+  const latestUpdated = useMemo(() => {
     const times = [coverageUpdated, officialUpdated].filter(
       (t): t is number => t != null,
     );
     if (!times.length) return null;
-    return formatRelativeUpdatedAt(Math.max(...times));
+    return Math.max(...times);
   }, [coverageUpdated, officialUpdated]);
 
   const header = (
     <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <NewsFeedScopeTabs scope={scope} onChange={setScope} tabs={tabs} />
       <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
-        {updatedLabel ? (
-          <span className="text-[11px] text-muted">
-            {busy ? "Updating…" : updatedLabel}
-          </span>
-        ) : null}
+        <FreshnessLabel updatedAt={latestUpdated} pending={busy} />
         <IconButton
           size="sm"
           onClick={refreshAll}
@@ -271,6 +269,7 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
           <NewsHeadlinesPanel
             items={officialDisplay}
             isLoading={officialLoading}
+            isRefreshing={officialRefreshing}
             showSentimentFilters={false}
             emptyMessage="No press releases available for this symbol right now."
           />
@@ -302,20 +301,22 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
                 showAiNews && analytics
                   ? `${coverageCount} stories analyzed`
                   : showAiNews
-                    ? "Loading coverage summary…"
+                    ? "Synthesizing recent headlines…"
                     : "Pro — synthesized from recent headlines"
               }
               icon={Newspaper}
               bodyClassName="min-w-0"
             >
               <ProFeatureGate feature="newsAi" allowed={showAiNews}>
-                {coverageLoading && !analytics ? (
-                  <NewsOverviewSkeleton />
-                ) : analytics ? (
-                  <NewsOverviewContent data={analytics} />
-                ) : (
-                  <Skeleton className="h-24 rounded-xl" />
-                )}
+                <LoadingSurface
+                  loading={showAiNews && coverageLoading && !analytics}
+                  refreshing={showAiNews && coverageRefreshing && !!analytics}
+                  hasContent={!!analytics}
+                  label="Loading news brief"
+                  skeleton={<NewsOverviewLoading />}
+                >
+                  {analytics ? <NewsOverviewContent data={analytics} /> : null}
+                </LoadingSurface>
               </ProFeatureGate>
             </ResearchSectionCard>
 
@@ -330,31 +331,39 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
                 icon={List}
                 bodyClassName="min-w-0"
               >
-                {coverageLoading && !analytics ? (
-                  <NewsHeadlinesPanel items={[]} isLoading />
-                ) : coverageCount > 0 ? (
-                  <NewsHeadlinesPanel
-                    items={coverageDisplay}
-                    isLoading={coverageLoading && !analytics}
-                    itemLimit={FEED_PREVIEW_LIMIT}
-                    defaultView="grid"
-                    hideViewToggle
-                    showSentimentFilters={showAiNews}
-                    showSentiment={showAiNews}
-                    footer={
-                      coverageCount > FEED_PREVIEW_LIMIT ? (
-                        <ViewAllLink
-                          label={`View all ${coverageCount} stories`}
-                          onClick={() => setScope("coverage")}
-                        />
-                      ) : null
-                    }
-                  />
-                ) : (
-                  <p className="text-sm text-muted">
-                    No enriched market headlines yet.
-                  </p>
-                )}
+                <LoadingSurface
+                  loading={coverageLoading && coverageCount === 0}
+                  refreshing={coverageRefreshing || (coverageLoading && coverageCount > 0)}
+                  hasContent={coverageCount > 0}
+                  label="Loading market coverage"
+                  skeleton={
+                    <NewsHeadlinesSkeleton view="grid" rows={3} />
+                  }
+                >
+                  {coverageCount > 0 ? (
+                    <NewsHeadlinesPanel
+                      items={coverageDisplay}
+                      isRefreshing={coverageRefreshing}
+                      itemLimit={FEED_PREVIEW_LIMIT}
+                      defaultView="grid"
+                      hideViewToggle
+                      showSentimentFilters={showAiNews}
+                      showSentiment={showAiNews}
+                      footer={
+                        coverageCount > FEED_PREVIEW_LIMIT ? (
+                          <ViewAllLink
+                            label={`View all ${coverageCount} stories`}
+                            onClick={() => setScope("coverage")}
+                          />
+                        ) : null
+                      }
+                    />
+                  ) : (
+                    <p className="text-sm text-muted">
+                      No enriched market headlines yet.
+                    </p>
+                  )}
+                </LoadingSurface>
               </ResearchSectionCard>
             ) : null}
 
@@ -364,66 +373,48 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
               icon={FileText}
               bodyClassName="min-w-0"
             >
-              {officialLoading && officialCount === 0 ? (
-                <NewsHeadlinesPanel
-                  items={[]}
-                  isLoading
-                  hideToolbar
-                  showSentimentFilters={false}
-                />
-              ) : officialCount > 0 ? (
-                <NewsHeadlinesPanel
-                  items={officialDisplay}
-                  isLoading={false}
-                  showSentimentFilters={false}
-                  itemLimit={FEED_PREVIEW_LIMIT}
-                  hideToolbar
-                  footer={
-                    officialCount > FEED_PREVIEW_LIMIT ? (
-                      <ViewAllLink
-                        label={`View all ${officialCount} official releases`}
-                        onClick={() => setScope("official")}
-                      />
-                    ) : null
-                  }
-                />
-              ) : (
-                <OfficialEmptyHint />
-              )}
+              <LoadingSurface
+                loading={officialLoading && officialCount === 0}
+                refreshing={officialRefreshing}
+                hasContent={officialCount > 0}
+                label="Loading official releases"
+                skeleton={
+                  <NewsHeadlinesSkeleton view="grid" rows={3} label="Loading official releases" />
+                }
+              >
+                {officialCount > 0 ? (
+                  <NewsHeadlinesPanel
+                    items={officialDisplay}
+                    isRefreshing={officialRefreshing}
+                    showSentimentFilters={false}
+                    itemLimit={FEED_PREVIEW_LIMIT}
+                    hideToolbar
+                    footer={
+                      officialCount > FEED_PREVIEW_LIMIT ? (
+                        <ViewAllLink
+                          label={`View all ${officialCount} official releases`}
+                          onClick={() => setScope("official")}
+                        />
+                      ) : null
+                    }
+                  />
+                ) : (
+                  <OfficialEmptyHint />
+                )}
+              </LoadingSurface>
             </ResearchSectionCard>
           </div>
         }
         aside={
-          showAiNews && analytics ? (
-            <>
-              <ResearchSectionCard
-                title="Market context"
-                description="How recent news may affect the stock"
-                icon={Activity}
-              >
-                <NewsContextAside data={analytics} />
-              </ResearchSectionCard>
-
-              {(analytics.insights.length > 0 ||
-                analytics.risks.length > 0 ||
-                analytics.deepAnalysis) && (
-                <ResearchSectionCard
-                  title="Coverage analysis"
-                  description="Themes and risks from recent headlines"
-                  icon={Sparkles}
-                >
-                  <NewsAnalysisAside data={analytics} />
-                </ResearchSectionCard>
-              )}
-            </>
-          ) : !showAiNews ? (
+          showAiNews ? (
+            <NewsAsideSections
+              data={analytics}
+              loading={coverageLoading && !analytics}
+              refreshing={coverageRefreshing}
+            />
+          ) : (
             <ProFeatureGate feature="newsAi" allowed={false} />
-          ) : coverageLoading ? (
-            <div className="app-stack" aria-hidden>
-              <Skeleton className="h-40 rounded-xl" />
-              <Skeleton className="h-48 rounded-xl" />
-            </div>
-          ) : undefined
+          )
         }
       />
     </div>

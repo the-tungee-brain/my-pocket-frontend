@@ -44,7 +44,8 @@ export function usePortfolioNews(
 
   return {
     items: query.data?.items ?? ([] as PortfolioHoldingsNewsItem[]),
-    loading: query.isLoading || query.isFetching,
+    loading: query.isLoading,
+    refreshing: query.isFetching && !query.isLoading,
     error,
     lastUpdated: query.dataUpdatedAt > 0 ? query.dataUpdatedAt : null,
     refetch,

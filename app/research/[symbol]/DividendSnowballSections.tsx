@@ -90,7 +90,9 @@ function SnowballScenarioControlsPanel({
           />
         </button>
         {open ? (
-          <div className="space-y-3 border-t border-border/70 p-3">{children}</div>
+          <div className="space-y-3 border-t border-border/70 p-3">
+            {children}
+          </div>
         ) : null}
       </div>
     </>
@@ -207,7 +209,11 @@ function SnowballNumericInput({
   const adjustByStep = (direction: 1 | -1) => {
     const parsed = parseSnowballInputNumber(text);
     const current =
-      parsed != null ? parsed : value != null && Number.isFinite(value) ? value : 0;
+      parsed != null
+        ? parsed
+        : value != null && Number.isFinite(value)
+          ? value
+          : 0;
     if (!stepSize || stepSize <= 0) return;
     const next = resolveFixedStepValue(
       current,
@@ -291,10 +297,7 @@ function SnowballNumericInput({
           onCommit(next);
         }
       }}
-      className={cn(
-        disabled && "cursor-not-allowed opacity-70",
-        className,
-      )}
+      className={cn(disabled && "cursor-not-allowed opacity-70", className)}
     />
   );
 }
@@ -617,10 +620,12 @@ export function DividendSummaryStats({
       {scenario && projectionWindow ? (
         <p className="text-xs leading-relaxed text-muted">
           Projections combine historic dividend growth (5Y CAGR when available),{" "}
-          {priceGrowthPct != null ? `${priceGrowthPct.toFixed(1)}%` : "estimated"}{" "}
-          annual price growth, and your share count. Portfolio value also reflects
-          price growth; enable DRIP below to reinvest dividends into more shares.
-          Past growth rates are not guaranteed to continue.
+          {priceGrowthPct != null
+            ? `${priceGrowthPct.toFixed(1)}%`
+            : "estimated"}{" "}
+          annual price growth, and your share count. Portfolio value also
+          reflects price growth; enable DRIP below to reinvest dividends into
+          more shares. Past growth rates are not guaranteed to continue.
         </p>
       ) : null}
     </div>
@@ -1099,138 +1104,138 @@ export function DividendSnowballScenarioCard({
             annualContributionUsd,
           })}
         >
-        <div className="grid gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="space-y-1 text-xs text-muted">
-            Investment
-            <SnowballCurrencyInput
-              min={0}
-              max={100000000}
-              step={SNOWBALL_CURRENCY_STEP}
-              value={investmentUsd}
-              onCommit={(next) => {
-                emitScenario("investment", {
-                  investmentUsd: next,
-                  sharePrice,
-                  projectYears,
-                  reinvestDividends,
-                  priceCagrPct: scenarioParams?.priceCagrPct ?? null,
-                  annualContributionUsd,
-                });
-              }}
-              className="w-full rounded-md border border-border bg-background py-1.5 pr-2 text-sm tabular-nums text-foreground"
-            />
-          </label>
-          <label className="space-y-1 text-xs text-muted">
-            Share price
-            <SnowballCurrencyInput
-              min={0.01}
-              max={1000000}
-              value={sharePrice}
-              disabled
-              onCommit={() => {}}
-              className="w-full rounded-md border border-border bg-muted-bg/40 py-1.5 pr-2 text-sm tabular-nums text-foreground"
-            />
-          </label>
-          <label className="space-y-1 text-xs text-muted">
-            Shares
-            <SnowballNumericInput
-              min={0.01}
-              max={1000000}
-              step={0.01}
-              value={shares}
-              onCommit={(next) => {
-                emitScenario("shares", {
-                  shares: next,
-                  sharePrice,
-                  projectYears,
-                  reinvestDividends,
-                  priceCagrPct: scenarioParams?.priceCagrPct ?? null,
-                  annualContributionUsd,
-                });
-              }}
-              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
-            />
-          </label>
-          <label className="space-y-1 text-xs text-muted">
-            Annual contribution
-            <SnowballCurrencyInput
-              min={0}
-              max={100000000}
-              step={SNOWBALL_CURRENCY_STEP}
-              allowZero
-              value={annualContributionUsd}
-              onCommit={(next) => {
-                updateScenario({ annualContributionUsd: next });
-              }}
-              onClear={() => updateScenario({ annualContributionUsd: 0 })}
-              className="w-full rounded-md border border-border bg-background py-1.5 pr-2 text-sm tabular-nums text-foreground"
-            />
-          </label>
-        </div>
-
-        <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
-          <div>
-            <p className="text-xs font-medium text-foreground">
-              Projection horizon
-            </p>
-            <p className="mt-1 text-[11px] text-muted">
-              {currentYear} → {endYear} · {scenario.dividendCagrPct.toFixed(1)}%
-              avg dividend growth / yr
-            </p>
+          <div className="grid gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="space-y-1 text-xs text-muted">
+              Investment
+              <SnowballCurrencyInput
+                min={0}
+                max={100000000}
+                step={SNOWBALL_CURRENCY_STEP}
+                value={investmentUsd}
+                onCommit={(next) => {
+                  emitScenario("investment", {
+                    investmentUsd: next,
+                    sharePrice,
+                    projectYears,
+                    reinvestDividends,
+                    priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                    annualContributionUsd,
+                  });
+                }}
+                className="w-full rounded-md border border-border bg-background py-1.5 pr-2 text-sm tabular-nums text-foreground"
+              />
+            </label>
+            <label className="space-y-1 text-xs text-muted">
+              Share price
+              <SnowballCurrencyInput
+                min={0.01}
+                max={1000000}
+                value={sharePrice}
+                disabled
+                onCommit={() => {}}
+                className="w-full rounded-md border border-border bg-muted-bg/40 py-1.5 pr-2 text-sm tabular-nums text-foreground"
+              />
+            </label>
+            <label className="space-y-1 text-xs text-muted">
+              Shares
+              <SnowballNumericInput
+                min={0.01}
+                max={1000000}
+                step={0.01}
+                value={shares}
+                onCommit={(next) => {
+                  emitScenario("shares", {
+                    shares: next,
+                    sharePrice,
+                    projectYears,
+                    reinvestDividends,
+                    priceCagrPct: scenarioParams?.priceCagrPct ?? null,
+                    annualContributionUsd,
+                  });
+                }}
+                className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+              />
+            </label>
+            <label className="space-y-1 text-xs text-muted">
+              Annual contribution
+              <SnowballCurrencyInput
+                min={0}
+                max={100000000}
+                step={SNOWBALL_CURRENCY_STEP}
+                allowZero
+                value={annualContributionUsd}
+                onCommit={(next) => {
+                  updateScenario({ annualContributionUsd: next });
+                }}
+                onClear={() => updateScenario({ annualContributionUsd: 0 })}
+                className="w-full rounded-md border border-border bg-background py-1.5 pr-2 text-sm tabular-nums text-foreground"
+              />
+            </label>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {DIVIDEND_PROJECTION_YEAR_PRESETS.map((years) => (
-              <button
-                key={years}
-                type="button"
-                onClick={() => updateScenario({ projectYears: years })}
-                className={cn(
-                  "rounded-full border px-3 py-1 text-xs tabular-nums transition-colors",
-                  projectYears === years
-                    ? "border-accent/60 bg-accent/10 text-foreground"
-                    : "border-border bg-background text-muted hover:text-foreground",
-                )}
-              >
-                {years}y
-              </button>
-            ))}
-          </div>
-          <label className="block max-w-xs space-y-1 text-xs text-muted">
-            Custom years
-            <SnowballNumericInput
-              min={1}
-              max={50}
-              step={1}
-              value={projectYears}
-              onCommit={(next) =>
-                updateScenario({
-                  projectYears: Math.max(1, Math.min(50, Math.round(next))),
-                })
-              }
-              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
-            />
-          </label>
-        </div>
 
-        <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
-          <label className="flex items-start gap-3 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={reinvestDividends}
-              onChange={(event) => {
-                updateScenario({ reinvestDividends: event.target.checked });
-              }}
-              className="mt-0.5"
-            />
-            <span>
-              <span className="font-medium">Reinvest dividends (DRIP)</span>
-              <span className="mt-1 block text-xs text-muted">
-                Use each year&apos;s dividend cash to buy more shares over the
-                next {projectYears} years.
+          <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
+            <div>
+              <p className="text-xs font-medium text-foreground">
+                Projection horizon
+              </p>
+              <p className="mt-1 text-[11px] text-muted">
+                {currentYear} → {endYear} ·{" "}
+                {scenario.dividendCagrPct.toFixed(1)}% avg dividend growth / yr
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {DIVIDEND_PROJECTION_YEAR_PRESETS.map((years) => (
+                <button
+                  key={years}
+                  type="button"
+                  onClick={() => updateScenario({ projectYears: years })}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs tabular-nums transition-colors",
+                    projectYears === years
+                      ? "border-accent/60 bg-accent/10 text-foreground"
+                      : "border-border bg-background text-muted hover:text-foreground",
+                  )}
+                >
+                  {years}y
+                </button>
+              ))}
+            </div>
+            <label className="block max-w-xs space-y-1 text-xs text-muted">
+              Custom years
+              <SnowballNumericInput
+                min={1}
+                max={50}
+                step={1}
+                value={projectYears}
+                onCommit={(next) =>
+                  updateScenario({
+                    projectYears: Math.max(1, Math.min(50, Math.round(next))),
+                  })
+                }
+                className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+              />
+            </label>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
+            <label className="flex items-start gap-3 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={reinvestDividends}
+                onChange={(event) => {
+                  updateScenario({ reinvestDividends: event.target.checked });
+                }}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="font-medium">Reinvest dividends (DRIP)</span>
+                <span className="mt-1 block text-xs text-muted">
+                  Use each year&apos;s dividend cash to buy more shares over the
+                  next {projectYears} years.
+                </span>
               </span>
-            </span>
-          </label>
-        </div>
+            </label>
+          </div>
         </SnowballScenarioControlsPanel>
       ) : null}
 
@@ -1416,10 +1421,7 @@ export function DividendSnowballSkeleton() {
 }
 
 export function DividendsPageSkeleton() {
-  const panelClass = cn(
-    "flex flex-col",
-    DIVIDEND_HISTORY_PANEL_MIN_CLASS,
-  );
+  const panelClass = cn("flex flex-col", DIVIDEND_HISTORY_PANEL_MIN_CLASS);
   const panelBodyClass = "flex min-h-0 flex-1 flex-col";
 
   return (
@@ -1432,7 +1434,7 @@ export function DividendsPageSkeleton() {
           className={panelClass}
           bodyClassName={panelBodyClass}
         >
-          <Skeleton className="h-full min-h-[28rem] rounded-xl" />
+          <Skeleton className="h-full min-h-112 rounded-xl" />
         </ResearchSectionCard>
 
         <ResearchSectionCard

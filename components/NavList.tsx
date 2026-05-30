@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import {
   BriefcaseBusiness,
   CircleDollarSign,
+  Link2,
   Search,
   Star,
   X,
@@ -15,6 +16,7 @@ import { useToast } from "@/app/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 import { IconButton } from "./ui/IconButton";
 import { SkeletonList } from "./ui/Skeleton";
+import { EmptyState } from "./ui/EmptyState";
 import { AlertBadge } from "./AlertBadge";
 import type { SymbolAlertSummary } from "@/lib/intelligence";
 import { symbolHubPath } from "@/lib/symbolRoutes";
@@ -178,17 +180,22 @@ export function NavList({
       )}
 
       {!loading && symbols.length === 0 && (
-        <div className="rounded-lg border border-dashed border-border bg-background/50 px-3 py-3 text-[11px] text-muted">
-          <p>
-            Connect Schwab in Settings to import holdings. Read-only OAuth —
-            your login credentials remain with Schwab.
-          </p>
-          <Link
-            href="/settings"
-            className="mt-2 inline-flex text-xs font-medium text-accent-strong transition hover:underline"
-          >
-            Go to Settings
-          </Link>
+        <div className="px-2">
+          <EmptyState
+            icon={Link2}
+            title="No positions yet"
+            description="Connect Schwab in Settings to import holdings. Read-only OAuth — your login credentials stay with Schwab."
+            variant="solid"
+            className="px-4 py-6"
+            action={
+              <Link
+                href="/settings"
+                className="inline-flex text-xs font-medium text-accent-strong transition hover:underline"
+              >
+                Go to Settings
+              </Link>
+            }
+          />
         </div>
       )}
 

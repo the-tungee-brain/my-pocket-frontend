@@ -31,7 +31,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-md md:hidden"
+      className="safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-md md:hidden"
       aria-label="Primary"
     >
       <div className="mx-auto grid max-w-lg grid-cols-3">

@@ -9,13 +9,14 @@ import {
 } from "@/components/NewsHeadlinesFeed";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
-import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
 
 type Props = {
   items: PortfolioHoldingsNewsItem[];
   loading?: boolean;
+  refreshing?: boolean;
   error?: string | null;
   lastUpdated?: number | null;
   onRefresh?: () => void;
@@ -25,6 +26,7 @@ type Props = {
 export function PortfolioNewsSection({
   items,
   loading = false,
+  refreshing = false,
   error = null,
   lastUpdated = null,
   onRefresh,
@@ -35,23 +37,22 @@ export function PortfolioNewsSection({
     [items],
   );
 
-  const updatedLabel = lastUpdated
-    ? formatRelativeUpdatedAt(lastUpdated)
-    : null;
-
   const refreshAction = onRefresh ? (
     <div className="flex shrink-0 items-center gap-2">
-      {updatedLabel ? (
-        <span className="hidden text-[11px] text-muted sm:inline">{updatedLabel}</span>
-      ) : null}
+      <FreshnessLabel
+        updatedAt={lastUpdated}
+        pending={loading || refreshing}
+        pendingLabel="Fetching headlines…"
+        className="hidden sm:inline-flex"
+      />
       <IconButton
         size="sm"
         onClick={onRefresh}
-        disabled={loading}
+        disabled={loading || refreshing}
         aria-label="Refresh news"
       >
         <RefreshCw
-          className={cn("h-3.5 w-3.5", loading && "animate-spin")}
+          className={cn("h-3.5 w-3.5", (loading || refreshing) && "animate-spin")}
           aria-hidden
         />
       </IconButton>
@@ -72,6 +73,7 @@ export function PortfolioNewsSection({
         <NewsHeadlinesPanel
           items={displayItems}
           isLoading={loading}
+          isRefreshing={refreshing}
           showSentimentFilters={false}
           emptyMessage="No headlines available right now."
         />

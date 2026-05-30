@@ -5,6 +5,11 @@ import { useMemo, useState, type ReactNode } from "react";
 import type { EnrichedNewsItem, Sentiment } from "@/app/hooks/useCompanyNews";
 import type { PortfolioHoldingsNewsItem } from "@/app/types/portfolioNews";
 import { Skeleton } from "@/components/ui/Skeleton";
+import {
+  LoadingStagger,
+  LoadingSurface,
+} from "@/components/ui/ContentLoading";
+import { LoadingRegion } from "@/components/ui/LoadingRegion";
 import { appTabBarClass, appTabLinkClass } from "@/lib/appUi";
 import { newsHeadlineIconPalette } from "@/lib/newsHeadlineIcon";
 import { cn } from "@/lib/utils";
@@ -393,7 +398,15 @@ export function HeadlinesViewToggle({
   );
 }
 
-export function NewsHeadlinesSkeleton({ view }: { view: HeadlinesView }) {
+export function NewsHeadlinesSkeleton({
+  view,
+  rows = 4,
+  label = "Loading headlines",
+}: {
+  view: HeadlinesView;
+  rows?: number;
+  label?: string;
+}) {
   const card = (
     <div className="flex gap-3 rounded-xl border border-border bg-background/40 p-3">
       <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
@@ -405,28 +418,35 @@ export function NewsHeadlinesSkeleton({ view }: { view: HeadlinesView }) {
     </div>
   );
 
-  return view === "grid" ? (
-    <div className={NEWS_HEADLINES_GRID_CLASS}>
-      {[1, 2, 3, 4].map((row) => (
-        <div key={row} className="min-h-0 min-w-0">
-          {card}
-        </div>
-      ))}
-    </div>
-  ) : (
-    <div className={NEWS_HEADLINES_LIST_CLASS}>
-      {[1, 2, 3, 4].map((row) => (
-        <div key={row} className="min-w-0">
-          {card}
-        </div>
-      ))}
-    </div>
+  return (
+    <LoadingRegion label={label}>
+      <LoadingStagger>
+        {view === "grid" ? (
+          <div className={NEWS_HEADLINES_GRID_CLASS}>
+            {Array.from({ length: rows }, (_, row) => (
+              <div key={row} className="min-h-0 min-w-0">
+                {card}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={NEWS_HEADLINES_LIST_CLASS}>
+            {Array.from({ length: rows }, (_, row) => (
+              <div key={row} className="min-w-0">
+                {card}
+              </div>
+            ))}
+          </div>
+        )}
+      </LoadingStagger>
+    </LoadingRegion>
   );
 }
 
 type NewsHeadlinesPanelProps = {
   items: NewsHeadlineDisplayItem[];
   isLoading?: boolean;
+  isRefreshing?: boolean;
   showSentimentFilters?: boolean;
   showSentiment?: boolean;
   showFeedKind?: boolean;
@@ -442,6 +462,7 @@ type NewsHeadlinesPanelProps = {
 export function NewsHeadlinesPanel({
   items,
   isLoading = false,
+  isRefreshing = false,
   showSentimentFilters = true,
   showSentiment = true,
   showFeedKind = false,
@@ -476,63 +497,54 @@ export function NewsHeadlinesPanel({
     (counts.bullish > 0 || counts.bearish > 0) &&
     items.length > 0;
 
-  if (isLoading && items.length === 0) {
-    return (
-      <div className={NEWS_HEADLINES_PANEL_CONTAINER_CLASS}>
-        <NewsHeadlinesSkeleton view={layoutView} />
-      </div>
-    );
-  }
-
-  return (
-    <div className={NEWS_HEADLINES_PANEL_CONTAINER_CLASS}>
-      <div className="app-stack min-w-0">
+  const panelBody = (
+    <div className="app-stack min-w-0">
       {!hideToolbar ? (
-      <div className="flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        {hasSentimentSpread ? (
-          <div
-            className="flex min-w-0 flex-wrap gap-1.5"
-            role="group"
-            aria-label="Filter by sentiment"
-          >
-            <FilterChip
-              active={filter === "all"}
-              label="All"
-              count={items.length}
-              onClick={() => setFilter("all")}
+        <div className="flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          {hasSentimentSpread ? (
+            <div
+              className="flex min-w-0 flex-wrap gap-1.5"
+              role="group"
+              aria-label="Filter by sentiment"
+            >
+              <FilterChip
+                active={filter === "all"}
+                label="All"
+                count={items.length}
+                onClick={() => setFilter("all")}
+              />
+              <FilterChip
+                active={filter === "bullish"}
+                label="Bullish"
+                count={counts.bullish}
+                onClick={() => setFilter("bullish")}
+              />
+              <FilterChip
+                active={filter === "neutral"}
+                label="Neutral"
+                count={counts.neutral}
+                onClick={() => setFilter("neutral")}
+              />
+              <FilterChip
+                active={filter === "bearish"}
+                label="Bearish"
+                count={counts.bearish}
+                onClick={() => setFilter("bearish")}
+              />
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted">
+              {items.length} headline{items.length === 1 ? "" : "s"}
+            </p>
+          )}
+          {!hideViewToggle ? (
+            <HeadlinesViewToggle
+              view={headlinesView}
+              onChange={setHeadlinesView}
+              className="w-full shrink-0 sm:w-auto"
             />
-            <FilterChip
-              active={filter === "bullish"}
-              label="Bullish"
-              count={counts.bullish}
-              onClick={() => setFilter("bullish")}
-            />
-            <FilterChip
-              active={filter === "neutral"}
-              label="Neutral"
-              count={counts.neutral}
-              onClick={() => setFilter("neutral")}
-            />
-            <FilterChip
-              active={filter === "bearish"}
-              label="Bearish"
-              count={counts.bearish}
-              onClick={() => setFilter("bearish")}
-            />
-          </div>
-        ) : (
-          <p className="text-[11px] text-muted">
-            {items.length} headline{items.length === 1 ? "" : "s"}
-          </p>
-        )}
-        {!hideViewToggle ? (
-          <HeadlinesViewToggle
-            view={headlinesView}
-            onChange={setHeadlinesView}
-            className="w-full shrink-0 sm:w-auto"
-          />
-        ) : null}
-      </div>
+          ) : null}
+        </div>
       ) : null}
 
       {visibleItems.length > 0 ? (
@@ -563,8 +575,20 @@ export function NewsHeadlinesPanel({
       )}
 
       {footer ? <div className="pt-1">{footer}</div> : null}
-      </div>
     </div>
+  );
+
+  return (
+    <LoadingSurface
+      loading={isLoading}
+      refreshing={isRefreshing}
+      hasContent={items.length > 0}
+      label="Loading headlines"
+      className={NEWS_HEADLINES_PANEL_CONTAINER_CLASS}
+      skeleton={<NewsHeadlinesSkeleton view={layoutView} />}
+    >
+      {panelBody}
+    </LoadingSurface>
   );
 }
 

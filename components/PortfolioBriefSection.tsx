@@ -26,7 +26,7 @@ import {
   sortSignalsBySeverity,
 } from "@/lib/intelligence";
 import { findQuickAction } from "@/lib/quickActions";
-import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
@@ -175,10 +175,13 @@ export function PortfolioBriefSection({
           title="Morning brief"
           description={
             <>
-              {lastUpdated != null && (
-                <span className="mr-2 text-[10px] text-muted">
-                  {formatRelativeUpdatedAt(lastUpdated)}
-                </span>
+              {(lastUpdated != null || (loading && !hasContent)) && (
+                <FreshnessLabel
+                  updatedAt={lastUpdated}
+                  pending={loading && !hasContent}
+                  pendingLabel="Loading your brief…"
+                  className="mr-2"
+                />
               )}
               <span
                 className={cn(

@@ -46,7 +46,8 @@ export function usePressReleases(
 
   return {
     items: query.data?.items ?? ([] as PressReleaseHeadline[]),
-    isLoading: query.isLoading || query.isFetching,
+    isLoading: query.isLoading,
+    isRefreshing: query.isFetching && !query.isLoading,
     error,
     lastUpdated: query.dataUpdatedAt > 0 ? query.dataUpdatedAt : null,
     refetch,
