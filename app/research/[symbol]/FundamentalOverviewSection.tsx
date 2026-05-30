@@ -2,7 +2,7 @@
 
 import {
   ResearchAtAGlanceBox,
-  ResearchBulletList,
+  ResearchPairedBulletLists,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
 import type { FundamentalsOverview } from "@/app/hooks/useFundamentals";
@@ -39,17 +39,17 @@ export function FundamentalOverviewSection({
         ) : null}
 
         {(overview.strengths.length > 0 || overview.concerns.length > 0) && (
-          <div className="grid gap-5 sm:grid-cols-2 sm:items-start">
-            <ResearchBulletList
-              title="Fundamental strengths"
-              items={overview.strengths}
-            />
-            <ResearchBulletList
-              title="Key concerns"
-              items={overview.concerns}
-              variant="risk"
-            />
-          </div>
+          <ResearchPairedBulletLists
+            left={{
+              title: "Fundamental strengths",
+              items: overview.strengths,
+            }}
+            right={{
+              title: "Key concerns",
+              items: overview.concerns,
+              variant: "risk",
+            }}
+          />
         )}
 
         {overview.assumptions ? (

@@ -11,7 +11,7 @@ import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import {
   ResearchAtAGlanceBox,
-  ResearchBulletList,
+  ResearchPairedBulletLists,
   ResearchProseText,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
@@ -157,17 +157,17 @@ function BusinessOverviewContent({ business }: { business: BusinessBlock }) {
       ) : null}
 
       {(business.growthDrivers?.length || business.keyRisks?.length) ? (
-        <div className="grid gap-5 sm:grid-cols-2 sm:items-start">
-          <ResearchBulletList
-            title="Growth drivers"
-            items={business.growthDrivers ?? []}
-          />
-          <ResearchBulletList
-            title="Business risks"
-            items={business.keyRisks ?? []}
-            variant="risk"
-          />
-        </div>
+        <ResearchPairedBulletLists
+          left={{
+            title: "Growth drivers",
+            items: business.growthDrivers ?? [],
+          }}
+          right={{
+            title: "Business risks",
+            items: business.keyRisks ?? [],
+            variant: "risk",
+          }}
+        />
       ) : null}
     </div>
   );

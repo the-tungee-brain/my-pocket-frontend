@@ -14,6 +14,7 @@ import {
   ResearchAtAGlanceBox,
   ResearchAsideCard,
   ResearchBulletList,
+  ResearchPairedBulletLists,
   ResearchProseText,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
@@ -106,17 +107,17 @@ export function BigPictureArticle({
         ))}
 
         {(strengthsSection?.bullets?.length || risksSection?.bullets?.length) ? (
-          <div className="grid gap-5 sm:grid-cols-2 sm:items-start">
-            <ResearchBulletList
-              title="Key strengths"
-              items={strengthsSection?.bullets ?? []}
-            />
-            <ResearchBulletList
-              title="Key risks"
-              items={risksSection?.bullets ?? []}
-              variant="risk"
-            />
-          </div>
+          <ResearchPairedBulletLists
+            left={{
+              title: "Key strengths",
+              items: strengthsSection?.bullets ?? [],
+            }}
+            right={{
+              title: "Key risks",
+              items: risksSection?.bullets ?? [],
+              variant: "risk",
+            }}
+          />
         ) : null}
 
         {watchSection?.bullets && watchSection.bullets.length > 0 ? (
