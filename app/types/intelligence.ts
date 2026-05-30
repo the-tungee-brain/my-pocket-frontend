@@ -122,6 +122,8 @@ export type OptionChainPreview = {
 
 export type CachedResearchSnippet = {
   sentiment?: string | null;
+  short?: string | null;
+  long?: string | null;
   investmentThesis?: string | null;
   keyStrengths: string[];
   keyRisks: string[];

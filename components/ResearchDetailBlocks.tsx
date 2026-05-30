@@ -62,9 +62,9 @@ function bulletDotClass(tone: BulletTone) {
 
 function bulletItemClass(tone: BulletTone) {
   return tone === "risk"
-    ? "border-danger/20 bg-danger/5"
+    ? "border-danger/20 bg-surface-elevated/40"
     : tone === "watch"
-      ? "border-accent/20 bg-accent-muted/40"
+      ? "border-accent/20 bg-surface-elevated/40"
       : "border-border bg-surface-elevated/40";
 }
 
