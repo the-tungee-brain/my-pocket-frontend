@@ -54,20 +54,17 @@ function getCachedEntry(
   return stored;
 }
 
-export function useInsights(
-  opts: {
-    label: string | null;
-    positions: Position[] | null;
-    account: SchwabAccounts | null;
-    accessToken: string | null;
-    enabled?: boolean;
-    /** @deprecated Use structuredAnalyze for Analyze button flows. */
-    prompt?: string | null;
-    structuredAnalyze?: boolean;
-    userDisplayMessage?: string | null;
-  },
-  model: string = "gpt-4.1-mini",
-): InsightState {
+export function useInsights(opts: {
+  label: string | null;
+  positions: Position[] | null;
+  account: SchwabAccounts | null;
+  accessToken: string | null;
+  enabled?: boolean;
+  /** @deprecated Use structuredAnalyze for Analyze button flows. */
+  prompt?: string | null;
+  structuredAnalyze?: boolean;
+  userDisplayMessage?: string | null;
+}): InsightState {
   const {
     label,
     positions,
@@ -287,7 +284,6 @@ export function useInsights(
               positions,
               symbol: label === "PORTFOLIO" ? null : label,
               userDisplayMessage: displayMessage,
-              model,
             })
           : {
               account,
@@ -295,7 +291,6 @@ export function useInsights(
               symbol: label === "PORTFOLIO" ? null : label,
               action: "free-form" as const,
               prompt,
-              model,
             };
 
         await streamAnalysis(body, accessToken, (chunk) => {
@@ -344,7 +339,6 @@ export function useInsights(
     positions,
     account,
     accessToken,
-    model,
     prompt,
     structuredAnalyze,
     userDisplayMessage,

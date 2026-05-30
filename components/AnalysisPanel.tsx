@@ -224,7 +224,6 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       structuredAnalyze: true,
       userDisplayMessage,
     },
-    "gpt-5.4",
   );
 
   const showComparePaths =

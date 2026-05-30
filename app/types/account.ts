@@ -11,6 +11,8 @@ export type AccountPlan = {
   email?: string;
   freeModel: string;
   defaultModel: string;
+  /** Pro background AI model (summaries, research AI, structured analysis). */
+  backgroundModel?: string;
   /** Models available on the free plan — from backend allowlist. */
   freeModels?: string[];
   /** Pro-only models — from backend allowlist. */

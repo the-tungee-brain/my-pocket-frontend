@@ -846,7 +846,6 @@ export function useChatState({
                   positions: positionsForSelectedSymbol ?? [],
                   symbol: symbolForApi,
                   userDisplayMessage: userMessage.content,
-                  model: state.model,
                 })
               : {
                   account: account,

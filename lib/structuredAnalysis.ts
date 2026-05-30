@@ -14,7 +14,6 @@ export type StructuredAnalyzeRequestBody = {
   user_display_message: string;
   response_format: typeof STRUCTURED_ANALYSIS_SCHEMA;
   analysis_instructions: string;
-  model?: string;
 };
 
 export function buildStructuredAnalyzeRequest(input: {
@@ -22,7 +21,6 @@ export function buildStructuredAnalyzeRequest(input: {
   positions: Position[];
   symbol: string | null;
   userDisplayMessage: string;
-  model?: string;
 }): StructuredAnalyzeRequestBody {
   return {
     account: input.account,
@@ -33,7 +31,6 @@ export function buildStructuredAnalyzeRequest(input: {
     user_display_message: input.userDisplayMessage,
     response_format: STRUCTURED_ANALYSIS_SCHEMA,
     analysis_instructions: STRUCTURED_ANALYSIS_INSTRUCTIONS,
-    model: input.model,
   };
 }
 
