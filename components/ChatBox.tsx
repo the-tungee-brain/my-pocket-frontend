@@ -16,14 +16,17 @@ import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import { pageShellClass } from "@/lib/pageLayout";
 import { ASSISTANT_CHAT_INPUT_CLASS } from "@/lib/scrollToChat";
-import { DEFAULT_CHAT_MODEL, getModelButtonLabel } from "@/lib/chatModels";
+import {
+  getDefaultChatModel,
+  getModelButtonLabel,
+} from "@/lib/chatModels";
 import {
   lockMainContentWhileModelMenuOpen,
   markModelMenuDismissed,
   registerModelMenuDismissListener,
 } from "@/lib/chatModelMenu";
 
-export { DEFAULT_CHAT_MODEL };
+export { DEFAULT_CHAT_MODEL } from "@/lib/chatModels";
 
 type SymbolChatState = {
   loading: boolean;
@@ -80,9 +83,9 @@ export function ChatBox({
   const isChatLoading = !!currentChat?.loading;
   const isBusy = isChatLoading || disabled;
   const canSend = !isBusy && inputValue.trim().length > 0;
-  const selectedModel = currentChat?.model || DEFAULT_CHAT_MODEL;
+  const selectedModel = currentChat?.model || getDefaultChatModel(plan);
   const modelMenuOpen = !!currentChat?.modelMenuOpen;
-  const modelButtonLabel = getModelButtonLabel(selectedModel);
+  const modelButtonLabel = getModelButtonLabel(selectedModel, plan);
   const modelMenuRef = useRef<HTMLDivElement>(null);
   const onCloseModelMenuRef = useRef(onCloseModelMenu);
 
@@ -257,6 +260,7 @@ export function ChatBox({
                 open={modelMenuOpen}
                 value={selectedModel}
                 onChange={onModelChange}
+                plan={plan}
                 isPaid={isPaid}
                 anchorRef={modelMenuRef}
               />

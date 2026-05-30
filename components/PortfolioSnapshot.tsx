@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, BriefcaseBusiness, ChevronDown, ShieldCheck } from "lucide-react";
+import { AlertTriangle, BriefcaseBusiness, ShieldCheck } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
 import { Badge } from "@/components/ui/Badge";
@@ -17,11 +17,7 @@ import type {
 } from "@/app/types/schwab";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
 import { sumOpenProfitLoss } from "@/lib/positionMetrics";
-import {
-  appIconBoxClass,
-  appPanelFooterClass,
-  appStatGridClass,
-} from "@/lib/appUi";
+import { appIconBoxClass, appStatGridClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -82,7 +78,6 @@ export function PortfolioSnapshot({
   children,
   className,
 }: Props) {
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [headerActionsEl, setHeaderActionsEl] = useState<HTMLDivElement | null>(
     null,
   );
@@ -201,83 +196,51 @@ export function PortfolioSnapshot({
             label="Today"
             value={formatSignedUsd(totalDayPL)}
             tone={dayTone}
-            subValue={`Liquidation ${formatUsd(balances?.liquidationValue ?? totalValue, { maximumFractionDigits: 0 })}`}
           />
         </div>
 
-        <div className="flex flex-wrap gap-x-5 gap-y-2 border-t border-border/70 pt-4 text-xs text-muted">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border/70 pt-4 text-xs text-muted md:grid-cols-3 xl:grid-cols-6">
           {totalOpenPL != null && (
-            <span className={cn("tabular-nums", openTone === "positive" && "text-success", openTone === "negative" && "text-danger")}>
+            <div
+              className={cn(
+                "min-w-0 tabular-nums",
+                openTone === "positive" && "text-success",
+                openTone === "negative" && "text-danger",
+              )}
+            >
               Open P/L {formatSignedUsd(totalOpenPL)}
-            </span>
+            </div>
+          )}
+          {account && cspReserved > 0 && (
+            <div className="min-w-0 tabular-nums text-warning">
+              CSP reserved {formatUsd(cspReserved)}
+            </div>
+          )}
+          {account && cashAfterCsp != null && cspReserved > 0 && (
+            <div className="min-w-0 tabular-nums">
+              Cash after CSP {formatUsd(cashAfterCsp)}
+            </div>
+          )}
+          {account && (
+            <div className="min-w-0 tabular-nums">
+              Liquidation{" "}
+              {formatUsd(balances?.liquidationValue ?? totalValue, {
+                maximumFractionDigits: 0,
+              })}
+            </div>
           )}
           {balances?.cashBalance != null && (
-            <span className="tabular-nums">Cash {formatUsd(balances.cashBalance)}</span>
+            <div className="min-w-0 tabular-nums">
+              Cash {formatUsd(balances.cashBalance)}
+            </div>
           )}
           {balances?.buyingPower != null && (
-            <span className="tabular-nums">Buying power {formatUsd(balances.buyingPower)}</span>
-          )}
-        </div>
-      </CardBody>
-
-      {account && (
-        <div className="border-t border-border/70">
-          <button
-            type="button"
-            onClick={() => setDetailsOpen((open) => !open)}
-            aria-expanded={detailsOpen}
-            className={cn(
-              appPanelFooterClass,
-              "w-full text-left text-xs font-medium text-muted transition hover:bg-muted-bg/40 hover:text-foreground",
-            )}
-          >
-            Account details
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 shrink-0 transition-transform",
-                detailsOpen && "rotate-180",
-              )}
-              aria-hidden
-            />
-          </button>
-
-          {detailsOpen && (
-            <div className={cn(appStatGridClass, "border-t border-border/70")}>
-              <KpiStat label="Cash" value={formatUsd(balances?.cashBalance ?? 0)} />
-              <KpiStat
-                label="Buying power"
-                value={formatUsd(balances?.buyingPower ?? 0)}
-              />
-              {cspReserved > 0 ? (
-                <>
-                  <KpiStat
-                    label="CSP reserved"
-                    value={formatUsd(cspReserved)}
-                    tone="warning"
-                  />
-                  <KpiStat
-                    label="Cash after CSP"
-                    value={cashAfterCsp != null ? formatUsd(cashAfterCsp) : "—"}
-                  />
-                </>
-              ) : (
-                <KpiStat
-                  label="Available funds"
-                  value={formatUsd(
-                    balances?.availableFunds ?? balances?.cashBalance ?? 0,
-                  )}
-                />
-              )}
-              <KpiStat
-                label="Liquidation"
-                value={formatUsd(balances?.liquidationValue ?? totalValue, {
-                  maximumFractionDigits: 0,
-                })}
-              />
+            <div className="min-w-0 tabular-nums">
+              Buying power {formatUsd(balances.buyingPower)}
             </div>
           )}
         </div>
-      )}
+      </CardBody>
 
       <PortfolioSnapshotHeaderActionsContext.Provider value={headerActionsEl}>
         {children}

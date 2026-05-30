@@ -12,21 +12,12 @@ import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import {
-  CHAT_MODEL_OPTIONS,
-  CHAT_MODEL_TIERS,
-  DEFAULT_CHAT_MODEL,
+  getChatModelOptions,
   requiresProModel,
   type ChatModelOption,
 } from "@/lib/chatModels";
+import type { AccountPlan } from "@/app/types/account";
 import { registerModelMenuRoot } from "@/lib/chatModelMenu";
-
-type ModelPickerProps = {
-  open: boolean;
-  value: string;
-  onChange: (modelId: string) => void;
-  isPaid?: boolean;
-  anchorRef: RefObject<HTMLElement | null>;
-};
 
 type MenuPosition = {
   top: number;
@@ -35,11 +26,27 @@ type MenuPosition = {
   maxHeight: number;
 };
 
+type ModelPickerProps = {
+  open: boolean;
+  value: string;
+  onChange: (modelId: string) => void;
+  plan?: AccountPlan | null;
+  isPaid?: boolean;
+  anchorRef: RefObject<HTMLElement | null>;
+};
+
 function groupByTier(options: ChatModelOption[]) {
-  return CHAT_MODEL_TIERS.map((tier) => ({
-    ...tier,
-    options: options.filter((option) => option.tier === tier.id),
-  })).filter((group) => group.options.length > 0);
+  const tiers = [
+    { id: "fast" as const, label: "Simple" },
+    { id: "balanced" as const, label: "Standard" },
+    { id: "advanced" as const, label: "Advanced" },
+  ];
+  return tiers
+    .map((tier) => ({
+      ...tier,
+      options: options.filter((option) => option.tier === tier.id),
+    }))
+    .filter((group) => group.options.length > 0);
 }
 
 function preventScrollChaining(event: WheelEvent) {
@@ -97,6 +104,7 @@ export function ModelPicker({
   open,
   value,
   onChange,
+  plan = null,
   isPaid = false,
   anchorRef,
 }: ModelPickerProps) {
@@ -149,7 +157,8 @@ export function ModelPicker({
 
   if (!open || !mounted || !position) return null;
 
-  const groups = groupByTier(CHAT_MODEL_OPTIONS);
+  const chatModelOptions = getChatModelOptions(plan);
+  const groups = groupByTier(chatModelOptions);
   const listMaxHeight = Math.max(120, position.maxHeight - (isPaid ? 40 : 88));
 
   const menu = (
@@ -181,7 +190,7 @@ export function ModelPicker({
             </p>
             {group.options.map((option) => {
               const isActive = option.id === value;
-              const locked = !isPaid && requiresProModel(option.id);
+              const locked = !isPaid && requiresProModel(option.id, plan);
               return (
                 <button
                   key={option.id}

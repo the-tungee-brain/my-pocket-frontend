@@ -12,6 +12,7 @@ import {
   Layers,
   Link2,
   LogOut,
+  Mail,
   RefreshCw,
   Shield,
   Trash2,
@@ -119,6 +120,8 @@ export function SettingsPageContent() {
       profile.primaryStrategy
     );
   }, [catalog, profile?.primaryStrategy]);
+
+  const accountEmail = session?.user?.email ?? plan?.email ?? null;
 
   const StrategyIcon = profile?.primaryStrategy
     ? STRATEGY_ICONS[profile.primaryStrategy]
@@ -240,6 +243,29 @@ export function SettingsPageContent() {
             title="Account & privacy"
             description="Plan, security details, and session controls."
           />
+
+          {accountEmail && (
+            <Card surface="subtle" className="mx-0">
+              <CardBody className="p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted-bg text-muted">
+                    <Mail className="h-4 w-4" aria-hidden />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      Signed in as
+                    </p>
+                    <p className="mt-1 break-all text-sm text-foreground">
+                      {accountEmail}
+                    </p>
+                    <p className="mt-1 text-xs text-muted">
+                      This is the Google account registered with Tomcrest.
+                    </p>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          )}
 
           <AccountPlanCard plan={plan} loading={planLoading} />
 

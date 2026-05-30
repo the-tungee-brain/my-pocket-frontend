@@ -26,9 +26,11 @@ import {
   shouldBlockModelMenuOpen,
 } from "@/lib/chatModelMenu";
 import {
-  CHAT_MODEL_OPTIONS,
-  DEFAULT_CHAT_MODEL,
+  clampChatModelForPlan,
+  getDefaultChatModel,
+  normalizeChatModelId,
 } from "@/lib/chatModels";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import {
   loadPersistedChat,
   persistChatState,
@@ -68,13 +70,15 @@ export function useChatState({
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const serverHydrateInflightRef = useRef<Set<string>>(new Set());
   chatBySymbolRef.current = chatBySymbol;
-  const resolveChatModel = useCallback((model: string | undefined | null) => {
-    const trimmed = model?.trim();
-    if (!trimmed) return DEFAULT_CHAT_MODEL;
-    return CHAT_MODEL_OPTIONS.some((option) => option.id === trimmed)
-      ? trimmed
-      : DEFAULT_CHAT_MODEL;
-  }, []);
+  const { plan, loading: planLoading } = useAccountPlan(accessToken);
+
+  const resolveChatModel = useCallback(
+    (model: string | undefined | null) => {
+      if (planLoading) return normalizeChatModelId(model, plan);
+      return clampChatModelForPlan(model, plan);
+    },
+    [plan, planLoading],
+  );
 
   const ensureSymbolChatState = useCallback(
     (key: string, base?: Partial<SymbolChatState>): SymbolChatState => ({
@@ -188,6 +192,29 @@ export function useChatState({
     });
     chatHydratedUserRef.current = chatUserId;
   }, [chatUserId, ensureSymbolChatState]);
+
+  useEffect(() => {
+    if (planLoading) return;
+
+    setChatBySymbol((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      for (const [key, state] of Object.entries(prev)) {
+        const clamped = clampChatModelForPlan(state.model, plan);
+        if (state.model !== clamped) {
+          next[key] = { ...state, model: clamped };
+          changed = true;
+        }
+      }
+
+      if (changed && chatUserId) {
+        persistChatState(chatUserId, next);
+      }
+
+      return changed ? next : prev;
+    });
+  }, [chatUserId, plan, planLoading]);
 
   useEffect(() => {
     if (!chatUserId || chatHydratedUserRef.current !== chatUserId) return;

@@ -33,7 +33,7 @@ const PRO_FEATURES = [
   "Financial strength & fundamental AI on Research",
   "Income snowball (DRIP projections & contributions)",
   "Wheel backtest with trade log and PDF export",
-  "Advanced AI models (gpt-5.4, o3, o4-mini, and more)",
+  "Advanced AI models (gpt-5.1, gpt-4o, gpt-5.4, o3, and more)",
 ] as const;
 
 export function AccountPlanCard({
@@ -206,7 +206,7 @@ export function LandingPricingSection() {
               ))}
             </ul>
             <p className="mt-4 text-xs text-muted">
-              AI: Simple & Standard tiers (e.g. gpt-4.1-mini, gpt-4o) —
+              AI: Simple & Standard tiers (e.g. gpt-4.1-mini, gpt-4o-mini) —
               portfolio-aware chat and analysis.
             </p>
           </Card>
