@@ -517,6 +517,7 @@ export function DividendsPageContent({ symbol }: Props) {
               <DividendHistoricalBacktestCard
                 history={backtestDisplayHistory}
                 backtestParams={backtestDraft}
+                appliedParams={backtestApplied}
                 displayParams={displayBacktestParams}
                 onBacktestChange={setBacktestDraft}
                 onApply={applyBacktest}

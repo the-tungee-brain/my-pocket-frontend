@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
-import { ChevronDown, History, LineChart, TrendingUp } from "lucide-react";
+import { ChevronDown, Download, History, LineChart, TrendingUp } from "lucide-react";
 import type {
   AnnualDividendIncome,
   DividendAdvancedSnowballScenario,
@@ -21,6 +21,7 @@ import {
   resolveCurrentYieldPct,
 } from "@/lib/dividendHistory";
 import { formatExpenseRatio } from "@/lib/etfHoldings";
+import { downloadDividendBacktestResult } from "@/lib/dividendBacktestExport";
 import { cn } from "@/lib/utils";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
@@ -1313,6 +1314,7 @@ export function DividendHistoryCharts({
 export function DividendHistoricalBacktestCard({
   history,
   backtestParams,
+  appliedParams,
   displayParams,
   onBacktestChange,
   onApply,
@@ -1322,6 +1324,7 @@ export function DividendHistoricalBacktestCard({
 }: {
   history: DividendHistoryContext;
   backtestParams?: DividendBacktestParams;
+  appliedParams?: DividendBacktestParams;
   displayParams?: DividendBacktestParams;
   onBacktestChange?: (params: DividendBacktestParams) => void;
   onApply?: () => void;
@@ -1389,17 +1392,55 @@ export function DividendHistoricalBacktestCard({
   }
 
   const maxLookbackYears = Math.min(15, completedYears.length);
+  const exportParams = appliedParams ?? backtestParams;
+  const exportReinvestDividends = exportParams?.reinvestDividends ?? reinvestDividends;
+  const exportAnnualContributionUsd = exportParams?.annualContributionUsd ?? 0;
+  const pdfInput = {
+    ticker: history.ticker,
+    startYear: backtest.startYear,
+    endYear: backtest.endYear,
+    investmentUsd,
+    sharePriceAtStart: drip?.sharePriceAtStart ?? startSharePrice,
+    shares: backtestShares,
+    annualContributionUsd: exportAnnualContributionUsd,
+    reinvestDividends: exportReinvestDividends,
+    priceCagrPct: drip?.priceCagrPct ?? exportParams?.priceCagrPct ?? null,
+    hasPendingChanges,
+    dataAsOf: history.dataAsOf,
+  };
+  const pdfResult = {
+    cashCollected: backtest.cashCollected,
+    cashCollectedAnnual: backtest.cashCollectedAnnual,
+    drip,
+    yearlyRows,
+  };
+
+  function handleDownloadPdf() {
+    downloadDividendBacktestResult(pdfInput, pdfResult);
+  }
 
   return (
     <div className="app-stack">
-      <div>
-        <p className="text-sm font-medium text-foreground">Historical backtest</p>
-        <p className="mt-1 text-xs text-muted">
-          Replay actual dividend payments from {backtest.startYear} through{" "}
-          {backtest.endYear} using your investment, share count, contributions, and
-          optional DRIP. Enter investment or shares — the other is calculated from
-          modeled share price at the start of the window.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-foreground">Historical backtest</p>
+          <p className="mt-1 text-xs text-muted">
+            Replay actual dividend payments from {backtest.startYear} through{" "}
+            {backtest.endYear} using your investment, share count, contributions, and
+            optional DRIP. Enter investment or shares — the other is calculated from
+            modeled share price at the start of the window.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 shrink-0 gap-1.5 px-3 text-[11px]"
+          onClick={handleDownloadPdf}
+        >
+          <Download className="h-3.5 w-3.5" aria-hidden />
+          Download PDF
+        </Button>
       </div>
 
       {onBacktestChange ? (
