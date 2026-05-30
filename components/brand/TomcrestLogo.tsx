@@ -62,7 +62,7 @@ export function TomcrestLogo({
     <div className={cn("flex min-w-0 items-center", styles.gap, className)}>
       <div
         className={cn(
-          "flex shrink-0 items-center justify-center bg-accent-muted text-accent-strong",
+          "flex shrink-0 items-center justify-center border border-accent/25 bg-gradient-to-br from-accent-muted to-transparent text-accent-strong shadow-[0_0_20px_color-mix(in_oklab,var(--accent)_15%,transparent)]",
           styles.shell,
         )}
       >

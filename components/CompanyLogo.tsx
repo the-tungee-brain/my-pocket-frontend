@@ -19,15 +19,26 @@ const etfContainerClasses: Record<NonNullable<CompanyLogoProps["size"]>, string>
   md: "h-10 w-10 rounded-lg p-1.5",
 };
 
-const stockImageClasses: Record<NonNullable<CompanyLogoProps["size"]>, string> = {
-  sm: "h-7 w-7 rounded-md",
-  md: "h-10 w-10 rounded-lg",
+const stockTileClasses: Record<NonNullable<CompanyLogoProps["size"]>, string> = {
+  sm: "h-7 w-7 rounded-md p-1",
+  md: "h-10 w-10 rounded-lg p-1.5",
 };
 
 const iconSizeClasses: Record<NonNullable<CompanyLogoProps["size"]>, string> = {
   sm: "h-3.5 w-3.5",
   md: "h-5 w-5",
 };
+
+function stockLogoTileClassName(
+  size: NonNullable<CompanyLogoProps["size"]>,
+  className?: string,
+) {
+  return cn(
+    "flex shrink-0 items-center justify-center ring-1 ring-white/10",
+    stockTileClasses[size],
+    className,
+  );
+}
 
 function StockLogoFallback({
   symbol,
@@ -41,10 +52,9 @@ function StockLogoFallback({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center border border-border bg-surface-elevated font-semibold uppercase text-muted ring-1 ring-border/40",
-        stockImageClasses[size],
+        stockLogoTileClassName(size, className),
+        "bg-surface-elevated font-semibold uppercase text-muted",
         size === "sm" ? "text-[10px]" : "text-xs",
-        className,
       )}
       aria-hidden
     >
@@ -62,6 +72,7 @@ export function CompanyLogo({
 }: CompanyLogoProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const src = resolveResearchLogoUrl(symbol, logo);
+  const finnhubFallback = finnhubStockLogoUrl(symbol);
 
   useEffect(() => {
     setImageFailed(false);
@@ -88,22 +99,19 @@ export function CompanyLogo({
   }
 
   return (
-    <img
-      src={src}
-      alt=""
-      className={cn(
-        "shrink-0 object-contain border border-border bg-surface-elevated ring-1 ring-border/40",
-        stockImageClasses[size],
-        className,
-      )}
-      onError={(event) => {
-        const fallback = finnhubStockLogoUrl(symbol);
-        if (!event.currentTarget.src.includes("finnhubimage/stock_logo")) {
-          event.currentTarget.src = fallback;
-          return;
-        }
-        setImageFailed(true);
-      }}
-    />
+    <div className={stockLogoTileClassName(size, className)}>
+      <img
+        src={src}
+        alt=""
+        className="h-full w-full object-contain drop-shadow-[0_0_1px_rgba(255,255,255,0.35)]"
+        onError={(event) => {
+          if (event.currentTarget.src !== finnhubFallback) {
+            event.currentTarget.src = finnhubFallback;
+            return;
+          }
+          setImageFailed(true);
+        }}
+      />
+    </div>
   );
 }

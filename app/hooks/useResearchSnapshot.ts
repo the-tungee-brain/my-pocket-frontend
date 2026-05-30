@@ -5,7 +5,7 @@ import type { ResearchSnapshot } from "@/lib/researchSnapshot";
 import { useOverviewBundleGate } from "@/app/research/ResearchOverviewContext";
 import {
   fetchResearchSnapshot,
-  snapshotMissingKeyStats,
+  snapshotNeedsRefresh,
 } from "@/lib/researchSnapshot";
 
 type UseResearchSnapshotOptions = {
@@ -20,7 +20,7 @@ export function useResearchSnapshot(
   const [snapshot, setSnapshot] = useState<ResearchSnapshot | null>(() => {
     const key = symbol?.toUpperCase().trim();
     if (key && overviewBundle?.snapshot) {
-      if (!snapshotMissingKeyStats(overviewBundle.snapshot)) {
+      if (!snapshotNeedsRefresh(overviewBundle.snapshot)) {
         return overviewBundle.snapshot;
       }
     }
@@ -43,7 +43,7 @@ export function useResearchSnapshot(
       return;
     }
     if (key && overviewBundle?.snapshot) {
-      if (!snapshotMissingKeyStats(overviewBundle.snapshot)) {
+      if (!snapshotNeedsRefresh(overviewBundle.snapshot)) {
         setSnapshot(overviewBundle.snapshot);
         setIsLoading(false);
         setError(null);

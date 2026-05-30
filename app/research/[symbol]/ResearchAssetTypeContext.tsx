@@ -6,13 +6,17 @@ import type { AssetType } from "@/app/types/research";
 
 type ResearchAssetTypeContextValue = {
   assetType: AssetType | null;
+  logoUrl: string | null;
   isLoading: boolean;
+  isLogoLoading: boolean;
   isEtf: boolean;
 };
 
 const ResearchAssetTypeContext = createContext<ResearchAssetTypeContextValue>({
   assetType: null,
+  logoUrl: null,
   isLoading: true,
+  isLogoLoading: true,
   isEtf: false,
 });
 
@@ -27,13 +31,14 @@ export function ResearchAssetTypeProvider({
   accessToken,
   children,
 }: Props) {
-  const { assetType, isLoading, isEtf } = useResearchAssetType(symbol, {
-    accessToken,
-  });
+  const { assetType, logoUrl, isLoading, isLogoLoading, isEtf } =
+    useResearchAssetType(symbol, {
+      accessToken,
+    });
 
   return (
     <ResearchAssetTypeContext.Provider
-      value={{ assetType, isLoading, isEtf }}
+      value={{ assetType, logoUrl, isLoading, isLogoLoading, isEtf }}
     >
       {children}
     </ResearchAssetTypeContext.Provider>

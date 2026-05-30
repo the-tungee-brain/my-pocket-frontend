@@ -70,8 +70,8 @@ export function AnalyzePrompt({
                 className="relative flex h-3.5 w-3.5 items-center justify-center"
                 aria-hidden
               >
-                <span className="absolute h-3.5 w-3.5 animate-ping rounded-full bg-accent/25 motion-reduce:animate-none motion-reduce:opacity-40" />
-                <span className="relative h-1.5 w-1.5 rounded-full bg-accent-strong" />
+                <span className="absolute h-3.5 w-3.5 rounded-full bg-accent/10 loading-soft-ring motion-reduce:opacity-40" />
+                <span className="relative h-1.5 w-1.5 rounded-full bg-accent/75 loading-soft-core motion-reduce:opacity-80" />
               </span>
               Analyzing…
             </>

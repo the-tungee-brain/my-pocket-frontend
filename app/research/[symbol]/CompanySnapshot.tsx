@@ -49,8 +49,9 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
   const overviewBundle = useResearchOverviewBundle();
   const { snapshot, etfHoldings, isLoading, error } = useResearchSymbolHeader();
   const dataAsOfLabel = formatResearchDataAsOf(overviewBundle?.asOf);
-  const { assetType, isEtf } = useResearchAssetTypeContext();
+  const { assetType, logoUrl, isEtf } = useResearchAssetTypeContext();
   const researchLabel = isEtf ? "ETF research" : "Stock research";
+  const displayLogo = logoUrl ?? snapshot?.logo;
 
   if (isLoading) {
     if (compact) {
@@ -108,7 +109,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           </Link>
           <CompanyLogo
             symbol={snapshot.symbol}
-            logo={snapshot.logo}
+            logo={displayLogo}
             size="sm"
             isEtf={isEtf}
           />
@@ -176,7 +177,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
         <div className="flex flex-wrap items-center gap-3">
           <CompanyLogo
             symbol={snapshot.symbol}
-            logo={snapshot.logo}
+            logo={displayLogo}
             size="md"
             isEtf={isEtf}
           />

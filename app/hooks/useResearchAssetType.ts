@@ -9,9 +9,12 @@ import {
 import { useEtfHoldings } from "@/app/hooks/useEtfHoldings";
 import {
   fetchAssetType,
+  fetchTickerLogoUrl,
   getCachedAssetType,
+  getCachedTickerLogoUrl,
   isEtfAssetType,
   rememberAssetType,
+  rememberTickerLogoUrl,
 } from "@/lib/researchAssetType";
 
 type UseResearchAssetTypeOptions = {
@@ -37,9 +40,17 @@ export function useResearchAssetType(
     if (!symbolUpper) return null;
     return getCachedAssetType(symbolUpper) ?? null;
   });
+  const [logoUrl, setLogoUrl] = useState<string | null>(() => {
+    if (!symbolUpper) return null;
+    return getCachedTickerLogoUrl(symbolUpper) ?? null;
+  });
   const [isLoading, setIsLoading] = useState<boolean>(() => {
     if (!symbolUpper) return false;
     return getCachedAssetType(symbolUpper) === undefined;
+  });
+  const [isLogoLoading, setIsLogoLoading] = useState<boolean>(() => {
+    if (!symbolUpper) return false;
+    return getCachedTickerLogoUrl(symbolUpper) === undefined;
   });
 
   const bundleResolvesAssetType =
@@ -91,7 +102,7 @@ export function useResearchAssetType(
 
     let cancelled = false;
 
-    async function load() {
+    async function loadAssetType() {
       setIsLoading(true);
       const resolved = await fetchAssetType(symbolUpper!, accessToken!);
       if (cancelled) return;
@@ -99,12 +110,50 @@ export function useResearchAssetType(
       setIsLoading(false);
     }
 
-    void load();
+    void loadAssetType();
 
     return () => {
       cancelled = true;
     };
   }, [symbolUpper, accessToken, overviewBundle]);
+
+  useEffect(() => {
+    if (!symbolUpper) {
+      setLogoUrl(null);
+      setIsLogoLoading(false);
+      return;
+    }
+
+    const cachedLogo = getCachedTickerLogoUrl(symbolUpper);
+    if (cachedLogo) {
+      setLogoUrl(cachedLogo);
+      setIsLogoLoading(false);
+      return;
+    }
+
+    if (!accessToken) {
+      setLogoUrl(null);
+      setIsLogoLoading(true);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadLogoUrl() {
+      setIsLogoLoading(true);
+      const resolved = await fetchTickerLogoUrl(symbolUpper!, accessToken!);
+      if (cancelled) return;
+      if (resolved) rememberTickerLogoUrl(symbolUpper!, resolved);
+      setLogoUrl(resolved);
+      setIsLogoLoading(false);
+    }
+
+    void loadLogoUrl();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [symbolUpper, accessToken]);
 
   const isEtf =
     isEtfAssetType(assetType) ||
@@ -113,7 +162,9 @@ export function useResearchAssetType(
 
   return {
     assetType: isEtf && assetType !== "ETF" ? "ETF" : assetType,
+    logoUrl,
     isLoading,
+    isLogoLoading,
     isEtf,
   };
 }

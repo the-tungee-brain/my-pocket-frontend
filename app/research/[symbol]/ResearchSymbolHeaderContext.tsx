@@ -12,7 +12,7 @@ import type { EtfHoldingsContext } from "@/app/types/research";
 import {
   fetchResearchSnapshot,
   getCachedResearchSnapshot,
-  snapshotMissingKeyStats,
+  snapshotNeedsRefresh,
   type ResearchSnapshot,
 } from "@/lib/researchSnapshot";
 import {
@@ -48,7 +48,7 @@ type ProviderProps = {
 function resolveBundleSnapshot(
   bundleSnapshot: ResearchSnapshot | undefined,
 ): ResearchSnapshot | null {
-  if (!bundleSnapshot || snapshotMissingKeyStats(bundleSnapshot)) {
+  if (!bundleSnapshot || snapshotNeedsRefresh(bundleSnapshot)) {
     return null;
   }
   return bundleSnapshot;

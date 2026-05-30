@@ -2,7 +2,9 @@ import { apiFetch } from "@/lib/apiClient";
 import type { AssetType } from "@/app/types/research";
 
 const STORAGE_PREFIX = "powerpocket-asset-type:";
+const LOGO_STORAGE_PREFIX = "powerpocket-ticker-logo:";
 const memoryCache = new Map<string, AssetType>();
+const logoMemoryCache = new Map<string, string>();
 
 const VALID_ASSET_TYPES = new Set<string>([
   "STOCK",
@@ -28,6 +30,22 @@ function readAssetType(value: unknown): AssetType | null {
 
 function readAssetTypeFromRecord(record: Record<string, unknown>): AssetType | null {
   return readAssetType(record.assetType ?? record.asset_type);
+}
+
+function readLogoUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (
+    !trimmed.startsWith("http://") &&
+    !trimmed.startsWith("https://")
+  ) {
+    return null;
+  }
+  return trimmed;
+}
+
+function readLogoUrlFromRecord(record: Record<string, unknown>): string | null {
+  return readLogoUrl(record.logoUrl ?? record.logo_url);
 }
 
 /** Returns a cached asset type, or undefined when a fresh lookup is needed. */
@@ -80,7 +98,7 @@ export function rememberAssetType(
 async function fetchSymbolLookup(
   symbol: string,
   accessToken: string,
-): Promise<AssetType | null> {
+): Promise<{ assetType: AssetType | null; logoUrl: string | null }> {
   try {
     const params = new URLSearchParams({ symbol });
     const res = await apiFetch(`/symbols/lookup?${params.toString()}`, {
@@ -88,13 +106,18 @@ async function fetchSymbolLookup(
       accessToken,
     });
 
-    if (res.status === 404) return null;
-    if (!res.ok) return null;
+    if (res.status === 404) return { assetType: null, logoUrl: null };
+    if (!res.ok) return { assetType: null, logoUrl: null };
 
     const data = (await res.json()) as Record<string, unknown>;
-    return readAssetTypeFromRecord(data);
+    const logoUrl = readLogoUrlFromRecord(data);
+    if (logoUrl) rememberTickerLogoUrl(symbol, logoUrl);
+    return {
+      assetType: readAssetTypeFromRecord(data),
+      logoUrl,
+    };
   } catch {
-    return null;
+    return { assetType: null, logoUrl: null };
   }
 }
 
@@ -147,6 +170,59 @@ async function fetchAssetTypeFromSearch(
   }
 }
 
+export function getCachedTickerLogoUrl(symbol: string): string | undefined {
+  const key = normalizeKey(symbol);
+  if (!key) return undefined;
+
+  const fromMemory = logoMemoryCache.get(key);
+  if (fromMemory) return fromMemory;
+
+  if (typeof window === "undefined") return undefined;
+
+  try {
+    const raw = sessionStorage.getItem(`${LOGO_STORAGE_PREFIX}${key}`);
+    if (!raw) return undefined;
+    const parsed = readLogoUrl(raw);
+    if (parsed) {
+      logoMemoryCache.set(key, parsed);
+      return parsed;
+    }
+    sessionStorage.removeItem(`${LOGO_STORAGE_PREFIX}${key}`);
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function rememberTickerLogoUrl(
+  symbol: string,
+  logoUrl: string | null | undefined,
+): void {
+  const key = normalizeKey(symbol);
+  if (!key) return;
+
+  const parsed = readLogoUrl(logoUrl ?? null);
+  if (!parsed) {
+    logoMemoryCache.delete(key);
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.removeItem(`${LOGO_STORAGE_PREFIX}${key}`);
+    } catch {
+      // ignore
+    }
+    return;
+  }
+
+  logoMemoryCache.set(key, parsed);
+  if (typeof window === "undefined") return;
+
+  try {
+    sessionStorage.setItem(`${LOGO_STORAGE_PREFIX}${key}`, parsed);
+  } catch {
+    // ignore
+  }
+}
+
 export async function fetchAssetType(
   symbol: string,
   accessToken: string,
@@ -157,10 +233,10 @@ export async function fetchAssetType(
   const cached = getCachedAssetType(key);
   if (cached) return cached;
 
-  const lookupType = await fetchSymbolLookup(key, accessToken);
-  if (lookupType) {
-    rememberAssetType(key, lookupType);
-    return lookupType;
+  const lookup = await fetchSymbolLookup(key, accessToken);
+  if (lookup.assetType) {
+    rememberAssetType(key, lookup.assetType);
+    return lookup.assetType;
   }
 
   if (await probeEtfHoldings(key, accessToken)) {
@@ -177,6 +253,22 @@ export async function fetchAssetType(
   return null;
 }
 
+export async function fetchTickerLogoUrl(
+  symbol: string,
+  accessToken: string,
+): Promise<string | null> {
+  const key = normalizeKey(symbol);
+  if (!key) return null;
+
+  const cached = getCachedTickerLogoUrl(key);
+  if (cached) return cached;
+
+  const lookup = await fetchSymbolLookup(key, accessToken);
+  if (lookup.logoUrl) return lookup.logoUrl;
+
+  return null;
+}
+
 export function isEtfAssetType(assetType: AssetType | null | undefined): boolean {
   return assetType === "ETF";
 }
@@ -185,9 +277,11 @@ export function clearCachedAssetType(symbol: string): void {
   const key = normalizeKey(symbol);
   if (!key) return;
   memoryCache.delete(key);
+  logoMemoryCache.delete(key);
   if (typeof window === "undefined") return;
   try {
     sessionStorage.removeItem(`${STORAGE_PREFIX}${key}`);
+    sessionStorage.removeItem(`${LOGO_STORAGE_PREFIX}${key}`);
   } catch {
     // ignore
   }
