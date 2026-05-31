@@ -86,9 +86,7 @@ export function PublicMarketingFooter() {
         )}
       >
         <div className="flex items-center gap-2.5 text-sm text-muted">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent-muted text-accent-strong">
-            <TomcrestMark className="h-3.5 w-3.5" aria-hidden="true" />
-          </div>
+          <TomcrestMark className="h-7 w-7 rounded-md" aria-hidden="true" />
           <span>Tomcrest — AI portfolio intelligence</span>
         </div>
         <div className="flex flex-col items-center gap-3 sm:items-end">

@@ -1,6 +1,10 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { ACTIVE_LOGO_VARIANT, type LogoVariant } from "@/lib/brand";
-import { TomcrestMark } from "./TomcrestMark";
+import {
+  ACTIVE_LOGO_VARIANT,
+  BRAND_MARK_SRC,
+  type LogoVariant,
+} from "@/lib/brand";
 
 type TomcrestLogoProps = {
   variant?: LogoVariant;
@@ -13,22 +17,19 @@ type TomcrestLogoProps = {
 
 const sizeStyles = {
   sm: {
-    shell: "h-8 w-8 rounded-lg",
-    mark: "h-4 w-4",
+    mark: "h-8 w-8 rounded-[10px]",
     title: "text-sm",
     subtitle: "text-[10px]",
     gap: "gap-2.5",
   },
   md: {
-    shell: "h-9 w-9 rounded-lg",
-    mark: "h-4 w-4",
+    mark: "h-9 w-9 rounded-[10px]",
     title: "text-sm",
     subtitle: "text-[11px]",
     gap: "gap-2.5",
   },
   lg: {
-    shell: "h-11 w-11 rounded-xl",
-    mark: "h-5 w-5",
+    mark: "h-11 w-11 rounded-xl",
     title: "text-base",
     subtitle: "text-xs",
     gap: "gap-3",
@@ -60,17 +61,16 @@ export function TomcrestLogo({
 
   return (
     <div className={cn("flex min-w-0 items-center", styles.gap, className)}>
-      <div
-        className={cn(
-          "flex shrink-0 items-center justify-center border border-accent/25 bg-gradient-to-br from-accent-muted to-transparent text-accent-strong shadow-[0_0_20px_color-mix(in_oklab,var(--accent)_15%,transparent)]",
-          styles.shell,
-        )}
-      >
-        <TomcrestMark
-          variant={variant}
-          className={cn(styles.mark, markClassName)}
-        />
-      </div>
+      <Image
+        src={BRAND_MARK_SRC}
+        alt=""
+        width={512}
+        height={512}
+        unoptimized
+        className={cn("shrink-0 object-contain", styles.mark, markClassName)}
+        aria-hidden
+        priority
+      />
       <div className="min-w-0">
         <TomcrestWordmark titleClassName={styles.title} />
         {showSubtitle && (
