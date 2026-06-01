@@ -13,6 +13,7 @@ import type { IntelligenceSignal } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
 import { pageSectionClass, pageOverviewAsideClass, pageOverviewMainClass, pageOverviewSplitClass } from "@/lib/pageLayout";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
+import { PatternTrendForecastCard } from "@/components/PatternTrendForecastCard";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
@@ -82,6 +83,7 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
               researchBasePath="/research"
               isEtf={isEtf}
               hideRecentEvents
+              hidePatternForecast
               className={pageSectionClass}
             />
           </>
@@ -99,7 +101,13 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
               </>
             ) : null}
             {!isEtf ? (
-              <StreetAnalysisOverview symbol={symbol} className={pageSectionClass} />
+              <>
+                <PatternTrendForecastCard
+                  forecast={intelligence?.patternForecast}
+                  className={pageSectionClass}
+                />
+                <StreetAnalysisOverview symbol={symbol} className={pageSectionClass} />
+              </>
             ) : null}
             <PerformanceSnapshot symbol={symbol} className={pageSectionClass} />
             <IntelligenceRecentEventsPanel

@@ -378,7 +378,8 @@ export function hasSymbolResearchIntelligenceContent(
     (intelligence.eventTimeline?.length ?? 0) > 0 ||
     !!intelligence.cachedResearch?.investmentThesis ||
     (intelligence.cachedResearch?.keyStrengths?.length ?? 0) > 0 ||
-    (intelligence.cachedResearch?.keyRisks?.length ?? 0) > 0
+    (intelligence.cachedResearch?.keyRisks?.length ?? 0) > 0 ||
+    !!intelligence.patternForecast
   );
 }
 

@@ -46,6 +46,7 @@ import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ResearchAsideCard } from "@/components/ResearchDetailBlocks";
+import { PatternTrendForecastCard } from "@/components/PatternTrendForecastCard";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -59,6 +60,7 @@ type Props = {
   actionContext?: "portfolio" | "research";
   compact?: boolean;
   hideRecentEvents?: boolean;
+  hidePatternForecast?: boolean;
   className?: string;
   researchBasePath?: string;
   isEtf?: boolean;
@@ -303,6 +305,7 @@ export function SymbolIntelligencePanel({
   actionContext = "portfolio",
   compact = false,
   hideRecentEvents = false,
+  hidePatternForecast = false,
   className,
   researchBasePath,
   isEtf = false,
@@ -366,6 +369,10 @@ export function SymbolIntelligencePanel({
             Some live Schwab data is unavailable. Research signals are still shown.
           </p>
         )}
+
+        {intelligence?.patternForecast && !hidePatternForecast ? (
+          <PatternTrendForecastCard forecast={intelligence.patternForecast} />
+        ) : null}
 
         {!!signals.length && (
           <IntelligenceSection

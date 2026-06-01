@@ -131,6 +131,19 @@ export type CachedResearchSnippet = {
   valuationContext?: string | null;
 };
 
+export type PatternTrendForecast = {
+  asOfDate: string;
+  horizonDays: number;
+  labelScheme: string;
+  prediction: number;
+  upProb?: number | null;
+  tradeSignal?: boolean | null;
+  inTrainingUniverse: boolean;
+  probabilities: Record<string, number>;
+  indicators: Record<string, number>;
+  modelTrainEndDate?: string | null;
+};
+
 export type SymbolIntelligence = {
   symbol: string;
   signals: IntelligenceSignal[];
@@ -140,6 +153,7 @@ export type SymbolIntelligence = {
   optionChainPreview?: OptionChainPreview | null;
   rollSuggestions?: OptionRollSuggestion[];
   cachedResearch?: CachedResearchSnippet | null;
+  patternForecast?: PatternTrendForecast | null;
   dataGaps?: string[];
   partial?: boolean;
   reauthRequired?: boolean;
