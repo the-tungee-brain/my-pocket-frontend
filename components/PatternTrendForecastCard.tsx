@@ -7,13 +7,18 @@ import { KpiStat } from "@/components/ui/KpiStat";
 import {
   formatPatternPercent,
   hasPatternForecast,
+  isRankingPortfolioStrategy,
   patternDirectionLabel,
   patternDirectionSubtitle,
   patternDirectionTone,
   patternIndicatorRows,
+  patternModelSummary,
+  patternPortfolioSummary,
   patternProbabilityRows,
-  patternTradeSignalLabel,
-  patternTradeSignalTone,
+  patternRankingBadgeLabel,
+  patternRankingBadgeTone,
+  patternRankingScore,
+  patternUpProbLabel,
 } from "@/lib/patternForecast";
 import { formatFriendlyDate } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
@@ -101,15 +106,23 @@ export function PatternTrendForecastCard({ forecast, className }: Props) {
   if (!hasPatternForecast(forecast)) return null;
 
   const directionTone = patternDirectionTone(forecast);
-  const tradeLabel = patternTradeSignalLabel(forecast);
-  const tradeTone = patternTradeSignalTone(forecast);
+  const rankingBadge = patternRankingBadgeLabel(forecast);
+  const rankingTone = patternRankingBadgeTone(forecast);
+  const portfolioSummary = patternPortfolioSummary(forecast);
+  const modelSummary = patternModelSummary(forecast);
   const indicators = patternIndicatorRows(forecast.indicators);
   const probabilities = patternProbabilityRows(forecast);
+  const rankingScore = patternRankingScore(forecast);
+  const usesRanking = isRankingPortfolioStrategy(forecast);
 
   return (
     <ResearchSectionCard
-      title="5-day trend model"
-      description="Machine-learning estimate for the next 5 trading sessions"
+      title="5-day alpha model"
+      description={
+        usesRanking
+          ? "Relative strength + trend ranking for the next 5 trading sessions"
+          : "Machine-learning estimate for the next 5 trading sessions"
+      }
       icon={TrendingUp}
       className={className}
     >
@@ -127,27 +140,43 @@ export function PatternTrendForecastCard({ forecast, className }: Props) {
                 <p className="text-lg font-semibold text-foreground">
                   {patternDirectionLabel(forecast)}
                 </p>
-                {tradeLabel ? (
+                {rankingBadge ? (
                   <span
                     className={cn(
                       "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                      toneBorderClass[tradeTone],
-                      toneTextClass[tradeTone],
+                      toneBorderClass[rankingTone],
+                      toneTextClass[rankingTone],
                     )}
                   >
-                    {tradeLabel}
+                    {rankingBadge}
                   </span>
                 ) : null}
               </div>
               <p className="text-sm leading-relaxed text-muted">
                 {patternDirectionSubtitle(forecast)}
               </p>
+              {portfolioSummary ? (
+                <p className="text-xs text-muted">{portfolioSummary}</p>
+              ) : null}
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {usesRanking ? (
+              <KpiStat
+                label="Ranking score"
+                value={formatPatternPercent(rankingScore)}
+                tone={
+                  rankingTone === "positive"
+                    ? "positive"
+                    : rankingTone === "warning"
+                      ? "warning"
+                      : "default"
+                }
+              />
+            ) : null}
             <KpiStat
-              label="P(up)"
+              label={patternUpProbLabel(forecast)}
               value={formatPatternPercent(forecast.upProb)}
               tone={directionTone === "positive" ? "positive" : "default"}
             />
@@ -164,7 +193,8 @@ export function PatternTrendForecastCard({ forecast, className }: Props) {
 
         {!forecast.inTrainingUniverse ? (
           <p className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-xs text-warning">
-            This symbol is outside the model&apos;s trained universe. Treat the
+            This symbol is outside the model&apos;s trained universe (
+            {forecast.trainingUniverse?.toUpperCase() ?? "TOP20"}). Treat the
             forecast as exploratory.
           </p>
         ) : null}
@@ -189,7 +219,7 @@ export function PatternTrendForecastCard({ forecast, className }: Props) {
           <div className="space-y-3 rounded-xl border border-border bg-background/40 p-3">
             <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted">
               <Activity className="h-3.5 w-3.5" aria-hidden />
-              Technical snapshot
+              Relative strength & trend
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {indicators.map((row) => (
@@ -209,9 +239,12 @@ export function PatternTrendForecastCard({ forecast, className }: Props) {
           </div>
         ) : null}
 
-        {forecast.modelTrainEndDate ? (
+        {modelSummary || forecast.modelTrainEndDate ? (
           <p className="text-xs text-muted">
-            Model trained through {formatFriendlyDate(forecast.modelTrainEndDate)}.
+            {modelSummary ? `${modelSummary}. ` : null}
+            {forecast.modelTrainEndDate
+              ? `Model trained through ${formatFriendlyDate(forecast.modelTrainEndDate)}. `
+              : null}
             Not investment advice.
           </p>
         ) : (

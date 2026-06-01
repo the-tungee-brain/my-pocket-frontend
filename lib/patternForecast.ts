@@ -8,11 +8,13 @@ const INDICATOR_ROWS: Array<{
   format: "price" | "decimal" | "percent";
   decimals?: number;
 }> = [
-  { key: "rsi_14", label: "RSI (14)", format: "decimal", decimals: 1 },
-  { key: "sma_20", label: "SMA 20", format: "price" },
-  { key: "sma_200", label: "SMA 200", format: "price" },
-  { key: "macd", label: "MACD", format: "decimal", decimals: 3 },
-  { key: "bb_pct", label: "Bollinger %B", format: "percent" },
+  { key: "rs_vs_spy_21d", label: "RS vs SPY (21d)", format: "percent" },
+  { key: "rs_vs_spy_63d", label: "RS vs SPY (63d)", format: "percent" },
+  { key: "rs_vs_spy_126d", label: "RS vs SPY (126d)", format: "percent" },
+  { key: "close_vs_sma20", label: "Close vs SMA 20", format: "percent" },
+  { key: "close_vs_sma200", label: "Close vs SMA 200", format: "percent" },
+  { key: "ret_21d", label: "Return (21d)", format: "percent" },
+  { key: "ret_63d", label: "Return (63d)", format: "percent" },
 ];
 
 export function hasPatternForecast(
@@ -22,10 +24,30 @@ export function hasPatternForecast(
 }
 
 export function isBinaryPatternScheme(labelScheme: string | undefined): boolean {
-  return labelScheme === "binary_updown";
+  return (
+    labelScheme === "binary_updown" || labelScheme === "binary_outperform_spy"
+  );
+}
+
+export function isOutperformSpyScheme(labelScheme: string | undefined): boolean {
+  return labelScheme === "binary_outperform_spy";
+}
+
+function binaryClassLabels(labelScheme: string | undefined): {
+  down: string;
+  up: string;
+} {
+  if (isOutperformSpyScheme(labelScheme)) {
+    return { down: "Underperform SPY", up: "Outperform SPY" };
+  }
+  return { down: "Down", up: "Up" };
 }
 
 export function patternDirectionLabel(forecast: PatternTrendForecast): string {
+  if (isOutperformSpyScheme(forecast.labelScheme)) {
+    return forecast.prediction === 1 ? "Outperform SPY" : "Underperform SPY";
+  }
+
   if (isBinaryPatternScheme(forecast.labelScheme)) {
     return forecast.prediction === 1 ? "Up" : "Down";
   }
@@ -41,6 +63,12 @@ export function patternDirectionLabel(forecast: PatternTrendForecast): string {
 }
 
 export function patternDirectionSubtitle(forecast: PatternTrendForecast): string {
+  if (isOutperformSpyScheme(forecast.labelScheme)) {
+    return forecast.prediction === 1
+      ? "Model expects this name to beat SPY over the next 5 trading days."
+      : "Model expects this name to lag SPY over the next 5 trading days.";
+  }
+
   if (isBinaryPatternScheme(forecast.labelScheme)) {
     return forecast.prediction === 1
       ? "Model expects a positive move over the next 5 trading days."
@@ -115,15 +143,17 @@ export function patternIndicatorRows(
 export function patternProbabilityRows(
   forecast: PatternTrendForecast,
 ): Array<{ label: string; value: number; selected: boolean }> {
+  const labels = binaryClassLabels(forecast.labelScheme);
+
   if (isBinaryPatternScheme(forecast.labelScheme)) {
     return [
       {
-        label: "Down",
+        label: labels.down,
         value: forecast.probabilities["0"] ?? 0,
         selected: forecast.prediction === 0,
       },
       {
-        label: "Up",
+        label: labels.up,
         value: forecast.probabilities["1"] ?? forecast.upProb ?? 0,
         selected: forecast.prediction === 1,
       },
@@ -147,6 +177,75 @@ export function patternProbabilityRows(
       selected: forecast.prediction === 1,
     },
   ];
+}
+
+export function patternRankingScore(
+  forecast: PatternTrendForecast,
+): number | null {
+  if (forecast.rankingScore != null) return forecast.rankingScore;
+  return forecast.upProb ?? null;
+}
+
+export function isRankingPortfolioStrategy(
+  forecast: PatternTrendForecast,
+): boolean {
+  return forecast.portfolioStrategy?.strategyType === "ranking";
+}
+
+export function patternRankingBadgeLabel(
+  forecast: PatternTrendForecast,
+): string | null {
+  if (!isRankingPortfolioStrategy(forecast)) {
+    return patternTradeSignalLabel(forecast);
+  }
+
+  const score = patternRankingScore(forecast);
+  if (score == null) return null;
+  if (score >= 0.65) return "Top-tier rank";
+  if (score >= 0.5) return "Mid rank";
+  return "Lower rank";
+}
+
+export function patternRankingBadgeTone(
+  forecast: PatternTrendForecast,
+): PatternDirectionTone {
+  if (!isRankingPortfolioStrategy(forecast)) {
+    return patternTradeSignalTone(forecast);
+  }
+
+  const score = patternRankingScore(forecast);
+  if (score == null) return "neutral";
+  if (score >= 0.65) return "positive";
+  if (score >= 0.5) return "neutral";
+  return "warning";
+}
+
+export function patternPortfolioSummary(
+  forecast: PatternTrendForecast,
+): string | null {
+  const strategy = forecast.portfolioStrategy;
+  if (!strategy) return null;
+
+  const universe = strategy.universe.toUpperCase();
+  return `Ranking portfolio · ${universe} · top ${strategy.topN} · ${strategy.rebalanceDays}d rebalance`;
+}
+
+export function patternModelSummary(
+  forecast: PatternTrendForecast,
+): string | null {
+  if (forecast.modelLabel && forecast.modelKey) {
+    const featureCount =
+      forecast.nFeatures != null ? ` · ${forecast.nFeatures} features` : "";
+    return `Model ${forecast.modelKey} · ${forecast.modelLabel}${featureCount}`;
+  }
+  if (forecast.modelLabel) return forecast.modelLabel;
+  return null;
+}
+
+export function patternUpProbLabel(forecast: PatternTrendForecast): string {
+  return isOutperformSpyScheme(forecast.labelScheme)
+    ? "P(outperform SPY)"
+    : "P(up)";
 }
 
 export function patternTradeSignalLabel(

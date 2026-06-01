@@ -131,17 +131,33 @@ export type CachedResearchSnippet = {
   valuationContext?: string | null;
 };
 
+export type PatternPortfolioStrategy = {
+  strategyType: string;
+  universe: string;
+  topN: number;
+  rebalanceDays: number;
+  holdDays: number;
+  maxPositionWeight: number;
+};
+
 export type PatternTrendForecast = {
   asOfDate: string;
   horizonDays: number;
   labelScheme: string;
   prediction: number;
   upProb?: number | null;
+  rankingScore?: number | null;
   tradeSignal?: boolean | null;
   inTrainingUniverse: boolean;
   probabilities: Record<string, number>;
   indicators: Record<string, number>;
   modelTrainEndDate?: string | null;
+  modelKey?: string | null;
+  modelLabel?: string | null;
+  trainingUniverse?: string | null;
+  nFeatures?: number | null;
+  featureGroups?: string[];
+  portfolioStrategy?: PatternPortfolioStrategy | null;
 };
 
 export type SymbolIntelligence = {
