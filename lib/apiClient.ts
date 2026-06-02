@@ -18,6 +18,7 @@ import {
   readOverviewBundleEtag,
   writeOverviewBundleEtag,
 } from "@/lib/overviewBundleCache";
+import { normalizeResearchOverviewBundle } from "@/lib/researchOverviewBundle";
 import type {
   InvestmentStrategy,
   JourneyStepStatus,
@@ -716,7 +717,9 @@ export async function fetchResearchOverviewBundle(
   const etag = parseEtagHeader(res.headers.get("ETag"));
   writeOverviewBundleEtag(etagKey, etag);
 
-  const bundle = (await res.json()) as ResearchOverviewBundle;
+  const bundle = normalizeResearchOverviewBundle(
+    (await res.json()) as ResearchOverviewBundle,
+  );
   return { status: "ok", bundle };
 }
 

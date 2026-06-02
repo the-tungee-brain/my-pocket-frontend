@@ -131,7 +131,8 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
             stacked
             sectorDonutVariant="interactive"
           />
-          {holdings.holdings.length < holdings.total_holdings ? (
+          {holdings.total_holdings != null &&
+          holdings.holdings.length < holdings.total_holdings ? (
             <p className="mt-4 border-t border-border pt-3 text-xs text-muted">
               Showing {Math.min(holdings.holdings.length, limit)} of{" "}
               {holdings.total_holdings.toLocaleString()} holdings.

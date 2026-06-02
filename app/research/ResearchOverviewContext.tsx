@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   type ReactNode,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ import { fetchResearchOverviewBundle } from "@/lib/apiClient";
 import { overviewBundleEtagKey, writeOverviewBundleEtag } from "@/lib/overviewBundleCache";
 import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
 import { seedResearchOverviewCaches } from "@/lib/researchOverviewSeeds";
+import { normalizeResearchOverviewBundle } from "@/lib/researchOverviewBundle";
 
 const ResearchOverviewContext = createContext<ResearchOverviewBundle | null>(
   null,
@@ -63,13 +65,18 @@ export function ResearchOverviewProvider({
     staleTime: 2 * 60_000,
   });
 
+  const bundle = useMemo(
+    () => (data ? normalizeResearchOverviewBundle(data) : null),
+    [data],
+  );
+
   useEffect(() => {
-    if (!data) return;
-    seedResearchOverviewCaches(data);
-  }, [data]);
+    if (!bundle) return;
+    seedResearchOverviewCaches(bundle);
+  }, [bundle]);
 
   return (
-    <ResearchOverviewContext.Provider value={data ?? null}>
+    <ResearchOverviewContext.Provider value={bundle}>
       <ResearchOverviewLoadingContext.Provider
         value={isLoading || isFetching}
       >

@@ -431,10 +431,12 @@ export function EtfFundStats({
     holdings.dividend_yield
       ? { label: "Dividend yield", value: holdings.dividend_yield }
       : null,
-    {
-      label: "Holdings count",
-      value: holdings.total_holdings.toLocaleString(),
-    },
+    holdings.total_holdings != null
+      ? {
+          label: "Holdings count",
+          value: holdings.total_holdings.toLocaleString(),
+        }
+      : null,
   ].filter(Boolean) as Array<{ label: string; value: string }>;
 
   return (
