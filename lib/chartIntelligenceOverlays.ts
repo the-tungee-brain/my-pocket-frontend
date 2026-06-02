@@ -3,7 +3,13 @@ import type {
   ChartIntelligenceTrendline,
   ChartIntelligenceZone,
 } from "@/app/types/intelligence";
-import type { IChartApi, ISeriesApi, SeriesType, Time } from "lightweight-charts";
+import type {
+  IChartApi,
+  ISeriesApi,
+  SeriesMarker,
+  SeriesType,
+  Time,
+} from "lightweight-charts";
 import {
   BaselineSeries,
   createSeriesMarkers,
@@ -309,12 +315,8 @@ export function applyChartIntelligenceOverlays(
               ? LineStyle.Solid
               : LineStyle.Dashed,
         priceLineVisible: false,
-        lastValueVisible: isFibChannel ? fibRatio === 0.5 : true,
-        title: isFibChannel
-          ? fibRatio === 0.5
-            ? line.label ?? "Fib 50%"
-            : ""
-          : trendlineTitle(line, style),
+        lastValueVisible: false,
+        title: "",
         crosshairMarkerVisible: false,
       });
       overlay.setData(
@@ -332,8 +334,8 @@ export function applyChartIntelligenceOverlays(
         lineWidth: 2,
         lineStyle: LineStyle.Dashed,
         priceLineVisible: false,
-        lastValueVisible: true,
-        title: trendlineTitle(line, style),
+        lastValueVisible: false,
+        title: "",
         crosshairMarkerVisible: false,
       });
       overlay.setData([
@@ -384,8 +386,8 @@ export function applyChartIntelligenceOverlays(
     renderZoneBand(zone, "resistance");
   }
 
-  const markers = (intelligence.annotations ?? [])
-    .map((annotation) => {
+  const markers: SeriesMarker<Time>[] = (intelligence.annotations ?? [])
+    .map((annotation): SeriesMarker<Time> | null => {
       const date =
         annotation.date ??
         (annotation.barIndex != null ? data[annotation.barIndex]?.date : null);
@@ -441,7 +443,7 @@ export function applyChartIntelligenceOverlays(
         text: annotation.label ?? "",
       };
     })
-    .filter(Boolean);
+    .filter((marker): marker is SeriesMarker<Time> => marker != null);
 
   const highlightDates = new Set(
     (intelligence.highlightedCandles ?? []).map((item) =>
@@ -456,7 +458,7 @@ export function applyChartIntelligenceOverlays(
     markers.push({
       time: toChartTime(bar.date) as Time,
       position: "inBar" as const,
-      shape: "square" as const,
+      shape: "circle" as const,
       color: "rgba(250, 204, 21, 0.9)",
       text: "Pattern",
     });

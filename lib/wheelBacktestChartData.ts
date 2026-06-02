@@ -306,7 +306,7 @@ export function buildTradeMarkers(trades: WheelBacktestTrade[]) {
             time,
             position: "aboveBar" as const,
             color: "#64748b",
-            shape: "square" as const,
+            shape: "circle" as const,
             text: "$",
           };
       }
