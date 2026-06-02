@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, CircleHelp, Sparkles } from "lucide-react";
 import type { PatternIntelligence, PrimaryCandlestickPattern } from "@/app/types/intelligence";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { KpiStat } from "@/components/ui/KpiStat";
@@ -10,6 +10,7 @@ import {
   isPatternIntelligenceBenchmark,
   patternIntelligenceBenchmarkNotice,
 } from "@/lib/modelBenchmark";
+import { patternCandlestickDescription } from "@/lib/patternCandlestickReference";
 import {
   formatPatternPercent,
   hasPatternIntelligence,
@@ -73,6 +74,30 @@ function TimeframeBlock({
   );
 }
 
+function PatternHelpButton({ patternId }: { patternId: string }) {
+  const description = patternCandlestickDescription(patternId);
+  if (!description) return null;
+
+  return (
+    <span className="group relative inline-flex shrink-0">
+      <button
+        type="button"
+        className="inline-flex rounded-full text-muted transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        aria-label="What is this candlestick pattern?"
+        title={description}
+      >
+        <CircleHelp className="h-4 w-4" aria-hidden />
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-64 -translate-x-1/2 rounded-lg border border-border bg-background px-2.5 py-2 text-left text-[11px] font-normal normal-case leading-relaxed tracking-normal text-foreground opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+      >
+        {description}
+      </span>
+    </span>
+  );
+}
+
 function PatternHeader({
   pattern,
 }: {
@@ -85,9 +110,12 @@ function PatternHeader({
       </p>
       {pattern ? (
         <>
-          <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-            {pattern.label}
-          </p>
+          <div className="mt-1 flex items-center gap-2">
+            <p className="text-2xl font-semibold tracking-tight text-foreground">
+              {pattern.label}
+            </p>
+            <PatternHelpButton patternId={pattern.patternId} />
+          </div>
           <p className="mt-1 text-sm text-muted">
             {patternIntelligencePatternSubtitle(pattern)}
           </p>
