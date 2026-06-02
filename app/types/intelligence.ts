@@ -188,6 +188,7 @@ export type ChartAnalystKeyLevel = {
   levelType?: string | null;
   display: string;
   implication: string;
+  available?: boolean;
 };
 
 export type ChartAnalystEvidenceBullet = {

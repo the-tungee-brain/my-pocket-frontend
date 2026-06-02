@@ -113,11 +113,6 @@ function AnalystSummaryBody({
         <p className="mt-2 text-sm leading-relaxed text-foreground">
           {outlook.expectation}
         </p>
-        {outlook.modelContext ? (
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            {outlook.modelContext}
-          </p>
-        ) : null}
         {isBenchmark ? (
           <p className="mt-2 text-sm leading-relaxed text-muted">
             {outlook.benchmarkNotice ?? benchmarkNotice}
@@ -126,17 +121,19 @@ function AnalystSummaryBody({
         <CompactPatternLine pattern={pattern} />
       </div>
 
-      <div className="rounded-xl border border-border bg-background/40 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          Key level
-        </p>
-        <p className="mt-2 text-sm font-semibold text-foreground">
-          {keyLevel.display}
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-muted">
-          {keyLevel.implication}
-        </p>
-      </div>
+      {keyLevel.available !== false && keyLevel.price != null ? (
+        <div className="rounded-xl border border-border bg-background/40 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Key level
+          </p>
+          <p className="mt-2 text-sm font-semibold text-foreground">
+            {keyLevel.display}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            {keyLevel.implication}
+          </p>
+        </div>
+      ) : null}
 
       {whyThisOutlook.length > 0 ? (
         <div className="rounded-xl border border-border bg-background/30 p-4">
