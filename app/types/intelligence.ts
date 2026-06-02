@@ -229,6 +229,34 @@ export type PatternExplanation = {
   disclaimer: string;
 };
 
+export type PatternVerdictBullet = {
+  tone: "positive" | "warning" | "negative" | "neutral" | string;
+  text: string;
+};
+
+export type PatternFinalVerdict = {
+  title: string;
+  bullets: PatternVerdictBullet[];
+  conclusion: string;
+};
+
+export type PatternConfidenceContributor = {
+  key: string;
+  label: string;
+  weightPct: number;
+  qualitative: string;
+  emphasized: boolean;
+  score: number;
+};
+
+export type PatternInterpretation = {
+  actionableVerdict: string;
+  traderSummary: string;
+  finalVerdict: PatternFinalVerdict;
+  confidenceContributors: PatternConfidenceContributor[];
+  historicalRead?: string | null;
+};
+
 export type PatternIntelligence = {
   symbol: string;
   asOfDate: string;
@@ -240,6 +268,7 @@ export type PatternIntelligence = {
   setupOutcome?: PatternSetupOutcome | null;
   coreModel?: Record<string, unknown> | null;
   explanation: PatternExplanation;
+  interpretation?: PatternInterpretation | null;
 };
 
 export type SymbolIntelligence = {
