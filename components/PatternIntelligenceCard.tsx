@@ -133,6 +133,19 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
             </button>
             {evidenceOpen ? (
               <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                    Insight
+                  </p>
+                  <p className="mt-1.5 text-sm font-medium leading-relaxed text-foreground">
+                    {evidence.insight}
+                  </p>
+                  {evidence.conditionalNote ? (
+                    <p className="mt-2 text-xs leading-relaxed text-muted">
+                      {evidence.conditionalNote}
+                    </p>
+                  ) : null}
+                </div>
                 {hasEvidenceStats ? (
                   <div className="grid grid-cols-2 gap-3">
                     <KpiStat
@@ -153,7 +166,6 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
                     />
                   </div>
                 ) : null}
-                <p className="text-sm leading-relaxed text-muted">{evidence.summary}</p>
               </div>
             ) : null}
           </div>

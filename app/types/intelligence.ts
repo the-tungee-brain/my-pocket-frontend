@@ -238,6 +238,8 @@ export type PatternSignalSummary = {
 };
 
 export type PatternEvidence = {
+  insight: string;
+  conditionalNote?: string | null;
   summary: string;
   setupLabel?: string | null;
   occurrenceCount?: number | null;
