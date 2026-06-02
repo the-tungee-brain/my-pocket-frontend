@@ -237,7 +237,33 @@ export type PatternSignalSummary = {
   patternWarning?: boolean;
 };
 
+export type PatternSignalState = {
+  label: string;
+  probability?: number | null;
+  probabilityText: string;
+  tone: string;
+};
+
+export type PatternTimeframeSlice = {
+  label: string;
+  caption: string;
+};
+
+export type PatternTimeframeInterpretation = {
+  shortTerm: PatternTimeframeSlice;
+  longTermTrend: PatternTimeframeSlice;
+  relativeStrength: PatternTimeframeSlice;
+};
+
+export type PatternAlignmentBlock = {
+  state: string;
+  headline: string;
+  explanation: string;
+};
+
 export type PatternEvidence = {
+  framing?: string | null;
+  statsNote?: string | null;
   insight: string;
   conditionalNote?: string | null;
   summary: string;
@@ -249,6 +275,9 @@ export type PatternEvidence = {
 };
 
 export type PatternInterpretation = {
+  signalState?: PatternSignalState | null;
+  timeframe?: PatternTimeframeInterpretation | null;
+  alignment?: PatternAlignmentBlock | null;
   signalSummary: PatternSignalSummary;
   verdict: string;
   evidence: PatternEvidence;

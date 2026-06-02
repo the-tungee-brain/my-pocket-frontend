@@ -1,4 +1,8 @@
-import type { PatternIntelligence } from "@/app/types/intelligence";
+import type {
+  PatternAlignmentBlock,
+  PatternIntelligence,
+  PatternSignalState,
+} from "@/app/types/intelligence";
 
 export function hasPatternIntelligence(
   payload: PatternIntelligence | null | undefined,
@@ -11,16 +15,72 @@ export function formatPatternPercent(value: number | null | undefined): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+export type SignalTone =
+  | "strong_bullish"
+  | "bullish"
+  | "slight_bullish"
+  | "neutral"
+  | "slight_bearish"
+  | "bearish"
+  | "strong_bearish"
+  | "unavailable"
+  | "warning";
+
+export function signalStateTone(
+  signalState: PatternSignalState | null | undefined,
+  alignmentState?: string,
+): SignalTone {
+  if (signalState?.tone) {
+    return signalState.tone as SignalTone;
+  }
+  return alignmentState === "conflict" ? "warning" : "neutral";
+}
+
 export function verdictTone(
   verdict: string,
   alignmentState: string,
-): "positive" | "negative" | "neutral" | "warning" {
-  const text = verdict.toLowerCase();
-  if (text.includes("dominates") || text.includes("confirms")) return "positive";
-  if (text.includes("reduce exposure") || text.includes("confirmed by weak")) {
-    return "warning";
+  signalState?: PatternSignalState | null,
+  alignment?: PatternAlignmentBlock | null,
+): SignalTone {
+  if (signalState?.tone && signalState.tone !== "unavailable") {
+    return signalState.tone as SignalTone;
   }
-  if (text.includes("conflict") || text.includes("defer")) return "warning";
-  if (alignmentState === "model_only") return "neutral";
+  if (alignment?.state === "conflict") return "warning";
+
+  const text = verdict.toLowerCase();
+  if (text.includes("bullish continuation") || text.includes("rebound")) {
+    return "bullish";
+  }
+  if (text.includes("bearish trend") || text.includes("weakness")) {
+    return "bearish";
+  }
+  if (text.includes("mixed") || text.includes("inconclusive")) {
+    return "neutral";
+  }
+  if (alignmentState === "conflict") return "warning";
   return "neutral";
 }
+
+export const signalToneClass = {
+  strong_bullish: "text-success",
+  bullish: "text-success",
+  slight_bullish: "text-success/80",
+  neutral: "text-foreground",
+  slight_bearish: "text-danger/80",
+  bearish: "text-danger",
+  strong_bearish: "text-danger",
+  unavailable: "text-muted",
+  warning: "text-warning",
+} as const;
+
+export const signalToneBorderClass = {
+  strong_bullish: "border-success/30 bg-success/10",
+  bullish: "border-success/25 bg-success/5",
+  slight_bullish: "border-success/20 bg-success/5",
+  neutral: "border-border bg-background/40",
+  slight_bearish: "border-danger/20 bg-danger/5",
+  bearish: "border-danger/25 bg-danger/5",
+  strong_bearish: "border-danger/30 bg-danger/10",
+  unavailable: "border-border bg-background/40",
+  warning: "border-warning/25 bg-warning/5",
+} as const;

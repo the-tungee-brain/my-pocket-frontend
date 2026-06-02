@@ -106,24 +106,22 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
                 />
               </>
             ) : null}
+            <ProFeatureGate
+              feature="patternTrend"
+              allowed={patternTrendAllowed}
+              className={pageSectionClass}
+            >
+              <PatternTrendForecastCard
+                forecast={intelligence?.patternForecast}
+                className={pageSectionClass}
+              />
+              <PatternIntelligenceCard
+                intelligence={intelligence?.patternIntelligence}
+                className={pageSectionClass}
+              />
+            </ProFeatureGate>
             {!isEtf ? (
-              <>
-                <ProFeatureGate
-                  feature="patternTrend"
-                  allowed={patternTrendAllowed}
-                  className={pageSectionClass}
-                >
-                  <PatternTrendForecastCard
-                    forecast={intelligence?.patternForecast}
-                    className={pageSectionClass}
-                  />
-                  <PatternIntelligenceCard
-                    intelligence={intelligence?.patternIntelligence}
-                    className={pageSectionClass}
-                  />
-                </ProFeatureGate>
-                <StreetAnalysisOverview symbol={symbol} className={pageSectionClass} />
-              </>
+              <StreetAnalysisOverview symbol={symbol} className={pageSectionClass} />
             ) : null}
             <PerformanceSnapshot symbol={symbol} className={pageSectionClass} />
             <IntelligenceRecentEventsPanel
