@@ -371,7 +371,10 @@ export function SymbolIntelligencePanel({
         )}
 
         {intelligence?.patternForecast && !hidePatternForecast ? (
-          <PatternTrendForecastCard forecast={intelligence.patternForecast} />
+          <PatternTrendForecastCard
+            forecast={intelligence.patternForecast}
+            symbol={intelligence.symbol}
+          />
         ) : null}
 
         {!!signals.length && (

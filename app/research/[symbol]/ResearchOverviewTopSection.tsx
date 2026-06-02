@@ -113,6 +113,7 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             >
               <PatternTrendForecastCard
                 forecast={intelligence?.patternForecast}
+                symbol={symbolUpper}
                 className={pageSectionClass}
               />
               <PatternIntelligenceCard

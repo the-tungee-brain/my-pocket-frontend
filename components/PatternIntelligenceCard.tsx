@@ -2,13 +2,19 @@
 
 import { useState } from "react";
 import { ChevronDown, Sparkles } from "lucide-react";
-import type { PatternIntelligence } from "@/app/types/intelligence";
+import type { PatternIntelligence, PrimaryCandlestickPattern } from "@/app/types/intelligence";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { KpiStat } from "@/components/ui/KpiStat";
 import { formatFriendlyDate } from "@/lib/dateUtils";
 import {
+  isPatternIntelligenceBenchmark,
+  patternIntelligenceBenchmarkNotice,
+} from "@/lib/modelBenchmark";
+import {
   formatPatternPercent,
   hasPatternIntelligence,
+  patternIntelligencePatternSubtitle,
+  patternIntelligencePrimaryPattern,
   signalToneBorderClass,
   signalToneClass,
   verdictTone,
@@ -67,12 +73,47 @@ function TimeframeBlock({
   );
 }
 
+function PatternHeader({
+  pattern,
+}: {
+  pattern: PrimaryCandlestickPattern | null;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-surface-elevated/40 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+        Pattern
+      </p>
+      {pattern ? (
+        <>
+          <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+            {pattern.label}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            {patternIntelligencePatternSubtitle(pattern)}
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="mt-1 text-lg font-semibold text-foreground">
+            No active pattern
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            Trend and model context still apply.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function PatternIntelligenceCard({ intelligence, className }: Props) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
 
   if (!hasPatternIntelligence(intelligence)) return null;
 
+  const isBenchmark = isPatternIntelligenceBenchmark(intelligence);
+  const benchmarkNotice = patternIntelligenceBenchmarkNotice(intelligence);
   const interp = intelligence.interpretation;
   const signalState = interp?.signalState;
   const timeframe = interp?.timeframe;
@@ -89,34 +130,53 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
 
   const hasEvidenceStats =
     evidence?.occurrenceCount != null && evidence.avgReturn5d != null;
+  const primaryPattern = patternIntelligencePrimaryPattern(intelligence);
 
   return (
     <ResearchSectionCard
       title="Pattern intelligence"
-      description="Model C drives decisions · patterns frame risk"
+      description={
+        isBenchmark
+          ? "Pattern, trend, and regime context · no Model C on benchmark"
+          : "Model C drives decisions · patterns frame risk"
+      }
       icon={Sparkles}
       className={className}
     >
       <div className="app-stack">
+        <PatternHeader pattern={primaryPattern} />
+
         {signalState ? (
           <div
             className={cn(
               "rounded-xl border p-4",
-              signalToneBorderClass[tone],
+              isBenchmark
+                ? "border-border bg-background/40"
+                : signalToneBorderClass[tone],
             )}
           >
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-              Signal state
+              {isBenchmark ? "Benchmark notice" : "Signal state"}
             </p>
-            <p
-              className={cn(
-                "mt-2 text-2xl font-semibold tracking-tight",
-                signalToneClass[tone],
-              )}
-            >
-              {signalState.label}
-            </p>
-            <p className="mt-1 text-sm text-muted">{signalState.probabilityText}</p>
+            {!isBenchmark ? (
+              <>
+                <p
+                  className={cn(
+                    "mt-2 text-2xl font-semibold tracking-tight",
+                    signalToneClass[tone],
+                  )}
+                >
+                  {signalState.label}
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  {signalState.probabilityText}
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-sm leading-relaxed text-foreground">
+                {signalState.benchmarkNotice ?? benchmarkNotice}
+              </p>
+            )}
           </div>
         ) : null}
 
@@ -137,7 +197,9 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
                 caption={timeframe.longTermTrend.caption}
               />
               <TimeframeBlock
-                label="Relative strength"
+                label={
+                  isBenchmark ? "Market regime" : "Relative strength"
+                }
                 value={timeframe.relativeStrength.label}
                 caption={timeframe.relativeStrength.caption}
               />
@@ -190,12 +252,20 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
           </button>
           {detailsOpen ? (
             <div className="space-y-2 border-t border-border px-4 pb-4 pt-3">
-              <SignalRow label="Model C" value={summary?.modelC ?? "—"} emphasize />
+              {!isBenchmark ? (
+                <SignalRow
+                  label="Model C"
+                  value={summary?.modelC ?? "—"}
+                  emphasize
+                />
+              ) : null}
               <SignalRow label="Trend" value={summary?.trend ?? "—"} />
-              <SignalRow
-                label="Relative strength"
-                value={summary?.relativeStrength ?? "—"}
-              />
+              {!isBenchmark ? (
+                <SignalRow
+                  label="Relative strength"
+                  value={summary?.relativeStrength ?? "—"}
+                />
+              ) : null}
               {summary?.pattern ? (
                 <SignalRow
                   label="Pattern"

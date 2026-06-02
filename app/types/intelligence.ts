@@ -158,6 +158,8 @@ export type PatternTrendForecast = {
   nFeatures?: number | null;
   featureGroups?: string[];
   portfolioStrategy?: PatternPortfolioStrategy | null;
+  isBenchmark?: boolean;
+  benchmarkNotice?: string | null;
 };
 
 export type PrimaryCandlestickPattern = {
@@ -242,6 +244,8 @@ export type PatternSignalState = {
   probability?: number | null;
   probabilityText: string;
   tone: string;
+  isBenchmark?: boolean;
+  benchmarkNotice?: string | null;
 };
 
 export type PatternTimeframeSlice = {
@@ -295,6 +299,7 @@ export type PatternIntelligence = {
   coreModel?: Record<string, unknown> | null;
   explanation: PatternExplanation;
   interpretation?: PatternInterpretation | null;
+  isBenchmark?: boolean;
 };
 
 export type SymbolIntelligence = {

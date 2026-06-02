@@ -2,12 +2,41 @@ import type {
   PatternAlignmentBlock,
   PatternIntelligence,
   PatternSignalState,
+  PrimaryCandlestickPattern,
 } from "@/app/types/intelligence";
 
 export function hasPatternIntelligence(
   payload: PatternIntelligence | null | undefined,
 ): payload is PatternIntelligence {
   return payload != null && Boolean(payload.symbol);
+}
+
+export function patternIntelligencePrimaryPattern(
+  intelligence: PatternIntelligence,
+): PrimaryCandlestickPattern | null {
+  return (
+    intelligence.primaryPattern ??
+    intelligence.activePatterns?.[0] ??
+    null
+  );
+}
+
+export function formatPatternDirectionLabel(direction: string): string {
+  if (direction === "bullish") return "Bullish";
+  if (direction === "bearish") return "Bearish";
+  return "Neutral";
+}
+
+export function patternQualityLabel(strength: number): string {
+  if (strength >= 0.7) return "High quality";
+  if (strength >= 0.45) return "Moderate weight";
+  return "Low weight";
+}
+
+export function patternIntelligencePatternSubtitle(
+  pattern: PrimaryCandlestickPattern,
+): string {
+  return `${formatPatternDirectionLabel(pattern.direction)} · ${patternQualityLabel(pattern.strength)}`;
 }
 
 export function formatPatternPercent(value: number | null | undefined): string {
