@@ -171,26 +171,35 @@ export type PrimaryCandlestickPattern = {
   barIndex?: number | null;
 };
 
-export type ChartIntelligenceScoreRow = {
-  name: string;
-  bias: "bullish" | "neutral" | "bearish" | string;
-  detail: string;
+export type ChartAnalystOutlook = {
+  label: string;
+  tone: string;
+  probability?: number | null;
+  probabilityDisplay?: string | null;
+  expectation: string;
+  modelContext?: string | null;
+  isBenchmark?: boolean;
+  benchmarkNotice?: string | null;
 };
 
-export type ChartIntelligenceScorecard = {
-  rows: ChartIntelligenceScoreRow[];
-  thesis: {
-    headline: string;
-    action: string;
-    detail: string;
-  };
-  priorityOrder?: string[];
+export type ChartAnalystKeyLevel = {
+  label: string;
+  price?: number | null;
+  levelType?: string | null;
+  display: string;
+  implication: string;
 };
 
-export type ChartIntelligenceNarrative = {
-  summary: string;
-  action: string;
-  headline: string;
+export type ChartAnalystEvidenceBullet = {
+  text: string;
+  tone: "support" | "caution" | string;
+};
+
+export type ChartAnalystSummary = {
+  outlook: ChartAnalystOutlook;
+  keyLevel: ChartAnalystKeyLevel;
+  whyThisOutlook: ChartAnalystEvidenceBullet[];
+  thesis: string;
   disclaimer: string;
 };
 
@@ -251,26 +260,18 @@ export type ChartIntelligencePatternMetadata = {
   candleIndexes?: number[];
   startDate?: string;
   endDate?: string;
-  qualificationChecks?: { label: string; passed: boolean }[];
-  explanation?: string;
 };
 
 export type ChartIntelligence = {
-  trendlines: ChartIntelligenceTrendline[];
-  supportZones: ChartIntelligenceZone[];
-  resistanceZones: ChartIntelligenceZone[];
-  annotations: ChartIntelligenceAnnotation[];
-  highlightedCandles: { barIndex?: number; date?: string; patternId?: string }[];
+  trendlines?: ChartIntelligenceTrendline[];
+  supportZones?: ChartIntelligenceZone[];
+  resistanceZones?: ChartIntelligenceZone[];
+  annotations?: ChartIntelligenceAnnotation[];
+  highlightedCandles?: { barIndex?: number; date?: string; patternId?: string }[];
   breakoutEvents?: ChartIntelligenceBreakoutEvent[];
   fibChannel?: ChartIntelligenceFibChannel | null;
-  patternMetadata: ChartIntelligencePatternMetadata[];
-  structure: Record<string, unknown>;
-  movingAverages: Record<string, unknown>;
-  volume: Record<string, unknown>;
-  supportResistanceSummary?: string;
-  relativeStrength: Record<string, unknown>;
-  narrative: ChartIntelligenceNarrative;
-  scorecard: ChartIntelligenceScorecard;
+  patternMetadata?: ChartIntelligencePatternMetadata[];
+  summary: ChartAnalystSummary;
 };
 
 export type PatternTrendContextIntel = {
@@ -334,62 +335,6 @@ export type PatternExplanation = {
   disclaimer: string;
 };
 
-export type PatternSignalSummary = {
-  modelC: string;
-  trend: string;
-  relativeStrength: string;
-  pattern?: string | null;
-  patternWarning?: boolean;
-};
-
-export type PatternSignalState = {
-  label: string;
-  probability?: number | null;
-  probabilityText: string;
-  tone: string;
-  isBenchmark?: boolean;
-  benchmarkNotice?: string | null;
-};
-
-export type PatternTimeframeSlice = {
-  label: string;
-  caption: string;
-};
-
-export type PatternTimeframeInterpretation = {
-  shortTerm: PatternTimeframeSlice;
-  longTermTrend: PatternTimeframeSlice;
-  relativeStrength: PatternTimeframeSlice;
-};
-
-export type PatternAlignmentBlock = {
-  state: string;
-  headline: string;
-  explanation: string;
-};
-
-export type PatternEvidence = {
-  framing?: string | null;
-  statsNote?: string | null;
-  insight: string;
-  conditionalNote?: string | null;
-  summary: string;
-  setupLabel?: string | null;
-  occurrenceCount?: number | null;
-  winRate5d?: number | null;
-  avgReturn5d?: number | null;
-  avgReturn20d?: number | null;
-};
-
-export type PatternInterpretation = {
-  signalState?: PatternSignalState | null;
-  timeframe?: PatternTimeframeInterpretation | null;
-  alignment?: PatternAlignmentBlock | null;
-  signalSummary: PatternSignalSummary;
-  verdict: string;
-  evidence: PatternEvidence;
-};
-
 export type PatternIntelligence = {
   symbol: string;
   asOfDate: string;
@@ -401,7 +346,6 @@ export type PatternIntelligence = {
   setupOutcome?: PatternSetupOutcome | null;
   coreModel?: Record<string, unknown> | null;
   explanation: PatternExplanation;
-  interpretation?: PatternInterpretation | null;
   chartIntelligence?: ChartIntelligence | null;
   isBenchmark?: boolean;
 };

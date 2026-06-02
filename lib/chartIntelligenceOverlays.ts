@@ -472,5 +472,13 @@ export function applyChartIntelligenceOverlays(
 export function hasChartIntelligence(
   intelligence: ChartIntelligence | null | undefined,
 ): intelligence is ChartIntelligence {
-  return Boolean(intelligence?.narrative?.summary);
+  if (!intelligence) return false;
+  if (intelligence.summary?.outlook?.label) return true;
+  return Boolean(
+    (intelligence.supportZones?.length ?? 0) > 0 ||
+      (intelligence.resistanceZones?.length ?? 0) > 0 ||
+      (intelligence.trendlines?.length ?? 0) > 0 ||
+      (intelligence.breakoutEvents?.length ?? 0) > 0 ||
+      (intelligence.fibChannel?.lines?.length ?? 0) > 0,
+  );
 }

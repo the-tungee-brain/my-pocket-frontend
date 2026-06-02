@@ -1,8 +1,8 @@
 import type {
+  ChartAnalystOutlook,
+  ChartIntelligence,
   ChartIntelligencePatternMetadata,
-  PatternAlignmentBlock,
   PatternIntelligence,
-  PatternSignalState,
   PrimaryCandlestickPattern,
 } from "@/app/types/intelligence";
 
@@ -12,13 +12,18 @@ export function hasPatternIntelligence(
   return payload != null && Boolean(payload.symbol);
 }
 
+export function hasChartAnalystSummary(
+  chart: ChartIntelligence | null | undefined,
+): boolean {
+  return Boolean(chart?.summary?.outlook?.label);
+}
+
 type PatternMetadataLike = Partial<ChartIntelligencePatternMetadata> & {
   pattern_id?: string;
   quality_score?: number;
   candle_indexes?: number[];
   start_date?: string;
   end_date?: string;
-  qualification_checks?: { label: string; passed: boolean }[];
 };
 
 export function normalizeChartPatternMetadata(
@@ -34,9 +39,6 @@ export function normalizeChartPatternMetadata(
     candleIndexes: meta.candleIndexes ?? meta.candle_indexes ?? [],
     startDate: meta.startDate ?? meta.start_date,
     endDate: meta.endDate ?? meta.end_date,
-    qualificationChecks:
-      meta.qualificationChecks ?? meta.qualification_checks ?? [],
-    explanation: meta.explanation ?? "",
   };
 }
 
@@ -68,11 +70,6 @@ export function patternIntelligencePatternSubtitle(
   return `${formatPatternDirectionLabel(pattern.direction)} · ${patternQualityLabel(pattern.strength)}`;
 }
 
-export function formatPatternPercent(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(value)) return "—";
-  return `${(value * 100).toFixed(1)}%`;
-}
-
 export type SignalTone =
   | "strong_bullish"
   | "bullish"
@@ -84,39 +81,21 @@ export type SignalTone =
   | "unavailable"
   | "warning";
 
-export function signalStateTone(
-  signalState: PatternSignalState | null | undefined,
+export function outlookTone(
+  outlook: ChartAnalystOutlook | null | undefined,
   alignmentState?: string,
 ): SignalTone {
-  if (signalState?.tone) {
-    return signalState.tone as SignalTone;
+  if (outlook?.tone && outlook.tone !== "unavailable") {
+    return outlook.tone as SignalTone;
   }
   return alignmentState === "conflict" ? "warning" : "neutral";
 }
 
-export function verdictTone(
-  verdict: string,
-  alignmentState: string,
-  signalState?: PatternSignalState | null,
-  alignment?: PatternAlignmentBlock | null,
-): SignalTone {
-  if (signalState?.tone && signalState.tone !== "unavailable") {
-    return signalState.tone as SignalTone;
+export function outlookHeadline(outlook: ChartAnalystOutlook): string {
+  if (outlook.probabilityDisplay) {
+    return `${outlook.label} (${outlook.probabilityDisplay})`;
   }
-  if (alignment?.state === "conflict") return "warning";
-
-  const text = verdict.toLowerCase();
-  if (text.includes("bullish continuation") || text.includes("rebound")) {
-    return "bullish";
-  }
-  if (text.includes("bearish trend") || text.includes("weakness")) {
-    return "bearish";
-  }
-  if (text.includes("mixed") || text.includes("inconclusive")) {
-    return "neutral";
-  }
-  if (alignmentState === "conflict") return "warning";
-  return "neutral";
+  return outlook.label;
 }
 
 export const signalToneClass = {

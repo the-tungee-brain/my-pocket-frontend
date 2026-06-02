@@ -17,7 +17,7 @@ export function isPatternIntelligenceBenchmark(
   if (!intelligence) return false;
   return (
     intelligence.isBenchmark === true ||
-    intelligence.interpretation?.signalState?.isBenchmark === true ||
+    intelligence.chartIntelligence?.summary?.outlook?.isBenchmark === true ||
     isModelBenchmarkSymbol(intelligence.symbol)
   );
 }
@@ -40,7 +40,7 @@ export function patternIntelligenceBenchmarkNotice(
   intelligence: PatternIntelligence | null | undefined,
 ): string {
   return (
-    intelligence?.interpretation?.signalState?.benchmarkNotice ??
+    intelligence?.chartIntelligence?.summary?.outlook?.benchmarkNotice ??
     MODEL_BENCHMARK_NOTICE
   );
 }
