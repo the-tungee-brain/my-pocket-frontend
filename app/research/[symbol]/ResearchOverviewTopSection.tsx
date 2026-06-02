@@ -17,6 +17,7 @@ import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { hasProFeature } from "@/lib/planFeatures";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { PatternTrendForecastCard } from "@/components/PatternTrendForecastCard";
+import { PatternIntelligenceCard } from "@/components/PatternIntelligenceCard";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
@@ -114,6 +115,10 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
                 >
                   <PatternTrendForecastCard
                     forecast={intelligence?.patternForecast}
+                    className={pageSectionClass}
+                  />
+                  <PatternIntelligenceCard
+                    intelligence={intelligence?.patternIntelligence}
                     className={pageSectionClass}
                   />
                 </ProFeatureGate>

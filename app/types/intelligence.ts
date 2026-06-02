@@ -160,6 +160,88 @@ export type PatternTrendForecast = {
   portfolioStrategy?: PatternPortfolioStrategy | null;
 };
 
+export type PrimaryCandlestickPattern = {
+  patternId: string;
+  label: string;
+  direction: string;
+  strength: number;
+  asOfDate: string;
+};
+
+export type PatternTrendContextIntel = {
+  asOfDate: string;
+  close: number;
+  sma50?: number | null;
+  sma200?: number | null;
+  aboveSma50?: boolean | null;
+  aboveSma200?: boolean | null;
+  trendBias: string;
+  rsVsSpy21d?: number | null;
+  rsVsSpy63d?: number | null;
+  rsVsSpy126d?: number | null;
+  volRatio20d?: number | null;
+  volZscore20d?: number | null;
+};
+
+export type PatternIntelligenceScores = {
+  patternStrength: number;
+  trendStrength: number;
+  relativeStrength: number;
+  volumeConfirmation: number;
+  modelAlignment: number;
+  confirmationScore: number;
+  confidence: string;
+  alignmentState: "confirmed" | "conflict" | "model_only" | string;
+};
+
+export type PatternHistoricalStats = {
+  patternId: string;
+  label: string;
+  occurrenceCount: number;
+  avgReturn5d?: number | null;
+  avgReturn20d?: number | null;
+  winRate5d?: number | null;
+  winRate20d?: number | null;
+  maxDrawdown20d?: number | null;
+};
+
+export type PatternSetupOutcome = {
+  label: string;
+  patternLabel: string;
+  trendLabel: string;
+  rsLabel: string;
+  occurrenceCount: number;
+  patternOnlyCount: number;
+  avgReturn5d?: number | null;
+  avgReturn20d?: number | null;
+  winRate5d?: number | null;
+  winRate20d?: number | null;
+  maxDrawdown20d?: number | null;
+};
+
+export type PatternExplanation = {
+  headline: string;
+  patternSummary: string;
+  trendContext: string;
+  historicalContext: string;
+  modelContext: string;
+  confidenceExplanation: string;
+  disclaimer: string;
+};
+
+export type PatternIntelligence = {
+  symbol: string;
+  asOfDate: string;
+  primaryPattern?: PrimaryCandlestickPattern | null;
+  activePatterns: PrimaryCandlestickPattern[];
+  trendContext: PatternTrendContextIntel;
+  scores: PatternIntelligenceScores;
+  historicalStats?: PatternHistoricalStats | null;
+  setupOutcome?: PatternSetupOutcome | null;
+  coreModel?: Record<string, unknown> | null;
+  explanation: PatternExplanation;
+};
+
 export type SymbolIntelligence = {
   symbol: string;
   signals: IntelligenceSignal[];
@@ -170,6 +252,7 @@ export type SymbolIntelligence = {
   rollSuggestions?: OptionRollSuggestion[];
   cachedResearch?: CachedResearchSnippet | null;
   patternForecast?: PatternTrendForecast | null;
+  patternIntelligence?: PatternIntelligence | null;
   dataGaps?: string[];
   partial?: boolean;
   reauthRequired?: boolean;
