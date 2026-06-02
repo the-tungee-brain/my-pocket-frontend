@@ -7,6 +7,11 @@ import {
   HistogramSeries,
   LineSeries,
 } from "lightweight-charts";
+import type { ChartIntelligence } from "@/app/types/intelligence";
+import {
+  applyChartIntelligenceOverlays,
+  hasChartIntelligence,
+} from "@/lib/chartIntelligenceOverlays";
 import { ChevronDown, LineChart, CandlestickChart } from "lucide-react";
 import { iconButtonClass } from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
@@ -35,6 +40,7 @@ type Props = {
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  chartIntelligence?: ChartIntelligence | null;
   className?: string;
 };
 
@@ -228,6 +234,7 @@ export function StockChart({
   loading = false,
   error = null,
   onRetry,
+  chartIntelligence,
   className,
 }: Props) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -304,6 +311,12 @@ export function StockChart({
   }, [isFullscreen]);
 
   useEffect(() => {
+    if (hasChartIntelligence(chartIntelligence)) {
+      setChartMode("candle");
+    }
+  }, [chartIntelligence]);
+
+  useEffect(() => {
     if (!containerRef.current) return;
 
     if (!data.length) {
@@ -354,6 +367,8 @@ export function StockChart({
 
     chartRef.current = chart;
 
+    let priceSeries;
+
     const candles = data.map((d) => ({
       time: toChartTime(d.date) as never,
       open: d.open,
@@ -363,24 +378,26 @@ export function StockChart({
     }));
 
     if (chartMode === "line") {
-      const lineSeries = chart.addSeries(LineSeries, {
+      priceSeries = chart.addSeries(LineSeries, {
         color: accent,
         lineWidth: 2,
         crosshairMarkerRadius: 4,
       });
-      lineSeries.setData(
+      priceSeries.setData(
         candles.map((bar) => ({ time: bar.time, value: bar.close })),
       );
     } else {
-      const candleSeries = chart.addSeries(CandlestickSeries, {
+      priceSeries = chart.addSeries(CandlestickSeries, {
         upColor,
         downColor,
         borderVisible: false,
         wickUpColor: upColor,
         wickDownColor: downColor,
       });
-      candleSeries.setData(candles);
+      priceSeries.setData(candles);
     }
+
+    applyChartIntelligenceOverlays(chart, priceSeries, data, chartIntelligence);
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
       color: upColor,
@@ -446,7 +463,7 @@ export function StockChart({
       chart.remove();
       chartRef.current = null;
     };
-  }, [chartMode, data, dataByTime]);
+  }, [chartIntelligence, chartMode, data, dataByTime]);
 
   useEffect(() => {
     setSelectedPeriod(period);

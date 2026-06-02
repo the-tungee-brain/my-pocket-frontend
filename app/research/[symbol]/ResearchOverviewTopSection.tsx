@@ -18,6 +18,7 @@ import { hasProFeature } from "@/lib/planFeatures";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { PatternTrendForecastCard } from "@/components/PatternTrendForecastCard";
 import { PatternIntelligenceCard } from "@/components/PatternIntelligenceCard";
+import { ResearchDecisionPanel } from "@/components/ResearchDecisionPanel";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
@@ -77,7 +78,10 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
         asideClassName={pageOverviewAsideClass}
         main={
           <>
-            <ResearchStockChart symbol={symbol} />
+            <ResearchStockChart
+              symbol={symbol}
+              chartIntelligence={intelligence?.patternIntelligence?.chartIntelligence}
+            />
             <SymbolIntelligencePanel
               intelligence={intelligence}
               loading={loading}
@@ -113,7 +117,12 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             >
               <PatternTrendForecastCard
                 forecast={intelligence?.patternForecast}
+                researchDecision={intelligence?.researchDecision}
                 symbol={symbolUpper}
+                className={pageSectionClass}
+              />
+              <ResearchDecisionPanel
+                decision={intelligence?.researchDecision}
                 className={pageSectionClass}
               />
               <PatternIntelligenceCard

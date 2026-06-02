@@ -6,6 +6,7 @@ import type { PortfolioSectionId } from "@/app/contexts/PortfolioSectionContext"
 
 const SECTIONS: { id: PortfolioSectionId; label: string }[] = [
   { id: "today", label: "Today" },
+  { id: "rankings", label: "Rankings" },
   { id: "news", label: "News" },
   { id: "holdings", label: "Holdings" },
   { id: "activity", label: "Activity" },

@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import type { ChartIntelligence } from "@/app/types/intelligence";
 import { StockChart } from "@/components/StockChart";
 import { useStockData } from "@/app/hooks/useStockData";
 import { pageSectionClass } from "@/lib/pageLayout";
 
 type Props = {
   symbol: string;
+  chartIntelligence?: ChartIntelligence | null;
 };
 
-export function ResearchStockChart({ symbol }: Props) {
+export function ResearchStockChart({ symbol, chartIntelligence }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken ?? null;
 
@@ -41,6 +43,7 @@ export function ResearchStockChart({ symbol }: Props) {
       interval={interval}
       onPeriodChange={setPeriod}
       onIntervalChange={setInterval}
+      chartIntelligence={chartIntelligence}
       className={pageSectionClass}
     />
   );

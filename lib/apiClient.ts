@@ -5,8 +5,11 @@ import type { SchwabReauthDetail } from "./schwabReauth";
 import type { AccountPositionsResponse, RecentOrdersResponse } from "@/app/types/schwab";
 import type {
   MorningBrief,
+  ModelDiagnostics,
   PortfolioChanges,
   PortfolioIntelligence,
+  PortfolioRankingDashboard,
+  ResearchDecision,
   SymbolIntelligence,
 } from "@/app/types/intelligence";
 import type { PortfolioNewsResponse } from "@/app/types/portfolioNews";
@@ -223,6 +226,46 @@ export async function fetchSymbolIntelligence(
   }
 
   return res.json() as Promise<SymbolIntelligence>;
+}
+
+export async function fetchPortfolioRankingDashboard(
+  accessToken: string,
+): Promise<PortfolioRankingDashboard> {
+  const res = await apiFetch("/research/portfolio-ranking", {
+    method: "GET",
+    accessToken,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load portfolio rankings (${res.status})`);
+  }
+  return res.json() as Promise<PortfolioRankingDashboard>;
+}
+
+export async function fetchModelDiagnostics(
+  accessToken: string,
+): Promise<ModelDiagnostics> {
+  const res = await apiFetch("/research/model-diagnostics", {
+    method: "GET",
+    accessToken,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load model diagnostics (${res.status})`);
+  }
+  return res.json() as Promise<ModelDiagnostics>;
+}
+
+export async function fetchResearchDecision(
+  accessToken: string,
+  symbol: string,
+): Promise<ResearchDecision> {
+  const res = await apiFetch(
+    `/research/decision${buildQuery({ symbol: symbol.toUpperCase() })}`,
+    { method: "GET", accessToken },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to load research decision (${res.status})`);
+  }
+  return res.json() as Promise<ResearchDecision>;
 }
 
 export async function fetchRecentOrders(
