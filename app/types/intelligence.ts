@@ -206,6 +206,7 @@ export type ChartIntelligenceZone = {
 export type ChartIntelligenceTrendline = {
   label?: string;
   style?: string;
+  ratio?: number;
   startDate?: string;
   endDate?: string;
   startPrice?: number;
@@ -213,8 +214,25 @@ export type ChartIntelligenceTrendline = {
   points?: { date: string; price: number }[];
 };
 
+export type ChartIntelligenceBreakoutEvent = {
+  kind: string;
+  barIndex?: number;
+  date?: string;
+  price?: number;
+  zoneLabel?: string;
+  label?: string;
+  volumeRatio?: number | null;
+};
+
+export type ChartIntelligenceFibChannel = {
+  bias?: string;
+  summary?: string;
+  lines?: ChartIntelligenceTrendline[];
+};
+
 export type ChartIntelligenceAnnotation = {
   type?: string;
+  breakoutKind?: string;
   barIndex?: number;
   date?: string;
   price?: number;
@@ -243,6 +261,8 @@ export type ChartIntelligence = {
   resistanceZones: ChartIntelligenceZone[];
   annotations: ChartIntelligenceAnnotation[];
   highlightedCandles: { barIndex?: number; date?: string; patternId?: string }[];
+  breakoutEvents?: ChartIntelligenceBreakoutEvent[];
+  fibChannel?: ChartIntelligenceFibChannel | null;
   patternMetadata: ChartIntelligencePatternMetadata[];
   structure: Record<string, unknown>;
   movingAverages: Record<string, unknown>;

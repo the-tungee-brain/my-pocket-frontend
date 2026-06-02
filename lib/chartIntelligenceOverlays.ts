@@ -24,6 +24,7 @@ type TrendlineLike = ChartIntelligenceTrendline & {
   end_date?: string;
   start_price?: number;
   end_price?: number;
+  ratio?: number;
 };
 
 type ZoneLike = ChartIntelligenceZone & {
@@ -232,6 +233,28 @@ export function buildChartIntelligenceLegendItems(
     });
   }
 
+  if ((intelligence.fibChannel?.lines ?? []).length > 0) {
+    items.push({
+      id: "fib-channel",
+      label: "Fib channel",
+      subtitle: intelligence.fibChannel?.summary,
+      kind: "line",
+      color: "#f59e0b",
+      dashed: true,
+    });
+  }
+
+  for (const event of intelligence.breakoutEvents ?? []) {
+    const kind = event.kind ?? "";
+    if (!kind.includes("failed") && !kind.includes("confirmed")) continue;
+    items.push({
+      id: `breakout-${kind}-${event.date ?? event.barIndex ?? items.length}`,
+      label: event.label ?? kind.replace(/_/g, " "),
+      kind: "marker",
+      color: kind.includes("failed") ? "#ef4444" : "#22c55e",
+    });
+  }
+
   return items;
 }
 
@@ -245,6 +268,12 @@ const ZONE_BAND_COLORS = {
     bottom: "rgba(239, 68, 68, 0.04)",
   },
 } as const;
+
+function fibChannelColor(ratio: number): string {
+  if (ratio === 0 || ratio >= 1) return "rgba(245, 158, 11, 0.85)";
+  if (ratio === 0.5) return "rgba(245, 158, 11, 0.65)";
+  return "rgba(245, 158, 11, 0.35)";
+}
 
 export function applyChartIntelligenceOverlays(
   chart: IChartApi,
@@ -265,15 +294,27 @@ export function applyChartIntelligenceOverlays(
     const style = typeof line.style === "string" ? line.style : "sma50";
     const color = SMA_COLORS[style] ?? "#64748b";
     const isSma = style.startsWith("sma");
+    const isFibChannel = style === "fib_channel";
+    const fibRatio =
+      isFibChannel && typeof rawLine.ratio === "number" ? rawLine.ratio : 0.5;
 
     if (line.points && line.points.length >= 2) {
       const overlay = chart.addSeries(LineSeries, {
-        color,
-        lineWidth: isSma ? 1 : 2,
-        lineStyle: isSma ? LineStyle.Solid : LineStyle.Dashed,
+        color: isFibChannel ? fibChannelColor(fibRatio) : color,
+        lineWidth: isFibChannel ? (fibRatio === 0.5 ? 2 : 1) : isSma ? 1 : 2,
+        lineStyle:
+          isFibChannel && fibRatio !== 0 && fibRatio !== 1
+            ? LineStyle.Dotted
+            : isSma
+              ? LineStyle.Solid
+              : LineStyle.Dashed,
         priceLineVisible: false,
-        lastValueVisible: true,
-        title: trendlineTitle(line, style),
+        lastValueVisible: isFibChannel ? fibRatio === 0.5 : true,
+        title: isFibChannel
+          ? fibRatio === 0.5
+            ? line.label ?? "Fib 50%"
+            : ""
+          : trendlineTitle(line, style),
         crosshairMarkerVisible: false,
       });
       overlay.setData(
@@ -350,6 +391,30 @@ export function applyChartIntelligenceOverlays(
         (annotation.barIndex != null ? data[annotation.barIndex]?.date : null);
       if (!date) return null;
       const time = toChartTime(String(date).slice(0, 10));
+
+      if (annotation.type === "breakout") {
+        const breakoutKind =
+          annotation.breakoutKind ??
+          (annotation as { breakout_kind?: string }).breakout_kind ??
+          "";
+        const failed = breakoutKind.includes("failed");
+        const bullishBreak =
+          breakoutKind === "confirmed_breakout" ||
+          breakoutKind === "failed_breakdown";
+        return {
+          time: time as Time,
+          position:
+            breakoutKind.includes("breakout") || breakoutKind.includes("breakdown")
+              ? breakoutKind.includes("breakout")
+                ? ("aboveBar" as const)
+                : ("belowBar" as const)
+              : ("aboveBar" as const),
+          shape: bullishBreak ? ("arrowUp" as const) : ("arrowDown" as const),
+          color: failed ? "#ef4444" : "#22c55e",
+          text: annotation.label ?? (failed ? "Failed" : "Break"),
+        };
+      }
+
       const position =
         annotation.position === "belowBar"
           ? ("belowBar" as const)
