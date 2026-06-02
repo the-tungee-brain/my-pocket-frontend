@@ -1,7 +1,7 @@
 "use client";
 
 import { Activity, ArrowDownRight, ArrowUpRight, Minus, TrendingUp } from "lucide-react";
-import type { PatternTrendForecast, ResearchDecision } from "@/app/types/intelligence";
+import type { PatternTrendForecast } from "@/app/types/intelligence";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { KpiStat } from "@/components/ui/KpiStat";
 import {
@@ -30,7 +30,6 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   forecast: PatternTrendForecast | null | undefined;
-  researchDecision?: ResearchDecision | null;
   symbol?: string;
   className?: string;
 };
@@ -109,16 +108,8 @@ function ProbabilityBar({
   );
 }
 
-export function PatternTrendForecastCard({
-  forecast,
-  researchDecision,
-  symbol,
-  className,
-}: Props) {
+export function PatternTrendForecastCard({ forecast, symbol, className }: Props) {
   if (!hasPatternForecast(forecast)) return null;
-
-  const ranking = researchDecision?.ranking;
-  const quality = researchDecision?.researchQualityScore;
 
   const isBenchmark = isPatternForecastBenchmark(forecast, symbol);
   const benchmarkNotice = patternForecastBenchmarkNotice(forecast);
@@ -205,24 +196,7 @@ export function PatternTrendForecastCard({
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
-              {quality ? (
-                <KpiStat
-                  label="Research quality"
-                  value={`${quality.score}/100`}
-                  tone={quality.score >= 60 ? "positive" : "default"}
-                />
-              ) : null}
-              {ranking ? (
-                <>
-                  <KpiStat label="Rank" value={ranking.rankDisplay} />
-                  <KpiStat label="Percentile" value={ranking.percentileLabel} />
-                  <KpiStat
-                    label="Expected outcome"
-                    value={ranking.expectedOutcome}
-                    className="col-span-2"
-                  />
-                </>
-              ) : usesRanking ? (
+              {usesRanking ? (
                 <KpiStat
                   label="Ranking score"
                   value={formatPatternPercent(rankingScore)}
@@ -235,13 +209,11 @@ export function PatternTrendForecastCard({
                   }
                 />
               ) : null}
-              {!usesRanking ? (
-                <KpiStat
-                  label={patternUpProbLabel(forecast)}
-                  value={formatPatternPercent(forecast.upProb)}
-                  tone={directionTone === "positive" ? "positive" : "default"}
-                />
-              ) : null}
+              <KpiStat
+                label={patternUpProbLabel(forecast)}
+                value={formatPatternPercent(forecast.upProb)}
+                tone={directionTone === "positive" ? "positive" : "default"}
+              />
               <KpiStat
                 label="As of"
                 value={formatFriendlyDate(forecast.asOfDate)}

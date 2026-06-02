@@ -162,138 +162,6 @@ export type PatternTrendForecast = {
   benchmarkNotice?: string | null;
 };
 
-export type ResearchQualityScore = {
-  score: number;
-  headline: string;
-  components: {
-    modelConfidence: number;
-    trendQuality: number;
-    relativeStrength: number;
-    regimeAlignment: number;
-    chartIntelligence: number;
-  };
-};
-
-export type MultiTimeframeAnalysis = {
-  weeklyTrend: string;
-  weeklyTrendLabel: string;
-  dailyTrend: string;
-  dailyTrendLabel: string;
-  forecastTrend: string;
-  forecastTrendLabel: string;
-  conclusion: string;
-};
-
-export type RankingExplanation = {
-  rank: number;
-  universeSize: number;
-  percentile: number;
-  percentileLabel: string;
-  expectedOutcome: string;
-  rankDisplay: string;
-};
-
-export type SignalChangeExplanation = {
-  materialChange: boolean;
-  priorDate: string;
-  priorScore: number;
-  todayScore: number;
-  priorScorePct: number;
-  todayScorePct: number;
-  scoreDelta: number;
-  positiveDrivers: string[];
-  negativeDrivers: string[];
-  summary: string;
-};
-
-export type ModelContributors = {
-  positive: string[];
-  negative: string[];
-};
-
-export type RegimeHistoricalPerformance = {
-  ic: number;
-  rankIc: number;
-  sharpe: number;
-  hitRate: number;
-  label?: string | null;
-};
-
-export type RegimeContext = {
-  asOfDate?: string | null;
-  marketRegime: string;
-  spyTrendRegime?: string | null;
-  vixRegime: string;
-  vixLevel?: number | null;
-  spyAbove200Dma?: boolean | null;
-  regimeLabel: string;
-  historicalPerformance: RegimeHistoricalPerformance;
-};
-
-export type RegimeBlock = {
-  current: RegimeContext;
-  alignmentNote?: string | null;
-};
-
-export type ResearchDecision = {
-  symbol: string;
-  asOfDate?: string | null;
-  isBenchmark?: boolean;
-  benchmarkNotice?: string | null;
-  researchQualityScore?: ResearchQualityScore | null;
-  multiTimeframe?: MultiTimeframeAnalysis | null;
-  ranking?: RankingExplanation | null;
-  signalChange?: SignalChangeExplanation | null;
-  contributors?: ModelContributors | null;
-  regime?: RegimeBlock | null;
-};
-
-export type PortfolioRankingRow = {
-  symbol: string;
-  rank: number;
-  percentile?: number | null;
-  rankingScore: number;
-  trend: string;
-  dailyTrend: string;
-  relativeStrength?: number | null;
-  thesisSummary: string;
-  rankChange?: number | null;
-  scoreChange?: number | null;
-  priorRank?: number | null;
-};
-
-export type PortfolioRankingDashboard = {
-  asOfDate?: string | null;
-  universeSize: number;
-  top10: PortfolioRankingRow[];
-  bottom10: PortfolioRankingRow[];
-  biggestUpgrades: PortfolioRankingRow[];
-  biggestDowngrades: PortfolioRankingRow[];
-};
-
-export type ModelDiagnosticsAlert = {
-  severity: string;
-  message: string;
-};
-
-export type ModelDiagnostics = {
-  asOfDate?: string | null;
-  modelKey?: string | null;
-  modelLabel?: string | null;
-  universe?: string | null;
-  trainEndDate?: string | null;
-  rollingIc: number;
-  rankIc: number;
-  sharpe: number;
-  hitRate: number;
-  rollingWindowDays: number;
-  currentRegime: RegimeContext;
-  regimePerformance: RegimeHistoricalPerformance;
-  featureDrift: string[];
-  alerts: ModelDiagnosticsAlert[];
-  source?: string | null;
-};
-
 export type PrimaryCandlestickPattern = {
   patternId: string;
   label: string;
@@ -333,10 +201,6 @@ export type ChartIntelligenceZone = {
   zoneType?: string;
   touches?: number;
   strength?: number;
-  strengthScore?: number;
-  isMajor?: boolean;
-  startDate?: string;
-  endDate?: string;
 };
 
 export type ChartIntelligenceTrendline = {
@@ -346,9 +210,6 @@ export type ChartIntelligenceTrendline = {
   endDate?: string;
   startPrice?: number;
   endPrice?: number;
-  touches?: number;
-  confidence?: number;
-  ageWeeks?: number;
   points?: { date: string; price: number }[];
 };
 
@@ -361,19 +222,6 @@ export type ChartIntelligenceAnnotation = {
   direction?: string;
   position?: string;
   swingType?: string;
-  kind?: string;
-  shape?: string;
-  eventType?: string;
-  volumeConfirmed?: boolean;
-};
-
-export type ChartIntelligencePatternProof = {
-  title: string;
-  checks: { label: string; passed: boolean }[];
-  qualityScore: number;
-  volumeConfirmed?: boolean | null;
-  volumeNote?: string | null;
-  tooltipLines: string[];
 };
 
 export type ChartIntelligencePatternMetadata = {
@@ -382,29 +230,11 @@ export type ChartIntelligencePatternMetadata = {
   direction: string;
   confidence: number;
   qualityScore: number;
-  candleIndexes: number[];
-  startDate: string;
-  endDate: string;
-  qualificationChecks: { label: string; passed: boolean }[];
-  explanation: string;
-  proofMode?: ChartIntelligencePatternProof;
-};
-
-export type ChartIntelligenceScore = {
-  score: number;
-  label: string;
-  weights: Record<string, number>;
-  components: Record<string, number>;
-};
-
-export type ChartIntelligenceTradeThesis = {
-  headline: string;
-  bullCase: string[];
-  bearCase: string[];
-  finalThesis: string;
-  patternProof?: ChartIntelligencePatternProof | null;
-  patternReplay?: Record<string, unknown> | null;
-  replayNote?: string | null;
+  candleIndexes?: number[];
+  startDate?: string;
+  endDate?: string;
+  qualificationChecks?: { label: string; passed: boolean }[];
+  explanation?: string;
 };
 
 export type ChartIntelligence = {
@@ -413,10 +243,7 @@ export type ChartIntelligence = {
   resistanceZones: ChartIntelligenceZone[];
   annotations: ChartIntelligenceAnnotation[];
   highlightedCandles: { barIndex?: number; date?: string; patternId?: string }[];
-  structureLabels?: ChartIntelligenceAnnotation[];
   patternMetadata: ChartIntelligencePatternMetadata[];
-  breakouts?: ChartIntelligenceAnnotation[];
-  volumeMarkers?: { type?: string; label?: string; barIndex?: number; date?: string }[];
   structure: Record<string, unknown>;
   movingAverages: Record<string, unknown>;
   volume: Record<string, unknown>;
@@ -424,13 +251,6 @@ export type ChartIntelligence = {
   relativeStrength: Record<string, unknown>;
   narrative: ChartIntelligenceNarrative;
   scorecard: ChartIntelligenceScorecard;
-  tradeThesis?: ChartIntelligenceTradeThesis | null;
-  decisionHierarchy?: {
-    layers: { rank: number; key: string; label: string; note: string }[];
-    rule: string;
-  } | null;
-  chartIntelligenceScore?: ChartIntelligenceScore | null;
-  patternReplay?: Record<string, unknown> | null;
 };
 
 export type PatternTrendContextIntel = {
@@ -577,7 +397,6 @@ export type SymbolIntelligence = {
   cachedResearch?: CachedResearchSnippet | null;
   patternForecast?: PatternTrendForecast | null;
   patternIntelligence?: PatternIntelligence | null;
-  researchDecision?: ResearchDecision | null;
   dataGaps?: string[];
   partial?: boolean;
   reauthRequired?: boolean;

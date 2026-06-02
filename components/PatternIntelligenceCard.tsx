@@ -18,6 +18,7 @@ import { patternCandlestickDescription } from "@/lib/patternCandlestickReference
 import {
   formatPatternPercent,
   hasPatternIntelligence,
+  normalizeChartPatternMetadata,
   patternIntelligencePatternSubtitle,
   patternIntelligencePrimaryPattern,
   signalToneBorderClass,
@@ -145,156 +146,57 @@ function ChartIntelligenceSections({
 }) {
   if (!chart?.narrative?.summary) return null;
 
-  const thesis = chart.tradeThesis;
-  const proof = thesis?.patternProof ?? chart.patternMetadata?.[0]?.proofMode;
-  const replay = chart.patternReplay ?? thesis?.patternReplay;
-  const score = chart.chartIntelligenceScore;
+  const primaryMeta = normalizeChartPatternMetadata(chart.patternMetadata?.[0]);
+  const scorecardRows = chart.scorecard?.rows ?? [];
 
   return (
     <>
-      {score ? (
-        <div className="rounded-xl border border-border bg-background/40 p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                Chart intelligence score
-              </p>
-              <p className="mt-1 text-sm text-muted">{score.label}</p>
-            </div>
-            <p className="text-3xl font-semibold tabular-nums text-foreground">
-              {score.score}
-              <span className="text-base font-medium text-muted">/100</span>
-            </p>
-          </div>
-        </div>
-      ) : null}
-
-      {thesis ? (
-        <div className="rounded-xl border border-border bg-background/40 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Trade thesis
-          </p>
-          <p className="mt-2 text-sm font-semibold text-foreground">
-            {thesis.headline}
-          </p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-xs font-semibold uppercase text-success">Bull case</p>
-              <ul className="mt-2 space-y-1.5 text-sm text-muted">
-                {thesis.bullCase.map((item) => (
-                  <li key={item}>• {item}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase text-danger">Bear case</p>
-              <ul className="mt-2 space-y-1.5 text-sm text-muted">
-                {thesis.bearCase.map((item) => (
-                  <li key={item}>• {item}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <p className="mt-4 text-sm font-medium leading-relaxed text-foreground">
-            Final thesis: {thesis.finalThesis}
-          </p>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-border bg-background/40 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Trade thesis
-          </p>
-          <p className="mt-2 text-sm font-semibold text-foreground">
-            {chart.narrative.headline}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            {chart.narrative.summary}
-          </p>
-        </div>
-      )}
-
-      {chart.decisionHierarchy ? (
+      {primaryMeta ? (
         <div className="rounded-xl border border-border bg-background/30 p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Decision hierarchy
-          </p>
-          <ol className="mt-3 space-y-2">
-            {chart.decisionHierarchy.layers.map((layer) => (
-              <li key={layer.key} className="text-sm">
-                <span className="font-semibold text-foreground">
-                  {layer.rank}. {layer.label}
-                </span>
-                <span className="text-muted"> — {layer.note}</span>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-3 text-xs text-muted">{chart.decisionHierarchy.rule}</p>
-        </div>
-      ) : null}
-
-      {proof ? (
-        <div className="rounded-xl border border-warning/30 bg-warning/5 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Pattern proof
+            Pattern qualification
           </p>
           <p className="mt-2 text-sm font-semibold text-foreground">
-            {proof.title} · Quality {proof.qualityScore}/100
+            {primaryMeta.label} · Quality {primaryMeta.qualityScore}/100
           </p>
-          <ul className="mt-3 space-y-1.5">
-            {(proof.tooltipLines ?? []).map((line) => (
-              <li key={line} className="text-sm text-foreground">
-                {line}
-              </li>
-            ))}
-          </ul>
+          {(primaryMeta.qualificationChecks ?? []).length > 0 ? (
+            <ul className="mt-3 space-y-1.5">
+              {(primaryMeta.qualificationChecks ?? []).map((check) => (
+                <li
+                  key={check.label}
+                  className={cn(
+                    "text-sm",
+                    check.passed ? "text-foreground" : "text-muted line-through",
+                  )}
+                >
+                  {check.passed ? "✓" : "○"} {check.label}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-sm text-muted">No qualification checklist available.</p>
+          )}
         </div>
       ) : null}
 
-      {replay && typeof replay.summary === "string" ? (
-        <div className="rounded-xl border border-border bg-background/30 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Chart replay validation
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-foreground">
-            {replay.summary as string}
-          </p>
-          {"avgReturn5d" in replay && replay.avgReturn5d != null ? (
-            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <p className="text-muted">Avg 5d</p>
-                <p className="font-semibold text-foreground">
-                  {((replay.avgReturn5d as number) * 100).toFixed(1)}%
-                </p>
-              </div>
-              <div>
-                <p className="text-muted">Avg 20d</p>
-                <p className="font-semibold text-foreground">
-                  {((replay.avgReturn20d as number) * 100).toFixed(1)}%
-                </p>
-              </div>
-              <div>
-                <p className="text-muted">5d win rate</p>
-                <p className="font-semibold text-foreground">
-                  {((replay.winRate5d as number) * 100).toFixed(0)}%
-                </p>
-              </div>
-              <div>
-                <p className="text-muted">Occurrences</p>
-                <p className="font-semibold text-foreground">
-                  {replay.occurrences as number}
-                </p>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      <div className="rounded-xl border border-border bg-background/40 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+          Trade thesis
+        </p>
+        <p className="mt-2 text-sm font-semibold text-foreground">
+          {chart.narrative.headline}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-muted">
+          {chart.narrative.summary}
+        </p>
+      </div>
 
       <div className="rounded-xl border border-border bg-background/30 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
           Market structure scorecard
         </p>
         <div className="mt-3 space-y-2">
-          {chart.scorecard.rows.map((row) => (
+          {scorecardRows.map((row) => (
             <div
               key={row.name}
               className="flex items-start justify-between gap-3 text-sm"
@@ -360,8 +262,8 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
       className={className}
     >
       <div className="app-stack">
-        <ChartIntelligenceSections chart={chartIntel} />
         <PatternHeader pattern={primaryPattern} />
+        <ChartIntelligenceSections chart={chartIntel} />
 
         {signalState ? (
           <div

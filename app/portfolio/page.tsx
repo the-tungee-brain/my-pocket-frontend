@@ -20,7 +20,6 @@ import { StrategyPlaybookPanel } from "@/components/StrategyPlaybookPanel";
 import { StrategyOnboardingWizard } from "@/components/StrategyOnboardingWizard";
 import { PortfolioSectionTabBar } from "@/components/PortfolioSectionTabBar";
 import { PortfolioNewsSection } from "@/components/PortfolioNewsSection";
-import { PortfolioRankingDashboardSection } from "@/components/PortfolioRankingDashboard";
 import { usePortfolioNews } from "@/app/hooks/usePortfolioNews";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
@@ -514,16 +513,6 @@ export default function PortfolioPage() {
               lastUpdated={portfolioNewsLastUpdated}
               onRefresh={() => void refetchPortfolioNews()}
             />
-            </div>
-          )}
-
-          {activeSection === "rankings" && sessionAccessToken && (
-            <div
-              id="portfolio-panel-rankings"
-              role="tabpanel"
-              aria-labelledby="portfolio-tab-rankings"
-            >
-              <PortfolioRankingDashboardSection className={sectionClass} />
             </div>
           )}
 

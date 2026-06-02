@@ -18,7 +18,6 @@ import { hasProFeature } from "@/lib/planFeatures";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { PatternTrendForecastCard } from "@/components/PatternTrendForecastCard";
 import { PatternIntelligenceCard } from "@/components/PatternIntelligenceCard";
-import { ResearchDecisionPanel } from "@/components/ResearchDecisionPanel";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
@@ -82,6 +81,21 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
               symbol={symbol}
               chartIntelligence={intelligence?.patternIntelligence?.chartIntelligence}
             />
+            <ProFeatureGate
+              feature="patternTrend"
+              allowed={patternTrendAllowed}
+              className={pageSectionClass}
+            >
+              <PatternTrendForecastCard
+                forecast={intelligence?.patternForecast}
+                symbol={symbolUpper}
+                className={pageSectionClass}
+              />
+              <PatternIntelligenceCard
+                intelligence={intelligence?.patternIntelligence}
+                className={pageSectionClass}
+              />
+            </ProFeatureGate>
             <SymbolIntelligencePanel
               intelligence={intelligence}
               loading={loading}
@@ -110,26 +124,6 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
                 />
               </>
             ) : null}
-            <ProFeatureGate
-              feature="patternTrend"
-              allowed={patternTrendAllowed}
-              className={pageSectionClass}
-            >
-              <PatternTrendForecastCard
-                forecast={intelligence?.patternForecast}
-                researchDecision={intelligence?.researchDecision}
-                symbol={symbolUpper}
-                className={pageSectionClass}
-              />
-              <ResearchDecisionPanel
-                decision={intelligence?.researchDecision}
-                className={pageSectionClass}
-              />
-              <PatternIntelligenceCard
-                intelligence={intelligence?.patternIntelligence}
-                className={pageSectionClass}
-              />
-            </ProFeatureGate>
             {!isEtf ? (
               <StreetAnalysisOverview symbol={symbol} className={pageSectionClass} />
             ) : null}

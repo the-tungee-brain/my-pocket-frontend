@@ -1,4 +1,5 @@
 import type {
+  ChartIntelligencePatternMetadata,
   PatternAlignmentBlock,
   PatternIntelligence,
   PatternSignalState,
@@ -9,6 +10,34 @@ export function hasPatternIntelligence(
   payload: PatternIntelligence | null | undefined,
 ): payload is PatternIntelligence {
   return payload != null && Boolean(payload.symbol);
+}
+
+type PatternMetadataLike = Partial<ChartIntelligencePatternMetadata> & {
+  pattern_id?: string;
+  quality_score?: number;
+  candle_indexes?: number[];
+  start_date?: string;
+  end_date?: string;
+  qualification_checks?: { label: string; passed: boolean }[];
+};
+
+export function normalizeChartPatternMetadata(
+  meta: PatternMetadataLike | null | undefined,
+): ChartIntelligencePatternMetadata | null {
+  if (!meta) return null;
+  return {
+    patternId: meta.patternId ?? meta.pattern_id ?? "",
+    label: meta.label ?? "",
+    direction: meta.direction ?? "",
+    confidence: meta.confidence ?? 0,
+    qualityScore: meta.qualityScore ?? meta.quality_score ?? 0,
+    candleIndexes: meta.candleIndexes ?? meta.candle_indexes ?? [],
+    startDate: meta.startDate ?? meta.start_date,
+    endDate: meta.endDate ?? meta.end_date,
+    qualificationChecks:
+      meta.qualificationChecks ?? meta.qualification_checks ?? [],
+    explanation: meta.explanation ?? "",
+  };
 }
 
 export function patternIntelligencePrimaryPattern(

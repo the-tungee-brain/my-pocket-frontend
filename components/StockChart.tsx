@@ -10,7 +10,9 @@ import {
 import type { ChartIntelligence } from "@/app/types/intelligence";
 import {
   applyChartIntelligenceOverlays,
+  buildChartIntelligenceLegendItems,
   hasChartIntelligence,
+  type ChartOverlayLegendItem,
 } from "@/lib/chartIntelligenceOverlays";
 import { ChevronDown, LineChart, CandlestickChart } from "lucide-react";
 import { iconButtonClass } from "@/components/ui/IconButton";
@@ -224,6 +226,68 @@ function ChartLegend({
   );
 }
 
+function ChartOverlayLegendSwatch({ item }: { item: ChartOverlayLegendItem }) {
+  if (item.kind === "band") {
+    return (
+      <span
+        aria-hidden
+        className="h-2.5 w-4 shrink-0 rounded-sm border"
+        style={{
+          backgroundColor: `${item.color}22`,
+          borderColor: `${item.color}88`,
+        }}
+      />
+    );
+  }
+
+  if (item.kind === "marker") {
+    return (
+      <span
+        aria-hidden
+        className="h-2 w-2 shrink-0 rounded-[2px]"
+        style={{ backgroundColor: item.color }}
+      />
+    );
+  }
+
+  return (
+    <span aria-hidden className="flex h-2.5 w-4 shrink-0 items-center">
+      <span
+        className="block h-0 w-full border-t-2"
+        style={{
+          borderColor: item.color,
+          borderStyle: item.dashed ? "dashed" : "solid",
+        }}
+      />
+    </span>
+  );
+}
+
+function ChartOverlayLegend({ items }: { items: ChartOverlayLegendItem[] }) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="pointer-events-none absolute bottom-14 left-3 z-10 max-w-[min(100%-1.5rem,16rem)] rounded-lg border border-border/80 bg-background/92 px-2.5 py-2 shadow-sm backdrop-blur-sm">
+      <p className="text-[9px] font-semibold uppercase tracking-wide text-muted">
+        Chart overlays
+      </p>
+      <ul className="mt-1.5 space-y-1">
+        {items.map((item) => (
+          <li key={item.id} className="flex items-center gap-2 text-[10px] leading-tight">
+            <ChartOverlayLegendSwatch item={item} />
+            <span className="min-w-0">
+              <span className="font-medium text-foreground">{item.label}</span>
+              {item.subtitle ? (
+                <span className="ml-1 tabular-nums text-muted">{item.subtitle}</span>
+              ) : null}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function StockChart({
   data,
   symbol,
@@ -269,6 +333,10 @@ export function StockChart({
   const footerStats = useMemo(
     () => computeChartFooterStats(data, selectedInterval),
     [data, selectedInterval],
+  );
+  const overlayLegendItems = useMemo(
+    () => buildChartIntelligenceLegendItems(chartIntelligence),
+    [chartIntelligence],
   );
 
   useEffect(() => {
@@ -707,6 +775,10 @@ export function StockChart({
         >
           {legendPoint && chartState === "ready" && (
             <ChartLegend point={legendPoint} hovering={hoveredPoint != null} />
+          )}
+
+          {chartState === "ready" && overlayLegendItems.length > 0 && (
+            <ChartOverlayLegend items={overlayLegendItems} />
           )}
 
           <div
