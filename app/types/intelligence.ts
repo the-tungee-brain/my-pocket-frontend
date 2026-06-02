@@ -229,32 +229,27 @@ export type PatternExplanation = {
   disclaimer: string;
 };
 
-export type PatternVerdictBullet = {
-  tone: "positive" | "warning" | "negative" | "neutral" | string;
-  text: string;
+export type PatternSignalSummary = {
+  modelC: string;
+  trend: string;
+  relativeStrength: string;
+  pattern?: string | null;
+  patternWarning?: boolean;
 };
 
-export type PatternFinalVerdict = {
-  title: string;
-  bullets: PatternVerdictBullet[];
-  conclusion: string;
-};
-
-export type PatternConfidenceContributor = {
-  key: string;
-  label: string;
-  weightPct: number;
-  qualitative: string;
-  emphasized: boolean;
-  score: number;
+export type PatternEvidence = {
+  summary: string;
+  setupLabel?: string | null;
+  occurrenceCount?: number | null;
+  winRate5d?: number | null;
+  avgReturn5d?: number | null;
+  avgReturn20d?: number | null;
 };
 
 export type PatternInterpretation = {
-  actionableVerdict: string;
-  traderSummary: string;
-  finalVerdict: PatternFinalVerdict;
-  confidenceContributors: PatternConfidenceContributor[];
-  historicalRead?: string | null;
+  signalSummary: PatternSignalSummary;
+  verdict: string;
+  evidence: PatternEvidence;
 };
 
 export type PatternIntelligence = {

@@ -11,38 +11,16 @@ export function formatPatternPercent(value: number | null | undefined): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-export function setupOutcomeHasStats(
-  outcome: PatternIntelligence["setupOutcome"],
-): boolean {
-  return (
-    outcome != null &&
-    outcome.occurrenceCount >= 3 &&
-    outcome.avgReturn5d != null
-  );
-}
-
-export function verdictBulletIcon(tone: string): string {
-  switch (tone) {
-    case "positive":
-      return "✅";
-    case "warning":
-      return "⚠️";
-    case "negative":
-      return "❌";
-    default:
-      return "•";
-  }
-}
-
-export function interpretationTone(
-  verdict: string | undefined,
+export function verdictTone(
+  verdict: string,
   alignmentState: string,
 ): "positive" | "negative" | "neutral" | "warning" {
-  const text = (verdict ?? "").toLowerCase();
-  if (text.includes("override") || text.includes("conflict")) return "warning";
-  if (text.includes("confirm") && !text.includes("weak")) return "positive";
-  if (alignmentState === "model_only" || text.includes("model-only")) return "neutral";
-  if (text.includes("neutral")) return "neutral";
-  if (text.includes("bearish") || text.includes("conflict")) return "warning";
+  const text = verdict.toLowerCase();
+  if (text.includes("dominates") || text.includes("confirms")) return "positive";
+  if (text.includes("reduce exposure") || text.includes("confirmed by weak")) {
+    return "warning";
+  }
+  if (text.includes("conflict") || text.includes("defer")) return "warning";
+  if (alignmentState === "model_only") return "neutral";
   return "neutral";
 }
