@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, Search, Settings } from "lucide-react";
+import { BriefcaseBusiness, Search, Settings, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -17,6 +17,12 @@ const items = [
     label: "Research",
     icon: Search,
     isActive: (pathname: string) => pathname.startsWith("/research"),
+  },
+  {
+    href: "/top-movers",
+    label: "Movers",
+    icon: TrendingUp,
+    isActive: (pathname: string) => pathname.startsWith("/top-movers"),
   },
   {
     href: "/settings",
@@ -34,7 +40,7 @@ export function MobileBottomNav() {
       className="safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-md md:hidden"
       aria-label="Primary"
     >
-      <div className="mx-auto grid max-w-lg grid-cols-3">
+      <div className="mx-auto grid max-w-lg grid-cols-4">
         {items.map((item) => {
           const active = item.isActive(pathname);
           const Icon = item.icon;

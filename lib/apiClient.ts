@@ -37,6 +37,12 @@ import type {
   ChatSessionsResponse,
 } from "@/app/types/chat";
 import type { AccountPlan } from "@/app/types/account";
+import type {
+  PortfolioLatestResponse,
+  RankingsTopResponse,
+  SystemHealthResponse,
+} from "@/app/types/rankings";
+import { normalizeRankingsTopResponse } from "@/lib/normalizeRankings";
 
 type RecentOrdersOptions = {
   symbol?: string | null;
@@ -721,6 +727,59 @@ export async function fetchResearchOverviewBundle(
     (await res.json()) as ResearchOverviewBundle,
   );
   return { status: "ok", bundle };
+}
+
+export async function fetchRankingsTop(
+  accessToken: string,
+  limit = 20,
+): Promise<RankingsTopResponse> {
+  const res = await apiFetch(`/rankings/top${buildQuery({ limit })}`, {
+    method: "GET",
+    accessToken,
+  });
+  if (!res.ok) {
+    const error = new Error(
+      res.status === 404
+        ? "Rankings are not ready yet. The pipeline may still be running."
+        : `Failed to load rankings (${res.status})`,
+    ) as ApiError;
+    error.status = res.status;
+    throw error;
+  }
+  const raw: unknown = await res.json();
+  return normalizeRankingsTopResponse(raw);
+}
+
+export async function fetchPortfolioLatest(
+  accessToken: string,
+): Promise<PortfolioLatestResponse> {
+  const res = await apiFetch("/portfolio/latest", {
+    method: "GET",
+    accessToken,
+  });
+  if (!res.ok) {
+    const error = new Error(
+      res.status === 404
+        ? "Model portfolio is not available yet."
+        : `Failed to load portfolio (${res.status})`,
+    ) as ApiError;
+    error.status = res.status;
+    throw error;
+  }
+  return res.json() as Promise<PortfolioLatestResponse>;
+}
+
+export async function fetchSystemHealth(
+  accessToken: string,
+): Promise<SystemHealthResponse> {
+  const res = await apiFetch("/health", {
+    method: "GET",
+    accessToken,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load system health (${res.status})`);
+  }
+  return res.json() as Promise<SystemHealthResponse>;
 }
 
 export async function deleteAccount(accessToken: string): Promise<void> {
