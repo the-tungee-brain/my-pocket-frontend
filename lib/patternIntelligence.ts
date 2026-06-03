@@ -92,9 +92,6 @@ export function outlookTone(
 }
 
 export function outlookHeadline(outlook: ChartAnalystOutlook): string {
-  if (outlook.probabilityDisplay) {
-    return `${outlook.label} (${outlook.probabilityDisplay})`;
-  }
   return outlook.label;
 }
 

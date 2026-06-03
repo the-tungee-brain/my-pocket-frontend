@@ -198,8 +198,8 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
       title="Chart intelligence"
       description={
         isBenchmark
-          ? "5-day outlook from structure and regime · no Model C on benchmark"
-          : "5-day outlook · conclusion first, key evidence only"
+          ? "Qualitative 5-day read from price structure and patterns"
+          : "What to expect over the next 5 sessions — see Trend Analysis for model data"
       }
       icon={Sparkles}
       className={className}

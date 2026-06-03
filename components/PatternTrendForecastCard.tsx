@@ -1,22 +1,20 @@
 "use client";
 
-import { Activity, ArrowDownRight, ArrowUpRight, Minus, TrendingUp } from "lucide-react";
+import { Activity, TrendingUp } from "lucide-react";
 import type { PatternTrendForecast } from "@/app/types/intelligence";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { KpiStat } from "@/components/ui/KpiStat";
+import { cn } from "@/lib/utils";
 import {
   formatPatternPercent,
   hasPatternForecast,
   isRankingPortfolioStrategy,
-  patternDirectionLabel,
-  patternDirectionSubtitle,
-  patternDirectionTone,
   patternIndicatorRows,
   patternModelSummary,
   patternPortfolioSummary,
+  patternPredictedClassLabel,
+  patternPredictedClassProbability,
   patternProbabilityRows,
-  patternRankingBadgeLabel,
-  patternRankingBadgeTone,
   patternRankingScore,
   patternUpProbLabel,
 } from "@/lib/patternForecast";
@@ -26,55 +24,12 @@ import {
   patternForecastBenchmarkNotice,
 } from "@/lib/modelBenchmark";
 import { formatFriendlyDate } from "@/lib/dateUtils";
-import { cn } from "@/lib/utils";
 
 type Props = {
   forecast: PatternTrendForecast | null | undefined;
   symbol?: string;
   className?: string;
 };
-
-const toneBorderClass = {
-  positive: "border-success/25 bg-success/5",
-  negative: "border-danger/25 bg-danger/5",
-  neutral: "border-border bg-background/40",
-  warning: "border-warning/25 bg-warning/5",
-} as const;
-
-const toneTextClass = {
-  positive: "text-success",
-  negative: "text-danger",
-  neutral: "text-muted",
-  warning: "text-warning",
-} as const;
-
-function DirectionIcon({
-  forecast,
-  className,
-}: {
-  forecast: PatternTrendForecast;
-  className?: string;
-}) {
-  const tone = patternDirectionTone(forecast);
-  const Icon =
-    tone === "positive"
-      ? ArrowUpRight
-      : tone === "negative"
-        ? ArrowDownRight
-        : Minus;
-
-  return (
-    <div
-      className={cn(
-        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border",
-        toneBorderClass[tone],
-        className,
-      )}
-    >
-      <Icon className={cn("h-5 w-5", toneTextClass[tone])} aria-hidden />
-    </div>
-  );
-}
 
 function ProbabilityBar({
   label,
@@ -113,11 +68,6 @@ export function PatternTrendForecastCard({ forecast, symbol, className }: Props)
 
   const isBenchmark = isPatternForecastBenchmark(forecast, symbol);
   const benchmarkNotice = patternForecastBenchmarkNotice(forecast);
-  const directionTone = patternDirectionTone(forecast);
-  const rankingBadge = isBenchmark ? null : patternRankingBadgeLabel(forecast);
-  const rankingTone = patternRankingBadgeTone(forecast);
-  const portfolioSummary = isBenchmark ? null : patternPortfolioSummary(forecast);
-  const modelSummary = isBenchmark ? null : patternModelSummary(forecast);
   const indicators = patternIndicatorRows(
     isBenchmark
       ? filterBenchmarkIndicators(forecast.indicators)
@@ -126,16 +76,20 @@ export function PatternTrendForecastCard({ forecast, symbol, className }: Props)
   const probabilities = isBenchmark ? [] : patternProbabilityRows(forecast);
   const rankingScore = patternRankingScore(forecast);
   const usesRanking = !isBenchmark && isRankingPortfolioStrategy(forecast);
+  const portfolioSummary = isBenchmark ? null : patternPortfolioSummary(forecast);
+  const modelSummary = isBenchmark ? null : patternModelSummary(forecast);
+  const predictedClass = isBenchmark ? null : patternPredictedClassLabel(forecast);
+  const predictedClassProb = isBenchmark
+    ? null
+    : patternPredictedClassProbability(forecast);
 
   return (
     <ResearchSectionCard
       title="Trend analysis"
       description={
         isBenchmark
-          ? "Trend and regime indicators · Model C ranking not applicable"
-          : usesRanking
-            ? "Relative strength + trend ranking for the next 5 trading sessions"
-            : "Machine-learning estimate for the next 5 trading sessions"
+          ? "Quantitative trend and regime inputs · Model C not applicable"
+          : "Model outputs and feature inputs for the next 5 trading sessions"
       }
       icon={TrendingUp}
       className={className}
@@ -161,59 +115,32 @@ export function PatternTrendForecastCard({ forecast, symbol, className }: Props)
             </div>
           </div>
         ) : (
-          <div
-            className={cn(
-              "rounded-xl border p-4",
-              toneBorderClass[directionTone],
-            )}
-          >
-            <div className="flex items-start gap-3">
-              <DirectionIcon forecast={forecast} />
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-lg font-semibold text-foreground">
-                    {patternDirectionLabel(forecast)}
-                  </p>
-                  {rankingBadge ? (
-                    <span
-                      className={cn(
-                        "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                        toneBorderClass[rankingTone],
-                        toneTextClass[rankingTone],
-                      )}
-                    >
-                      {rankingBadge}
-                    </span>
-                  ) : null}
-                </div>
-                <p className="text-sm leading-relaxed text-muted">
-                  {patternDirectionSubtitle(forecast)}
-                </p>
-                {portfolioSummary ? (
-                  <p className="text-xs text-muted">{portfolioSummary}</p>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-border bg-background/40 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+              Model outputs
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
               {usesRanking ? (
                 <KpiStat
                   label="Ranking score"
                   value={formatPatternPercent(rankingScore)}
-                  tone={
-                    rankingTone === "positive"
-                      ? "positive"
-                      : rankingTone === "warning"
-                        ? "warning"
-                        : "default"
-                  }
                 />
               ) : null}
               <KpiStat
                 label={patternUpProbLabel(forecast)}
                 value={formatPatternPercent(forecast.upProb)}
-                tone={directionTone === "positive" ? "positive" : "default"}
               />
+              {predictedClass ? (
+                <KpiStat
+                  label="Predicted class"
+                  value={predictedClass}
+                  subValue={
+                    predictedClassProb != null
+                      ? formatPatternPercent(predictedClassProb)
+                      : undefined
+                  }
+                />
+              ) : null}
               <KpiStat
                 label="As of"
                 value={formatFriendlyDate(forecast.asOfDate)}
@@ -223,6 +150,9 @@ export function PatternTrendForecastCard({ forecast, symbol, className }: Props)
                 value={`${forecast.horizonDays} sessions`}
               />
             </div>
+            {portfolioSummary ? (
+              <p className="mt-3 text-xs text-muted">{portfolioSummary}</p>
+            ) : null}
           </div>
         )}
 

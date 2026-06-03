@@ -43,6 +43,21 @@ function binaryClassLabels(labelScheme: string | undefined): {
   return { down: "Down", up: "Up" };
 }
 
+/** Factual predicted class label for Trend Analysis (not a narrative headline). */
+export function patternPredictedClassLabel(
+  forecast: PatternTrendForecast,
+): string {
+  return patternDirectionLabel(forecast);
+}
+
+export function patternPredictedClassProbability(
+  forecast: PatternTrendForecast,
+): number | null {
+  const rows = patternProbabilityRows(forecast);
+  const selected = rows.find((row) => row.selected);
+  return selected?.value ?? forecast.upProb ?? null;
+}
+
 export function patternDirectionLabel(forecast: PatternTrendForecast): string {
   if (isOutperformSpyScheme(forecast.labelScheme)) {
     return forecast.prediction === 1 ? "Outperform SPY" : "Underperform SPY";
