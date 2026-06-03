@@ -15,6 +15,7 @@ import {
   useSymbolCompanyName,
   useTopMoverDetail,
   useTopMoversBundle,
+  useTopMoversIntelPrefetch,
 } from "@/app/hooks/useTopMovers";
 import { rankingsHaveMlMetrics } from "@/lib/topMovers";
 import { appStackClass } from "@/lib/appUi";
@@ -32,7 +33,6 @@ export function TopMoversPage() {
     query.data?.health.last_ranking_run_at ??
     query.data?.rankings.timestamp ??
     null;
-  const universeSize = query.data?.health.universe_size ?? null;
   const hasMlMetrics = rankingsHaveMlMetrics(items);
 
   useEffect(() => {
@@ -51,7 +51,21 @@ export function TopMoversPage() {
     [items, selectedSymbol],
   );
 
+  const prefetchSymbols = useMemo(
+    () => items.map((i) => i.symbol.toUpperCase()),
+    [items],
+  );
+  const prefetchedIntel = useTopMoversIntelPrefetch(prefetchSymbols);
   const nameQuery = useSymbolCompanyName(selectedSymbol);
+  const detailQuery = useTopMoverDetail(selectedSymbol);
+
+  const intelligenceBySymbol = useMemo(() => {
+    const map = { ...prefetchedIntel };
+    if (selectedSymbol && detailQuery.data) {
+      map[selectedSymbol] = detailQuery.data;
+    }
+    return map;
+  }, [prefetchedIntel, selectedSymbol, detailQuery.data]);
 
   const companyNames = useMemo(() => {
     const map: Record<string, string> = {};
@@ -119,14 +133,14 @@ export function TopMoversPage() {
             selectedSymbol={selectedSymbol}
             onSelect={setSelectedSymbol}
             companyNames={companyNames}
-            universeSize={universeSize}
+            intelligenceBySymbol={intelligenceBySymbol}
           />
         }
         aside={
           <StockDetailPanel
             item={selectedItem}
-            universeSize={universeSize}
-            listCount={items.length}
+            items={items}
+            regimeId={regimeId}
             hasMlMetrics={hasMlMetrics}
             inPortfolio={inPortfolio}
             className="lg:sticky lg:top-4"

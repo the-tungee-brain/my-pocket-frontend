@@ -1,12 +1,16 @@
 "use client";
 
 import type { RankingItem } from "@/app/types/rankings";
+import type { PatternIntelligence } from "@/app/types/intelligence";
+import { ConvictionBadge } from "@/components/top-movers/ConvictionBadge";
+import { ContributionSparkline } from "@/components/top-movers/ContributionSparkline";
 import {
   formatExcessReturn,
   formatProbability,
+  rankContext,
   rankingsHaveMlMetrics,
-  topUniverseLabel,
-  trendDisplayForRow,
+  convictionForRow,
+  sparklineFromScores,
 } from "@/lib/topMovers";
 import { cn } from "@/lib/utils";
 
@@ -15,40 +19,15 @@ type Props = {
   selectedSymbol: string | null;
   onSelect: (symbol: string) => void;
   companyNames?: Record<string, string>;
-  universeSize?: number | null;
+  intelligenceBySymbol?: Record<string, PatternIntelligence | null | undefined>;
 };
-
-function TrendChip({
-  label,
-  glyph,
-  tone,
-}: {
-  label: string;
-  glyph: string;
-  tone: "positive" | "neutral" | "negative";
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-        tone === "positive" && "bg-success/15 text-success",
-        tone === "negative" && "bg-danger/15 text-danger",
-        tone === "neutral" && "bg-muted-bg text-muted",
-      )}
-      title={label}
-    >
-      <span aria-hidden>{glyph}</span>
-      <span className="max-w-[5.5rem] truncate">{label}</span>
-    </span>
-  );
-}
 
 export function TopMoversTable({
   items,
   selectedSymbol,
   onSelect,
   companyNames = {},
-  universeSize,
+  intelligenceBySymbol = {},
 }: Props) {
   const hasMl = rankingsHaveMlMetrics(items);
 
@@ -62,12 +41,10 @@ export function TopMoversTable({
           const sym = item.symbol.toUpperCase();
           const selected = selectedSymbol === sym;
           const name = companyNames[sym];
-          const trend = trendDisplayForRow(item.rank, items.length);
-          const percentile = topUniverseLabel(
-            item.rank,
-            universeSize,
-            items.length,
-          );
+          const intel = intelligenceBySymbol[sym];
+          const ctx = rankContext(item, items);
+          const conviction = convictionForRow(item.rank, items.length);
+          const spark = sparklineFromScores(intel?.scores);
 
           return (
             <li key={sym}>
@@ -80,13 +57,14 @@ export function TopMoversTable({
                 )}
                 aria-current={selected ? "true" : undefined}
               >
-                <span className="w-6 shrink-0 pt-0.5 font-mono text-sm tabular-nums text-muted">
-                  {item.rank}
+                <span className="w-8 shrink-0 pt-0.5 font-mono text-sm font-semibold tabular-nums text-foreground">
+                  {ctx.rankLabel}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-mono text-sm font-semibold text-foreground">
                     {sym}
                   </span>
+                  <span className="block text-xs text-muted">{ctx.subtitle}</span>
                   {name ? (
                     <span className="block truncate text-xs text-muted">{name}</span>
                   ) : null}
@@ -106,13 +84,10 @@ export function TopMoversTable({
                   ) : null}
                 </span>
                 <span className="flex shrink-0 flex-col items-end gap-1.5">
-                  <span className="text-right text-[11px] font-semibold text-accent">
-                    {percentile}
-                  </span>
-                  <TrendChip
-                    label={trend.label}
-                    glyph={trend.symbol}
-                    tone={trend.tone}
+                  <ConvictionBadge tier={conviction.tier} label={conviction.label} />
+                  <ContributionSparkline
+                    values={spark}
+                    pending={!intel}
                   />
                 </span>
               </button>

@@ -51,6 +51,17 @@ export function MarketRegimeCard({
         {narrative.title}
       </h2>
       <p className="text-sm leading-relaxed text-muted">{narrative.guidance}</p>
+      <div className="space-y-1.5 rounded-lg border border-border bg-muted-bg/30 px-3 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+          Regime impact
+        </p>
+        <p className="text-sm font-medium text-foreground">
+          {narrative.signalImpact}
+        </p>
+        <p className="text-xs leading-relaxed text-muted">
+          {narrative.confidenceNote}
+        </p>
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         <Badge
           variant={

@@ -66,16 +66,12 @@ const patternIntelQueryOptions = (
   },
 });
 
-/** Warm pattern intelligence for the top of the list (trend chips + faster detail). */
+/** Warm pattern intelligence for every row (list sparklines + detail). */
 export function useTopMoversIntelPrefetch(symbols: string[]) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
   const keys = useMemo(
-    () =>
-      [...new Set(symbols.map((s) => s.toUpperCase()).filter(Boolean))].slice(
-        0,
-        5,
-      ),
+    () => [...new Set(symbols.map((s) => s.toUpperCase()).filter(Boolean))],
     [symbols],
   );
 
