@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { BarChart3, LineChart, ScrollText, Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useAccountPlan } from "@/app/hooks/useAccountPlan";
@@ -31,10 +31,23 @@ export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
   const { plan } = useAccountPlan(session?.accessToken);
   const financialStrengthAllowed = hasProFeature(plan, "financialStrength");
   const [period, setPeriod] = useState<SecPeriod>("annual");
+  const [aiAnalysisRequested, setAiAnalysisRequested] = useState(false);
   const { fundamentals, isLoading, error } = useFundamentals(symbol, {
     accessToken: session?.accessToken,
     proFinancialAnalysis: financialStrengthAllowed,
+    includeAiOverview: aiAnalysisRequested && financialStrengthAllowed,
+    includeStreetAnalysis: false,
   });
+
+  const isAnalyzingAi =
+    aiAnalysisRequested &&
+    financialStrengthAllowed &&
+    isLoading &&
+    !fundamentals?.overview;
+
+  const requestAiAnalysis = useCallback(() => {
+    setAiAnalysisRequested(true);
+  }, []);
 
   const yfinanceSnapshot =
     period === "quarterly"
@@ -65,7 +78,13 @@ export function FinancialsPageContent({ symbol }: FinancialsPageContentProps) {
           >
             <FinancialStrengthSection
               strength={fundamentals?.strength}
-              isLoading={isLoading && financialStrengthAllowed}
+              overview={fundamentals?.overview}
+              isLoading={isLoading && !fundamentals}
+              aiAnalysisRequested={aiAnalysisRequested}
+              isAnalyzingAi={isAnalyzingAi}
+              onRequestAiAnalysis={
+                financialStrengthAllowed ? requestAiAnalysis : undefined
+              }
             />
           </ProFeatureGate>
         </ResearchSectionCard>

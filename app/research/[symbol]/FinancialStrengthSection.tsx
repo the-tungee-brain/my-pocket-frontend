@@ -1,13 +1,22 @@
 "use client";
 
 import { ShieldCheck, ShieldAlert } from "lucide-react";
-import type { FinancialStrength } from "@/app/hooks/useFundamentals";
+import type {
+  FinancialStrength,
+  FundamentalsOverview,
+} from "@/app/hooks/useFundamentals";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { FundamentalOverviewSection } from "./FundamentalOverviewSection";
+import { ResearchAiAnalyzePrompt } from "./ResearchAiAnalyzePrompt";
 
 type FinancialStrengthSectionProps = {
   strength: FinancialStrength | null | undefined;
+  overview?: FundamentalsOverview | null;
   isLoading?: boolean;
+  aiAnalysisRequested?: boolean;
+  isAnalyzingAi?: boolean;
+  onRequestAiAnalysis?: () => void;
 };
 
 const RATING_STYLES: Record<
@@ -38,7 +47,11 @@ const RATING_STYLES: Record<
 
 export function FinancialStrengthSection({
   strength,
+  overview,
   isLoading,
+  aiAnalysisRequested = false,
+  isAnalyzingAi = false,
+  onRequestAiAnalysis,
 }: FinancialStrengthSectionProps) {
   if (isLoading) {
     return (
@@ -141,6 +154,29 @@ export function FinancialStrengthSection({
           </div>
         )}
       </div>
+
+      {onRequestAiAnalysis ? (
+        <div className="mt-4 border-t border-border pt-4">
+          {!aiAnalysisRequested ? (
+            <ResearchAiAnalyzePrompt
+              description="Generate an AI read on valuation, growth, and key risks using filings and market data."
+              buttonLabel="Run AI analysis"
+              onAnalyze={onRequestAiAnalysis}
+            />
+          ) : isAnalyzingAi ? (
+            <div className="space-y-3">
+              <Skeleton className="h-16 rounded-xl" />
+              <Skeleton className="h-24 rounded-xl" />
+            </div>
+          ) : overview ? (
+            <FundamentalOverviewSection overview={overview} />
+          ) : (
+            <p className="text-sm text-muted">
+              AI analysis could not be generated. Try again in a moment.
+            </p>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

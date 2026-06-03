@@ -44,6 +44,7 @@ import {
 } from "@/lib/earningsUtils";
 import { cn } from "@/lib/utils";
 import { StreetEarningsEstimates } from "./StreetAnalysisSection";
+import { ResearchAiAnalyzePrompt } from "./ResearchAiAnalyzePrompt";
 
 type EarningsPageContentProps = {
   symbol: string;
@@ -289,14 +290,20 @@ function EarningsDetailPanel({
   const { data: session } = useSession();
   const { plan } = useAccountPlan(session?.accessToken);
   const earningsAiAllowed = hasProFeature(plan, "earningsAi");
+  const [analysisRequested, setAnalysisRequested] = useState(false);
+  const includeAnalysis = earningsAiAllowed && analysisRequested;
   const { data, isLoading, error } = useEarningsDetail(
     symbol,
     previewEvent.reportDate,
     {
       accessToken: session?.accessToken,
-      proEarningsAnalysis: earningsAiAllowed,
+      proEarningsAnalysis: includeAnalysis,
     },
   );
+
+  useEffect(() => {
+    setAnalysisRequested(false);
+  }, [previewEvent.reportDate]);
 
   const event = data?.event ?? previewEvent;
   const analysis = earningsAiAllowed ? (data?.analysis ?? null) : null;
@@ -304,7 +311,8 @@ function EarningsDetailPanel({
   const officialReleases = data?.officialReleases ?? [];
   const transcript = data?.transcript ?? [];
   const officialDisplayItems = officialReleases.map(pressReleaseToDisplay);
-  const showAnalysisLoading = earningsAiAllowed && isLoading && !analysis;
+  const detailLoading = isLoading && !data;
+  const showAnalysisLoading = includeAnalysis && isLoading && !analysis;
 
   return (
     <div className="space-y-6">
@@ -328,7 +336,16 @@ function EarningsDetailPanel({
 
       <div className="border-t border-border pt-6">
         <ProFeatureGate feature="earningsAi" allowed={earningsAiAllowed}>
-          {showAnalysisLoading ? <EarningsAnalysisSkeleton /> : null}
+          {!analysisRequested ? (
+            <ResearchAiAnalyzePrompt
+              description="Summarize this quarter — highlights, surprises, guidance, and investor takeaway."
+              buttonLabel="Run AI analysis"
+              onAnalyze={() => setAnalysisRequested(true)}
+              disabled={detailLoading}
+            />
+          ) : showAnalysisLoading ? (
+            <EarningsAnalysisSkeleton />
+          ) : null}
 
           {!showAnalysisLoading && analysis ? (
             <div className="space-y-6">
@@ -378,7 +395,7 @@ function EarningsDetailPanel({
         </ProFeatureGate>
       </div>
 
-      {!showAnalysisLoading && officialReleases.length > 0 ? (
+      {!detailLoading && officialReleases.length > 0 ? (
         <div className="min-w-0 border-t border-border pt-6">
           <div className="mb-3 flex items-center gap-2">
             <FileText className="h-4 w-4 text-muted" aria-hidden="true" />
@@ -399,7 +416,7 @@ function EarningsDetailPanel({
         </div>
       ) : null}
 
-      {!showAnalysisLoading && relatedNews.length > 0 ? (
+      {!detailLoading && relatedNews.length > 0 ? (
         <div className="min-w-0 border-t border-border pt-6">
           <div className="mb-3 flex items-center gap-2">
             <Newspaper className="h-4 w-4 text-muted" aria-hidden="true" />
@@ -419,7 +436,7 @@ function EarningsDetailPanel({
         </div>
       ) : null}
 
-      {!showAnalysisLoading ? (
+      {!detailLoading ? (
         <div className="border-t border-border pt-6">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
             Earnings call transcript

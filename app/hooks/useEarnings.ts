@@ -159,7 +159,7 @@ export function useEarningsDetail(
   {
     accessToken,
     enabled = true,
-    proEarningsAnalysis = true,
+    proEarningsAnalysis = false,
   }: AccessOptions & { enabled?: boolean } = {},
 ) {
   const [data, setData] = useState<EarningsDetailResponse | null>(null);

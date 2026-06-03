@@ -135,7 +135,7 @@ export function PortfolioSnapshot({
                   <FreshnessLabel
                     updatedAt={positionsSyncedAt}
                     pending={briefPending}
-                    pendingLabel="Morning brief · updating…"
+                    pendingLabel="Today's briefing · updating…"
                   />
                 </span>
               )}

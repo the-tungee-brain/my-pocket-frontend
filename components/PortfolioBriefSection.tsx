@@ -172,7 +172,7 @@ export function PortfolioBriefSection({
     <Card className={cn(className)} aria-label="Portfolio brief">
       <CardHeader>
         <CardTitle
-          title="Morning brief"
+          title="Today's briefing"
           description={
             <>
               {(lastUpdated != null || (loading && !hasContent)) && (

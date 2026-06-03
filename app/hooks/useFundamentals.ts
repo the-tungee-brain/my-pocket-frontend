@@ -57,19 +57,29 @@ const fundamentalsCache = new Map<string, FundamentalsBlock>();
 
 type UseFundamentalsOptions = {
   accessToken?: string | null;
-  /** When false, API omits strength & AI overview — use a separate cache slot. */
+  /** When false, client still loads fundamentals but should not request AI overview. */
   proFinancialAnalysis?: boolean;
+  /** LLM fundamentals overview (Pro). Defaults to false for faster initial page load. */
+  includeAiOverview?: boolean;
+  /** Wall Street estimates / ownership bundle. Off on Financials tab. */
+  includeStreetAnalysis?: boolean;
 };
 
 export function useFundamentals(
   symbol: string | null,
-  { accessToken, proFinancialAnalysis = true }: UseFundamentalsOptions = {},
+  {
+    accessToken,
+    proFinancialAnalysis = true,
+    includeAiOverview = false,
+    includeStreetAnalysis = false,
+  }: UseFundamentalsOptions = {},
 ) {
   const [fundamentals, setFundamentals] = useState<FundamentalsBlock | null>(
     null,
   );
   const [isLoading, setIsLoading] = useState<boolean>(!!symbol);
   const [error, setError] = useState<string | null>(null);
+  const wantsAiOverview = proFinancialAnalysis && includeAiOverview;
 
   useEffect(() => {
     const key = symbol?.toUpperCase().trim();
@@ -88,7 +98,7 @@ export function useFundamentals(
       return;
     }
 
-    const cacheId = `${key}:${proFinancialAnalysis ? "pro" : "free"}`;
+    const cacheId = `${key}:${proFinancialAnalysis ? "pro" : "free"}:ai${wantsAiOverview ? "1" : "0"}:street${includeStreetAnalysis ? "1" : "0"}`;
     const cached = fundamentalsCache.get(cacheId);
     if (cached) {
       setFundamentals(cached);
@@ -104,13 +114,15 @@ export function useFundamentals(
       setError(null);
 
       try {
-        const res = await apiFetch(
-          `/research/fundamentals?symbol=${encodeURIComponent(key!)}`,
-          {
-            method: "GET",
-            accessToken: accessToken!,
-          },
-        );
+        const params = new URLSearchParams({
+          symbol: key!,
+          include_ai_overview: wantsAiOverview ? "true" : "false",
+          include_street_analysis: includeStreetAnalysis ? "true" : "false",
+        });
+        const res = await apiFetch(`/research/fundamentals?${params}`, {
+          method: "GET",
+          accessToken: accessToken!,
+        });
 
         if (!res.ok) {
           throw new Error("Failed to fetch fundamentals");
@@ -138,7 +150,13 @@ export function useFundamentals(
     return () => {
       cancelled = true;
     };
-  }, [symbol, accessToken, proFinancialAnalysis]);
+  }, [
+    symbol,
+    accessToken,
+    proFinancialAnalysis,
+    wantsAiOverview,
+    includeStreetAnalysis,
+  ]);
 
   return { fundamentals, isLoading, error };
 }

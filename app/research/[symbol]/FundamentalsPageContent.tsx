@@ -41,6 +41,8 @@ export function FundamentalsPageContent({
   const { fundamentals, isLoading, error } = useFundamentals(symbol, {
     accessToken: session?.accessToken,
     proFinancialAnalysis: financialStrengthAllowed,
+    includeAiOverview: true,
+    includeStreetAnalysis: true,
   });
 
   return (
