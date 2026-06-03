@@ -41,7 +41,7 @@ export default function ResearchPage() {
   const showEmptyState =
     !isLoading && !error && results.length === 0 && query.trim().length > 0;
   const listboxId = "research-symbol-listbox";
-  console.log(accessToken);
+
   useEffect(() => {
     setActiveIndex(-1);
   }, [query, results]);
