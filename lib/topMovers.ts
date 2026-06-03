@@ -147,27 +147,41 @@ export function formatExcessReturn(value: number | null | undefined): string {
   return `${sign}${pct.toFixed(1)}%`;
 }
 
+/** Price trend for detail panel — uses explicit pipeline `trendBias` values. */
 export function trendDisplayFromIntelligence(
   intel: PatternIntelligence | null | undefined,
 ): TrendDisplay | null {
   if (!intel) return null;
   const bias = (intel.trendContext.trendBias ?? "").toLowerCase();
   const strength = intel.scores.trendStrength;
-  if (
-    bias.includes("up") ||
-    bias.includes("bull") ||
-    strength >= 0.65
-  ) {
-    return { label: "Strong uptrend", symbol: "↗", tone: "positive" };
+
+  switch (bias) {
+    case "uptrend":
+      if (strength >= 0.75) {
+        return { label: "Strong uptrend", symbol: "↗", tone: "positive" };
+      }
+      if (strength >= 0.55) {
+        return { label: "Uptrend", symbol: "↗", tone: "positive" };
+      }
+      return { label: "Mild uptrend", symbol: "↗", tone: "positive" };
+    case "downtrend":
+      if (strength <= 0.4) {
+        return { label: "Downtrend", symbol: "↘", tone: "negative" };
+      }
+      return { label: "Weak trend", symbol: "↘", tone: "negative" };
+    case "mixed":
+      return { label: "Sideways", symbol: "→", tone: "neutral" };
+    default:
+      return { label: "Trend unclear", symbol: "→", tone: "neutral" };
   }
-  if (
-    bias.includes("down") ||
-    bias.includes("bear") ||
-    strength <= 0.35
-  ) {
-    return { label: "Weak trend", symbol: "↘", tone: "negative" };
-  }
-  return { label: "Sideways", symbol: "→", tone: "neutral" };
+}
+
+/** Stable list-row chip — rank only, unchanged when detail loads. */
+export function trendDisplayForRow(
+  rank: number,
+  listCount: number,
+): TrendDisplay {
+  return trendDisplayFromRank(rank, listCount);
 }
 
 export function trendDisplayFromRank(

@@ -1,14 +1,12 @@
 "use client";
 
 import type { RankingItem } from "@/app/types/rankings";
-import type { PatternIntelligence } from "@/app/types/intelligence";
 import {
   formatExcessReturn,
   formatProbability,
   rankingsHaveMlMetrics,
   topUniverseLabel,
-  trendDisplayFromIntelligence,
-  trendDisplayFromRank,
+  trendDisplayForRow,
 } from "@/lib/topMovers";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +16,6 @@ type Props = {
   onSelect: (symbol: string) => void;
   companyNames?: Record<string, string>;
   universeSize?: number | null;
-  intelligenceBySymbol?: Record<string, PatternIntelligence | null | undefined>;
 };
 
 function TrendChip({
@@ -52,7 +49,6 @@ export function TopMoversTable({
   onSelect,
   companyNames = {},
   universeSize,
-  intelligenceBySymbol = {},
 }: Props) {
   const hasMl = rankingsHaveMlMetrics(items);
 
@@ -66,10 +62,7 @@ export function TopMoversTable({
           const sym = item.symbol.toUpperCase();
           const selected = selectedSymbol === sym;
           const name = companyNames[sym];
-          const intel = intelligenceBySymbol[sym];
-          const trend =
-            trendDisplayFromIntelligence(intel) ??
-            trendDisplayFromRank(item.rank, items.length);
+          const trend = trendDisplayForRow(item.rank, items.length);
           const percentile = topUniverseLabel(
             item.rank,
             universeSize,

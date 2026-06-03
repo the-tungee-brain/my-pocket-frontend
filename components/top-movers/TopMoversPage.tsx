@@ -15,7 +15,6 @@ import {
   useSymbolCompanyName,
   useTopMoverDetail,
   useTopMoversBundle,
-  useTopMoversIntelPrefetch,
 } from "@/app/hooks/useTopMovers";
 import { rankingsHaveMlMetrics } from "@/lib/topMovers";
 import { appStackClass } from "@/lib/appUi";
@@ -52,13 +51,7 @@ export function TopMoversPage() {
     [items, selectedSymbol],
   );
 
-  const prefetchSymbols = useMemo(
-    () => items.slice(0, 5).map((i) => i.symbol.toUpperCase()),
-    [items],
-  );
-  const prefetchedIntel = useTopMoversIntelPrefetch(prefetchSymbols);
   const nameQuery = useSymbolCompanyName(selectedSymbol);
-  const detailQuery = useTopMoverDetail(selectedSymbol);
 
   const companyNames = useMemo(() => {
     const map: Record<string, string> = {};
@@ -66,14 +59,6 @@ export function TopMoversPage() {
     if (selectedSymbol && name) map[selectedSymbol] = name;
     return map;
   }, [nameQuery.data, selectedSymbol]);
-
-  const intelligenceBySymbol = useMemo(() => {
-    const map = { ...prefetchedIntel };
-    if (selectedSymbol && detailQuery.data) {
-      map[selectedSymbol] = detailQuery.data;
-    }
-    return map;
-  }, [prefetchedIntel, selectedSymbol, detailQuery.data]);
 
   const inPortfolio = selectedSymbol
     ? query.data?.portfolioSymbols.has(selectedSymbol) ?? false
@@ -135,7 +120,6 @@ export function TopMoversPage() {
             onSelect={setSelectedSymbol}
             companyNames={companyNames}
             universeSize={universeSize}
-            intelligenceBySymbol={intelligenceBySymbol}
           />
         }
         aside={

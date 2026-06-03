@@ -15,6 +15,7 @@ import {
   segmentsFromPatternScores,
   signalStrengthLabel,
   topUniverseLabel,
+  trendDisplayFromIntelligence,
 } from "@/lib/topMovers";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ export function StockDetailPanel({
   const segments = segmentsFromPatternScores(intel?.scores);
   const signals = keySignalsFromIntelligence(intel);
   const strength = signalStrengthLabel(intel?.scores);
+  const priceTrend = trendDisplayFromIntelligence(intel);
 
   if (!item) {
     return (
@@ -73,6 +75,13 @@ export function StockDetailPanel({
               <p className="text-sm font-medium text-foreground">{strength}</p>
             ) : detailQuery.isLoading ? (
               <p className="text-sm text-muted">Loading signal strength…</p>
+            ) : null}
+            {priceTrend ? (
+              <p className="text-sm text-muted">
+                <span className="font-medium text-foreground">Price trend: </span>
+                <span aria-hidden>{priceTrend.symbol} </span>
+                {priceTrend.label}
+              </p>
             ) : null}
           </div>
           <Badge variant={inPortfolio ? "accent" : "muted"}>
