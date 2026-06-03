@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CompositeModelBanner } from "@/components/top-movers/CompositeModelBanner";
 import { MarketRegimeCard } from "@/components/top-movers/MarketRegimeCard";
 import { StockDetailPanel } from "@/components/top-movers/StockDetailPanel";
 import { TopMoversHeader } from "@/components/top-movers/TopMoversHeader";
@@ -10,7 +11,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { TrendingUp } from "lucide-react";
 import { PageShell, PageSplit } from "@/components/PageShell";
-import { useTopMoversBundle, useTopMoverDetail } from "@/app/hooks/useTopMovers";
+import {
+  useSymbolCompanyName,
+  useTopMoverDetail,
+  useTopMoversBundle,
+  useTopMoversIntelPrefetch,
+} from "@/app/hooks/useTopMovers";
+import { rankingsHaveMlMetrics } from "@/lib/topMovers";
 import { appStackClass } from "@/lib/appUi";
 import { pageSplitClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
@@ -26,6 +33,8 @@ export function TopMoversPage() {
     query.data?.health.last_ranking_run_at ??
     query.data?.rankings.timestamp ??
     null;
+  const universeSize = query.data?.health.universe_size ?? null;
+  const hasMlMetrics = rankingsHaveMlMetrics(items);
 
   useEffect(() => {
     if (!items.length) return;
@@ -43,28 +52,37 @@ export function TopMoversPage() {
     [items, selectedSymbol],
   );
 
-  const detailForName = useTopMoverDetail(selectedSymbol);
+  const prefetchSymbols = useMemo(
+    () => items.slice(0, 5).map((i) => i.symbol.toUpperCase()),
+    [items],
+  );
+  const prefetchedIntel = useTopMoversIntelPrefetch(prefetchSymbols);
+  const nameQuery = useSymbolCompanyName(selectedSymbol);
+  const detailQuery = useTopMoverDetail(selectedSymbol);
+
   const companyNames = useMemo(() => {
     const map: Record<string, string> = {};
-    const name = detailForName.data?.snapshot?.name;
+    const name = nameQuery.data;
     if (selectedSymbol && name) map[selectedSymbol] = name;
     return map;
-  }, [detailForName.data?.snapshot?.name, selectedSymbol]);
+  }, [nameQuery.data, selectedSymbol]);
+
+  const intelligenceBySymbol = useMemo(() => {
+    const map = { ...prefetchedIntel };
+    if (selectedSymbol && detailQuery.data) {
+      map[selectedSymbol] = detailQuery.data;
+    }
+    return map;
+  }, [prefetchedIntel, selectedSymbol, detailQuery.data]);
 
   const inPortfolio = selectedSymbol
     ? query.data?.portfolioSymbols.has(selectedSymbol) ?? false
     : false;
 
-  const lacksMlMetrics =
-    items.length > 0 &&
-    items.every(
-      (i) => i.ml_probability == null && i.expected_excess_return == null,
-    );
-
   if (query.isLoading && !query.data) {
     return (
       <PageShell className={appStackClass}>
-        <TopMoversHeader />
+        <TopMoversHeader hasMlMetrics />
         <SkeletonList rows={8} />
       </PageShell>
     );
@@ -73,7 +91,7 @@ export function TopMoversPage() {
   if (query.isError) {
     return (
       <PageShell className={appStackClass}>
-        <TopMoversHeader />
+        <TopMoversHeader hasMlMetrics={hasMlMetrics} />
         <ErrorBanner
           message={
             query.error instanceof Error
@@ -88,7 +106,7 @@ export function TopMoversPage() {
   if (!items.length) {
     return (
       <PageShell className={appStackClass}>
-        <TopMoversHeader />
+        <TopMoversHeader hasMlMetrics={hasMlMetrics} />
         <EmptyState
           icon={TrendingUp}
           title="Rankings not ready"
@@ -100,19 +118,14 @@ export function TopMoversPage() {
 
   return (
     <PageShell className={appStackClass}>
-      <TopMoversHeader />
+      <TopMoversHeader hasMlMetrics={hasMlMetrics} />
       <MarketRegimeCard
         regimeId={regimeId}
         asOfDate={query.data?.rankings.as_of_date}
         updatedAt={updatedAt}
         systemStatus={query.data?.health.system_status}
       />
-      {lacksMlMetrics ? (
-        <p className="text-xs text-muted">
-          P(SPY) and excess return are not in this ranking run (composite-only model).
-          Re-run the pipeline with an ML backend to populate them.
-        </p>
-      ) : null}
+      {!hasMlMetrics ? <CompositeModelBanner /> : null}
       <PageSplit
         splitClassName={cn(pageSplitClass, "lg:items-start")}
         main={
@@ -121,12 +134,16 @@ export function TopMoversPage() {
             selectedSymbol={selectedSymbol}
             onSelect={setSelectedSymbol}
             companyNames={companyNames}
+            universeSize={universeSize}
+            intelligenceBySymbol={intelligenceBySymbol}
           />
         }
         aside={
           <StockDetailPanel
             item={selectedItem}
-            regimeId={regimeId}
+            universeSize={universeSize}
+            listCount={items.length}
+            hasMlMetrics={hasMlMetrics}
             inPortfolio={inPortfolio}
             className="lg:sticky lg:top-4"
           />

@@ -5,6 +5,7 @@ import type { SchwabReauthDetail } from "./schwabReauth";
 import type { AccountPositionsResponse, RecentOrdersResponse } from "@/app/types/schwab";
 import type {
   MorningBrief,
+  PatternIntelligence,
   PortfolioChanges,
   PortfolioIntelligence,
   SymbolIntelligence,
@@ -727,6 +728,43 @@ export async function fetchResearchOverviewBundle(
     (await res.json()) as ResearchOverviewBundle,
   );
   return { status: "ok", bundle };
+}
+
+export async function fetchSymbolLookupName(
+  accessToken: string,
+  symbol: string,
+): Promise<string | null> {
+  const res = await apiFetch(
+    `/symbols/lookup${buildQuery({ symbol: symbol.toUpperCase() })}`,
+    { method: "GET", accessToken },
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) return null;
+  const data = (await res.json()) as Record<string, unknown>;
+  const name = data.name ?? data.companyName;
+  return typeof name === "string" && name.trim() ? name.trim() : null;
+}
+
+export async function fetchPatternIntelligence(
+  accessToken: string,
+  symbol: string,
+): Promise<PatternIntelligence> {
+  const res = await apiFetch(
+    `/pattern/intelligence${buildQuery({ symbol: symbol.toUpperCase() })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    const error = new Error(
+      res.status === 404
+        ? "Pattern intelligence is not available for this symbol."
+        : `Failed to load pattern intelligence (${res.status})`,
+    ) as ApiError;
+    error.status = res.status;
+    throw error;
+  }
+
+  return res.json() as Promise<PatternIntelligence>;
 }
 
 export async function fetchRankingsTop(

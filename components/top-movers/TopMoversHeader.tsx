@@ -1,20 +1,23 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 type Props = {
-  title?: string;
-  subtitle?: string;
+  hasMlMetrics?: boolean;
+  className?: string;
 };
 
-export function TopMoversHeader({
-  title = "Top Movers",
-  subtitle = "Precomputed 5-day excess vs SPY · refreshes every minute",
-}: Props) {
+export function TopMoversHeader({ hasMlMetrics = true, className }: Props) {
   return (
-    <header className="space-y-1">
-      <h1 className="font-mono text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-        {title}
+    <header className={cn("space-y-1", className)}>
+      <h1 className="font-mono text-2xl font-semibold tracking-tight text-foreground">
+        Top Movers
       </h1>
-      <p className="max-w-2xl text-sm text-muted">{subtitle}</p>
+      <p className="text-sm text-muted">
+        {hasMlMetrics
+          ? "ML-ranked leaders vs the full universe"
+          : "Composite-ranked leaders vs the full universe"}
+      </p>
     </header>
   );
 }

@@ -2,8 +2,8 @@
 
 import { Badge } from "@/components/ui/Badge";
 import {
-  formatRegimeLabel,
   formatRelativeTime,
+  regimeNarrative,
   regimeRiskTone,
 } from "@/lib/topMovers";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ export function MarketRegimeCard({
   systemStatus,
   className,
 }: Props) {
+  const narrative = regimeNarrative(regimeId);
   const riskTone = regimeRiskTone(regimeId);
   const riskLabel =
     riskTone === "risk-on"
@@ -31,34 +32,38 @@ export function MarketRegimeCard({
         ? "Risk-off"
         : "Mixed";
 
+  const statusLabel =
+    systemStatus === "ok"
+      ? "Pipeline OK"
+      : systemStatus
+        ? systemStatus.charAt(0).toUpperCase() + systemStatus.slice(1)
+        : null;
+
   return (
     <section
-      className={cn(
-        "app-panel flex flex-wrap items-center justify-between gap-3 px-4 py-3",
-        className,
-      )}
-      aria-label="Market regime"
+      className={cn("app-panel space-y-3 px-4 py-4", className)}
+      aria-label="Market environment"
     >
-      <div className="min-w-0 space-y-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
-          Market regime
-        </p>
-        <p className="font-mono text-sm font-semibold text-foreground">
-          {formatRegimeLabel(regimeId)}
-        </p>
-        <p className="text-xs text-muted">
-          {asOfDate ? `As of ${asOfDate}` : null}
-          {asOfDate && updatedAt ? " · " : null}
-          {formatRelativeTime(updatedAt)}
-        </p>
-      </div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+        Market environment
+      </p>
+      <h2 className="text-lg font-semibold leading-snug text-foreground">
+        {narrative.title}
+      </h2>
+      <p className="text-sm leading-relaxed text-muted">{narrative.guidance}</p>
       <div className="flex flex-wrap items-center gap-2">
         <Badge
-          variant={riskTone === "risk-on" ? "success" : riskTone === "risk-off" ? "warning" : "muted"}
+          variant={
+            riskTone === "risk-on"
+              ? "success"
+              : riskTone === "risk-off"
+                ? "warning"
+                : "muted"
+          }
         >
           {riskLabel}
         </Badge>
-        {systemStatus ? (
+        {statusLabel ? (
           <Badge
             variant={
               systemStatus === "ok"
@@ -68,10 +73,15 @@ export function MarketRegimeCard({
                   : "danger"
             }
           >
-            {systemStatus}
+            {statusLabel}
           </Badge>
         ) : null}
       </div>
+      <p className="text-xs text-muted">
+        {asOfDate ? `As of ${asOfDate}` : null}
+        {asOfDate && updatedAt ? " · " : null}
+        {formatRelativeTime(updatedAt)}
+      </p>
     </section>
   );
 }

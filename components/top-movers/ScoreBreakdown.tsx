@@ -35,14 +35,16 @@ export function ScoreBreakdown({ segments, loading, className }: Props) {
     <div className={cn("space-y-3", className)}>
       {segments.map((segment) => (
         <div key={segment.key}>
-          <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-            <span className="text-muted">{segment.label}</span>
-            <span className="tabular-nums text-foreground/80">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <span className="text-sm font-medium text-foreground">
+              {segment.label}
+            </span>
+            <span className="text-sm font-semibold tabular-nums text-muted">
               {Math.round(segment.value * 100)}
             </span>
           </div>
           <div
-            className="h-1.5 overflow-hidden rounded-full bg-muted-bg"
+            className="h-2 overflow-hidden rounded-full bg-muted-bg"
             role="meter"
             aria-valuenow={Math.round(segment.value * 100)}
             aria-valuemin={0}
