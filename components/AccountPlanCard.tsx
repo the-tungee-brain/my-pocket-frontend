@@ -33,7 +33,7 @@ const PRO_FEATURES = [
   "AI earnings analysis (quarterly summaries & takeaways)",
   "AI news research (brief, sentiment, coverage analysis)",
   "Financial strength & fundamental AI on Research",
-  "Big picture & business AI on Research Overview and Business",
+  "Business AI and structured fundamentals on Research",
   "5-day pattern trend forecast on Research",
   "Income snowball (DRIP projections & contributions)",
   "Wheel backtest with trade log and PDF export",

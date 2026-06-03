@@ -13,17 +13,11 @@ import type { IntelligenceSignal } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
 import { pageSectionClass, pageOverviewAsideClass, pageOverviewMainClass, pageOverviewSplitClass } from "@/lib/pageLayout";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
-import { useAccountPlan } from "@/app/hooks/useAccountPlan";
-import { hasProFeature } from "@/lib/planFeatures";
-import { ProFeatureGate } from "@/components/ProFeatureGate";
-import { PatternTrendForecastCard } from "@/components/PatternTrendForecastCard";
-import { PatternIntelligenceCard } from "@/components/PatternIntelligenceCard";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
 import { EtfFundsOverview } from "./EtfFundsOverview";
 import { StreetAnalysisOverview } from "./StreetAnalysisOverview";
-import { SummarySection } from "./SummarySection";
 
 type Props = {
   symbol: string;
@@ -38,8 +32,6 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
   const chatKey = symbolChatKey(symbolUpper) ?? symbolUpper;
 
   const { isEtf } = useResearchAssetTypeContext();
-  const { plan } = useAccountPlan(accessToken);
-  const patternTrendAllowed = hasProFeature(plan, "patternTrend");
 
   const { intelligence, loading, error, refetch } = useSymbolIntelligence(
     symbol,
@@ -81,21 +73,6 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
               symbol={symbol}
               chartIntelligence={intelligence?.patternIntelligence?.chartIntelligence}
             />
-            <ProFeatureGate
-              feature="patternTrend"
-              allowed={patternTrendAllowed}
-              className={pageSectionClass}
-            >
-              <PatternTrendForecastCard
-                forecast={intelligence?.patternForecast}
-                symbol={symbolUpper}
-                className={pageSectionClass}
-              />
-              <PatternIntelligenceCard
-                intelligence={intelligence?.patternIntelligence}
-                className={pageSectionClass}
-              />
-            </ProFeatureGate>
             <SymbolIntelligencePanel
               intelligence={intelligence}
               loading={loading}
@@ -137,7 +114,6 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
           </>
         }
       />
-      <SummarySection symbol={symbol} className={pageSectionClass} />
     </div>
   );
 }

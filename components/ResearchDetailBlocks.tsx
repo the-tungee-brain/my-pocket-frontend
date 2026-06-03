@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
-import { splitIntoParagraphs } from "@/lib/bigPictureArticle";
+import { splitIntoParagraphs } from "@/lib/proseParagraphs";
 import {
   appCalloutClass,
   appCalloutLabelClass,

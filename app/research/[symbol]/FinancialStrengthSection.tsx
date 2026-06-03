@@ -1,76 +1,134 @@
 "use client";
 
 import { ShieldCheck, ShieldAlert } from "lucide-react";
-import type {
-  FinancialStrength,
-  FundamentalsOverview,
-} from "@/app/hooks/useFundamentals";
+import type { FinancialStrength } from "@/app/hooks/useFundamentals";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { FundamentalOverviewSection } from "./FundamentalOverviewSection";
-import { ResearchAiAnalyzePrompt } from "./ResearchAiAnalyzePrompt";
 
 type FinancialStrengthSectionProps = {
   strength: FinancialStrength | null | undefined;
-  overview?: FundamentalsOverview | null;
   isLoading?: boolean;
-  aiAnalysisRequested?: boolean;
-  isAnalyzingAi?: boolean;
-  onRequestAiAnalysis?: () => void;
 };
 
-const RATING_STYLES: Record<
-  FinancialStrength["rating"],
-  { label: string; badge: string; ring: string }
+type ProfileTone = "positive" | "neutral" | "caution" | "risk";
+
+function profileTone(profile: string): ProfileTone {
+  const lowered = profile.toLowerCase();
+  if (
+    lowered.includes("high risk") ||
+    lowered.includes("turnaround") ||
+    lowered.includes("speculative")
+  ) {
+    return lowered.includes("high growth") ? "caution" : "risk";
+  }
+  if (
+    lowered.includes("financially strong") ||
+    lowered.includes("compounder") ||
+    lowered.includes("capital-intensive")
+  ) {
+    return lowered.includes("capital-intensive") ? "neutral" : "positive";
+  }
+  if (lowered.includes("cash-generating") || lowered.includes("mature")) {
+    return "neutral";
+  }
+  return "neutral";
+}
+
+const TONE_STYLES: Record<
+  ProfileTone,
+  { badge: string; ring: string; bar: string }
 > = {
-  strong: {
-    label: "Strong",
+  positive: {
     badge: "border-accent/30 bg-accent-muted text-accent-strong",
     ring: "ring-accent/20",
+    bar: "bg-accent",
   },
-  solid: {
-    label: "Solid",
-    badge: "border-accent/25 bg-surface-elevated text-accent-strong",
-    ring: "ring-accent/15",
-  },
-  mixed: {
-    label: "Mixed",
+  neutral: {
     badge: "border-border bg-muted-bg text-foreground",
     ring: "ring-border",
+    bar: "bg-foreground/70",
   },
-  weak: {
-    label: "Weak",
+  caution: {
+    badge: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+    ring: "ring-amber-500/20",
+    bar: "bg-amber-500",
+  },
+  risk: {
     badge: "border-danger/30 bg-danger/10 text-danger",
     ring: "ring-danger/20",
+    bar: "bg-danger",
   },
 };
+
+const BREAKDOWN_LABELS: {
+  key: keyof NonNullable<FinancialStrength["scoreBreakdown"]>;
+  label: string;
+  weight: string;
+}[] = [
+  { key: "growth", label: "Growth", weight: "30%" },
+  { key: "profitability", label: "Profitability", weight: "30%" },
+  { key: "cashFlow", label: "Cash flow", weight: "25%" },
+  { key: "balanceSheet", label: "Balance sheet", weight: "15%" },
+];
+
+function ScoreBar({
+  label,
+  weight,
+  score,
+  rankLabel,
+  barClass,
+}: {
+  label: string;
+  weight: string;
+  score: number;
+  rankLabel: string;
+  barClass: string;
+}) {
+  return (
+    <div>
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+        <span className="text-muted">
+          {label}{" "}
+          <span className="text-muted/80">({weight})</span>
+        </span>
+        <span className="tabular-nums text-foreground">
+          {score}/100 · {rankLabel}
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted-bg">
+        <div
+          className={cn("h-full rounded-full transition-all", barClass)}
+          style={{ width: `${score}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export function FinancialStrengthSection({
   strength,
-  overview,
   isLoading,
-  aiAnalysisRequested = false,
-  isAnalyzingAi = false,
-  onRequestAiAnalysis,
 }: FinancialStrengthSectionProps) {
   if (isLoading) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-16 rounded-xl" />
-        <Skeleton className="h-24 rounded-xl" />
-      </div>
-    );
+    return <Skeleton className="h-32 rounded-xl" />;
   }
 
   if (!strength) {
     return (
       <p className="text-sm text-muted">
-        Financial strength summary isn&apos;t available for this symbol.
+        Financial overview isn&apos;t available for this symbol.
       </p>
     );
   }
 
-  const style = RATING_STYLES[strength.rating];
+  const tone = profileTone(strength.profile);
+  const style = TONE_STYLES[tone];
+  const breakdown = strength.scoreBreakdown;
+  const rawVerdict =
+    strength.financialVerdict?.trim() || strength.scoreExplanation?.trim();
+  const verdict = rawVerdict
+    ? rawVerdict.charAt(0).toUpperCase() + rawVerdict.slice(1)
+    : "";
 
   return (
     <div
@@ -87,7 +145,7 @@ export function FinancialStrengthSection({
               style.badge,
             )}
           >
-            {strength.rating === "weak" || strength.rating === "mixed" ? (
+            {tone === "risk" || tone === "caution" ? (
               <ShieldAlert className="h-5 w-5" aria-hidden />
             ) : (
               <ShieldCheck className="h-5 w-5" aria-hidden />
@@ -97,84 +155,56 @@ export function FinancialStrengthSection({
             <div className="flex flex-wrap items-center gap-2">
               <span
                 className={cn(
-                  "rounded-md border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide",
+                  "rounded-md border px-2 py-0.5 text-xs font-semibold tracking-wide",
                   style.badge,
                 )}
               >
-                {style.label}
+                {strength.profile}
               </span>
               <span className="text-xs tabular-nums text-muted">
-                Score {strength.score}/100
+                Financial Health Score {strength.score}/100
               </span>
             </div>
-            <p className="mt-1 text-sm font-medium text-foreground">
-              {strength.headline}
-            </p>
+            {strength.businessContext ? (
+              <p className="mt-1 text-[11px] text-muted">
+                {strength.businessContext}
+              </p>
+            ) : null}
+            {verdict ? (
+              <div className="mt-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                  Financial verdict
+                </p>
+                <p className="mt-0.5 text-sm leading-snug text-foreground">
+                  {verdict}
+                </p>
+              </div>
+            ) : null}
+            {strength.headline ? (
+              <p className="mt-1 text-xs text-muted">{strength.headline}</p>
+            ) : null}
           </div>
         </div>
       </div>
 
-      {strength.highlights.length > 0 && (
-        <ul className="mt-3 space-y-1 text-sm text-foreground">
-          {strength.highlights.map((item) => (
-            <li key={item} className="leading-relaxed">
-              {item}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        {strength.strengths.length > 0 && (
-          <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-accent-strong">
-              Strengths
-            </p>
-            <ul className="space-y-1 text-sm text-foreground">
-              {strength.strengths.map((item) => (
-                <li key={item} className="leading-relaxed">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {strength.risks.length > 0 && (
-          <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-danger">
-              Risks
-            </p>
-            <ul className="space-y-1 text-sm text-foreground">
-              {strength.risks.map((item) => (
-                <li key={item} className="leading-relaxed">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {onRequestAiAnalysis ? (
-        <div className="mt-4 border-t border-border pt-4">
-          {!aiAnalysisRequested ? (
-            <ResearchAiAnalyzePrompt
-              description="Generate an AI read on valuation, growth, and key risks using filings and market data."
-              buttonLabel="Run AI analysis"
-              onAnalyze={onRequestAiAnalysis}
-            />
-          ) : isAnalyzingAi ? (
-            <div className="space-y-3">
-              <Skeleton className="h-16 rounded-xl" />
-              <Skeleton className="h-24 rounded-xl" />
-            </div>
-          ) : overview ? (
-            <FundamentalOverviewSection overview={overview} />
-          ) : (
-            <p className="text-sm text-muted">
-              AI analysis could not be generated. Try again in a moment.
-            </p>
-          )}
+      {breakdown ? (
+        <div className="mt-4 space-y-2.5 border-t border-border pt-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Score drivers
+          </p>
+          {BREAKDOWN_LABELS.map(({ key, label, weight }) => {
+            const row = breakdown[key];
+            return (
+              <ScoreBar
+                key={key}
+                label={label}
+                weight={weight}
+                score={row.score}
+                rankLabel={row.rankLabel}
+                barClass={style.bar}
+              />
+            );
+          })}
         </div>
       ) : null}
     </div>

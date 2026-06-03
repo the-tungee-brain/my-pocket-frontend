@@ -51,6 +51,28 @@ export function formatStreetUpside(pct: number | null | undefined): string {
   return `${prefix}${pct.toFixed(1)}% vs mean target`;
 }
 
+/** How last price compares to the consensus mean target. */
+export function formatPremiumDiscountToTarget(
+  current: number | null | undefined,
+  mean: number | null | undefined,
+  upsideToMeanPct?: number | null,
+): string {
+  if (upsideToMeanPct != null && !Number.isNaN(upsideToMeanPct)) {
+    if (upsideToMeanPct >= 0.5) {
+      return `${upsideToMeanPct.toFixed(1)}% below mean target`;
+    }
+    if (upsideToMeanPct <= -0.5) {
+      return `${Math.abs(upsideToMeanPct).toFixed(1)}% above mean target`;
+    }
+    return "At mean target";
+  }
+  if (current == null || mean == null || mean === 0) return "—";
+  const pct = ((current - mean) / mean) * 100;
+  if (pct <= -0.5) return `${Math.abs(pct).toFixed(1)}% below mean target`;
+  if (pct >= 0.5) return `${pct.toFixed(1)}% above mean target`;
+  return "At mean target";
+}
+
 export function formatEstimateRange(estimate: PeriodEstimate | null | undefined): string {
   if (!estimate?.avg) return "—";
   const low = estimate.low != null ? formatCompactNumber(estimate.low) : null;

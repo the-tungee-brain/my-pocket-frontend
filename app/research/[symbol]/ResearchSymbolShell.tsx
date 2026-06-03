@@ -30,6 +30,8 @@ import {
   useResearchAssetTypeContext,
 } from "./ResearchAssetTypeContext";
 import { ResearchSymbolHeaderProvider } from "./ResearchSymbolHeaderContext";
+import { TradeDecisionPanel } from "@/components/TradeDecisionPanel";
+import { pageSectionClass } from "@/lib/pageLayout";
 
 type Props = {
   symbol: string;
@@ -170,6 +172,13 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
       >
         {activeTab !== "overview" ? (
           <ResearchDataAsOfLabel className="-mt-4 mb-1" />
+        ) : null}
+        {!isEtf && activeTab === "overview" ? (
+          <TradeDecisionPanel
+            symbol={symbol}
+            accessToken={accessToken}
+            className={pageSectionClass}
+          />
         ) : null}
         {children}
       </div>

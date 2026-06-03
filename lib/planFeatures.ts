@@ -8,7 +8,6 @@ export type ProFeatureId =
   | "financialStrength"
   | "earningsAi"
   | "business"
-  | "bigPicture"
   | "patternTrend";
 
 const API_FEATURE_KEYS: Record<ProFeatureId, string> = {
@@ -18,7 +17,6 @@ const API_FEATURE_KEYS: Record<ProFeatureId, string> = {
   financialStrength: "financial_strength",
   earningsAi: "earnings_ai",
   business: "business",
-  bigPicture: "big_picture",
   patternTrend: "pattern_trend",
 };
 
@@ -55,11 +53,6 @@ export const PRO_FEATURE_LABELS: Record<
     title: "AI business overview",
     description:
       "How the company works, competes, and grows — segments, moat, revenue model, and business risks on Research Business.",
-  },
-  bigPicture: {
-    title: "Big picture AI",
-    description:
-      "AI investment thesis, valuation context, key strengths, risks, and what to watch on Research Overview.",
   },
   patternTrend: {
     title: "5-day pattern trend",

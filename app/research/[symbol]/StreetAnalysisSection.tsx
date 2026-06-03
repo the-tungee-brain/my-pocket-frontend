@@ -16,6 +16,7 @@ import {
   formatRatingActionDate,
   estimateForPeriod,
   formatRatingActionLine,
+  formatPremiumDiscountToTarget,
   formatStreetPrice,
   formatStreetUpside,
   hasStreetAnalysis,
@@ -208,11 +209,35 @@ export function StreetAnalysisSection({
         </div>
       )}
 
-      {targets && (targets.mean != null || targets.low != null || targets.high != null) ? (
+      {targets && (targets.mean != null || targets.current != null) ? (
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
             <Target className="h-3 w-3" aria-hidden />
-            Price targets
+            Price vs Street
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+              <p className="text-[10px] text-muted">Current price</p>
+              <p className="text-sm font-semibold tabular-nums text-foreground">
+                {formatStreetPrice(targets.current)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+              <p className="text-[10px] text-muted">Mean target</p>
+              <p className="text-sm font-semibold tabular-nums text-foreground">
+                {formatStreetPrice(targets.mean)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+              <p className="text-[10px] text-muted">Vs mean target</p>
+              <p className="text-sm font-semibold tabular-nums text-foreground">
+                {formatPremiumDiscountToTarget(
+                  targets.current,
+                  targets.mean,
+                  targets.upsideToMeanPct,
+                )}
+              </p>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {[
@@ -234,13 +259,10 @@ export function StreetAnalysisSection({
           </div>
           {targets.upsideToMeanPct != null ? (
             <p className="text-xs text-muted">
-              {formatStreetUpside(targets.upsideToMeanPct)}
-              {targets.current != null ? (
-                <span className="text-foreground">
-                  {" "}
-                  · last {formatStreetPrice(targets.current)}
-                </span>
-              ) : null}
+              Implied upside if the stock reaches the mean target:{" "}
+              <span className="text-foreground">
+                {formatStreetUpside(targets.upsideToMeanPct)}
+              </span>
             </p>
           ) : null}
         </div>

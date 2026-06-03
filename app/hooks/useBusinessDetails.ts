@@ -5,17 +5,45 @@ import { apiFetch } from "@/lib/apiClient";
 import { isAbortError } from "@/lib/isAbortError";
 
 export type BusinessBlock = {
-  whatTheyDo: string;
-  segments: string[];
-  revenueNotes: string;
-  customersAndMarkets: string;
-  competitiveLandscape: string;
-  moatAndDifferentiators: string;
-  growthDrivers: string[];
-  keyRisks: string[];
+  industry: string;
+  primaryProduct: string;
+  revenueModel: string;
+  primaryCustomers: string[];
+  howTheyMakeMoney: string[];
+  revenueVisibility: string[];
+  advantages: string[];
+  challenges: string[];
+  revenueDrivers: string[];
+  constraints: string[];
+  businessRisks: string[];
+  dependencies: string[];
 };
 
+/** API should use camelCase; accept snake_case from older responses. */
+function normalizeBusinessBlock(raw: Record<string, unknown>): BusinessBlock {
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  const arr = (v: unknown) => (Array.isArray(v) ? v.map(String) : []);
+
+  return {
+    industry: str(raw.industry),
+    primaryProduct: str(raw.primaryProduct ?? raw.primary_product),
+    revenueModel: str(raw.revenueModel ?? raw.revenue_model),
+    primaryCustomers: arr(raw.primaryCustomers ?? raw.primary_customers),
+    howTheyMakeMoney: arr(raw.howTheyMakeMoney ?? raw.how_they_make_money),
+    revenueVisibility: arr(raw.revenueVisibility ?? raw.revenue_visibility),
+    advantages: arr(raw.advantages),
+    challenges: arr(raw.challenges),
+    revenueDrivers: arr(
+      raw.revenueDrivers ?? raw.revenue_drivers ?? raw.growthDrivers ?? raw.growth_drivers,
+    ),
+    constraints: arr(raw.constraints),
+    businessRisks: arr(raw.businessRisks ?? raw.business_risks),
+    dependencies: arr(raw.dependencies),
+  };
+}
+
 const businessDetailsCache = new Map<string, BusinessBlock>();
+const BUSINESS_CACHE_VERSION = "v4";
 
 type UseBusinessDetailsOptions = {
   accessToken?: string | null;
@@ -40,7 +68,7 @@ export function useBusinessDetails(
       return;
     }
 
-    const symbolKey = key;
+    const cacheKey = `${key}:${BUSINESS_CACHE_VERSION}`;
 
     if (!enabled) {
       setBusiness(null);
@@ -56,7 +84,7 @@ export function useBusinessDetails(
       return;
     }
 
-    const cached = businessDetailsCache.get(symbolKey);
+    const cached = businessDetailsCache.get(cacheKey);
     if (cached) {
       setBusiness(cached);
       setIsLoading(false);
@@ -71,7 +99,7 @@ export function useBusinessDetails(
     async function load() {
       try {
         const res = await apiFetch(
-          `/research/business?symbol=${encodeURIComponent(symbolKey)}`,
+          `/research/business?symbol=${encodeURIComponent(key)}`,
           {
             method: "GET",
             accessToken: token,
@@ -83,10 +111,12 @@ export function useBusinessDetails(
           throw new Error("Failed to fetch business details");
         }
 
-        const data: BusinessBlock = await res.json();
+        const data = normalizeBusinessBlock(
+          (await res.json()) as Record<string, unknown>,
+        );
         if (signal.aborted) return;
 
-        businessDetailsCache.set(symbolKey, data);
+        businessDetailsCache.set(cacheKey, data);
         setBusiness(data);
         setError(null);
       } catch (e: unknown) {
