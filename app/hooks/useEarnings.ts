@@ -105,7 +105,8 @@ export function useEarningsList(
       return;
     }
 
-    const cacheKey = listKey(key, limit);
+    const resolvedSymbol: string = key;
+    const cacheKey = listKey(resolvedSymbol, limit);
     const cached = listCache.get(cacheKey);
     if (cached) {
       setData(cached);
@@ -114,6 +115,8 @@ export function useEarningsList(
       return;
     }
 
+    const earningsPath =
+      `/research/earnings?symbol=${encodeURIComponent(resolvedSymbol)}&limit=${limit}`;
     let cancelled = false;
 
     async function load() {
@@ -122,7 +125,7 @@ export function useEarningsList(
 
       try {
         const res = await apiFetch(
-          `/research/earnings?symbol=${encodeURIComponent(key!)}&limit=${limit}`,
+          earningsPath,
           { method: "GET", accessToken: accessToken! },
         );
 
@@ -185,7 +188,9 @@ export function useEarningsDetail(
       return;
     }
 
-    const cacheKey = detailKey(key, reportDate, proEarningsAnalysis);
+    const resolvedSymbol: string = key;
+    const resolvedReportDate: string = reportDate;
+    const cacheKey = detailKey(resolvedSymbol, resolvedReportDate, proEarningsAnalysis);
     const cached = detailCache.get(cacheKey);
     if (cached) {
       setData(cached);
@@ -202,8 +207,8 @@ export function useEarningsDetail(
     async function load() {
       try {
         const params = new URLSearchParams({
-          symbol: key!,
-          report_date: reportDate!,
+          symbol: resolvedSymbol,
+          report_date: resolvedReportDate,
           include_transcript: "true",
           include_analysis: proEarningsAnalysis ? "true" : "false",
         });

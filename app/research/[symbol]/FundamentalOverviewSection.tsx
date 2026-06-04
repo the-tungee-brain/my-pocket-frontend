@@ -2,13 +2,15 @@
 
 import {
   ResearchAtAGlanceBox,
-  ResearchPairedBulletLists,
   ResearchTextBlock,
 } from "@/components/ResearchDetailBlocks";
 import type { FundamentalsOverview } from "@/app/hooks/useFundamentals";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { appCalloutClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
+import { InvestmentThesisSection } from "./InvestmentThesisSection";
+import { ValuationConclusionSection } from "./ValuationConclusionSection";
+import { ValuationSummarySection } from "./ValuationSummarySection";
 
 type FundamentalOverviewSectionProps = {
   overview: FundamentalsOverview | null | undefined;
@@ -22,39 +24,36 @@ export function FundamentalOverviewSection({
   isEtf = false,
 }: FundamentalOverviewSectionProps) {
   if (overview) {
-    const valuationTitle = isEtf ? "Cost & composition" : "Valuation take";
+    const valuationTitle = isEtf ? "Cost & composition" : "What is priced in";
+    const hasConclusion = Boolean(overview.valuationConclusion?.trim());
+    const hasThesis =
+      (overview.investmentThesis?.bullCase?.length ?? 0) > 0 ||
+      (overview.investmentThesis?.bearCase?.length ?? 0) > 0;
+    const showSummary =
+      Boolean(overview.valuationSummary?.trim()) &&
+      overview.valuationSummary?.trim() !== overview.valuationConclusion?.trim();
 
     return (
       <div className="app-stack">
-        <ResearchAtAGlanceBox title="At a glance">
-          <p className="text-sm font-medium leading-relaxed text-foreground">
-            {overview.atAGlance}
-          </p>
-        </ResearchAtAGlanceBox>
+        {hasConclusion ? (
+          <ResearchAtAGlanceBox title="At a glance">
+            <ValuationConclusionSection overview={overview} />
+          </ResearchAtAGlanceBox>
+        ) : null}
 
-        {overview.valuationTake ? (
+        {showSummary ? (
           <ResearchTextBlock title={valuationTitle}>
-            <p>{overview.valuationTake}</p>
+            <ValuationSummarySection overview={overview} />
           </ResearchTextBlock>
         ) : null}
 
-        {(overview.strengths.length > 0 || overview.concerns.length > 0) && (
-          <ResearchPairedBulletLists
-            left={{
-              title: "Fundamental strengths",
-              items: overview.strengths,
-            }}
-            right={{
-              title: "Key concerns",
-              items: overview.concerns,
-              variant: "risk",
-            }}
-          />
-        )}
+        {hasThesis ? (
+          <InvestmentThesisSection thesis={overview.investmentThesis} />
+        ) : null}
 
-        {overview.assumptions ? (
-          <ResearchTextBlock title="What you'd need to believe">
-            <p>{overview.assumptions}</p>
+        {overview.streetContext ? (
+          <ResearchTextBlock title="Street context">
+            <p>{overview.streetContext}</p>
           </ResearchTextBlock>
         ) : null}
       </div>

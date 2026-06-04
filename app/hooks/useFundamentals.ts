@@ -130,8 +130,9 @@ export function useFundamentals(
       return;
     }
 
+    const resolvedSymbol: string = key;
     const cacheId = fundamentalsCacheKey(
-      key,
+      resolvedSymbol,
       proFinancialAnalysis,
       wantsAiOverview,
       includeStreetAnalysis,
@@ -146,7 +147,12 @@ export function useFundamentals(
     }
 
     const baseCached = fundamentalsCache.get(
-      fundamentalsCacheKey(key, proFinancialAnalysis, false, includeStreetAnalysis),
+      fundamentalsCacheKey(
+        resolvedSymbol,
+        proFinancialAnalysis,
+        false,
+        includeStreetAnalysis,
+      ),
     );
     /** Re-fetch only for AI overview; keep statements/metrics on screen. */
     const aiOnlyUpgrade = wantsAiOverview && baseCached != null;
@@ -166,7 +172,7 @@ export function useFundamentals(
 
       try {
         const params = new URLSearchParams({
-          symbol: key!,
+          symbol: resolvedSymbol,
           include_ai_overview: wantsAiOverview ? "true" : "false",
           include_street_analysis: includeStreetAnalysis ? "true" : "false",
         });
