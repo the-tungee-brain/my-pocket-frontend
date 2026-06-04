@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { useWatchlistContext } from "@/app/contexts/WatchlistContext";
 import { sortedFolders } from "@/lib/watchlistWorkspace";
 import type { CustomTradePlanResponse } from "@/app/types/customTradePlan";
@@ -9,6 +10,13 @@ import { postCustomTradePlan } from "@/lib/customTradePlan";
 import { fetchMomentumBreakoutCheck } from "@/lib/momentumBreakoutCheck";
 import { postMomentumBreakoutTradePlanAlert } from "@/lib/momentumBreakoutAlerts";
 import { formatUsdLevel } from "@/lib/momentumBreakoutAlertUi";
+import {
+  mbChipClass,
+  mbInsetListClass,
+  mbOpportunityCardClass,
+  mbSectionLabelClass,
+  mbStatusPillClass,
+} from "@/lib/momentumBreakoutUi";
 import { SymbolSearchField } from "@/components/SymbolSearchField";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -21,16 +29,31 @@ type Props = {
   className?: string;
 };
 
-function resultPanelClass(status: MomentumBreakoutCheckResponse["status"]): string {
+function resultAccentClass(status: MomentumBreakoutCheckResponse["status"]): string {
   switch (status) {
     case "TRADABLE_BREAKOUT":
-      return "border-success/30 bg-success/8";
+      return "border-l-success/60 bg-success/[0.04]";
     case "REJECTED_BREAKOUT":
-      return "border-warning/35 bg-warning-muted/40";
+      return "border-l-warning/60 bg-warning-muted/25";
     case "NO_BREAKOUT_SETUP":
-      return "border-border/80 bg-muted-bg/30";
+      return "border-l-border bg-muted-bg/20";
     default:
-      return "border-border/80 bg-muted-bg/25";
+      return "border-l-border bg-muted-bg/15";
+  }
+}
+
+function resultPillKind(
+  status: MomentumBreakoutCheckResponse["status"],
+): "approved" | "caution" | "rejected" | "neutral" {
+  switch (status) {
+    case "TRADABLE_BREAKOUT":
+      return "approved";
+    case "REJECTED_BREAKOUT":
+      return "caution";
+    case "NO_BREAKOUT_SETUP":
+      return "neutral";
+    default:
+      return "rejected";
   }
 }
 
@@ -110,7 +133,7 @@ export function MomentumBreakoutStockCheck({
       const created = await postMomentumBreakoutTradePlanAlert(accessToken, sym);
       if (!created.planAvailable) {
         setError(
-          "We could not save this educational plan to your watchlist. It may not pass current safety rules.",
+          "We could not save this educational plan. It may not pass current safety rules.",
         );
         return;
       }
@@ -148,65 +171,44 @@ export function MomentumBreakoutStockCheck({
     result != null && trackedSymbols?.has(result.symbol.toUpperCase());
 
   return (
-    <section
-      className={cn(
-        "rounded-xl border border-border/80 bg-surface/60 px-4 py-4",
-        className,
-      )}
-      aria-label="Check any stock"
-    >
-      <h3 className="text-[15px] font-semibold text-foreground">
-        Check any stock
-      </h3>
-      <p className="mt-1 text-[13px] leading-relaxed text-foreground/75">
-        After reviewing today&apos;s scan, search by symbol or company name to
-        see whether a stock qualifies for a Momentum Breakout educational plan.
+    <div className={cn("space-y-4", className)} aria-label="Check any stock">
+      <p className="text-sm text-muted">
+        Search any symbol after reviewing the scan, or pick one from your
+        research watchlist.
       </p>
 
       <SymbolSearchField
-        className="mt-3"
         accessToken={accessToken}
         value={symbolInput}
         onChange={(next) => setSymbolInput(next.toUpperCase())}
         onSelect={(symbol) => void runCheck(symbol)}
-        placeholder="Search symbol or company, e.g. Microsoft or MSFT"
+        placeholder="Symbol or company name"
         limit={8}
         clearOnSelect={false}
       />
 
       {watchlistSuggestions.length > 0 && (
-        <div className="mt-3">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            From your watchlist
-          </p>
-          <ul
-            className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-lg border border-border/80 bg-background/60 p-1"
-            aria-label="Watchlist symbols to check"
-          >
+        <div>
+          <p className={mbSectionLabelClass}>From your watchlist</p>
+          <div className="mt-2 flex max-h-28 flex-wrap gap-2 overflow-y-auto">
             {watchlistSuggestions.map((item) => (
-              <li key={item.symbol}>
-                <button
-                  type="button"
-                  onClick={() => void runCheck(item.symbol)}
-                  className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-sm transition hover:bg-muted-bg"
-                >
-                  <span className="font-mono font-semibold text-foreground">
-                    {item.symbol}
-                  </span>
-                  {item.title !== item.symbol && (
-                    <span className="min-w-0 truncate text-xs text-muted">
-                      {item.title}
-                    </span>
-                  )}
-                </button>
-              </li>
+              <button
+                key={item.symbol}
+                type="button"
+                className={mbChipClass}
+                onClick={() => void runCheck(item.symbol)}
+                title={item.title !== item.symbol ? item.title : undefined}
+              >
+                <Search className="h-3 w-3 text-muted" aria-hidden />
+                {item.symbol}
+              </button>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 
       {error && (
-        <p className="mt-3 text-sm text-danger" role="alert">
+        <p className="rounded-lg border border-danger/25 bg-danger/5 px-3 py-2 text-sm text-danger" role="alert">
           {error}
         </p>
       )}
@@ -214,39 +216,52 @@ export function MomentumBreakoutStockCheck({
       {result && (
         <div
           className={cn(
-            "mt-4 rounded-lg border px-4 py-3",
-            resultPanelClass(result.status),
+            "rounded-xl border border-border/70 border-l-4 px-4 py-4",
+            resultAccentClass(result.status),
           )}
         >
-          <h4 className="text-base font-semibold text-foreground">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-mono text-sm font-semibold text-foreground">
+              {result.symbol}
+            </span>
+            <span className={mbStatusPillClass(resultPillKind(result.status))}>
+              {result.status.replace(/_/g, " ").toLowerCase()}
+            </span>
+          </div>
+          <h4 className="mt-2 text-base font-semibold text-foreground">
             {result.verdictTitle}
           </h4>
-          <p className="mt-2 text-[13px] leading-relaxed text-foreground/80">
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">
             {result.verdictMessage}
           </p>
 
           {result.status === "REJECTED_BREAKOUT" &&
             result.rejectionReasons.length > 0 && (
-              <ul className="mt-3 list-inside list-disc space-y-1 text-[13px] text-foreground/80">
+              <ul className="mt-3 space-y-1 text-sm text-foreground/85">
                 {result.rejectionReasons.map((reason) => (
-                  <li key={reason}>{reason}</li>
+                  <li key={reason} className="flex gap-2">
+                    <span className="text-muted">·</span>
+                    <span>{reason}</span>
+                  </li>
                 ))}
               </ul>
             )}
 
           {result.status === "NO_BREAKOUT_SETUP" &&
             result.failedSetupRules.length > 0 && (
-              <ul className="mt-3 list-inside list-disc space-y-1 text-[13px] text-foreground/80">
+              <ul className={cn("mt-3", mbInsetListClass)}>
                 {result.failedSetupRules.map((rule) => (
-                  <li key={rule}>{rule}</li>
+                  <li key={rule} className="px-3 py-2 text-sm text-muted">
+                    {rule}
+                  </li>
                 ))}
               </ul>
             )}
 
           {result.entryPrice != null && result.stopPrice != null && (
-            <p className="mt-3 text-[13px] text-foreground/75">
-              Educational levels: entry {formatUsdLevel(result.entryPrice)} ·
-              stop {formatUsdLevel(result.stopPrice)} · target{" "}
+            <p className="mt-3 text-xs text-muted">
+              Entry {formatUsdLevel(result.entryPrice)} · Stop{" "}
+              {formatUsdLevel(result.stopPrice)} · Target{" "}
               {result.targetPrice != null
                 ? formatUsdLevel(result.targetPrice)
                 : "—"}
@@ -258,7 +273,7 @@ export function MomentumBreakoutStockCheck({
               type="button"
               variant={alreadyTracked ? "outline" : "default"}
               size="sm"
-              className="mt-3 w-full sm:w-auto"
+              className="mt-4 w-full"
               isLoading={tracking}
               onClick={() => void handleTrack()}
             >
@@ -274,7 +289,7 @@ export function MomentumBreakoutStockCheck({
                 type="button"
                 variant={alreadyTracked ? "outline" : "default"}
                 size="sm"
-                className="mt-3 w-full sm:w-auto"
+                className="mt-4 w-full"
                 isLoading={tracking}
                 onClick={() => void handleTrack()}
               >
@@ -289,7 +304,7 @@ export function MomentumBreakoutStockCheck({
               type="button"
               variant="outline"
               size="sm"
-              className="mt-3 w-full sm:w-auto"
+              className="mt-4 w-full"
               isLoading={customLoading}
               onClick={() => void handleCustomPlan()}
             >
@@ -300,68 +315,60 @@ export function MomentumBreakoutStockCheck({
       )}
 
       {customPlan && (
-        <div className="mt-3 rounded-lg border border-border/80 bg-background/60 px-4 py-3">
-          <p className="text-[13px] font-semibold uppercase tracking-wide text-foreground/70">
-            {customPlan.setupName} · not Momentum Breakout
+        <div className={cn(mbOpportunityCardClass, "space-y-3")}>
+          <p className={mbSectionLabelClass}>
+            {customPlan.setupName} · not momentum breakout
           </p>
-          <p className="mt-2 text-[13px] leading-relaxed text-foreground/80">
+          <p className="text-sm leading-relaxed text-muted">
             {customPlan.entryExplanation}
           </p>
-          <dl className="mt-3 grid gap-2 text-[13px] sm:grid-cols-2">
-            <div>
-              <dt className="text-foreground/70">Current price</dt>
-              <dd className="font-semibold tabular-nums text-foreground">
+          <dl className="grid gap-2 text-sm sm:grid-cols-2">
+            <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+              <dt className="text-xs text-muted">Current price</dt>
+              <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.currentPrice)}
               </dd>
-              <dd className="text-foreground/60">
-                As of {customPlan.latestBarDate}
-              </dd>
+              <dd className="text-[11px] text-muted">As of {customPlan.latestBarDate}</dd>
             </div>
-            <div>
-              <dt className="text-foreground/70">Entry trigger</dt>
-              <dd className="font-semibold tabular-nums text-foreground">
+            <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+              <dt className="text-xs text-muted">Entry trigger</dt>
+              <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.entryPrice)}
               </dd>
               {customPlan.distanceToEntryPct > 2 && (
-                <dd className="text-foreground/75">
-                  Distance: +{customPlan.distanceToEntryPct.toFixed(1)}%
+                <dd className="text-[11px] text-muted">
+                  +{customPlan.distanceToEntryPct.toFixed(1)}% away
                 </dd>
               )}
             </div>
-            <div>
-              <dt className="text-foreground/70">Stop (educational)</dt>
-              <dd className="font-semibold tabular-nums text-foreground">
+            <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+              <dt className="text-xs text-muted">Stop</dt>
+              <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.stopPrice)}
               </dd>
             </div>
-            <div>
-              <dt className="text-foreground/70">Target (educational)</dt>
-              <dd className="font-semibold tabular-nums text-foreground">
+            <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+              <dt className="text-xs text-muted">Target</dt>
+              <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.targetPrice)} (
                 {customPlan.riskReward.toFixed(1)}R)
               </dd>
             </div>
           </dl>
           {!customPlan.planActiveAtCurrentPrice && (
-            <p className="mt-3 rounded-md border border-warning/30 bg-warning-muted/40 px-3 py-2 text-[13px] leading-relaxed text-foreground/85">
-              This plan is inactive until the entry trigger is reached. For
-              learning only — we do not place trades.
-            </p>
-          )}
-          {customPlan.planActiveAtCurrentPrice && (
-            <p className="mt-3 text-[13px] text-foreground/75">
-              For learning only — we do not place trades.
+            <p className="rounded-lg border border-warning/25 bg-warning-muted/30 px-3 py-2 text-sm text-foreground/90">
+              Inactive until the entry trigger is reached. Educational only.
             </p>
           )}
           {customPlan.warnings.length > 0 && (
-            <ul className="mt-2 list-inside list-disc space-y-1 text-[13px] text-foreground/75">
+            <ul className="space-y-1 text-sm text-muted">
               {customPlan.warnings.map((warning) => (
-                <li key={warning}>{warning}</li>
+                <li key={warning}>· {warning}</li>
               ))}
             </ul>
           )}
         </div>
       )}
-    </section>
+    </div>
   );
 }

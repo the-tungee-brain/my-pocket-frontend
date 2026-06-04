@@ -7,6 +7,7 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardBody } from "@/components/ui/Card";
 import { appStackClass } from "@/lib/appUi";
 import { pageSectionClass } from "@/lib/pageLayout";
+import { cn } from "@/lib/utils";
 
 export default function MomentumBreakoutAlertsPage() {
   const { data: session, status } = useSession();
@@ -56,7 +57,7 @@ export default function MomentumBreakoutAlertsPage() {
   }
 
   return (
-    <PageShell className={appStackClass}>
+    <PageShell className={cn(appStackClass, "pt-4 pb-10 sm:pt-6")}>
       <MomentumBreakoutAlertsPanel accessToken={accessToken} />
     </PageShell>
   );

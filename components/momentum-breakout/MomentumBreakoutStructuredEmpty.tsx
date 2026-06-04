@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { appIconBoxClass } from "@/lib/appUi";
+import { appIconBoxClass, appPanelSubtleClass } from "@/lib/appUi";
 
 type Props = {
   icon: LucideIcon;
@@ -23,10 +23,7 @@ export function MomentumBreakoutStructuredEmpty({
 }: Props) {
   return (
     <div
-      className={cn(
-        "rounded-xl border border-border bg-secondary/40 px-4 py-4",
-        className,
-      )}
+      className={cn(appPanelSubtleClass, "px-4 py-4", className)}
     >
       <div className="flex items-start gap-3">
         <div

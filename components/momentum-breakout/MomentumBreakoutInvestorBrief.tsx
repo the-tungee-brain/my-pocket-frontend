@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import type { MomentumBreakoutScanResponse } from "@/app/types/momentumBreakoutScan";
-import type { StrategyTrackRecord } from "@/lib/momentumBreakoutInvestorUi";
 import {
   buildHeroVerdict,
   deriveStrategyTrackRecord,
@@ -14,6 +13,14 @@ import {
 } from "@/lib/momentumBreakoutInvestorUi";
 import { formatUsdLevel } from "@/lib/momentumBreakoutAlertUi";
 import type { PaperTradeSummary } from "@/app/types/momentumBreakoutPaperPerformance";
+import {
+  mbHeroShellClass,
+  mbOpportunityCardApprovedClass,
+  mbOpportunityCardClass,
+  mbSectionLabelClass,
+  mbStatTileClass,
+  mbStatusPillClass,
+} from "@/lib/momentumBreakoutUi";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -29,33 +36,7 @@ type Props = {
   className?: string;
 };
 
-function heroToneClass(tone: string): string {
-  switch (tone) {
-    case "favorable":
-      return "border-success/30 bg-gradient-to-b from-success/10 to-surface";
-    case "cautious":
-      return "border-warning/35 bg-gradient-to-b from-warning-muted/50 to-surface";
-    default:
-      return "border-border bg-gradient-to-b from-muted-bg/50 to-surface";
-  }
-}
-
-function verdictBadgeClass(kind: string): string {
-  switch (kind) {
-    case "Approved":
-      return "text-success";
-    case "Caution":
-      return "text-amber-800 dark:text-amber-200";
-    case "Rejected":
-      return "text-danger";
-    case "Completed":
-      return "text-foreground/70";
-    default:
-      return "text-foreground";
-  }
-}
-
-function HeroStatChip({
+function HeroStatTile({
   value,
   label,
   highlight = false,
@@ -65,14 +46,7 @@ function HeroStatChip({
   highlight?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-xl border px-3 py-2.5",
-        highlight
-          ? "border-success/35 bg-success/10"
-          : "border-border/80 bg-background/50",
-      )}
-    >
+    <div className={cn(mbStatTileClass, highlight && "border-success/30 bg-success/[0.06]")}>
       <p
         className={cn(
           "text-xl font-bold tabular-nums tracking-tight sm:text-2xl",
@@ -81,9 +55,7 @@ function HeroStatChip({
       >
         {value.toLocaleString()}
       </p>
-      <p className="mt-0.5 text-[13px] leading-snug text-foreground/80">
-        {label}
-      </p>
+      <p className="mt-0.5 text-xs leading-snug text-muted">{label}</p>
     </div>
   );
 }
@@ -96,9 +68,9 @@ function TrackRecordMetric({
   value: string;
 }) {
   return (
-    <div className="min-w-0 sm:flex-1">
-      <dt className="text-[13px] font-medium text-foreground/75">{label}</dt>
-      <dd className="mt-1 text-[17px] font-semibold tabular-nums text-foreground">
+    <div className="min-w-0 flex-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
+      <dt className="text-xs font-medium text-muted">{label}</dt>
+      <dd className="mt-1 text-base font-semibold tabular-nums text-foreground">
         {value}
       </dd>
     </div>
@@ -137,30 +109,33 @@ export function MomentumBreakoutInvestorBrief({
     ? blocked
     : blocked.slice(0, REJECTED_PREVIEW_COUNT);
 
+  const heroTone =
+    hero.tone === "favorable"
+      ? "favorable"
+      : hero.tone === "cautious"
+        ? "cautious"
+        : "neutral";
+
   return (
-    <div className={cn("space-y-4", className)}>
-      <section
-        className={cn(
-          "rounded-2xl border px-5 py-6 shadow-sm",
-          heroToneClass(hero.tone),
-        )}
+    <div className={cn("space-y-6", className)}>
+      <div
+        className={cn("rounded-xl px-4 py-5 sm:px-5 sm:py-6", mbHeroShellClass(heroTone))}
         aria-label="Today's verdict"
       >
-        <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <p className={mbSectionLabelClass}>Today&apos;s verdict</p>
+        <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           {hero.title}
         </h2>
-        <p className="mt-3 max-w-prose text-base leading-relaxed text-foreground/80">
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
           {hero.body}
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <HeroStatChip
+          <HeroStatTile
             value={hero.stocksScanned}
-            label={
-              hero.stocksScanned === 1 ? "Stock scanned" : "Stocks scanned"
-            }
+            label={hero.stocksScanned === 1 ? "Stock scanned" : "Stocks scanned"}
           />
-          <HeroStatChip
+          <HeroStatTile
             value={hero.opportunitiesReviewed}
             label={
               hero.opportunitiesReviewed === 1
@@ -168,34 +143,33 @@ export function MomentumBreakoutInvestorBrief({
                 : "Opportunities reviewed"
             }
           />
-          <HeroStatChip
+          <HeroStatTile
             value={hero.opportunitiesRejected}
             label={
               hero.opportunitiesRejected === 1
-                ? "Opportunity rejected"
-                : "Opportunities rejected"
+                ? "Rejected"
+                : "Rejected"
             }
           />
           {hero.opportunitiesApproved > 0 && (
-            <HeroStatChip
+            <HeroStatTile
               value={hero.opportunitiesApproved}
               label={
-                hero.opportunitiesApproved === 1
-                  ? "Opportunity approved"
-                  : "Opportunities approved"
+                hero.opportunitiesApproved === 1 ? "Approved" : "Approved"
               }
               highlight
             />
           )}
         </div>
 
-        <p className="mt-5 text-[13px] leading-relaxed text-foreground/75">
-          We continue scanning automatically during market hours.
+        <p className="mt-4 text-xs text-muted">
+          Scans run automatically during market hours.
           {marketScanLabel ? (
             <>
               {" "}
-              <span className="font-medium text-foreground">
-                Market scan: {marketScanLabel}
+              Last scan{" "}
+              <span className="font-medium text-foreground/80">
+                {marketScanLabel}
               </span>
             </>
           ) : null}
@@ -205,17 +179,12 @@ export function MomentumBreakoutInvestorBrief({
             {error}
           </p>
         )}
-      </section>
+      </div>
 
       {trackDisplay && (
-        <section
-          className="rounded-xl border border-border/80 bg-surface/60 px-4 py-4"
-          aria-label="Strategy track record"
-        >
-          <h3 className="text-[15px] font-semibold text-foreground">
-            Strategy Track Record
-          </h3>
-          <dl className="mt-3 flex flex-col gap-3 sm:flex-row sm:gap-4">
+        <section aria-label="Strategy track record">
+          <h3 className={mbSectionLabelClass}>Strategy track record</h3>
+          <dl className="mt-3 flex flex-col gap-2 sm:flex-row">
             <TrackRecordMetric label="Win rate" value={trackDisplay.winRate} />
             <TrackRecordMetric
               label="Profit factor"
@@ -226,45 +195,32 @@ export function MomentumBreakoutInvestorBrief({
               value={trackDisplay.tradesStudied}
             />
           </dl>
-          <p className="mt-3 text-[13px] leading-relaxed text-foreground/70">
-            Based on historical pattern research. Future results may differ.
+          <p className="mt-2 text-xs text-muted">
+            Historical pattern research only. Future results may differ.
           </p>
         </section>
       )}
 
       {tradable.length > 0 && (
         <section aria-label="Tradable opportunities">
-          <h3 className="text-[15px] font-semibold text-foreground">
-            Tradable Opportunities
-          </h3>
-          <p className="mt-1 text-[13px] text-foreground/75">
-            Passed quality and risk checks. Tap Track this plan to jump to your
-            watchlist.
+          <h3 className={mbSectionLabelClass}>Tradable opportunities</h3>
+          <p className="mt-1 text-sm text-muted">
+            Passed quality and risk checks. Save a plan to your alert watchlist.
           </p>
-          <ul className="mt-2 space-y-2">
+          <ul className="mt-3 space-y-2">
             {tradable.slice(0, 8).map((c) => {
               const alreadyTracked = trackedSymbols?.has(
                 c.symbol.toUpperCase(),
               );
               return (
-                <li
-                  key={c.symbol}
-                  className="rounded-lg border border-success/25 bg-success/8 px-3 py-2.5"
-                >
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="text-[17px] font-bold tracking-wide text-foreground">
+                <li key={c.symbol} className={mbOpportunityCardApprovedClass}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-mono text-base font-semibold text-foreground">
                       {c.symbol}
                     </span>
-                    <span
-                      className={cn(
-                        "text-[13px] font-semibold",
-                        verdictBadgeClass("Approved"),
-                      )}
-                    >
-                      Approved
-                    </span>
+                    <span className={mbStatusPillClass("approved")}>Approved</span>
                   </div>
-                  <p className="mt-1 text-[13px] text-foreground/75">
+                  <p className="mt-2 text-xs text-muted">
                     {formatRegimeForInvestors(c.marketRegime)} · Entry{" "}
                     {formatUsdLevel(c.entryPrice)} · Stop{" "}
                     {formatUsdLevel(c.stopPrice)} · Target{" "}
@@ -275,7 +231,7 @@ export function MomentumBreakoutInvestorBrief({
                       type="button"
                       variant={alreadyTracked ? "outline" : "default"}
                       size="sm"
-                      className="mt-2.5 w-full sm:w-auto"
+                      className="mt-3 w-full"
                       onClick={() => onTrackPlan(c.symbol)}
                     >
                       {alreadyTracked
@@ -291,46 +247,43 @@ export function MomentumBreakoutInvestorBrief({
       )}
 
       <section aria-label="Rejected opportunities">
-        <h3 className="text-[15px] font-semibold text-foreground">
-          Rejected Opportunities
-        </h3>
-        <p className="mt-1 text-[13px] text-foreground/75">
+        <h3 className={mbSectionLabelClass}>Rejected opportunities</h3>
+        <p className="mt-1 text-sm text-muted">
           Reviewed today but did not meet our standards.
         </p>
         {blocked.length === 0 ? (
-          <p className="mt-2 text-[13px] text-foreground/75">
+          <p className="mt-3 text-sm text-muted">
             No rejected opportunities in the latest scan window.
           </p>
         ) : (
           <>
-            <ul className="mt-2 space-y-1.5">
+            <ul className="mt-3 space-y-2">
               {visibleRejected.map((c) => {
                 const reasons = explainRejectedOpportunity(c);
                 const primary = reasons[0];
                 const extra = reasons.slice(1);
                 return (
-                  <li
-                    key={c.symbol}
-                    className="rounded-lg border border-border/70 bg-muted-bg/25 px-3 py-2"
-                  >
-                    <p className="text-[17px] font-bold text-foreground">
-                      {c.symbol}
-                    </p>
+                  <li key={c.symbol} className={mbOpportunityCardClass}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-sm font-semibold text-foreground">
+                        {c.symbol}
+                      </span>
+                      <span className={mbStatusPillClass("rejected")}>
+                        Rejected
+                      </span>
+                    </div>
                     {primary && (
-                      <p className="mt-1 text-[13px] text-foreground/80">
+                      <p className="mt-1.5 text-sm text-foreground/85">
                         {primary}
                       </p>
                     )}
                     {extra.length > 0 && (
-                      <ul className="mt-1 list-inside list-disc text-[13px] text-foreground/70">
+                      <ul className="mt-1 list-inside list-disc text-xs text-muted">
                         {extra.map((r) => (
                           <li key={r}>{r}</li>
                         ))}
                       </ul>
                     )}
-                    <p className="mt-1.5 text-[13px] font-medium text-foreground/65">
-                      No action recommended.
-                    </p>
                   </li>
                 );
               })}
@@ -338,12 +291,12 @@ export function MomentumBreakoutInvestorBrief({
             {blocked.length > REJECTED_PREVIEW_COUNT && (
               <button
                 type="button"
-                className="mt-2 text-[13px] font-semibold text-accent-strong hover:underline"
+                className="mt-3 text-sm font-medium text-accent-strong hover:underline"
                 onClick={() => setRejectedExpanded((open) => !open)}
               >
                 {rejectedExpanded
                   ? "Show fewer"
-                  : `Show all ${blocked.length} rejected opportunities`}
+                  : `Show all ${blocked.length} rejected`}
               </button>
             )}
           </>
