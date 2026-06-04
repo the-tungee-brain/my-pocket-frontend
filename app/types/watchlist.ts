@@ -25,6 +25,7 @@ export type WatchlistFolderDto = {
 export type WatchlistWorkspaceResponse = {
   folders: WatchlistFolderDto[];
   asOf: string;
+  workspaceVersion?: number;
 };
 
 export type WatchlistSymbolSyncPayload = {
@@ -47,6 +48,7 @@ export type WatchlistFolderSyncPayload = {
 
 export type WatchlistWorkspaceSyncRequest = {
   folders: WatchlistFolderSyncPayload[];
+  baseVersion?: number;
 };
 
 export type WatchlistFolder = {

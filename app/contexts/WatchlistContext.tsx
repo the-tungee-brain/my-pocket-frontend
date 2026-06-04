@@ -13,6 +13,7 @@ import {
 import { useSession } from "next-auth/react";
 import {
   fetchWatchlistWorkspace,
+  isWatchlistConflictError,
   syncWatchlistWorkspace,
 } from "@/lib/watchlistApi";
 import {
@@ -25,7 +26,6 @@ import {
   allTickersFromFolders,
   buildSyncRequest,
   containsTicker,
-  folderIdsContaining,
   foldersFromResponse,
   mergeQuotesIntoFolders,
   mirrorFoldersToLocalStorage,
@@ -34,10 +34,12 @@ import {
   readLocalWatchlistSymbols,
   seedFoldersFromLocalSymbols,
   sortedFolders,
+  workspaceVersionFromResponse,
 } from "@/lib/watchlistWorkspace";
 import type {
   WatchlistFolder,
   WatchlistSaveSheetState,
+  WatchlistWorkspaceResponse,
 } from "@/app/types/watchlist";
 
 const SYNC_DEBOUNCE_MS = 700;
@@ -93,6 +95,9 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPersistingRef = useRef(false);
   const needsSyncAfterPersistRef = useRef(false);
+  const syncBlockedByConflictRef = useRef(false);
+  const workspaceVersionRef = useRef<number | null>(null);
+  const latestServerFoldersRef = useRef<WatchlistFolder[] | null>(null);
   const foldersRef = useRef(folders);
   foldersRef.current = folders;
 
@@ -102,6 +107,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   }, [folders, isAuthenticated, localSymbols]);
 
   const sortedFolderList = useMemo(() => sortedFolders(folders), [folders]);
+  const symbolCount = symbols.length;
 
   const refreshLocalSymbols = useCallback(() => {
     setLocalSymbols(getWatchlist());
@@ -117,39 +123,78 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     [folders, isAuthenticated, localSymbols],
   );
 
+  const applyWorkspaceVersion = useCallback(
+    (response: WatchlistWorkspaceResponse) => {
+      workspaceVersionRef.current = workspaceVersionFromResponse(response);
+    },
+    [],
+  );
+
   const persistWorkspace = useCallback(
     async (applyResponse = false) => {
       if (!accessToken) return;
+      if (syncBlockedByConflictRef.current) return;
       isPersistingRef.current = true;
       setIsSyncing(true);
       try {
-        const payload = buildSyncRequest(foldersRef.current);
+        const payload = buildSyncRequest(
+          foldersRef.current,
+          workspaceVersionRef.current,
+        );
         const response = await syncWatchlistWorkspace(accessToken, payload);
+        applyWorkspaceVersion(response);
         if (applyResponse) {
           const next = foldersFromResponse(response);
           setFolders(next);
           mirrorFoldersToLocalStorage(next);
+          latestServerFoldersRef.current = next;
         }
         setError(null);
       } catch (err) {
+        if (isWatchlistConflictError(err)) {
+          syncBlockedByConflictRef.current = true;
+          if (err.currentVersion !== null) {
+            workspaceVersionRef.current = err.currentVersion;
+          }
+          needsSyncAfterPersistRef.current = false;
+          if (syncTimerRef.current) {
+            clearTimeout(syncTimerRef.current);
+            syncTimerRef.current = null;
+          }
+          try {
+            const latest = await fetchWatchlistWorkspace(accessToken, false);
+            applyWorkspaceVersion(latest);
+            latestServerFoldersRef.current = foldersFromResponse(latest);
+          } catch {
+            latestServerFoldersRef.current = null;
+          }
+          setError(
+            "Watchlist changed on another device. Your local edits are preserved, but auto-save is paused. Reload to use the latest server copy or try again to overwrite it.",
+          );
+          return;
+        }
         setError(
           err instanceof Error ? err.message : "Could not save your watchlist.",
         );
       } finally {
         isPersistingRef.current = false;
         setIsSyncing(false);
-        if (needsSyncAfterPersistRef.current) {
+        if (
+          needsSyncAfterPersistRef.current &&
+          !syncBlockedByConflictRef.current
+        ) {
           needsSyncAfterPersistRef.current = false;
           scheduleSyncRef.current?.();
         }
       }
     },
-    [accessToken],
+    [accessToken, applyWorkspaceVersion],
   );
 
   const scheduleSyncRef = useRef<(() => void) | null>(null);
   scheduleSyncRef.current = () => {
     if (!accessToken || !hasLoaded) return;
+    if (syncBlockedByConflictRef.current) return;
     if (isPersistingRef.current) {
       needsSyncAfterPersistRef.current = true;
       return;
@@ -164,6 +209,16 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   const scheduleSync = useCallback(() => {
     scheduleSyncRef.current?.();
   }, []);
+
+  const handleErrorRetry = useCallback(() => {
+    if (!syncBlockedByConflictRef.current) {
+      setError(null);
+      return;
+    }
+    syncBlockedByConflictRef.current = false;
+    setError(null);
+    void persistWorkspace(false);
+  }, [persistWorkspace]);
 
   const updateFolders = useCallback(
     (updater: (prev: WatchlistFolder[]) => WatchlistFolder[]) => {
@@ -186,6 +241,9 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
       if (!accessToken) {
         setFolders([]);
         setLocalSymbols(local);
+        workspaceVersionRef.current = null;
+        latestServerFoldersRef.current = null;
+        syncBlockedByConflictRef.current = false;
         setHasLoaded(true);
         return;
       }
@@ -197,12 +255,15 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
           accessToken,
           includeQuotes,
         );
+        applyWorkspaceVersion(response);
+        syncBlockedByConflictRef.current = false;
         let next = foldersFromResponse(response);
         if (!includeQuotes && next.some((f) => f.symbols.length > 0)) {
           // placeholder quotes filled on refresh
         }
         setFolders(next);
         mirrorFoldersToLocalStorage(next);
+        latestServerFoldersRef.current = next;
 
         if (next.length === 0 && local.length > 0 && migrating) {
           next = seedFoldersFromLocalSymbols(local);
@@ -228,7 +289,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
         setHasLoaded(true);
       }
     },
-    [accessToken, hasLoaded, persistWorkspace],
+    [accessToken, hasLoaded, persistWorkspace, applyWorkspaceVersion],
   );
 
   const refreshQuotes = useCallback(async () => {
@@ -236,8 +297,15 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     if (!foldersRef.current.some((f) => f.symbols.length > 0)) return;
     try {
       const response = await fetchWatchlistWorkspace(accessToken, true);
+      const version = workspaceVersionFromResponse(response);
+      if (version !== null) {
+        const currentVersion = workspaceVersionRef.current;
+        if (currentVersion === null || version >= currentVersion) {
+          workspaceVersionRef.current = version;
+        }
+      }
       setFolders((prev) => mergeQuotesIntoFolders(prev, response));
-      setError(null);
+      if (!syncBlockedByConflictRef.current) setError(null);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not refresh watchlist quotes.",
@@ -438,21 +506,24 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     [accessToken, updateFolders],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: This load should reset only when auth identity/status changes.
   useEffect(() => {
     if (status === "loading") return;
     setHasLoaded(false);
+    workspaceVersionRef.current = null;
+    latestServerFoldersRef.current = null;
+    syncBlockedByConflictRef.current = false;
     void load({ includeQuotes: false });
   }, [accessToken, status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!accessToken || !hasLoaded) return;
-    const hasSymbols = folders.some((f) => f.symbols.length > 0);
-    if (!hasSymbols) return;
+    if (symbolCount === 0) return;
 
     void refreshQuotes();
     const timer = setInterval(() => void refreshQuotes(), QUOTE_REFRESH_MS);
     return () => clearInterval(timer);
-  }, [accessToken, hasLoaded, folders.length, refreshQuotes]);
+  }, [accessToken, hasLoaded, symbolCount, refreshQuotes]);
 
   useEffect(() => {
     const onUpdate = () => {
@@ -494,7 +565,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
       toggleSymbol,
       addFolder,
       setFolderCollapsed,
-      dismissError: () => setError(null),
+      dismissError: handleErrorRetry,
     }),
     [
       folders,
@@ -516,6 +587,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
       toggleSymbol,
       addFolder,
       setFolderCollapsed,
+      handleErrorRetry,
     ],
   );
 

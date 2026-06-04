@@ -22,6 +22,14 @@ export function foldersFromResponse(
   return response.folders.map(folderFromDto);
 }
 
+export function workspaceVersionFromResponse(
+  response: WatchlistWorkspaceResponse,
+): number | null {
+  return typeof response.workspaceVersion === "number"
+    ? response.workspaceVersion
+    : null;
+}
+
 function folderFromDto(dto: WatchlistFolderDto): WatchlistFolder {
   return {
     id: dto.id,
@@ -50,13 +58,16 @@ function symbolFromDto(dto: WatchlistSymbolDto): WatchlistSymbol {
   };
 }
 
-export function buildSyncRequest(folders: WatchlistFolder[]): WatchlistWorkspaceSyncRequest {
+export function buildSyncRequest(
+  folders: WatchlistFolder[],
+  baseVersion?: number | null,
+): WatchlistWorkspaceSyncRequest {
   const ordered = [...folders].sort((a, b) => {
     if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
     return a.sortOrder - b.sortOrder;
   });
 
-  return {
+  const payload: WatchlistWorkspaceSyncRequest = {
     folders: ordered.map((folder, folderIndex) => ({
       id: folder.id,
       name: folder.name,
@@ -75,6 +86,12 @@ export function buildSyncRequest(folders: WatchlistFolder[]): WatchlistWorkspace
         })),
     })),
   };
+
+  if (typeof baseVersion === "number" && Number.isFinite(baseVersion)) {
+    payload.baseVersion = baseVersion;
+  }
+
+  return payload;
 }
 
 export function allTickersFromFolders(folders: WatchlistFolder[]): string[] {

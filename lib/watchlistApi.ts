@@ -4,14 +4,49 @@ import type {
   WatchlistWorkspaceSyncRequest,
 } from "@/app/types/watchlist";
 
+type WatchlistConflictDetail = {
+  code: "watchlist_version_conflict";
+  message?: string;
+  currentVersion?: number;
+  baseVersion?: number;
+};
+
+export class WatchlistConflictError extends Error {
+  currentVersion: number | null;
+  baseVersion: number | null;
+
+  constructor(detail: WatchlistConflictDetail) {
+    super(detail.message || "Watchlist has changed on another device.");
+    this.name = "WatchlistConflictError";
+    this.currentVersion =
+      typeof detail.currentVersion === "number" ? detail.currentVersion : null;
+    this.baseVersion =
+      typeof detail.baseVersion === "number" ? detail.baseVersion : null;
+  }
+}
+
+export function isWatchlistConflictError(
+  err: unknown,
+): err is WatchlistConflictError {
+  return err instanceof WatchlistConflictError;
+}
+
 async function parseError(res: Response, fallback: string): Promise<never> {
   let detail = fallback;
+  let body: { detail?: string | WatchlistConflictDetail } | null = null;
   try {
-    const body = (await res.json()) as { detail?: string };
-    if (body.detail) detail = body.detail;
+    body = (await res.json()) as { detail?: string | WatchlistConflictDetail };
   } catch {
     // ignore
   }
+  if (
+    res.status === 409 &&
+    typeof body?.detail === "object" &&
+    body.detail?.code === "watchlist_version_conflict"
+  ) {
+    throw new WatchlistConflictError(body.detail);
+  }
+  if (typeof body?.detail === "string") detail = body.detail;
   throw new Error(detail);
 }
 
