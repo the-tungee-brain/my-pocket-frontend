@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchPortfolioExitAttention } from "@/lib/apiClient";
-import type { PortfolioExitAttentionItem } from "@/app/types/equityExitGuidance";
+import type { PortfolioExitAttentionItem } from "@/app/types/positionGuidance";
 import { isAbortError } from "@/lib/isAbortError";
 
 type Options = {

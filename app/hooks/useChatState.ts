@@ -432,6 +432,7 @@ export function useChatState({
       selectedSymbol,
       positionsForSelectedSymbol,
       prompt,
+      displayMessage,
     }) => {
       if (!accessToken) return;
       if (
@@ -447,6 +448,8 @@ export function useChatState({
 
       const userInput = prompt.trim();
       if (!userInput) return;
+      const chatDisplay =
+        (displayMessage ?? userInput).trim() || userInput;
 
       setChatBySymbol((prev) => {
         const prevState = ensureSymbolChatState(
@@ -456,7 +459,7 @@ export function useChatState({
         const userMessage: ChatMessage = {
           id: `user-${activeChatKey}-${Date.now()}`,
           role: "user",
-          content: userInput,
+          content: chatDisplay,
         };
 
         return {
@@ -521,6 +524,7 @@ export function useChatState({
               symbol: symbolForApi,
               action: "free-form",
               prompt: userInput,
+              user_display_message: chatDisplay,
               model: state.model,
               session_id: state.sessionId ?? undefined,
               ...chatSessionFields,

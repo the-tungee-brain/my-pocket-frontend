@@ -43,6 +43,8 @@ export type AnalysisPanelAnalyzeSectionProps = {
   onStart: () => void;
   onRefetch: () => void;
   onFollowUp: () => void;
+  /** Hide LLM trade-action card when Position Guidance is authoritative. */
+  hideRecommendedAction?: boolean;
 };
 
 export function AnalysisPanelAnalyzeSection({
@@ -68,6 +70,7 @@ export function AnalysisPanelAnalyzeSection({
   onStart,
   onRefetch,
   onFollowUp,
+  hideRecommendedAction = false,
 }: AnalysisPanelAnalyzeSectionProps) {
   return (
     <>
@@ -95,7 +98,9 @@ export function AnalysisPanelAnalyzeSection({
               )}
             >
               <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted">
-                AI analysis
+                {hideRecommendedAction
+                  ? "Guidance explanation (no trade actions)"
+                  : "AI analysis"}
               </p>
               {showPortfolioAllocation && portfolioPrecomputed && (
                 <div className="mb-4 space-y-3">
@@ -108,6 +113,7 @@ export function AnalysisPanelAnalyzeSection({
                   analysis={displayAnalysis}
                   loading={loading}
                   hideDetailLabel={showPortfolioAllocation}
+                  hideRecommendedAction={hideRecommendedAction}
                 />
               ) : (
                 content && (

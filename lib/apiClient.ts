@@ -41,9 +41,9 @@ import type { AccountPlan } from "@/app/types/account";
 import type { EmergingLeadersResponse } from "@/app/types/emergingLeaders";
 import type { EmergingLeadersValidationResponse } from "@/app/types/emergingLeadersValidation";
 import type {
-  EquityExitGuidance,
   PortfolioExitAttentionResponse,
-} from "@/app/types/equityExitGuidance";
+  SymbolPositionGuidance,
+} from "@/app/types/positionGuidance";
 import type {
   PortfolioLatestResponse,
   RankingsTopResponse,
@@ -793,12 +793,12 @@ export async function fetchEmergingLeaders(
   return res.json() as Promise<EmergingLeadersResponse>;
 }
 
-export async function fetchEquityExitGuidance(
+export async function fetchPositionGuidance(
   symbol: string,
   options: { accessToken: string; signal?: AbortSignal },
-): Promise<EquityExitGuidance> {
+): Promise<SymbolPositionGuidance> {
   const res = await apiFetch(
-    `/research/equity-exit-guidance?symbol=${encodeURIComponent(symbol)}`,
+    `/research/position-guidance?symbol=${encodeURIComponent(symbol)}`,
     {
       method: "GET",
       accessToken: options.accessToken,
@@ -807,12 +807,12 @@ export async function fetchEquityExitGuidance(
   );
   if (!res.ok) {
     const error = new Error(
-      `Failed to load exit guidance (${res.status})`,
+      `Failed to load position guidance (${res.status})`,
     ) as ApiError;
     error.status = res.status;
     throw error;
   }
-  return res.json() as Promise<EquityExitGuidance>;
+  return res.json() as Promise<SymbolPositionGuidance>;
 }
 
 export async function fetchPortfolioExitAttention(options: {

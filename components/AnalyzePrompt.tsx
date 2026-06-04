@@ -11,6 +11,9 @@ type Props = {
   onClick: () => void;
   showTopBorder?: boolean;
   className?: string;
+  title?: string;
+  description?: string;
+  loadingLabel?: string;
 };
 
 export function AnalyzePrompt({
@@ -21,14 +24,21 @@ export function AnalyzePrompt({
   onClick,
   showTopBorder = true,
   className,
+  title: titleOverride,
+  description: descriptionOverride,
+  loadingLabel = "Analyzing…",
 }: Props) {
-  const title = isPortfolio
-    ? "In-depth diversification review"
-    : `Get an AI read on ${symbol}`;
+  const title =
+    titleOverride ??
+    (isPortfolio
+      ? "In-depth diversification review"
+      : `Get an AI read on ${symbol}`);
 
-  const description = isPortfolio
-    ? "See how your holdings are spread across names, sectors, and cash — where you're concentrated, and how to balance the mix."
-    : "Summarizes your holdings, P/L, options risk, and one recommended next step.";
+  const description =
+    descriptionOverride ??
+    (isPortfolio
+      ? "See how your holdings are spread across names, sectors, and cash — where you're concentrated, and how to balance the mix."
+      : "Summarizes your holdings, P/L, options risk, and one recommended next step.");
 
   const buttonClass = cn(
     "mt-5 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
@@ -73,7 +83,7 @@ export function AnalyzePrompt({
                 <span className="absolute h-3.5 w-3.5 rounded-full bg-accent/10 loading-soft-ring motion-reduce:opacity-40" />
                 <span className="relative h-1.5 w-1.5 rounded-full bg-accent/75 loading-soft-core motion-reduce:opacity-80" />
               </span>
-              Analyzing…
+              {loadingLabel}
             </>
           ) : (
             <>

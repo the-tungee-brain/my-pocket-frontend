@@ -20,6 +20,8 @@ export type ChatContextValue = {
     selectedSymbol: string | null;
     positionsForSelectedSymbol: Position[] | null;
     prompt: string;
+    /** Shown in chat UI; full `prompt` still sent to the API. */
+    displayMessage?: string;
   }) => Promise<void>;
   sendPlaybookAsk: (opts: {
     activeChatKey: string;

@@ -4,8 +4,10 @@ import { useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
-import { AnalysisPanel } from "@/components/AnalysisPanel";
-import { EquityExitGuidancePanel } from "@/components/EquityExitGuidancePanel";
+import { SymbolLegsTable } from "@/components/analysis/analysisPanelHoldings";
+import { PositionGuidancePanel } from "@/components/PositionGuidancePanel";
+import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { usePositionGuidance } from "@/app/hooks/usePositionGuidance";
 import { TaxWashSaleStrip } from "@/components/TaxWashSaleStrip";
 import { OptionsTabPrompt } from "@/components/OptionsTabPrompt";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
@@ -20,7 +22,6 @@ import {
 import type { TaxAlertItem } from "@/lib/intelligence";
 import type { ProactiveAlert } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
-import { scrollToChat } from "@/lib/scrollToChat";
 import { shouldShowOptionsTab } from "@/lib/symbolOptions";
 import { BriefcaseBusiness } from "lucide-react";
 import { appStackClass } from "@/lib/appUi";
@@ -41,7 +42,11 @@ export function SymbolPositionContent({ symbol }: Props) {
   const chatKey = symbolChatKey(symbolUpper) ?? symbolUpper;
 
   const { intelligence } = useSymbolIntelligence(symbol, { accessToken });
-
+  const {
+    guidance,
+    isLoading: guidanceLoading,
+    error: guidanceError,
+  } = usePositionGuidance(symbolUpper, { accessToken });
   const positionsForSelectedSymbol = positionMap[symbolUpper] ?? null;
   const hasPosition = (positionsForSelectedSymbol?.length ?? 0) > 0;
   const showOptionsPrompt = shouldShowOptionsTab(
@@ -103,10 +108,6 @@ export function SymbolPositionContent({ symbol }: Props) {
     [chatKey, symbolUpper, sendQuickAction, positionsForSelectedSymbol],
   );
 
-  const handleAskFollowUp = useCallback(() => {
-    scrollToChat();
-  }, []);
-
   if (!hasPosition) {
     return (
       <EmptyState
@@ -150,18 +151,23 @@ export function SymbolPositionContent({ symbol }: Props) {
         <OptionsTabPrompt symbol={symbolUpper} className={panelClass} />
       )}
 
-      <EquityExitGuidancePanel
+      <ResearchSectionCard
+        title="Position details"
+        description={`Open Schwab legs for ${symbolUpper}`}
+        icon={BriefcaseBusiness}
+        className={panelClass}
+        bodyClassName="p-0"
+      >
+        <SymbolLegsTable positions={positionsForSelectedSymbol ?? []} />
+      </ResearchSectionCard>
+
+      <PositionGuidancePanel
         symbol={symbolUpper}
         accessToken={accessToken}
         className={panelClass}
-      />
-
-      <AnalysisPanel
-        mode="symbol"
-        symbol={symbolUpper}
-        positions={positionsForSelectedSymbol}
-        className={panelClass}
-        onAskFollowUp={handleAskFollowUp}
+        guidanceProp={guidance}
+        isLoadingProp={guidanceLoading}
+        errorProp={guidanceError}
       />
 
       {accessToken && (

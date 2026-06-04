@@ -12,6 +12,8 @@ type Props = {
   className?: string;
   /** When true, sections are supplementary (e.g. money map card is shown above). */
   hideDetailLabel?: boolean;
+  /** Position Guidance is authoritative — do not show LLM trade recommendations. */
+  hideRecommendedAction?: boolean;
 };
 
 export function StructuredAnalysisView({
@@ -19,6 +21,7 @@ export function StructuredAnalysisView({
   loading = false,
   className,
   hideDetailLabel = false,
+  hideRecommendedAction = false,
 }: Props) {
   const [expandedSections, setExpandedSections] = useState<Set<number>>(
     () => new Set(analysis.sections.length > 0 ? [0] : []),
@@ -45,7 +48,7 @@ export function StructuredAnalysisView({
         </p>
       </div>
 
-      {analysis.recommendedAction && (
+      {analysis.recommendedAction && !hideRecommendedAction && (
         <div className="rounded-xl border border-accent/30 bg-accent-muted/20 px-4 py-3">
           <div className="flex items-start gap-2">
             <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" />

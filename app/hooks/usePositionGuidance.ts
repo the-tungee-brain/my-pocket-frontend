@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchEquityExitGuidance } from "@/lib/apiClient";
-import type { EquityExitGuidance } from "@/app/types/equityExitGuidance";
+import { fetchPositionGuidance } from "@/lib/apiClient";
+import type { SymbolPositionGuidance } from "@/app/types/positionGuidance";
 import { isAbortError } from "@/lib/isAbortError";
 
 type Options = {
@@ -10,11 +10,11 @@ type Options = {
   enabled?: boolean;
 };
 
-export function useEquityExitGuidance(
+export function usePositionGuidance(
   symbol: string | null,
   { accessToken, enabled = true }: Options = {},
 ) {
-  const [guidance, setGuidance] = useState<EquityExitGuidance | null>(null);
+  const [guidance, setGuidance] = useState<SymbolPositionGuidance | null>(null);
   const [isLoading, setIsLoading] = useState(!!symbol);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +38,7 @@ export function useEquityExitGuidance(
 
     async function load() {
       try {
-        const data = await fetchEquityExitGuidance(key, {
+        const data = await fetchPositionGuidance(key, {
           accessToken: token,
           signal: controller.signal,
         });
@@ -47,7 +47,7 @@ export function useEquityExitGuidance(
         setError(null);
       } catch (e: unknown) {
         if (controller.signal.aborted || isAbortError(e)) return;
-        setError(e instanceof Error ? e.message : "Exit guidance unavailable");
+        setError(e instanceof Error ? e.message : "Position guidance unavailable");
         setGuidance(null);
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);

@@ -29,6 +29,7 @@ import {
   sumOpenProfitLoss,
   sumPortfolioWeight,
 } from "@/lib/positionMetrics";
+import type { StructuredAnalysis } from "@/app/types/analysis";
 import type { SymbolAlertSummary } from "@/lib/intelligence";
 import { SEVERITY_ORDER } from "@/lib/intelligence";
 import {
@@ -91,6 +92,13 @@ type CommonProps = {
   embedded?: boolean;
   /** Hide held-option compare paths (e.g. on Positions tab). */
   hideComparePaths?: boolean;
+  /** Fires when structured analysis payload changes (symbol/portfolio analyze). */
+  onStructuredAnalysisChange?: (analysis: StructuredAnalysis | null) => void;
+  /**
+   * When true (symbol tab with Position Guidance), AI is explanation-only —
+   * hide LLM "recommended action" cards; verdicts come from guidance engines only.
+   */
+  guidanceAuthoritative?: boolean;
 };
 
 export type AnalysisPanelProps = CommonProps & (PortfolioProps | SymbolProps);
@@ -154,6 +162,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     progressiveDisclosure = false,
     embedded = false,
     hideComparePaths = false,
+    onStructuredAnalysisChange,
   } = props;
   const isPortfolio = props.mode === "portfolio";
   const portfolioView = isPortfolio
@@ -242,6 +251,10 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     }
     return analysis;
   }, [structuredAnalysis, showComparePaths, showPortfolioAllocation]);
+
+  useEffect(() => {
+    onStructuredAnalysisChange?.(structuredAnalysis);
+  }, [structuredAnalysis, onStructuredAnalysisChange]);
 
   const recommendedComparePath = useMemo(
     () =>
@@ -483,6 +496,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
       onStart={handleStart}
       onRefetch={refetch}
       onFollowUp={handleFollowUp}
+      hideRecommendedAction={props.guidanceAuthoritative === true}
     />
   );
 

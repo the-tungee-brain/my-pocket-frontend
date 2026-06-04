@@ -11,7 +11,7 @@ import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { PortfolioAttentionSection, countAttentionItems } from "@/components/PortfolioAttentionSection";
-import { PortfolioExitAttentionRows } from "@/components/EquityExitGuidancePanel";
+import { PortfolioExitAttentionRows } from "@/components/PositionGuidancePanel";
 import { usePortfolioExitAttention } from "@/app/hooks/usePortfolioExitAttention";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
