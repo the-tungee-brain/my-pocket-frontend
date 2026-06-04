@@ -11,8 +11,11 @@ import {
   Star,
   Sprout,
   TrendingUp,
+  Bell,
   X,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useMomentumBreakoutFeatureFlags } from "@/app/hooks/useMomentumBreakoutFeatureFlags";
 import { useWatchlist } from "@/app/hooks/useWatchlist";
 import { useToast } from "@/app/contexts/ToastContext";
 import { cn } from "@/lib/utils";
@@ -70,6 +73,9 @@ export function NavList({
 }: NavListProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
+  const { flags: mbFlags } = useMomentumBreakoutFeatureFlags(accessToken);
   const { symbols: watchlist, remove: removeFromWatchlist } = useWatchlist();
   const { showToast } = useToast();
 
@@ -77,6 +83,9 @@ export function NavList({
   const isResearch = pathname.startsWith("/research");
   const isTopMovers = pathname.startsWith("/top-movers");
   const isEmergingLeaders = pathname.startsWith("/emerging-leaders");
+  const isMomentumBreakoutAlerts = pathname.startsWith(
+    "/research/momentum-breakout-alerts",
+  );
   const { symbol: hubSymbol } = pathname.match(/^\/research\/([^/]+)/)
     ? { symbol: pathname.split("/")[2]?.toUpperCase() ?? null }
     : { symbol: null };
@@ -228,6 +237,43 @@ export function NavList({
           <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
         )}
       </button>
+
+      {mbFlags.alertsEnabled && (
+        <button
+          type="button"
+          disabled={loading}
+          aria-current={isMomentumBreakoutAlerts ? "page" : undefined}
+          onClick={() => {
+            setSelectedView("research");
+            setSelectedSymbol(null);
+            router.replace("/research/momentum-breakout-alerts");
+          }}
+          className={cn(
+            "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
+            isMomentumBreakoutAlerts ? navItemActive : navItemInactive,
+          )}
+        >
+          <span
+            className={cn(
+              "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
+              isMomentumBreakoutAlerts
+                ? "border-accent/60 bg-accent-muted text-accent-strong"
+                : "border-border bg-muted-bg text-muted",
+            )}
+          >
+            <Bell className="h-3.5 w-3.5" aria-hidden="true" />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span>MB trade plans</span>
+            <span className="truncate text-[10px] text-muted">
+              Active alerts & history
+            </span>
+          </div>
+          {isMomentumBreakoutAlerts && (
+            <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
+          )}
+        </button>
+      )}
 
       <div className="my-3 h-px bg-border" />
 
