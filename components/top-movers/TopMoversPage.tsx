@@ -19,6 +19,7 @@ import {
 } from "@/app/hooks/useTopMovers";
 import { rankingsHaveMlMetrics } from "@/lib/topMovers";
 import { appStackClass } from "@/lib/appUi";
+import { moversDetailAsideStickyClass } from "@/lib/moversUi";
 import { pageSplitClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 
@@ -143,7 +144,7 @@ export function TopMoversPage() {
             regimeId={regimeId}
             hasMlMetrics={hasMlMetrics}
             inPortfolio={inPortfolio}
-            className="lg:sticky lg:top-4"
+            className={moversDetailAsideStickyClass}
           />
         }
       />

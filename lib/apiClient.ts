@@ -38,6 +38,8 @@ import type {
   ChatSessionsResponse,
 } from "@/app/types/chat";
 import type { AccountPlan } from "@/app/types/account";
+import type { EmergingLeadersResponse } from "@/app/types/emergingLeaders";
+import type { EmergingLeadersValidationResponse } from "@/app/types/emergingLeadersValidation";
 import type {
   PortfolioLatestResponse,
   RankingsTopResponse,
@@ -765,6 +767,45 @@ export async function fetchPatternIntelligence(
   }
 
   return res.json() as Promise<PatternIntelligence>;
+}
+
+export async function fetchEmergingLeaders(
+  accessToken: string,
+  limit = 20,
+): Promise<EmergingLeadersResponse> {
+  const res = await apiFetch(
+    `/research/emerging-leaders${buildQuery({ limit })}`,
+    { method: "GET", accessToken },
+  );
+  if (!res.ok) {
+    const error = new Error(
+      res.status === 404
+        ? "Emerging leaders scan is not available yet."
+        : `Failed to load emerging leaders (${res.status})`,
+    ) as ApiError;
+    error.status = res.status;
+    throw error;
+  }
+  return res.json() as Promise<EmergingLeadersResponse>;
+}
+
+export async function fetchEmergingLeadersValidation(
+  accessToken: string,
+): Promise<EmergingLeadersValidationResponse> {
+  const res = await apiFetch("/research/emerging-leaders-validation", {
+    method: "GET",
+    accessToken,
+  });
+  if (!res.ok) {
+    const error = new Error(
+      res.status === 404
+        ? "Emerging Leaders validation is not available yet."
+        : `Failed to load Emerging Leaders validation (${res.status})`,
+    ) as ApiError;
+    error.status = res.status;
+    throw error;
+  }
+  return res.json() as Promise<EmergingLeadersValidationResponse>;
 }
 
 export async function fetchRankingsTop(

@@ -4,22 +4,19 @@ import { MoversSectionNav } from "@/components/movers/MoversSectionNav";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  hasMlMetrics?: boolean;
   className?: string;
 };
 
-export function TopMoversHeader({ hasMlMetrics = true, className }: Props) {
+export function EmergingLeadersHeader({ className }: Props) {
   return (
     <header className={cn("space-y-3", className)}>
       <MoversSectionNav />
       <div className="space-y-1">
         <h1 className="font-mono text-2xl font-semibold tracking-tight text-foreground">
-          Top Movers
+          Emerging Leaders
         </h1>
         <p className="text-sm text-muted">
-          {hasMlMetrics
-            ? "ML-ranked leaders vs the full universe"
-            : "Composite-ranked leaders vs the full universe"}
+          Setup quality before the move — consolidation, not momentum
         </p>
       </div>
     </header>

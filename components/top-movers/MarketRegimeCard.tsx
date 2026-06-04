@@ -6,6 +6,13 @@ import {
   regimeNarrative,
   regimeRiskTone,
 } from "@/lib/topMovers";
+import {
+  moversMetaBodyClass,
+  moversMetaCardClass,
+  moversMetaEyebrowClass,
+  moversMetaInsetClass,
+  moversMetaTitleClass,
+} from "@/lib/moversUi";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -41,20 +48,14 @@ export function MarketRegimeCard({
 
   return (
     <section
-      className={cn("app-panel space-y-3 px-4 py-4", className)}
+      className={cn(moversMetaCardClass, className)}
       aria-label="Market environment"
     >
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
-        Market environment
-      </p>
-      <h2 className="text-lg font-semibold leading-snug text-foreground">
-        {narrative.title}
-      </h2>
-      <p className="text-sm leading-relaxed text-muted">{narrative.guidance}</p>
-      <div className="space-y-1.5 rounded-lg border border-border bg-muted-bg/30 px-3 py-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
-          Regime impact
-        </p>
+      <p className={moversMetaEyebrowClass}>Market environment</p>
+      <h2 className={moversMetaTitleClass}>{narrative.title}</h2>
+      <p className={moversMetaBodyClass}>{narrative.guidance}</p>
+      <div className={moversMetaInsetClass}>
+        <p className={moversMetaEyebrowClass}>Regime impact</p>
         <p className="text-sm font-medium text-foreground">
           {narrative.signalImpact}
         </p>

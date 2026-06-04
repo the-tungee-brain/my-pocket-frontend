@@ -22,7 +22,9 @@ const items = [
     href: "/top-movers",
     label: "Movers",
     icon: TrendingUp,
-    isActive: (pathname: string) => pathname.startsWith("/top-movers"),
+    isActive: (pathname: string) =>
+      pathname.startsWith("/top-movers") ||
+      pathname.startsWith("/emerging-leaders"),
   },
   {
     href: "/settings",

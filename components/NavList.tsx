@@ -9,6 +9,7 @@ import {
   Link2,
   Search,
   Star,
+  Sprout,
   TrendingUp,
   X,
 } from "lucide-react";
@@ -75,6 +76,7 @@ export function NavList({
   const isPortfolio = pathname === "/portfolio";
   const isResearch = pathname.startsWith("/research");
   const isTopMovers = pathname.startsWith("/top-movers");
+  const isEmergingLeaders = pathname.startsWith("/emerging-leaders");
   const { symbol: hubSymbol } = pathname.match(/^\/research\/([^/]+)/)
     ? { symbol: pathname.split("/")[2]?.toUpperCase() ?? null }
     : { symbol: null };
@@ -188,6 +190,41 @@ export function NavList({
           <span className="truncate text-[10px] text-muted">Pipeline rankings</span>
         </div>
         {isTopMovers && (
+          <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
+        )}
+      </button>
+
+      <button
+        type="button"
+        disabled={loading}
+        aria-current={isEmergingLeaders ? "page" : undefined}
+        onClick={() => {
+          setSelectedView("research");
+          setSelectedSymbol(null);
+          router.replace("/emerging-leaders");
+        }}
+        className={cn(
+          "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
+          isEmergingLeaders ? navItemActive : navItemInactive,
+        )}
+      >
+        <span
+          className={cn(
+            "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
+            isEmergingLeaders
+              ? "border-accent/60 bg-accent-muted text-accent-strong"
+              : "border-border bg-muted-bg text-muted",
+          )}
+        >
+          <Sprout className="h-3.5 w-3.5" aria-hidden="true" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span>Emerging leaders</span>
+          <span className="truncate text-[10px] text-muted">
+            Pre-breakout setups
+          </span>
+        </div>
+        {isEmergingLeaders && (
           <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
         )}
       </button>

@@ -12,6 +12,12 @@ import {
   convictionForRow,
   sparklineFromScores,
 } from "@/lib/topMovers";
+import {
+  moversRankedListLabelClass,
+  moversRankedRowButtonClass,
+  moversRankedRowHoverClass,
+  moversRankedRowSelectedClass,
+} from "@/lib/moversUi";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -33,9 +39,7 @@ export function TopMoversTable({
 
   return (
     <div className="app-panel overflow-hidden">
-      <p className="border-b border-border px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
-        Ranked list
-      </p>
+      <p className={moversRankedListLabelClass}>Ranked list</p>
       <ul className="divide-y divide-border">
         {items.map((item) => {
           const sym = item.symbol.toUpperCase();
@@ -52,8 +56,8 @@ export function TopMoversTable({
                 type="button"
                 onClick={() => onSelect(sym)}
                 className={cn(
-                  "flex w-full gap-3 px-4 py-3.5 text-left transition-colors",
-                  selected ? "bg-accent-muted/40" : "hover:bg-muted-bg/50",
+                  moversRankedRowButtonClass,
+                  selected ? moversRankedRowSelectedClass : moversRankedRowHoverClass,
                 )}
                 aria-current={selected ? "true" : undefined}
               >

@@ -12,6 +12,7 @@ import { PageSplit } from "@/components/PageShell";
 import type { IntelligenceSignal } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
 import { pageSectionClass, pageOverviewAsideClass, pageOverviewMainClass, pageOverviewSplitClass } from "@/lib/pageLayout";
+import { ResearchPatternOverviewSections } from "@/components/research/ResearchPatternOverviewSections";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
@@ -72,6 +73,12 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             <ResearchStockChart
               symbol={symbol}
               chartIntelligence={intelligence?.patternIntelligence?.chartIntelligence}
+            />
+            <ResearchPatternOverviewSections
+              symbol={symbol}
+              intelligence={intelligence}
+              loading={loading}
+              className={pageSectionClass}
             />
             <SymbolIntelligencePanel
               intelligence={intelligence}
