@@ -43,6 +43,7 @@ async function exchangeGoogleIdToken(
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // TODO(security): These are server-side auth secrets but currently use NEXT_PUBLIC_* names for deployment compatibility. Verify whether they are exposed in the client bundle before renaming.
   providers: [Google({
     clientId: process.env.NEXT_PUBLIC_AUTH_GOOGLE_ID,
     clientSecret: process.env.NEXT_PUBLIC_AUTH_GOOGLE_SECRET
