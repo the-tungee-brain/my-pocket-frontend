@@ -68,7 +68,9 @@ export function useBusinessDetails(
       return;
     }
 
-    const cacheKey = `${symbolKey}:${BUSINESS_CACHE_VERSION}`;
+    const resolvedSymbol: string = symbolKey;
+    const cacheKey = `${resolvedSymbol}:${BUSINESS_CACHE_VERSION}`;
+    const businessPath = `/research/business?symbol=${encodeURIComponent(resolvedSymbol)}`;
 
     if (!enabled) {
       setBusiness(null);
@@ -98,9 +100,7 @@ export function useBusinessDetails(
 
     async function load() {
       try {
-        const res = await apiFetch(
-          `/research/business?symbol=${encodeURIComponent(symbolKey)}`,
-          {
+        const res = await apiFetch(businessPath, {
             method: "GET",
             accessToken: token,
             signal,
