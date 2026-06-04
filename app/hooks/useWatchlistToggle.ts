@@ -5,7 +5,7 @@ import { useToast } from "@/app/contexts/ToastContext";
 import { useWatchlist } from "./useWatchlist";
 import { track } from "@/lib/analytics";
 
-export function useWatchlistToggle(symbol: string) {
+export function useWatchlistToggle(symbol: string, companyName?: string) {
   const { isWatchlisted, toggle } = useWatchlist();
   const { showToast } = useToast();
   const upper = symbol.trim().toUpperCase();
@@ -14,7 +14,7 @@ export function useWatchlistToggle(symbol: string) {
   const handleToggle = useCallback(
     (event?: { stopPropagation?: () => void }) => {
       event?.stopPropagation?.();
-      const added = toggle(upper);
+      const added = toggle(upper, companyName);
       showToast(
         added
           ? `${upper} added to watchlist`
@@ -26,7 +26,7 @@ export function useWatchlistToggle(symbol: string) {
       });
       return added;
     },
-    [toggle, upper, showToast],
+    [toggle, upper, companyName, showToast],
   );
 
   return { watching, handleToggle, symbol: upper };

@@ -6,6 +6,7 @@ import { useMomentumBreakoutAlerts } from "@/app/hooks/useMomentumBreakoutAlerts
 import { useMomentumBreakoutFeatureFlags } from "@/app/hooks/useMomentumBreakoutFeatureFlags";
 import { useMomentumBreakoutScan } from "@/app/hooks/useMomentumBreakoutScan";
 import { MomentumBreakoutInvestorBrief } from "@/components/momentum-breakout/MomentumBreakoutInvestorBrief";
+import { MomentumBreakoutStockCheck } from "@/components/momentum-breakout/MomentumBreakoutStockCheck";
 import { MomentumBreakoutStructuredEmpty } from "@/components/momentum-breakout/MomentumBreakoutStructuredEmpty";
 import { AlertCard } from "@/components/momentum-breakout/AlertCard";
 import { MomentumBreakoutLaunchReadinessPanel } from "@/components/momentum-breakout/MomentumBreakoutLaunchReadinessPanel";
@@ -112,6 +113,13 @@ export function MomentumBreakoutAlertsPanel({ accessToken, className }: Props) {
         error={scanError}
         trackedSymbols={trackedSymbols}
         onTrackPlan={handleTrackPlan}
+      />
+
+      <MomentumBreakoutStockCheck
+        accessToken={accessToken}
+        trackedSymbols={trackedSymbols}
+        onTrackPlan={handleTrackPlan}
+        onAlertsChanged={() => void reload()}
       />
 
       <Card

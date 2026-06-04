@@ -83,6 +83,7 @@ export function NavList({
   const isResearch = pathname.startsWith("/research");
   const isTopMovers = pathname.startsWith("/top-movers");
   const isEmergingLeaders = pathname.startsWith("/emerging-leaders");
+  const isWatchlistPage = pathname === "/watchlist";
   const isMomentumBreakoutAlerts = pathname.startsWith(
     "/research/momentum-breakout-alerts",
   );
@@ -165,7 +166,42 @@ export function NavList({
             Company snapshots
           </span>
         </div>
-        {isResearch && (
+        {isResearch && !isWatchlistPage && (
+          <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
+        )}
+      </button>
+
+      <button
+        type="button"
+        disabled={loading}
+        aria-current={isWatchlistPage ? "page" : undefined}
+        onClick={() => {
+          setSelectedView("research");
+          setSelectedSymbol(null);
+          router.replace("/watchlist");
+        }}
+        className={cn(
+          "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
+          isWatchlistPage ? navItemActive : navItemInactive,
+        )}
+      >
+        <span
+          className={cn(
+            "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
+            isWatchlistPage
+              ? "border-accent/60 bg-accent-muted text-accent-strong"
+              : "border-border bg-muted-bg text-muted",
+          )}
+        >
+          <Star className="h-3.5 w-3.5" aria-hidden="true" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span>Watchlist</span>
+          <span className="truncate text-[10px] text-muted">
+            Folders & live quotes
+          </span>
+        </div>
+        {isWatchlistPage && (
           <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
         )}
       </button>
@@ -365,15 +401,31 @@ export function NavList({
       <div className="my-3 h-px bg-border" />
 
       <div className={navSectionHeaderClass}>
-        <div className="flex items-center justify-between">
-          <span className={navSectionTitleClass}>Watchlist</span>
+        <div className="flex items-center justify-between gap-2">
+          <Link
+            href="/watchlist"
+            className={cn(
+              navSectionTitleClass,
+              "transition hover:text-foreground",
+              pathname === "/watchlist" && "text-foreground",
+            )}
+          >
+            Watchlist
+          </Link>
           {watchlist.length > 0 && (
             <span className="rounded-full bg-muted-bg px-2 py-px text-[10px] text-muted">
               {watchlist.length}
             </span>
           )}
         </div>
-        <p className={navSectionSubtitleClass}>Saved for research</p>
+        <p className={navSectionSubtitleClass}>
+          <Link
+            href="/watchlist"
+            className="text-accent-strong/90 transition hover:text-accent-strong hover:underline"
+          >
+            Folders & quotes
+          </Link>
+        </p>
       </div>
 
       {watchlist.length === 0 ? (

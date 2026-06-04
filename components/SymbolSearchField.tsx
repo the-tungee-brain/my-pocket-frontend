@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { Search, SearchX } from "lucide-react";
 import { useSymbolSearch } from "@/app/hooks/useSymbolSearch";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ type Props = {
   onSelect: (symbol: string) => void;
   placeholder?: string;
   limit?: number;
+  clearOnSelect?: boolean;
   className?: string;
 };
 
@@ -22,22 +23,36 @@ export function SymbolSearchField({
   onSelect,
   placeholder = "Search symbol or company, e.g. AAPL",
   limit = 8,
+  clearOnSelect = true,
   className,
 }: Props) {
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+
   const { results, isLoading, error, refetch } = useSymbolSearch(value, {
     accessToken,
     limit,
   });
 
   const trimmed = value.trim();
-  const showPanel = !!trimmed;
+  const showPanel = !!trimmed && suggestionsOpen;
   const hasResults = !isLoading && !error && results.length > 0;
   const showEmptyState =
     !isLoading && !error && results.length === 0 && trimmed.length > 0;
 
   const handleSelect = (symbol: string) => {
-    onSelect(symbol.toUpperCase());
-    onChange("");
+    const upper = symbol.toUpperCase();
+    setSuggestionsOpen(false);
+    onSelect(upper);
+    if (clearOnSelect) {
+      onChange("");
+    } else {
+      onChange(upper);
+    }
+  };
+
+  const handleChange = (next: string) => {
+    setSuggestionsOpen(true);
+    onChange(next);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -54,7 +69,10 @@ export function SymbolSearchField({
         </span>
         <input
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => handleChange(event.target.value)}
+          onFocus={() => {
+            if (trimmed) setSuggestionsOpen(true);
+          }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground"

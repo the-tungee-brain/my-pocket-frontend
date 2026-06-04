@@ -28,6 +28,25 @@ async function parseError(res: Response, fallback: string): Promise<never> {
   throw new Error(detail);
 }
 
+export async function postMomentumBreakoutTradePlanAlert(
+  accessToken: string,
+  symbol: string,
+): Promise<{ planAvailable: boolean }> {
+  const res = await apiFetch("/strategy/momentum-breakout/trade-plan-alert", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify({
+      symbol: symbol.trim().toUpperCase(),
+      persistAlert: true,
+    }),
+  });
+  if (!res.ok) {
+    return parseError(res, `Could not track plan for ${symbol} (${res.status})`);
+  }
+  const body = (await res.json()) as { planAvailable?: boolean };
+  return { planAvailable: body.planAvailable ?? false };
+}
+
 export async function fetchMomentumBreakoutActiveAlerts(
   accessToken: string,
 ): Promise<MomentumBreakoutAlertListResponse> {

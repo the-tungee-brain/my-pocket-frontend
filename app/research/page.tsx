@@ -177,9 +177,17 @@ export default function ResearchPage() {
 
         {watchlist.length > 0 && (
           <div className="mt-3">
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-              Your watchlist
-            </p>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                Your watchlist
+              </p>
+              <Link
+                href="/watchlist"
+                className="text-[11px] font-medium text-accent-strong hover:underline"
+              >
+                Manage folders
+              </Link>
+            </div>
             <div className="flex flex-wrap gap-2">
               {watchlist.map((symbol) => (
                 <button

@@ -10,6 +10,8 @@ import { QueryProvider } from "./QueryProvider";
 import { PositionsProvider } from "./Providers";
 import { ToastProvider } from "./contexts/ToastContext";
 import { StrategyProvider } from "./contexts/StrategyContext";
+import { WatchlistProvider } from "./contexts/WatchlistContext";
+import { WatchlistSaveSymbolDialog } from "@/components/watchlist/WatchlistSaveSymbolDialog";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -21,9 +23,14 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <ProductAnalytics />
       <ToastProvider>
         <QueryProvider>
-          <PositionsProvider>
-            <StrategyProvider>{children}</StrategyProvider>
-          </PositionsProvider>
+          <WatchlistProvider>
+            <PositionsProvider>
+              <StrategyProvider>
+                {children}
+                <WatchlistSaveSymbolDialog />
+              </StrategyProvider>
+            </PositionsProvider>
+          </WatchlistProvider>
         </QueryProvider>
       </ToastProvider>
     </SessionProvider>
