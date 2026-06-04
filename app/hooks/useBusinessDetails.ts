@@ -59,16 +59,16 @@ export function useBusinessDetails(
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const key = symbol?.toUpperCase().trim();
+    const symbolKey = symbol?.toUpperCase().trim();
 
-    if (!key) {
+    if (!symbolKey) {
       setBusiness(null);
       setIsLoading(false);
       setError(null);
       return;
     }
 
-    const cacheKey = `${key}:${BUSINESS_CACHE_VERSION}`;
+    const cacheKey = `${symbolKey}:${BUSINESS_CACHE_VERSION}`;
 
     if (!enabled) {
       setBusiness(null);
@@ -99,7 +99,7 @@ export function useBusinessDetails(
     async function load() {
       try {
         const res = await apiFetch(
-          `/research/business?symbol=${encodeURIComponent(key)}`,
+          `/research/business?symbol=${encodeURIComponent(symbolKey)}`,
           {
             method: "GET",
             accessToken: token,
