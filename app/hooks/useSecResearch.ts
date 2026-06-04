@@ -136,7 +136,8 @@ export function useSecLookup(
       return;
     }
 
-    const cached = lookupCache.get(key);
+    const resolvedSymbol: string = key;
+    const cached = lookupCache.get(resolvedSymbol);
     if (cached) {
       setLookup(cached);
       setIsLoading(false);
@@ -150,10 +151,10 @@ export function useSecLookup(
       setError(null);
       try {
         const data = await secFetch<SecLookup>(
-          `/research/sec/lookup?symbol=${encodeURIComponent(key)}`,
+          `/research/sec/lookup?symbol=${encodeURIComponent(resolvedSymbol)}`,
           accessToken,
           lookupCache,
-          key,
+          resolvedSymbol,
         );
         if (!cancelled) setLookup(data);
       } catch (e: any) {
@@ -192,7 +193,8 @@ export function useSecFilings(
       return;
     }
 
-    const cacheId = cacheKey([key, "filings", limit]);
+    const resolvedSymbol: string = key;
+    const cacheId = cacheKey([resolvedSymbol, "filings", limit]);
     const cached = filingsCache.get(cacheId);
     if (cached) {
       setFilings(cached);
@@ -207,7 +209,7 @@ export function useSecFilings(
       setError(null);
       try {
         const data = await secFetch<SecFilingsResponse>(
-          `/research/sec/filings?symbol=${encodeURIComponent(key)}&limit=${limit}`,
+          `/research/sec/filings?symbol=${encodeURIComponent(resolvedSymbol)}&limit=${limit}`,
           accessToken,
           filingsCache,
           cacheId,
@@ -252,7 +254,8 @@ export function useSecFinancials(
       return;
     }
 
-    const cacheId = cacheKey([key, "financials", period, limit]);
+    const resolvedSymbol: string = key;
+    const cacheId = cacheKey([resolvedSymbol, "financials", period, limit]);
     const cached = financialsCache.get(cacheId);
     if (cached) {
       setFinancials(cached);
@@ -267,7 +270,7 @@ export function useSecFinancials(
       setError(null);
       try {
         const data = await secFetch<SecFinancialsResponse>(
-          `/research/sec/financials?symbol=${encodeURIComponent(key)}&period=${period}&limit=${limit}`,
+          `/research/sec/financials?symbol=${encodeURIComponent(resolvedSymbol)}&period=${period}&limit=${limit}`,
           accessToken,
           financialsCache,
           cacheId,
@@ -310,7 +313,8 @@ export function useSecRatios(
       return;
     }
 
-    const cacheId = cacheKey([key, "ratios", period, limit]);
+    const resolvedSymbol: string = key;
+    const cacheId = cacheKey([resolvedSymbol, "ratios", period, limit]);
     const cached = ratiosCache.get(cacheId);
     if (cached) {
       setRatios(cached);
@@ -325,7 +329,7 @@ export function useSecRatios(
       setError(null);
       try {
         const data = await secFetch<SecRatiosResponse>(
-          `/research/sec/ratios?symbol=${encodeURIComponent(key)}&period=${period}&limit=${limit}`,
+          `/research/sec/ratios?symbol=${encodeURIComponent(resolvedSymbol)}&period=${period}&limit=${limit}`,
           accessToken,
           ratiosCache,
           cacheId,

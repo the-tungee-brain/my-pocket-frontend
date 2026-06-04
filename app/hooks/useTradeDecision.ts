@@ -57,15 +57,19 @@ export function useTradeDecision(
       return;
     }
 
+    const resolvedSymbol: string = key;
+    const tradeDecisionPath =
+      `/research/trade-decision?symbol=${encodeURIComponent(resolvedSymbol)}`;
     const controller = new AbortController();
     const token = accessToken;
 
     async function load() {
       try {
-        const res = await apiFetch(
-          `/research/trade-decision?symbol=${encodeURIComponent(key)}`,
-          { method: "GET", accessToken: token, signal: controller.signal },
-        );
+        const res = await apiFetch(tradeDecisionPath, {
+          method: "GET",
+          accessToken: token,
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error("Failed to load trade decision");
         const data = (await res.json()) as TradeDecision;
         if (controller.signal.aborted) return;
