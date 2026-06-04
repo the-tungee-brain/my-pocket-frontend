@@ -8,6 +8,10 @@ export function symbolHubPath(
   return `/research/${encoded}/${tab}`;
 }
 
+export function symbolPositionPath(symbol: string): string {
+  return symbolHubPath(symbol, "position");
+}
+
 export function parseResearchRoute(pathname: string): {
   symbol: string | null;
   tab: string | null;

@@ -11,6 +11,8 @@ import { useStrategyContext } from "@/app/contexts/StrategyContext";
 import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { PortfolioAttentionSection, countAttentionItems } from "@/components/PortfolioAttentionSection";
+import { PortfolioExitAttentionRows } from "@/components/EquityExitGuidancePanel";
+import { usePortfolioExitAttention } from "@/app/hooks/usePortfolioExitAttention";
 import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
 import { AnalysisPanel, type PortfolioNavigationRequest } from "@/components/AnalysisPanel";
@@ -316,6 +318,15 @@ export default function PortfolioPage() {
   });
   const attentionQueue = morningBrief?.attentionQueue ?? [];
 
+  const {
+    items: exitAttentionItems,
+    isLoading: exitAttentionLoading,
+  } = usePortfolioExitAttention({
+    accessToken: sessionAccessToken,
+    enabled: showContent && activeSection === "today",
+    limit: 10,
+  });
+
   const todayBadgeCount = useMemo(
     () =>
       countAttentionItems({
@@ -448,6 +459,12 @@ export default function PortfolioPage() {
                 onRunTax={handleTaxAlert}
                 onRunActionId={handleSuggestedAction}
               />
+
+              {!exitAttentionLoading && exitAttentionItems.length > 0 && (
+                <section className={sectionClass} aria-label="Exit guidance attention">
+                  <PortfolioExitAttentionRows items={exitAttentionItems} />
+                </section>
+              )}
 
               {(showBriefSection || strategyPlaybook || !showStrategyJourney) && (
                 <div

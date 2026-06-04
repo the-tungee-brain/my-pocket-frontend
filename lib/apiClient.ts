@@ -41,6 +41,10 @@ import type { AccountPlan } from "@/app/types/account";
 import type { EmergingLeadersResponse } from "@/app/types/emergingLeaders";
 import type { EmergingLeadersValidationResponse } from "@/app/types/emergingLeadersValidation";
 import type {
+  EquityExitGuidance,
+  PortfolioExitAttentionResponse,
+} from "@/app/types/equityExitGuidance";
+import type {
   PortfolioLatestResponse,
   RankingsTopResponse,
   SystemHealthResponse,
@@ -787,6 +791,51 @@ export async function fetchEmergingLeaders(
     throw error;
   }
   return res.json() as Promise<EmergingLeadersResponse>;
+}
+
+export async function fetchEquityExitGuidance(
+  symbol: string,
+  options: { accessToken: string; signal?: AbortSignal },
+): Promise<EquityExitGuidance> {
+  const res = await apiFetch(
+    `/research/equity-exit-guidance?symbol=${encodeURIComponent(symbol)}`,
+    {
+      method: "GET",
+      accessToken: options.accessToken,
+      signal: options.signal,
+    },
+  );
+  if (!res.ok) {
+    const error = new Error(
+      `Failed to load exit guidance (${res.status})`,
+    ) as ApiError;
+    error.status = res.status;
+    throw error;
+  }
+  return res.json() as Promise<EquityExitGuidance>;
+}
+
+export async function fetchPortfolioExitAttention(options: {
+  accessToken: string;
+  limit?: number;
+  signal?: AbortSignal;
+}): Promise<PortfolioExitAttentionResponse> {
+  const res = await apiFetch(
+    `/portfolio/exit-attention${buildQuery({ limit: options.limit ?? 10 })}`,
+    {
+      method: "GET",
+      accessToken: options.accessToken,
+      signal: options.signal,
+    },
+  );
+  if (!res.ok) {
+    const error = new Error(
+      `Failed to load exit attention (${res.status})`,
+    ) as ApiError;
+    error.status = res.status;
+    throw error;
+  }
+  return res.json() as Promise<PortfolioExitAttentionResponse>;
 }
 
 export async function fetchEmergingLeadersValidation(

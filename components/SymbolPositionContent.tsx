@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import { AnalysisPanel } from "@/components/AnalysisPanel";
+import { EquityExitGuidancePanel } from "@/components/EquityExitGuidancePanel";
 import { TaxWashSaleStrip } from "@/components/TaxWashSaleStrip";
 import { OptionsTabPrompt } from "@/components/OptionsTabPrompt";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
@@ -148,6 +149,12 @@ export function SymbolPositionContent({ symbol }: Props) {
       {showOptionsPrompt && (
         <OptionsTabPrompt symbol={symbolUpper} className={panelClass} />
       )}
+
+      <EquityExitGuidancePanel
+        symbol={symbolUpper}
+        accessToken={accessToken}
+        className={panelClass}
+      />
 
       <AnalysisPanel
         mode="symbol"
