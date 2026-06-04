@@ -19,8 +19,8 @@ export function usePositionGuidance(
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const key = symbol?.toUpperCase().trim();
-    if (!key || !enabled) {
+    const symbolKey = symbol?.toUpperCase().trim();
+    if (!symbolKey || !enabled) {
       setGuidance(null);
       setIsLoading(false);
       setError(null);
@@ -33,12 +33,13 @@ export function usePositionGuidance(
       return;
     }
 
+    const resolvedSymbol: string = symbolKey;
     const controller = new AbortController();
     const token = accessToken;
 
     async function load() {
       try {
-        const data = await fetchPositionGuidance(key, {
+        const data = await fetchPositionGuidance(resolvedSymbol, {
           accessToken: token,
           signal: controller.signal,
         });
