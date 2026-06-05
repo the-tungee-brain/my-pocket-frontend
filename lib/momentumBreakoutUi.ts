@@ -18,13 +18,15 @@ export const mbEyebrowClass = appEyebrowClass;
 export const mbSectionLabelClass = appSectionLabelClass;
 
 export const mbPageGridClass =
-  "grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] xl:items-start";
+  "grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] xl:items-start";
 
 export const mbScanColumnClass = "flex min-w-0 flex-col gap-5";
 
 export const mbWatchlistStickyClass = "xl:sticky xl:top-20";
 
-export function mbHeroShellClass(tone: "favorable" | "cautious" | "neutral"): string {
+export function mbHeroShellClass(
+  tone: "favorable" | "cautious" | "neutral",
+): string {
   switch (tone) {
     case "favorable":
       return "border-l-4 border-l-success/70 bg-gradient-to-br from-success/[0.07] via-transparent to-transparent";
@@ -35,7 +37,9 @@ export function mbHeroShellClass(tone: "favorable" | "cautious" | "neutral"): st
   }
 }
 
-export function mbStatusPillClass(kind: "approved" | "caution" | "rejected" | "neutral"): string {
+export function mbStatusPillClass(
+  kind: "approved" | "caution" | "rejected" | "neutral",
+): string {
   const base =
     "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
   switch (kind) {
@@ -53,13 +57,23 @@ export function mbStatusPillClass(kind: "approved" | "caution" | "rejected" | "n
 export const mbStatTileClass =
   "rounded-xl border border-border/70 bg-background/50 px-3 py-2.5";
 
+export const mbMetricTileClass =
+  "min-w-0 rounded-lg border border-border/60 bg-background/55 px-3 py-2.5";
+
+export const mbMetricLabelClass =
+  "text-[10px] font-semibold uppercase tracking-wide text-muted";
+
+export const mbMetricValueClass =
+  "mt-1 font-mono text-sm font-semibold tabular-nums text-foreground sm:text-base";
+
 export const mbOpportunityCardClass =
-  "rounded-xl border border-border/70 bg-background/40 p-3.5 transition-colors hover:border-border";
+  "rounded-lg border border-border/70 bg-background/40 p-3.5 transition-colors hover:border-border";
 
 export const mbOpportunityCardApprovedClass =
-  "rounded-xl border border-success/20 bg-success/[0.04] p-3.5 transition-colors hover:border-success/35";
+  "rounded-lg border border-success/20 bg-success/[0.04] p-3.5 transition-colors hover:border-success/35";
 
-export const mbInsetListClass = "app-inset divide-y divide-border/60 overflow-hidden p-0";
+export const mbInsetListClass =
+  "app-inset divide-y divide-border/60 overflow-hidden p-0";
 
 export const mbInsetRowClass =
   "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm transition hover:bg-muted-bg/50";

@@ -239,11 +239,6 @@ export async function fetchAssetType(
     return lookup.assetType;
   }
 
-  if (await probeEtfHoldings(key, accessToken)) {
-    rememberAssetType(key, "ETF");
-    return "ETF";
-  }
-
   const searchType = await fetchAssetTypeFromSearch(key, accessToken);
   if (searchType) {
     rememberAssetType(key, searchType);

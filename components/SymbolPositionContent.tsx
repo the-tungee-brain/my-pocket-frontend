@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
+import { useResearchSymbolIntelligence } from "@/app/research/[symbol]/ResearchSymbolIntelligenceContext";
 import { SymbolLegsTable } from "@/components/analysis/analysisPanelHoldings";
 import { PositionGuidancePanel } from "@/components/PositionGuidancePanel";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
@@ -41,7 +41,7 @@ export function SymbolPositionContent({ symbol }: Props) {
   const symbolUpper = symbol.toUpperCase();
   const chatKey = symbolChatKey(symbolUpper) ?? symbolUpper;
 
-  const { intelligence } = useSymbolIntelligence(symbol, { accessToken });
+  const intelligence = useResearchSymbolIntelligence()?.intelligence ?? null;
   const {
     guidance,
     isLoading: guidanceLoading,

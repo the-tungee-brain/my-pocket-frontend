@@ -47,6 +47,7 @@ export function useEtfHoldings(
     if (!accessToken) {
       setHoldings(null);
       setIsLoading(false);
+      setError(null);
       return;
     }
 
@@ -55,6 +56,9 @@ export function useEtfHoldings(
       setError(null);
       return;
     }
+
+    const requestKey = key;
+    const requestToken = accessToken;
 
     if (overviewBundle?.etfHoldings) {
       setHoldings(overviewBundle.etfHoldings);
@@ -78,13 +82,19 @@ export function useEtfHoldings(
       setError(null);
 
       try {
-        const data = await fetchEtfHoldings(key!, accessToken!, limit);
+        const data = await fetchEtfHoldings(requestKey, requestToken, limit);
         if (cancelled) return;
 
         setHoldings(data);
+        setError(
+          data
+            ? null
+            : "ETF holdings are unavailable for this symbol right now.",
+        );
       } catch {
         if (cancelled) return;
         setHoldings(null);
+        setError("ETF holdings are unavailable for this symbol right now.");
       } finally {
         if (!cancelled) {
           setIsLoading(false);

@@ -30,6 +30,7 @@ import {
   useResearchAssetTypeContext,
 } from "./ResearchAssetTypeContext";
 import { ResearchSymbolHeaderProvider } from "./ResearchSymbolHeaderContext";
+import { ResearchSymbolIntelligenceProvider } from "./ResearchSymbolIntelligenceContext";
 import { TradeDecisionPanel } from "@/components/TradeDecisionPanel";
 import { pageSectionClass } from "@/lib/pageLayout";
 
@@ -53,14 +54,17 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
   const activeTab = pathname.split("/")[3] ?? "overview";
   const hasPosition = (positionMap[symbolUpper]?.length ?? 0) > 0;
   const userPositions = positionMap[symbolUpper];
-  const { intelligence } = useSymbolIntelligence(symbol, {
+  const includeOptions =
+    activeTab === "overview" ||
+    activeTab === "options" ||
+    symbolHasOptionPositions(userPositions);
+  const symbolIntelligence = useSymbolIntelligence(symbol, {
     accessToken,
-    includeOptions:
-      activeTab === "options" || symbolHasOptionPositions(userPositions),
+    includeOptions,
   });
   const showOptionsTab = shouldShowOptionsTab(
     userPositions,
-    intelligence,
+    symbolIntelligence.intelligence,
     activeTab,
   );
   const showWheelBacktestTab = profile?.primaryStrategy === "wheel";
@@ -77,6 +81,7 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
   }, [symbol, symbolUpper, activeTab, hasPosition]);
 
   useEffect(() => {
+    void pathname;
     const root = document.getElementById("main-content");
     root?.scrollTo({ top: 0 });
   }, [pathname]);
@@ -102,7 +107,14 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
   }, [scrollCollapsed]);
 
   return (
-    <div className={cn(pageShellClass, "min-w-0 pb-2")}>
+    <ResearchSymbolIntelligenceProvider
+      intelligence={symbolIntelligence.intelligence}
+      loading={symbolIntelligence.loading}
+      error={symbolIntelligence.error}
+      refetch={symbolIntelligence.refetch}
+      includeOptions={includeOptions}
+    >
+      <div className={cn(pageShellClass, "min-w-0 pb-2")}>
       <div
         ref={sentinelRef}
         className="pointer-events-none h-px"
@@ -182,7 +194,8 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
         ) : null}
         {children}
       </div>
-    </div>
+      </div>
+    </ResearchSymbolIntelligenceProvider>
   );
 }
 

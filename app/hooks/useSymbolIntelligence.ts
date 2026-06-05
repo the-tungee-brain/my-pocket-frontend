@@ -3,16 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchSymbolIntelligence } from "@/lib/apiClient";
 import type { SymbolIntelligence } from "@/app/types/intelligence";
-import { useOverviewBundleGate } from "@/app/research/ResearchOverviewContext";
-
-const cache = new Map<string, SymbolIntelligence>();
 
 export function seedSymbolIntelligenceCache(
   symbol: string,
   intelligence: SymbolIntelligence,
 ) {
-  const key = symbol.toUpperCase().trim();
-  if (key) cache.set(key, intelligence);
+  void symbol;
+  void intelligence;
 }
 
 type Options = {
@@ -26,12 +23,9 @@ export function useSymbolIntelligence(
   options: Options = {},
 ) {
   const { accessToken, enabled = true, includeOptions = true } = options;
-  const { bundle: overviewBundle, waitForBundle } = useOverviewBundleGate(symbol);
   const key = symbol?.toUpperCase().trim() ?? "";
 
-  const [intelligence, setIntelligence] = useState<SymbolIntelligence | null>(
-    () => (key ? cache.get(key) ?? null : null),
-  );
+  const [intelligence, setIntelligence] = useState<SymbolIntelligence | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,26 +33,7 @@ export function useSymbolIntelligence(
     async (forceRefresh = false) => {
       if (!key || !accessToken || !enabled) return;
 
-      if (!forceRefresh) {
-        if (waitForBundle) {
-          setLoading(true);
-          setError(null);
-          return;
-        }
-        if (overviewBundle?.intelligence) {
-          cache.set(key, overviewBundle.intelligence);
-          setIntelligence(overviewBundle.intelligence);
-          setError(null);
-          setLoading(false);
-          return;
-        }
-        const cached = cache.get(key);
-        if (cached) {
-          setIntelligence(cached);
-          setError(null);
-          return;
-        }
-      }
+      void forceRefresh;
 
       setLoading(true);
       setError(null);
@@ -67,7 +42,6 @@ export function useSymbolIntelligence(
         const data = await fetchSymbolIntelligence(accessToken, key, {
           includeOptions,
         });
-        cache.set(key, data);
         setIntelligence(data);
       } catch (err) {
         const status =
@@ -87,7 +61,7 @@ export function useSymbolIntelligence(
         setLoading(false);
       }
     },
-    [accessToken, enabled, includeOptions, key, overviewBundle, waitForBundle],
+    [accessToken, enabled, includeOptions, key],
   );
 
   useEffect(() => {

@@ -11,7 +11,9 @@ export function seedResearchOverviewCaches(bundle: ResearchOverviewBundle) {
   const key = bundle.symbol.toUpperCase();
   if (!key) return;
 
-  seedSymbolIntelligenceCache(key, bundle.intelligence);
+  if (!bundle.intelligence.partial) {
+    seedSymbolIntelligenceCache(key, bundle.intelligence);
+  }
   if (bundle.assetType) {
     rememberAssetType(key, bundle.assetType);
   }

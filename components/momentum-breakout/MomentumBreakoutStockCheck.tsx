@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { useWatchlistContext } from "@/app/contexts/WatchlistContext";
 import { sortedFolders } from "@/lib/watchlistWorkspace";
@@ -13,6 +13,9 @@ import { formatUsdLevel } from "@/lib/momentumBreakoutAlertUi";
 import {
   mbChipClass,
   mbInsetListClass,
+  mbMetricLabelClass,
+  mbMetricTileClass,
+  mbMetricValueClass,
   mbOpportunityCardClass,
   mbSectionLabelClass,
   mbStatusPillClass,
@@ -26,10 +29,23 @@ type Props = {
   trackedSymbols?: ReadonlySet<string>;
   onTrackPlan?: (symbol: string) => void;
   onAlertsChanged?: () => void;
+  fixtureResult?: MomentumBreakoutCheckResponse | null;
+  fixtureError?: string | null;
   className?: string;
 };
 
-function resultAccentClass(status: MomentumBreakoutCheckResponse["status"]): string {
+function ResultMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={mbMetricTileClass}>
+      <dt className={mbMetricLabelClass}>{label}</dt>
+      <dd className={mbMetricValueClass}>{value}</dd>
+    </div>
+  );
+}
+
+function resultAccentClass(
+  status: MomentumBreakoutCheckResponse["status"],
+): string {
   switch (status) {
     case "TRADABLE_BREAKOUT":
       return "border-l-success/60 bg-success/[0.04]";
@@ -62,15 +78,30 @@ export function MomentumBreakoutStockCheck({
   trackedSymbols,
   onTrackPlan,
   onAlertsChanged,
+  fixtureResult = null,
+  fixtureError = null,
   className,
 }: Props) {
-  const [symbolInput, setSymbolInput] = useState("");
+  const [symbolInput, setSymbolInput] = useState(fixtureResult?.symbol ?? "");
   const [tracking, setTracking] = useState(false);
   const [customLoading, setCustomLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<MomentumBreakoutCheckResponse | null>(null);
-  const [customPlan, setCustomPlan] = useState<CustomTradePlanResponse | null>(null);
+  const [error, setError] = useState<string | null>(fixtureError);
+  const [result, setResult] = useState<MomentumBreakoutCheckResponse | null>(
+    fixtureResult,
+  );
+  const [customPlan, setCustomPlan] = useState<CustomTradePlanResponse | null>(
+    null,
+  );
   const { symbols: watchlistSymbols, sortedFolderList } = useWatchlistContext();
+
+  useEffect(() => {
+    setResult(fixtureResult);
+    setError(fixtureError);
+    setCustomPlan(null);
+    if (fixtureResult?.symbol) {
+      setSymbolInput(fixtureResult.symbol);
+    }
+  }, [fixtureError, fixtureResult]);
 
   const watchlistSuggestions = useMemo(() => {
     const seen = new Set<string>();
@@ -130,7 +161,10 @@ export function MomentumBreakoutStockCheck({
     setTracking(true);
     setError(null);
     try {
-      const created = await postMomentumBreakoutTradePlanAlert(accessToken, sym);
+      const created = await postMomentumBreakoutTradePlanAlert(
+        accessToken,
+        sym,
+      );
       if (!created.planAvailable) {
         setError(
           "We could not save this educational plan. It may not pass current safety rules.",
@@ -171,12 +205,7 @@ export function MomentumBreakoutStockCheck({
     result != null && trackedSymbols?.has(result.symbol.toUpperCase());
 
   return (
-    <div className={cn("space-y-4", className)} aria-label="Check any stock">
-      <p className="text-sm text-muted">
-        Search any symbol after reviewing the scan, or pick one from your
-        research watchlist.
-      </p>
-
+    <div className={cn("space-y-4", className)}>
       <SymbolSearchField
         accessToken={accessToken}
         value={symbolInput}
@@ -190,7 +219,7 @@ export function MomentumBreakoutStockCheck({
       {watchlistSuggestions.length > 0 && (
         <div>
           <p className={mbSectionLabelClass}>From your watchlist</p>
-          <div className="mt-2 flex max-h-28 flex-wrap gap-2 overflow-y-auto">
+          <div className="mt-2 flex max-h-24 flex-wrap gap-2 overflow-y-auto">
             {watchlistSuggestions.map((item) => (
               <button
                 key={item.symbol}
@@ -208,7 +237,10 @@ export function MomentumBreakoutStockCheck({
       )}
 
       {error && (
-        <p className="rounded-lg border border-danger/25 bg-danger/5 px-3 py-2 text-sm text-danger" role="alert">
+        <p
+          className="rounded-lg border border-danger/25 bg-danger/5 px-3 py-2 text-sm text-danger"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -221,7 +253,7 @@ export function MomentumBreakoutStockCheck({
           )}
         >
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-sm font-semibold text-foreground">
+            <span className="font-mono text-base font-semibold text-foreground">
               {result.symbol}
             </span>
             <span className={mbStatusPillClass(resultPillKind(result.status))}>
@@ -234,6 +266,27 @@ export function MomentumBreakoutStockCheck({
           <p className="mt-1.5 text-sm leading-relaxed text-muted">
             {result.verdictMessage}
           </p>
+
+          {result.entryPrice != null && result.stopPrice != null && (
+            <dl className="mt-4 grid grid-cols-3 gap-2">
+              <ResultMetric
+                label="Entry"
+                value={formatUsdLevel(result.entryPrice)}
+              />
+              <ResultMetric
+                label="Stop"
+                value={formatUsdLevel(result.stopPrice)}
+              />
+              <ResultMetric
+                label="Target"
+                value={
+                  result.targetPrice != null
+                    ? formatUsdLevel(result.targetPrice)
+                    : "-"
+                }
+              />
+            </dl>
+          )}
 
           {result.status === "REJECTED_BREAKOUT" &&
             result.rejectionReasons.length > 0 && (
@@ -258,30 +311,21 @@ export function MomentumBreakoutStockCheck({
               </ul>
             )}
 
-          {result.entryPrice != null && result.stopPrice != null && (
-            <p className="mt-3 text-xs text-muted">
-              Entry {formatUsdLevel(result.entryPrice)} · Stop{" "}
-              {formatUsdLevel(result.stopPrice)} · Target{" "}
-              {result.targetPrice != null
-                ? formatUsdLevel(result.targetPrice)
-                : "—"}
-            </p>
-          )}
-
-          {result.status === "TRADABLE_BREAKOUT" && result.canTrackBreakoutPlan && (
-            <Button
-              type="button"
-              variant={alreadyTracked ? "outline" : "default"}
-              size="sm"
-              className="mt-4 w-full"
-              isLoading={tracking}
-              onClick={() => void handleTrack()}
-            >
-              {alreadyTracked
-                ? "View on watchlist"
-                : "Track this breakout plan"}
-            </Button>
-          )}
+          {result.status === "TRADABLE_BREAKOUT" &&
+            result.canTrackBreakoutPlan && (
+              <Button
+                type="button"
+                variant={alreadyTracked ? "outline" : "default"}
+                size="sm"
+                className="mt-4 w-full"
+                isLoading={tracking}
+                onClick={() => void handleTrack()}
+              >
+                {alreadyTracked
+                  ? "View on watchlist"
+                  : "Track this breakout plan"}
+              </Button>
+            )}
 
           {result.status === "REJECTED_BREAKOUT" &&
             result.canTrackBreakoutPlan && (
@@ -328,7 +372,9 @@ export function MomentumBreakoutStockCheck({
               <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.currentPrice)}
               </dd>
-              <dd className="text-[11px] text-muted">As of {customPlan.latestBarDate}</dd>
+              <dd className="text-[11px] text-muted">
+                As of {customPlan.latestBarDate}
+              </dd>
             </div>
             <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
               <dt className="text-xs text-muted">Entry trigger</dt>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Bell, ListChecks, Loader2, RefreshCw } from "lucide-react";
+import { Bell, Clock, ListChecks, Loader2, RefreshCw } from "lucide-react";
 import { useMomentumBreakoutAlerts } from "@/app/hooks/useMomentumBreakoutAlerts";
 import { useMomentumBreakoutScan } from "@/app/hooks/useMomentumBreakoutScan";
 import { MomentumBreakoutInvestorBrief } from "@/components/momentum-breakout/MomentumBreakoutInvestorBrief";
@@ -29,9 +29,15 @@ import {
   mbScanColumnClass,
   mbWatchlistStickyClass,
 } from "@/lib/momentumBreakoutUi";
-import { appIconBoxClass, appStackClass, appTabBarClass, appTabLinkClass } from "@/lib/appUi";
+import {
+  appIconBoxClass,
+  appStackClass,
+  appTabBarClass,
+  appTabLinkClass,
+} from "@/lib/appUi";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
+import type { MomentumBreakoutDevFixture } from "@/lib/momentumBreakoutDevFixtures";
 
 type Tab = "active" | "history" | "performance";
 
@@ -39,38 +45,55 @@ type Props = {
   accessToken: string;
   flags: MomentumBreakoutFeatureFlags;
   className?: string;
+  fixture?: MomentumBreakoutDevFixture | null;
 };
 
 export function MomentumBreakoutAlertsPanel({
   accessToken,
   flags,
   className,
+  fixture = null,
 }: Props) {
   const [tab, setTab] = useState<Tab>("active");
   const {
-    activeAlerts,
-    historyAlerts,
-    disclaimer,
-    loading,
-    refreshing,
-    error,
-    lastUpdated,
-    refreshWarnings,
+    activeAlerts: liveActiveAlerts,
+    historyAlerts: liveHistoryAlerts,
+    disclaimer: liveDisclaimer,
+    loading: liveLoading,
+    refreshing: liveRefreshing,
+    error: liveError,
+    lastUpdated: liveLastUpdated,
+    refreshWarnings: liveRefreshWarnings,
     reload,
     manualRefresh,
     cancelAlert,
     cancellingAlertId,
   } = useMomentumBreakoutAlerts(accessToken, {
     includeHistory: tab === "history",
+    enabled: !fixture,
   });
   const {
-    scan: scanSummary,
-    loading: scanLoading,
-    error: scanError,
-  } = useMomentumBreakoutScan(accessToken, { tradableOnly: false });
+    scan: liveScanSummary,
+    loading: liveScanLoading,
+    error: liveScanError,
+  } = useMomentumBreakoutScan(accessToken, {
+    tradableOnly: false,
+    enabled: !fixture,
+  });
 
   const [watchlistHighlight, setWatchlistHighlight] = useState(false);
 
+  const activeAlerts = fixture?.activeAlerts ?? liveActiveAlerts;
+  const historyAlerts = fixture?.historyAlerts ?? liveHistoryAlerts;
+  const disclaimer = fixture?.disclaimer ?? liveDisclaimer;
+  const loading = fixture?.alertsLoading ?? liveLoading;
+  const refreshing = fixture ? false : liveRefreshing;
+  const error = fixture?.alertsError ?? liveError;
+  const lastUpdated = fixture?.lastUpdated ?? liveLastUpdated;
+  const refreshWarnings = fixture?.refreshWarnings ?? liveRefreshWarnings;
+  const scanSummary = fixture?.scan ?? liveScanSummary;
+  const scanLoading = fixture?.scanLoading ?? liveScanLoading;
+  const scanError = fixture?.scanError ?? liveScanError;
   const displayed = tab === "active" ? activeAlerts : historyAlerts;
 
   const watchlistPricesLabel = useMemo(() => {
@@ -109,13 +132,16 @@ export function MomentumBreakoutAlertsPanel({
             <div className={mbPanelHeaderClass}>
               <div className="flex min-w-0 items-center gap-2">
                 <div
-                  className={cn(appIconBoxClass, "h-8 w-8 shrink-0 text-accent-strong")}
+                  className={cn(
+                    appIconBoxClass,
+                    "h-8 w-8 shrink-0 text-accent-strong",
+                  )}
                   aria-hidden
                 >
                   <ListChecks className="h-4 w-4" />
                 </div>
-                <div>
-                  <p className={mbEyebrowClass}>Scanner</p>
+                <div className="min-w-0">
+                  <p className={mbEyebrowClass}>Scan</p>
                   <h2 className="text-sm font-semibold text-foreground">
                     Today&apos;s market scan
                   </h2>
@@ -142,8 +168,8 @@ export function MomentumBreakoutAlertsPanel({
                 >
                   <Bell className="h-4 w-4" />
                 </div>
-                <div>
-                  <p className={mbEyebrowClass}>Manual check</p>
+                <div className="min-w-0">
+                  <p className={mbEyebrowClass}>Check</p>
                   <h2 className="text-sm font-semibold text-foreground">
                     Check any stock
                   </h2>
@@ -156,6 +182,8 @@ export function MomentumBreakoutAlertsPanel({
                 trackedSymbols={trackedSymbols}
                 onTrackPlan={handleTrackPlan}
                 onAlertsChanged={() => void reload()}
+                fixtureResult={fixture?.manualResult ?? null}
+                fixtureError={fixture?.manualError ?? null}
               />
             </div>
           </section>
@@ -174,18 +202,16 @@ export function MomentumBreakoutAlertsPanel({
         >
           <div className={cn(mbPanelHeaderClass, "flex-wrap gap-3")}>
             <div className="min-w-0 flex-1">
-              <p className={mbEyebrowClass}>Price alerts</p>
+              <p className={mbEyebrowClass}>Monitor</p>
               <h2 className="text-sm font-semibold text-foreground">
-                Your plan watchlist
+                Trade plans
               </h2>
-              <p className="mt-0.5 text-xs text-muted">
-                Educational tracking only — not your research watchlist folders.
-              </p>
             </div>
-            <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               {watchlistPricesLabel && (
-                <span className="text-xs tabular-nums text-muted">
-                  Updated {watchlistPricesLabel}
+                <span className="inline-flex items-center gap-1.5 text-xs tabular-nums text-muted">
+                  <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                  {watchlistPricesLabel}
                 </span>
               )}
               <Button
@@ -210,7 +236,11 @@ export function MomentumBreakoutAlertsPanel({
               </p>
             )}
 
-            <div className={appTabBarClass} role="tablist" aria-label="Watchlist views">
+            <div
+              className={appTabBarClass}
+              role="tablist"
+              aria-label="Trade plan views"
+            >
               <button
                 type="button"
                 role="tab"
@@ -218,7 +248,8 @@ export function MomentumBreakoutAlertsPanel({
                 className={appTabLinkClass(tab === "active")}
                 onClick={() => setTab("active")}
               >
-                Active ({activeAlerts.length})
+                Active
+                <span className="ml-1 text-muted">({activeAlerts.length})</span>
               </button>
               <button
                 type="button"
@@ -227,7 +258,10 @@ export function MomentumBreakoutAlertsPanel({
                 className={appTabLinkClass(tab === "history")}
                 onClick={() => setTab("history")}
               >
-                Completed ({historyAlerts.length})
+                Completed
+                <span className="ml-1 text-muted">
+                  ({historyAlerts.length})
+                </span>
               </button>
               {flags.paperAnalyticsEnabled && (
                 <button
@@ -245,7 +279,7 @@ export function MomentumBreakoutAlertsPanel({
             {refreshWarnings.length > 0 && (
               <div className="rounded-lg border border-warning/25 bg-warning-muted/40 px-3 py-2 text-xs text-foreground">
                 <p className="font-semibold">Refresh notes</p>
-                <ul className="mt-1 list-inside list-disc text-muted">
+                <ul className="mt-1 space-y-1 text-muted">
                   {refreshWarnings.map((warning) => (
                     <li key={warning}>{warning}</li>
                   ))}
@@ -261,12 +295,18 @@ export function MomentumBreakoutAlertsPanel({
               <MomentumBreakoutPaperPerformanceTab accessToken={accessToken} />
             )}
 
-            {tab !== "performance" && loading && displayed.length === 0 && !error && (
-              <SkeletonList rows={3} rowClassName="h-24 rounded-xl" />
-            )}
+            {tab !== "performance" &&
+              loading &&
+              displayed.length === 0 &&
+              !error && (
+                <SkeletonList rows={3} rowClassName="h-24 rounded-xl" />
+              )}
 
-            {tab !== "performance" && !loading && !error && displayed.length === 0 && (
-              tab === "active" ? (
+            {tab !== "performance" &&
+              !loading &&
+              !error &&
+              displayed.length === 0 &&
+              (tab === "active" ? (
                 <MomentumBreakoutStructuredEmpty
                   icon={Bell}
                   title="No active alerts"
@@ -282,8 +322,7 @@ export function MomentumBreakoutAlertsPanel({
                   doing="We monitor entry, stop, and target levels on active plans."
                   expect="Completed plans show here after target, stop, or expiry."
                 />
-              )
-            )}
+              ))}
 
             {tab !== "performance" && refreshing && displayed.length > 0 && (
               <div className="flex items-center gap-2 text-xs text-muted">
@@ -304,12 +343,6 @@ export function MomentumBreakoutAlertsPanel({
                   />
                 ))}
               </div>
-            )}
-
-            {tab !== "performance" && (
-              <p className="text-[11px] leading-relaxed text-muted">
-                Auto-refresh every 60s. Use Refresh for an immediate price pull.
-              </p>
             )}
           </div>
         </section>

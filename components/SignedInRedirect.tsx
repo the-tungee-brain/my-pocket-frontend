@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 function RedirectingScreen() {
@@ -18,20 +18,27 @@ function RedirectingScreen() {
   );
 }
 
-export function SignedInRedirect({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function SignedInRedirect({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const allowDevMomentumBreakoutFixture =
+    process.env.NODE_ENV === "development" &&
+    pathname === "/research/momentum-breakout-alerts" &&
+    Boolean(searchParams.get("mbFixture"));
 
   useEffect(() => {
+    if (allowDevMomentumBreakoutFixture) return;
     if (status === "loading") return;
     if (!session?.accessToken) {
       router.replace("/");
     }
-  }, [router, session?.accessToken, status]);
+  }, [allowDevMomentumBreakoutFixture, router, session?.accessToken, status]);
+
+  if (allowDevMomentumBreakoutFixture) {
+    return children;
+  }
 
   if (status === "loading") {
     return <RedirectingScreen />;

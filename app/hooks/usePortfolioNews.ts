@@ -21,9 +21,13 @@ export function usePortfolioNews(
 
   const query = useQuery({
     queryKey: portfolioNewsQueryKey(accessToken ?? ""),
-    queryFn: () => fetchPortfolioNews(accessToken!),
+    queryFn: () => {
+      if (!accessToken) throw new Error("Missing access token");
+      return fetchPortfolioNews(accessToken);
+    },
     enabled: Boolean(accessToken && enabled),
     staleTime: 5 * 60_000,
+    retry: false,
   });
 
   const error = query.isError
@@ -39,6 +43,7 @@ export function usePortfolioNews(
     await queryClient.fetchQuery({
       queryKey: portfolioNewsQueryKey(accessToken),
       queryFn: () => fetchPortfolioNews(accessToken),
+      retry: false,
     });
   }, [accessToken, queryClient]);
 

@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback } from "react";
-import { useSession } from "next-auth/react";
 import { Target } from "lucide-react";
-import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
+import { useResearchSymbolIntelligence } from "@/app/research/[symbol]/ResearchSymbolIntelligenceContext";
 import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
 import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
 import { SymbolOptionsWorkspace } from "@/components/SymbolIntelligencePanel";
@@ -28,13 +27,14 @@ export function SymbolOptionsContent({ symbol }: Props) {
   const { error, positionMap, account, assignmentRiskSummary } =
     usePortfolioContext();
   const { sendPrompt } = useAppChatContext();
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken as string | undefined;
   const symbolUpper = symbol.toUpperCase();
   const chatKey = symbolChatKey(symbolUpper) ?? symbolUpper;
 
-  const { intelligence, loading: intelligenceLoading, error: intelligenceError, refetch: refetchIntelligence } =
-    useSymbolIntelligence(symbol, { accessToken });
+  const symbolIntelligence = useResearchSymbolIntelligence();
+  const intelligence = symbolIntelligence?.intelligence ?? null;
+  const intelligenceLoading = symbolIntelligence?.loading ?? false;
+  const intelligenceError = symbolIntelligence?.error ?? null;
+  const refetchIntelligence = symbolIntelligence?.refetch;
 
   const positionsForSymbol = positionMap[symbolUpper] ?? null;
   const hasOptionLegs = symbolHasOptionPositions(positionsForSymbol);

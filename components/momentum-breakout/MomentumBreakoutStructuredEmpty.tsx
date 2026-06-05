@@ -22,29 +22,33 @@ export function MomentumBreakoutStructuredEmpty({
   className,
 }: Props) {
   return (
-    <div
-      className={cn(appPanelSubtleClass, "px-4 py-4", className)}
-    >
+    <div className={cn(appPanelSubtleClass, "px-4 py-4", className)}>
       <div className="flex items-start gap-3">
         <div
-          className={cn(appIconBoxClass, "h-9 w-9 shrink-0 rounded-lg text-muted")}
+          className={cn(
+            appIconBoxClass,
+            "h-9 w-9 shrink-0 rounded-lg text-muted",
+          )}
           aria-hidden
         >
           <Icon className="h-4 w-4" />
         </div>
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted">{happened}</p>
+        </div>
       </div>
-      <dl className="mt-4 space-y-3 text-sm leading-relaxed">
-        <div>
-          <dt className="font-semibold text-foreground">What happened</dt>
-          <dd className="mt-1 text-muted">{happened}</dd>
+      <dl className="mt-4 grid gap-2 text-sm leading-relaxed sm:grid-cols-2">
+        <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Monitoring
+          </dt>
+          <dd className="mt-1 text-foreground/80">{doing}</dd>
         </div>
-        <div>
-          <dt className="font-semibold text-foreground">What we&apos;re doing</dt>
-          <dd className="mt-1 text-muted">{doing}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-foreground">What to expect next</dt>
+        <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Next
+          </dt>
           <dd className="mt-1 text-muted">{expectNext}</dd>
         </div>
       </dl>

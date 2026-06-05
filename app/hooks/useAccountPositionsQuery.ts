@@ -47,6 +47,7 @@ export function useAccountPositionsQuery(
     },
     enabled: enabled && Boolean(accessToken),
     staleTime: 30_000,
+    retry: false,
   });
 
   useEffect(() => {

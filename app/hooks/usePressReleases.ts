@@ -27,10 +27,13 @@ export function usePressReleases(
 
   const query = useQuery({
     queryKey: pressReleasesQueryKey(accessToken ?? "", symbolUpper, lookbackDays),
-    queryFn: () =>
-      fetchPressReleases(accessToken!, symbolUpper, { lookbackDays }),
+    queryFn: () => {
+      if (!accessToken) throw new Error("Missing access token");
+      return fetchPressReleases(accessToken, symbolUpper, { lookbackDays });
+    },
     enabled: Boolean(accessToken && symbolUpper && enabled),
     staleTime: 10 * 60_000,
+    retry: false,
   });
 
   const error = query.isError ? "Could not load official announcements." : null;
@@ -41,6 +44,7 @@ export function usePressReleases(
       queryKey: pressReleasesQueryKey(accessToken, symbolUpper, lookbackDays),
       queryFn: () =>
         fetchPressReleases(accessToken, symbolUpper, { lookbackDays }),
+      retry: false,
     });
   }, [accessToken, lookbackDays, queryClient, symbolUpper]);
 

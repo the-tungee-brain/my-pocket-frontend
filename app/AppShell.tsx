@@ -22,10 +22,7 @@ import { resolveActiveChatKey } from "@/lib/chatKeys";
 import type { QuickActionMode } from "@/lib/quickActions";
 import { OPEN_CHAT_EVENT } from "@/lib/scrollToChat";
 import { parseResearchRoute } from "@/lib/symbolRoutes";
-import {
-  buildSymbolAlertMap,
-  mergeDisplayAlerts,
-} from "@/lib/intelligence";
+import { buildSymbolAlertMap, mergeDisplayAlerts } from "@/lib/intelligence";
 
 const MIN_ROWS = 1;
 const MAX_ROWS = 24;
@@ -43,7 +40,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     positionMap,
     proactiveAlerts,
     portfolioBrief,
-    recentActivity,
     sessionAccessToken,
   } = usePortfolioContext();
 
@@ -75,7 +71,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const researchMatch = pathname.match(/^\/research\/([^/]+)(?:\/([^/]+))?/);
+  const isMomentumBreakoutAlertsRoute = pathname.startsWith(
+    "/research/momentum-breakout-alerts",
+  );
+  const researchMatch = isMomentumBreakoutAlertsRoute
+    ? null
+    : pathname.match(/^\/research\/([^/]+)(?:\/([^/]+))?/);
   const researchSymbol = researchMatch?.[1]?.toUpperCase();
   const { symbol: routeSymbol } = parseResearchRoute(pathname);
 
@@ -95,6 +96,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Mobile chat stays collapsed until the user expands it or OPEN_CHAT_EVENT fires
   // (e.g. Ask AI, playbook, scrollToChat).
   useEffect(() => {
+    if (activeChatKey === "__NONE__") {
+      setMobileChatExpanded(false);
+      return;
+    }
     setMobileChatExpanded(false);
   }, [activeChatKey]);
 
@@ -123,13 +128,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ? !!researchSymbol
       : selectedView === "portfolio" || !!selectedSymbol;
 
-  const hasChatPositions =
-    selectedView === "research" ? true : !!insightsPositions?.length;
-
   const chatDisabled =
-    selectedView === "research"
-      ? false
-      : !insightsPositions?.length;
+    selectedView === "research" ? false : !insightsPositions?.length;
 
   useEffect(() => {
     if (!showChat || activeChatKey === "__NONE__") return;
@@ -265,27 +265,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const labelSymbol =
     selectedView === "portfolio"
       ? "PORTFOLIO"
-      : selectedView === "research"
-        ? researchSymbol
-        : selectedSymbol;
+      : selectedView === "research" && isMomentumBreakoutAlertsRoute
+        ? "MB TRADE PLANS"
+        : selectedView === "research"
+          ? researchSymbol
+          : selectedSymbol;
 
   const headerLabel =
     selectedView === "portfolio"
       ? "Portfolio"
-      : selectedView === "research" && researchSymbol
-        ? researchSymbol
-        : selectedView === "research"
-          ? "Research"
-          : (selectedSymbol ?? "Position");
+      : selectedView === "research" && isMomentumBreakoutAlertsRoute
+        ? "MB trade plans"
+        : selectedView === "research" && researchSymbol
+          ? researchSymbol
+          : selectedView === "research"
+            ? "Research"
+            : (selectedSymbol ?? "Position");
 
   const headerSubtitle =
     selectedView === "portfolio"
       ? `${symbols.length} tracked ${symbols.length === 1 ? "symbol" : "symbols"}`
-      : selectedView === "research" && researchSymbol
-        ? `Stock research · ${researchTabLabel(pathname.split("/")[3])}`
-        : selectedView === "research"
-          ? "Search ticker or company name"
-          : "Position details and assistant context";
+      : selectedView === "research" && isMomentumBreakoutAlertsRoute
+        ? "Active alerts & history"
+        : selectedView === "research" && researchSymbol
+          ? `Stock research · ${researchTabLabel(pathname.split("/")[3])}`
+          : selectedView === "research"
+            ? "Search ticker or company name"
+            : "Position details and assistant context";
 
   const showConversation =
     selectedView === "portfolio" ||
@@ -328,9 +334,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     mode: selectedView,
     quickActionMode,
     selectedSymbol:
-      selectedView === "research"
-        ? researchSymbol ?? null
-        : selectedSymbol,
+      selectedView === "research" ? (researchSymbol ?? null) : selectedSymbol,
     currentChat,
     disabled: chatDisabled,
     inputRows,
@@ -348,9 +352,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ? "Ask about your portfolio"
       : isPositionTab
         ? `Analyze ${researchSymbol} position`
-        : selectedView === "research"
-          ? `Ask about ${researchSymbol ?? "this symbol"}`
-          : `Ask about ${selectedSymbol ?? "this position"}`;
+        : selectedView === "research" && isMomentumBreakoutAlertsRoute
+          ? "Ask about MB trade plans"
+          : selectedView === "research"
+            ? `Ask about ${researchSymbol ?? "this symbol"}`
+            : `Ask about ${selectedSymbol ?? "this position"}`;
 
   return (
     <>
@@ -385,12 +391,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
 
         <section className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <div
-            className={cn(
-              "sticky top-0 z-30 border-b",
-              appChromeClass,
-            )}
-          >
+          <div className={cn("sticky top-0 z-30 border-b", appChromeClass)}>
             {/* Mobile: title + actions, then full-width search */}
             <div className="flex flex-col gap-2.5 px-4 py-2.5 md:hidden">
               <div className="flex items-center gap-3">
@@ -403,12 +404,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Menu className="h-4 w-4" aria-hidden="true" />
                 </IconButton>
                 <div className="min-w-0 flex-1">
-                <div className="truncate font-mono text-xs font-semibold uppercase tracking-wide text-foreground">
-                  {headerLabel}
-                </div>
-                <div className="truncate font-mono text-[10px] uppercase tracking-wider text-muted">
-                  {headerSubtitle}
-                </div>
+                  <div className="truncate font-mono text-xs font-semibold uppercase tracking-wide text-foreground">
+                    {headerLabel}
+                  </div>
+                  <div className="truncate font-mono text-[10px] uppercase tracking-wider text-muted">
+                    {headerSubtitle}
+                  </div>
                 </div>
                 <HeaderActions />
               </div>
@@ -456,30 +457,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {showConversation && labelSymbol && (
                 <div id="assistant-chat">
                   <ConversationPane
-                  symbol={labelSymbol}
-                  messages={currentChat?.messages ?? []}
-                  loading={!!currentChat?.loading}
-                  onClear={handleClearChat}
-                  onFollowUpPrompt={(prompt) => void handleFollowUpPrompt(prompt)}
-                  historyControl={
-                    activeChatKey !== "__NONE__" ? (
-                      <ChatSessionHistory
-                        activeChatKey={activeChatKey}
-                        accessToken={sessionAccessToken}
-                        currentSessionId={currentChat?.sessionId}
-                        historyRevision={currentChat?.historyRevision ?? 0}
-                        showNewChat={
-                          (currentChat?.messages.length ?? 0) > 0 &&
-                          !currentChat?.loading
-                        }
-                        onStartNewSession={handleStartNewChat}
-                        onRestoreSession={(sessionId, messages) =>
-                          restoreChatSession(activeChatKey, sessionId, messages)
-                        }
-                      />
-                    ) : null
-                  }
-                />
+                    symbol={labelSymbol}
+                    messages={currentChat?.messages ?? []}
+                    loading={!!currentChat?.loading}
+                    onClear={handleClearChat}
+                    onFollowUpPrompt={(prompt) =>
+                      void handleFollowUpPrompt(prompt)
+                    }
+                    historyControl={
+                      activeChatKey !== "__NONE__" ? (
+                        <ChatSessionHistory
+                          activeChatKey={activeChatKey}
+                          accessToken={sessionAccessToken}
+                          currentSessionId={currentChat?.sessionId}
+                          historyRevision={currentChat?.historyRevision ?? 0}
+                          showNewChat={
+                            (currentChat?.messages.length ?? 0) > 0 &&
+                            !currentChat?.loading
+                          }
+                          onStartNewSession={handleStartNewChat}
+                          onRestoreSession={(sessionId, messages) =>
+                            restoreChatSession(
+                              activeChatKey,
+                              sessionId,
+                              messages,
+                            )
+                          }
+                        />
+                      ) : null
+                    }
+                  />
                 </div>
               )}
             </div>
@@ -505,7 +512,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         />
                         <span className="truncate">{mobileChatLabel}</span>
                       </span>
-                      <ChevronUp className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                      <ChevronUp
+                        className="h-4 w-4 shrink-0 text-muted"
+                        aria-hidden="true"
+                      />
                     </motion.button>
                   ) : (
                     <motion.div

@@ -3,16 +3,9 @@
 import {
   createContext,
   useContext,
-  useEffect,
-  useMemo,
   type ReactNode,
 } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchResearchOverviewBundle } from "@/lib/apiClient";
-import { overviewBundleEtagKey, writeOverviewBundleEtag } from "@/lib/overviewBundleCache";
 import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
-import { seedResearchOverviewCaches } from "@/lib/researchOverviewSeeds";
-import { normalizeResearchOverviewBundle } from "@/lib/researchOverviewBundle";
 
 const ResearchOverviewContext = createContext<ResearchOverviewBundle | null>(
   null,
@@ -30,56 +23,12 @@ export function ResearchOverviewProvider({
   accessToken,
   children,
 }: Props) {
-  const symbolUpper = symbol.toUpperCase();
-  const queryClient = useQueryClient();
-  const queryKey = ["research-overview", symbolUpper, accessToken ?? ""] as const;
-
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey,
-    queryFn: async () => {
-      const result = await fetchResearchOverviewBundle(
-        accessToken!,
-        symbolUpper,
-      );
-      if (result.status === "ok") {
-        return result.bundle;
-      }
-
-      const cached = queryClient.getQueryData<ResearchOverviewBundle>(queryKey);
-      if (cached) {
-        return cached;
-      }
-
-      writeOverviewBundleEtag(overviewBundleEtagKey(symbolUpper, false), null);
-      const retry = await fetchResearchOverviewBundle(
-        accessToken!,
-        symbolUpper,
-        { skipEtag: true },
-      );
-      if (retry.status !== "ok") {
-        throw new Error("Failed to load research overview");
-      }
-      return retry.bundle;
-    },
-    enabled: Boolean(symbolUpper && accessToken),
-    staleTime: 2 * 60_000,
-  });
-
-  const bundle = useMemo(
-    () => (data ? normalizeResearchOverviewBundle(data) : null),
-    [data],
-  );
-
-  useEffect(() => {
-    if (!bundle) return;
-    seedResearchOverviewCaches(bundle);
-  }, [bundle]);
+  void symbol;
+  void accessToken;
 
   return (
-    <ResearchOverviewContext.Provider value={bundle}>
-      <ResearchOverviewLoadingContext.Provider
-        value={isLoading || isFetching}
-      >
+    <ResearchOverviewContext.Provider value={null}>
+      <ResearchOverviewLoadingContext.Provider value={false}>
         {children}
       </ResearchOverviewLoadingContext.Provider>
     </ResearchOverviewContext.Provider>
@@ -99,14 +48,13 @@ export function useResearchDataAsOf(): string | null {
   return bundle?.asOf ?? null;
 }
 
-/** Avoid parallel fetches while the overview bundle request is in flight. */
+/** Overview data is an optional cache seed; sections fetch independently. */
 export function useOverviewBundleGate(symbol: string | null | undefined) {
   const bundle = useResearchOverviewBundle();
-  const overviewLoading = useResearchOverviewLoading();
   const key = symbol?.toUpperCase().trim() ?? "";
 
   return {
     bundle: key && bundle?.symbol === key ? bundle : null,
-    waitForBundle: Boolean(key && overviewLoading),
+    waitForBundle: false,
   };
 }

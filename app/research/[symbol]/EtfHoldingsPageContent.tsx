@@ -27,13 +27,13 @@ function LoadingBlock() {
   return (
     <div className="app-stack">
       <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-16 rounded-xl" />
+        {STATS_SKELETON_KEYS.map((key) => (
+          <Skeleton key={key} className="h-16 rounded-xl" />
         ))}
       </div>
       <div className="grid gap-4">
-        {Array.from({ length: 2 }).map((_, index) => (
-          <div key={index} className="space-y-2">
+        {SECTION_SKELETON_KEYS.map((key) => (
+          <div key={key} className="space-y-2">
             <Skeleton className="h-3 w-28" />
             <Skeleton className="h-52 rounded-xl" />
           </div>
@@ -53,9 +53,12 @@ const QUALITY_FOOTNOTE = (
   </p>
 );
 
+const STATS_SKELETON_KEYS = ["stat-a", "stat-b", "stat-c", "stat-d"];
+const SECTION_SKELETON_KEYS = ["section-a", "section-b"];
+
 export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
   const { data: session } = useSession();
-  const { holdings, isLoading } = useEtfHoldings(symbol, {
+  const { holdings, isLoading, error } = useEtfHoldings(symbol, {
     accessToken: session?.accessToken,
     limit,
     enabled: true,
@@ -82,7 +85,10 @@ export function EtfHoldingsPageContent({ symbol, limit = 25 }: Props) {
       <EmptyState
         icon={Layers}
         title="Holdings unavailable"
-        description="We couldn't load ETF holdings for this symbol. It may not be tagged as an ETF yet, or holdings data isn't available from our provider."
+        description={
+          error ??
+          "We couldn't load ETF holdings for this symbol. It may not be tagged as an ETF yet, or holdings data isn't available from our provider."
+        }
         variant="solid"
         action={
           <Link

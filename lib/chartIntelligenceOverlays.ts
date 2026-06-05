@@ -250,11 +250,11 @@ export function buildChartIntelligenceLegendItems(
     });
   }
 
-  for (const event of intelligence.breakoutEvents ?? []) {
+  for (const [index, event] of (intelligence.breakoutEvents ?? []).entries()) {
     const kind = event.kind ?? "";
     if (!kind.includes("failed") && !kind.includes("confirmed")) continue;
     items.push({
-      id: `breakout-${kind}-${event.date ?? event.barIndex ?? items.length}`,
+      id: `breakout-${kind}-${event.date ?? event.barIndex ?? "event"}-${index}`,
       label: event.label ?? kind.replace(/_/g, " "),
       kind: "marker",
       color: kind.includes("failed") ? "#ef4444" : "#22c55e",

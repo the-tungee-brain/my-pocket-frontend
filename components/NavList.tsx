@@ -57,10 +57,7 @@ const navSymbolLabelClass = "min-w-0 flex-1 truncate font-mono text-xs";
 const navSymbolRowTrailingInset = "pr-[5.25rem]";
 const navSymbolRowTrailingInsetCompact = "pr-11";
 const navSymbolIconClass = (active: boolean) =>
-  cn(
-    "h-3.5 w-3.5 shrink-0",
-    active ? "text-accent-strong" : "text-muted",
-  );
+  cn("h-3.5 w-3.5 shrink-0", active ? "text-accent-strong" : "text-muted");
 
 export function NavList({
   loading,
@@ -80,18 +77,21 @@ export function NavList({
   const { showToast } = useToast();
 
   const isPortfolio = pathname === "/portfolio";
-  const isResearch = pathname.startsWith("/research");
-  const isTopMovers = pathname.startsWith("/top-movers");
-  const isEmergingLeaders = pathname.startsWith("/emerging-leaders");
-  const isWatchlistPage = pathname === "/watchlist";
   const isMomentumBreakoutAlerts = pathname.startsWith(
     "/research/momentum-breakout-alerts",
   );
-  const { symbol: hubSymbol } = pathname.match(/^\/research\/([^/]+)/)
-    ? { symbol: pathname.split("/")[2]?.toUpperCase() ?? null }
-    : { symbol: null };
+  const isResearch =
+    pathname === "/research" ||
+    (pathname.startsWith("/research/") && !isMomentumBreakoutAlerts);
+  const isTopMovers = pathname.startsWith("/top-movers");
+  const isEmergingLeaders = pathname.startsWith("/emerging-leaders");
+  const isWatchlistPage = pathname === "/watchlist";
+  const { symbol: hubSymbol } =
+    isResearch && pathname.match(/^\/research\/([^/]+)/)
+      ? { symbol: pathname.split("/")[2]?.toUpperCase() ?? null }
+      : { symbol: null };
   const legacySymbol = pathname.startsWith("/portfolio/positions/")
-    ? pathname.split("/").at(-1)?.toUpperCase() ?? null
+    ? (pathname.split("/").at(-1)?.toUpperCase() ?? null)
     : null;
   const activeResearchSymbol = hubSymbol;
 
@@ -232,7 +232,9 @@ export function NavList({
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <span>Top movers</span>
-          <span className="truncate text-[10px] text-muted">Pipeline rankings</span>
+          <span className="truncate text-[10px] text-muted">
+            Pipeline rankings
+          </span>
         </div>
         {isTopMovers && (
           <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
@@ -375,7 +377,11 @@ export function NavList({
               trailing={
                 <>
                   {alertSummary && (
-                    <AlertBadge summary={alertSummary} compact className="mr-0.5" />
+                    <AlertBadge
+                      summary={alertSummary}
+                      compact
+                      className="mr-0.5"
+                    />
                   )}
                   <IconButton
                     size="sm"
@@ -480,7 +486,6 @@ export function NavList({
           })}
         </div>
       )}
-
     </div>
   );
 }

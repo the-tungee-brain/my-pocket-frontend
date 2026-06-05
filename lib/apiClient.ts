@@ -736,6 +736,74 @@ export async function fetchResearchOverviewBundle(
   return { status: "ok", bundle };
 }
 
+export async function fetchResearchOverviewFast(
+  accessToken: string,
+  symbol: string,
+  options: {
+    holdingsLimit?: number;
+  } = {},
+): Promise<ResearchOverviewBundleFetchResult> {
+  const symbolUpper = symbol.toUpperCase();
+  const res = await apiFetch(
+    `/research/overview-fast${buildQuery({
+      symbol: symbolUpper,
+      holdings_limit: options.holdingsLimit,
+    })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (res.status === 304) {
+    return { status: "not_modified" };
+  }
+
+  if (!res.ok) {
+    throw new Error(`Failed to load research overview fast path (${res.status})`);
+  }
+
+  const bundle = normalizeResearchOverviewBundle(
+    (await res.json()) as ResearchOverviewBundle,
+  );
+  return { status: "ok", bundle };
+}
+
+export async function fetchResearchOverviewEnrichment(
+  accessToken: string,
+  symbol: string,
+  options: {
+    holdingsLimit?: number;
+    sections?: string[];
+    includeSummary?: boolean;
+  } = {},
+): Promise<ResearchOverviewBundleFetchResult> {
+  const symbolUpper = symbol.toUpperCase();
+  const includeSummary = options.includeSummary ?? false;
+  const sections = options.sections?.length ? options.sections.join(",") : undefined;
+  const res = await apiFetch(
+    `/research/overview-enrichment${buildQuery({
+      symbol: symbolUpper,
+      holdings_limit: options.holdingsLimit,
+      sections,
+      include_summary: includeSummary ? true : undefined,
+    })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (res.status === 304) {
+    return { status: "not_modified" };
+  }
+
+  if (!res.ok) {
+    throw new Error(
+      `Failed to load research overview enrichment (${res.status})`,
+    );
+  }
+
+  const bundle = normalizeResearchOverviewBundle(
+    (await res.json()) as ResearchOverviewBundle,
+  );
+  return { status: "ok", bundle };
+}
+
 export async function fetchSymbolLookupName(
   accessToken: string,
   symbol: string,
@@ -919,4 +987,3 @@ export async function deleteAccount(accessToken: string): Promise<void> {
     throw new Error(`Failed to delete account (${res.status})`);
   }
 }
-

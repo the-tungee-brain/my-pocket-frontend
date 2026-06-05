@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
 import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import {
   IntelligenceRecentEventsPanel,
@@ -19,14 +17,13 @@ import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
 import { EtfFundsOverview } from "./EtfFundsOverview";
 import { StreetAnalysisOverview } from "./StreetAnalysisOverview";
+import { useResearchSymbolIntelligence } from "./ResearchSymbolIntelligenceContext";
 
 type Props = {
   symbol: string;
 };
 
 export function ResearchOverviewTopSection({ symbol }: Props) {
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken as string | undefined;
   const { positionMap } = usePortfolioContext();
   const { sendQuickAction } = useAppChatContext();
   const symbolUpper = symbol.toUpperCase();
@@ -34,10 +31,11 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
 
   const { isEtf } = useResearchAssetTypeContext();
 
-  const { intelligence, loading, error, refetch } = useSymbolIntelligence(
-    symbol,
-    { accessToken },
-  );
+  const symbolIntelligence = useResearchSymbolIntelligence();
+  const intelligence = symbolIntelligence?.intelligence ?? null;
+  const loading = symbolIntelligence?.loading ?? false;
+  const error = symbolIntelligence?.error ?? null;
+  const refetch = symbolIntelligence?.refetch;
 
   const handleRunSignal = useCallback(
     (_signal: IntelligenceSignal, actionId: string) => {
