@@ -22,7 +22,6 @@ import type {
   OptionChainPreview,
   OptionChainSideQuote,
   OptionChainTableRow,
-  OptionsStrikeCandidate,
   SymbolIntelligence,
 } from "@/app/types/intelligence";
 import {
@@ -36,7 +35,6 @@ import {
   signalToQuickActionId,
   sortSignalsBySeverity,
 } from "@/lib/intelligence";
-import { symbolHubPath } from "@/lib/symbolRoutes";
 import { findQuickAction } from "@/lib/quickActions";
 import { formatUsd } from "@/lib/formatCurrency";
 import { formatFriendlyDate, formatOptionExpiration } from "@/lib/dateUtils";
@@ -217,13 +215,13 @@ function IntelligenceRecentEventsList({
 }) {
   return (
     <ul className="space-y-2">
-      {timeline.slice(0, limit).map((entry, index) => {
+      {timeline.slice(0, limit).map((entry) => {
         const Icon = timelineIcon(entry.kind);
         const linkable = isTimelineExternalLink(entry);
 
         return (
           <li
-            key={`${entry.kind}-${entry.date}-${index}`}
+            key={`${entry.kind}-${entry.date}-${entry.title}-${entry.url ?? ""}`}
             className="flex gap-3 rounded-xl border border-border bg-background/60 px-3 py-2"
           >
             <Icon
@@ -268,11 +266,13 @@ function IntelligenceRecentEventsList({
 export function IntelligenceRecentEventsPanel({
   timeline,
   loading = false,
+  error = null,
   limit = 8,
   className,
 }: {
   timeline: EventTimelineEntry[];
   loading?: boolean;
+  error?: string | null;
   limit?: number;
   className?: string;
 }) {
@@ -284,8 +284,22 @@ export function IntelligenceRecentEventsPanel({
     );
   }
 
+  if (error) {
+    return (
+      <ResearchAsideCard title="Recent events" className={className}>
+        <p className="text-sm text-muted">{error}</p>
+      </ResearchAsideCard>
+    );
+  }
+
   if (!timeline.length) {
-    return null;
+    return (
+      <ResearchAsideCard title="Recent events" className={className}>
+        <p className="text-sm text-muted">
+          No recent public events are available yet.
+        </p>
+      </ResearchAsideCard>
+    );
   }
 
   return (
@@ -385,14 +399,14 @@ export function SymbolIntelligencePanel({
             compact={compact}
           >
             <ul className="space-y-2">
-              {signals.slice(0, compact ? 3 : 6).map((signal, index) => {
+              {signals.slice(0, compact ? 3 : 6).map((signal) => {
                 const actionId = signalToQuickActionId(signal, actionContext);
                 const quickAction = actionId ? findQuickAction(actionId) : null;
                 const ActionIcon = quickAction?.icon;
 
                 return (
                 <li
-                  key={`${signal.kind}-${index}`}
+                  key={`${signal.kind}-${signal.message}-${signal.symbol ?? ""}`}
                   className="rounded-xl border border-border bg-background/60 px-3 py-2"
                 >
                   <div className="flex items-start gap-2">

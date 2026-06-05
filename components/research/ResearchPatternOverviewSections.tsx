@@ -36,6 +36,15 @@ export function ResearchPatternOverviewSections({
   const showChartIntel =
     hasPatternIntelligence(patternIntel) &&
     patternIntel?.chartIntelligence != null;
+  const patternGap = intelligence?.dataGaps?.find(
+    (gap) =>
+      gap === "pattern_model_unavailable" ||
+      gap === "pattern_analysis_unavailable",
+  );
+  const unavailableReason =
+    patternGap === "pattern_model_unavailable"
+      ? "The pattern model is not available in this environment."
+      : "Pattern analysis is not available for this symbol right now.";
 
   if (loading && !intelligence) {
     return (
@@ -51,6 +60,23 @@ export function ResearchPatternOverviewSections({
   }
 
   const showUpsell = !patternTrendAllowed && !showForecast;
+
+  if (patternTrendAllowed && intelligence && !showForecast && !showChartIntel) {
+    return (
+      <ResearchSectionCard
+        title="Trend analysis"
+        description="Unavailable"
+        icon={Activity}
+        className={className}
+      >
+        <p className="text-sm leading-relaxed text-muted">
+          {patternGap
+            ? unavailableReason
+            : "Trend and chart intelligence are not available for this symbol yet."}
+        </p>
+      </ResearchSectionCard>
+    );
+  }
 
   if (!showForecast && !showUpsell && !showChartIntel) {
     return null;

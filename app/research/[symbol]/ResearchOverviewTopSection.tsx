@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import {
   IntelligenceRecentEventsPanel,
@@ -18,12 +19,15 @@ import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
 import { EtfFundsOverview } from "./EtfFundsOverview";
 import { StreetAnalysisOverview } from "./StreetAnalysisOverview";
 import { useResearchSymbolIntelligence } from "./ResearchSymbolIntelligenceContext";
+import { useResearchEvents } from "@/app/hooks/useResearchEvents";
 
 type Props = {
   symbol: string;
 };
 
 export function ResearchOverviewTopSection({ symbol }: Props) {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
   const { positionMap } = usePortfolioContext();
   const { sendQuickAction } = useAppChatContext();
   const symbolUpper = symbol.toUpperCase();
@@ -36,6 +40,15 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
   const loading = symbolIntelligence?.loading ?? false;
   const error = symbolIntelligence?.error ?? null;
   const refetch = symbolIntelligence?.refetch;
+  const researchEvents = useResearchEvents(symbol, accessToken);
+  const intelligenceTimeline = intelligence?.eventTimeline ?? [];
+  const recentEventsTimeline = researchEvents.events.length
+    ? researchEvents.events
+    : intelligenceTimeline;
+  const recentEventsLoading =
+    researchEvents.isLoading && recentEventsTimeline.length === 0;
+  const recentEventsError =
+    recentEventsTimeline.length === 0 ? researchEvents.error : null;
 
   const handleRunSignal = useCallback(
     (_signal: IntelligenceSignal, actionId: string) => {
@@ -112,8 +125,9 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             <PerformanceSnapshot symbol={symbol} className={pageSectionClass} />
             <IntelligenceRecentEventsPanel
               className={pageSectionClass}
-              timeline={intelligence?.eventTimeline ?? []}
-              loading={loading}
+              timeline={recentEventsTimeline}
+              loading={recentEventsLoading}
+              error={recentEventsError}
               limit={6}
             />
           </>

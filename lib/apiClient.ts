@@ -8,6 +8,7 @@ import type {
   PatternIntelligence,
   PortfolioChanges,
   PortfolioIntelligence,
+  ResearchEventsResponse,
   SymbolIntelligence,
 } from "@/app/types/intelligence";
 import type { PortfolioNewsResponse } from "@/app/types/portfolioNews";
@@ -219,8 +220,7 @@ export async function fetchSymbolIntelligence(
   const res = await apiFetch(
     `/research/intelligence${buildQuery({
       symbol: symbol.toUpperCase(),
-      include_options:
-        options.includeOptions === false ? false : true,
+      include_options: options.includeOptions !== false,
     })}`,
     { method: "GET", accessToken },
   );
@@ -236,6 +236,22 @@ export async function fetchSymbolIntelligence(
   }
 
   return res.json() as Promise<SymbolIntelligence>;
+}
+
+export async function fetchResearchEvents(
+  accessToken: string,
+  symbol: string,
+): Promise<ResearchEventsResponse> {
+  const res = await apiFetch(
+    `/research/events${buildQuery({ symbol: symbol.toUpperCase() })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load research events (${res.status})`);
+  }
+
+  return res.json() as Promise<ResearchEventsResponse>;
 }
 
 export async function fetchRecentOrders(

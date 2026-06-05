@@ -73,6 +73,11 @@ export type EventTimelineEntry = {
   url?: string | null;
 };
 
+export type ResearchEventsResponse = {
+  symbol: string;
+  events: EventTimelineEntry[];
+};
+
 export type OptionsStrikeCandidate = {
   side: "call" | "put";
   strike: number;
