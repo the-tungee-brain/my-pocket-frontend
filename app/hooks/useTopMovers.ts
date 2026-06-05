@@ -13,25 +13,41 @@ import {
 } from "@/lib/apiClient";
 
 export const topMoversQueryKey = ["top-movers"] as const;
+const VISIBLE_PREFETCH_LIMIT = 4;
 
-export function useTopMoversBundle() {
+export function useTopMoversRankings() {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
 
   return useQuery({
-    queryKey: [...topMoversQueryKey, accessToken ?? "anon"],
+    queryKey: [...topMoversQueryKey, "rankings", accessToken ?? "anon"],
+    enabled: Boolean(accessToken),
+    queryFn: () => {
+      if (!accessToken) throw new Error("Missing access token");
+      return fetchRankingsTop(accessToken, 20);
+    },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+}
+
+export function useTopMoversMetadata() {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
+
+  return useQuery({
+    queryKey: [...topMoversQueryKey, "metadata", accessToken ?? "anon"],
     enabled: Boolean(accessToken),
     queryFn: async () => {
-      const token = accessToken!;
-      const [rankings, health, portfolio] = await Promise.all([
-        fetchRankingsTop(token, 20),
-        fetchSystemHealth(token),
-        fetchPortfolioLatest(token).catch(() => null),
+      if (!accessToken) throw new Error("Missing access token");
+      const [health, portfolio] = await Promise.all([
+        fetchSystemHealth(accessToken),
+        fetchPortfolioLatest(accessToken).catch(() => null),
       ]);
       const portfolioSymbols = new Set(
         (portfolio?.holdings ?? []).map((h) => h.symbol.toUpperCase()),
       );
-      return { rankings, health, portfolio, portfolioSymbols };
+      return { health, portfolio, portfolioSymbols };
     },
     refetchInterval: 60_000,
     staleTime: 30_000,
@@ -46,7 +62,10 @@ export function useSymbolCompanyName(symbol: string | null) {
   return useQuery({
     queryKey: ["symbol-company-name", accessToken ?? "anon", key],
     enabled: Boolean(accessToken && key),
-    queryFn: () => fetchSymbolLookupName(accessToken!, key),
+    queryFn: () => {
+      if (!accessToken) throw new Error("Missing access token");
+      return fetchSymbolLookupName(accessToken, key);
+    },
     staleTime: 300_000,
   });
 }
@@ -66,13 +85,32 @@ const patternIntelQueryOptions = (
   },
 });
 
-/** Warm pattern intelligence for every row (list sparklines + detail). */
-export function useTopMoversIntelPrefetch(symbols: string[]) {
+/** Warm pattern intelligence only for rows likely to be inspected first. */
+export function useTopMoversIntelPrefetch({
+  visibleSymbols,
+  selectedSymbol,
+  hoveredSymbol,
+}: {
+  visibleSymbols: string[];
+  selectedSymbol: string | null;
+  hoveredSymbol: string | null;
+}) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
   const keys = useMemo(
-    () => [...new Set(symbols.map((s) => s.toUpperCase()).filter(Boolean))],
-    [symbols],
+    () =>
+      [
+        ...new Set(
+          [
+            selectedSymbol,
+            hoveredSymbol,
+            ...visibleSymbols.slice(0, VISIBLE_PREFETCH_LIMIT),
+          ]
+            .map((s) => s?.toUpperCase() ?? "")
+            .filter(Boolean),
+        ),
+      ],
+    [hoveredSymbol, selectedSymbol, visibleSymbols],
   );
 
   const results = useQueries({

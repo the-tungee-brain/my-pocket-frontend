@@ -13,8 +13,8 @@ import { TrendingUp } from "lucide-react";
 import { PageShell, PageSplit } from "@/components/PageShell";
 import {
   useSymbolCompanyName,
-  useTopMoverDetail,
-  useTopMoversBundle,
+  useTopMoversMetadata,
+  useTopMoversRankings,
   useTopMoversIntelPrefetch,
 } from "@/app/hooks/useTopMovers";
 import { rankingsHaveMlMetrics } from "@/lib/topMovers";
@@ -24,15 +24,20 @@ import { pageSplitClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 
 export function TopMoversPage() {
-  const query = useTopMoversBundle();
+  const rankingsQuery = useTopMoversRankings();
+  const metadataQuery = useTopMoversMetadata();
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+  const [hoveredSymbol, setHoveredSymbol] = useState<string | null>(null);
 
-  const items = query.data?.rankings.items ?? [];
+  const rankings = rankingsQuery.data ?? null;
+  const health = metadataQuery.data?.health ?? null;
+  const portfolioSymbols = metadataQuery.data?.portfolioSymbols;
+  const items = rankings?.items ?? [];
   const regimeId =
-    query.data?.health.regime_id ?? query.data?.rankings.regime_id ?? null;
+    health?.regime_id ?? rankings?.regime_id ?? null;
   const updatedAt =
-    query.data?.health.last_ranking_run_at ??
-    query.data?.rankings.timestamp ??
+    health?.last_ranking_run_at ??
+    rankings?.timestamp ??
     null;
   const hasMlMetrics = rankingsHaveMlMetrics(items);
 
@@ -56,17 +61,16 @@ export function TopMoversPage() {
     () => items.map((i) => i.symbol.toUpperCase()),
     [items],
   );
-  const prefetchedIntel = useTopMoversIntelPrefetch(prefetchSymbols);
+  const prefetchedIntel = useTopMoversIntelPrefetch({
+    visibleSymbols: prefetchSymbols,
+    selectedSymbol,
+    hoveredSymbol,
+  });
   const nameQuery = useSymbolCompanyName(selectedSymbol);
-  const detailQuery = useTopMoverDetail(selectedSymbol);
 
   const intelligenceBySymbol = useMemo(() => {
-    const map = { ...prefetchedIntel };
-    if (selectedSymbol && detailQuery.data) {
-      map[selectedSymbol] = detailQuery.data;
-    }
-    return map;
-  }, [prefetchedIntel, selectedSymbol, detailQuery.data]);
+    return { ...prefetchedIntel };
+  }, [prefetchedIntel]);
 
   const companyNames = useMemo(() => {
     const map: Record<string, string> = {};
@@ -76,10 +80,10 @@ export function TopMoversPage() {
   }, [nameQuery.data, selectedSymbol]);
 
   const inPortfolio = selectedSymbol
-    ? query.data?.portfolioSymbols.has(selectedSymbol) ?? false
+    ? portfolioSymbols?.has(selectedSymbol) ?? false
     : false;
 
-  if (query.isLoading && !query.data) {
+  if (rankingsQuery.isLoading && !rankings) {
     return (
       <PageShell className={appStackClass}>
         <TopMoversHeader hasMlMetrics />
@@ -88,14 +92,14 @@ export function TopMoversPage() {
     );
   }
 
-  if (query.isError) {
+  if (rankingsQuery.isError) {
     return (
       <PageShell className={appStackClass}>
         <TopMoversHeader hasMlMetrics={hasMlMetrics} />
         <ErrorBanner
           message={
-            query.error instanceof Error
-              ? query.error.message
+            rankingsQuery.error instanceof Error
+              ? rankingsQuery.error.message
               : "Something went wrong."
           }
         />
@@ -121,9 +125,9 @@ export function TopMoversPage() {
       <TopMoversHeader hasMlMetrics={hasMlMetrics} />
       <MarketRegimeCard
         regimeId={regimeId}
-        asOfDate={query.data?.rankings.as_of_date}
+        asOfDate={rankings?.as_of_date}
         updatedAt={updatedAt}
-        systemStatus={query.data?.health.system_status}
+        systemStatus={health?.system_status}
       />
       {!hasMlMetrics ? <CompositeModelBanner /> : null}
       <PageSplit
@@ -133,6 +137,7 @@ export function TopMoversPage() {
             items={items}
             selectedSymbol={selectedSymbol}
             onSelect={setSelectedSymbol}
+            onHoverSymbol={setHoveredSymbol}
             companyNames={companyNames}
             intelligenceBySymbol={intelligenceBySymbol}
           />

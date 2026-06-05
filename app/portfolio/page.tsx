@@ -58,7 +58,6 @@ import {
   portfolioTodayPairGridClass,
   portfolioTodayPairGridPairedClass,
 } from "@/lib/appUi";
-import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 import { parsePositionsSyncedAt } from "@/lib/dataFreshness";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { PageShell, PageSplit } from "@/components/PageShell";
@@ -88,7 +87,6 @@ export default function PortfolioPage() {
 
   const {
     sendQuickAction,
-    sendPrompt,
     sendPlaybookAsk,
     closeAllChatModelMenus,
   } = useAppChatContext();
@@ -174,6 +172,20 @@ export default function PortfolioPage() {
 
   const localBrief = buildLocalPortfolioBrief(allPositions, account, proactiveAlerts);
   const seedBrief = accountBrief ?? localBrief;
+  const hasLoadedPositions = !loading && allPositions.length > 0;
+  const [secondaryPortfolioLoadsReady, setSecondaryPortfolioLoadsReady] =
+    useState(false);
+
+  useEffect(() => {
+    if (!hasLoadedPositions) {
+      setSecondaryPortfolioLoadsReady(false);
+      return;
+    }
+    const id = window.setTimeout(() => {
+      setSecondaryPortfolioLoadsReady(true);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [hasLoadedPositions]);
 
   const {
     morningBrief,
@@ -183,7 +195,7 @@ export default function PortfolioPage() {
     lastUpdated: briefLastUpdated,
     refetch: refetchMorningBrief,
   } = useMorningBrief(sessionAccessToken, {
-    enabled: !loading && allPositions.length > 0,
+    enabled: hasLoadedPositions && secondaryPortfolioLoadsReady,
     initialBrief: seedBrief,
   });
 
@@ -304,7 +316,7 @@ export default function PortfolioPage() {
     [handleSuggestedAction],
   );
 
-  const showContent = !loading && allPositions.length > 0;
+  const showContent = hasLoadedPositions;
   const showBriefSection = showContent && sessionAccessToken;
   const {
     items: portfolioNewsItems,
@@ -323,7 +335,8 @@ export default function PortfolioPage() {
     isLoading: exitAttentionLoading,
   } = usePortfolioExitAttention({
     accessToken: sessionAccessToken,
-    enabled: showContent && activeSection === "today",
+    enabled:
+      showContent && secondaryPortfolioLoadsReady && activeSection === "today",
     limit: 10,
   });
 

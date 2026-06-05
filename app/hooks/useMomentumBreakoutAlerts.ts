@@ -13,6 +13,7 @@ const ACTIVE_POLL_MS = 60_000;
 
 type Options = {
   enabled?: boolean;
+  includeHistory?: boolean;
   historyLimit?: number;
 };
 
@@ -20,7 +21,7 @@ export function useMomentumBreakoutAlerts(
   accessToken: string | undefined,
   options: Options = {},
 ) {
-  const { enabled = true, historyLimit = 100 } = options;
+  const { enabled = true, includeHistory = true, historyLimit = 100 } = options;
   const [activeAlerts, setActiveAlerts] = useState<MomentumBreakoutAlertDto[]>([]);
   const [historyAlerts, setHistoryAlerts] = useState<MomentumBreakoutAlertDto[]>([]);
   const [disclaimer, setDisclaimer] = useState<string>("");
@@ -50,8 +51,8 @@ export function useMomentumBreakoutAlerts(
       historyLimit,
     );
     setHistoryAlerts(data.alerts);
-    if (!disclaimer) setDisclaimer(data.disclaimer);
-  }, [accessToken, enabled, historyLimit, disclaimer]);
+    setDisclaimer((current) => current || data.disclaimer);
+  }, [accessToken, enabled, historyLimit]);
 
   const loadAll = useCallback(
     async (opts?: { silent?: boolean }) => {
@@ -59,7 +60,11 @@ export function useMomentumBreakoutAlerts(
       if (!opts?.silent) setLoading(true);
       setError(null);
       try {
-        await Promise.all([loadActive(), loadHistory()]);
+        if (includeHistory) {
+          await Promise.all([loadActive(), loadHistory()]);
+        } else {
+          await loadActive();
+        }
       } catch (err) {
         setError(
           err instanceof Error
@@ -70,7 +75,7 @@ export function useMomentumBreakoutAlerts(
         if (!opts?.silent) setLoading(false);
       }
     },
-    [accessToken, enabled, loadActive, loadHistory],
+    [accessToken, enabled, includeHistory, loadActive, loadHistory],
   );
 
   const cancelAlert = useCallback(
@@ -80,7 +85,11 @@ export function useMomentumBreakoutAlerts(
       setError(null);
       try {
         await cancelMomentumBreakoutAlert(accessToken, alertId);
-        await Promise.all([loadActive(), loadHistory()]);
+        if (includeHistory) {
+          await Promise.all([loadActive(), loadHistory()]);
+        } else {
+          await loadActive();
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Could not cancel this alert.",
@@ -89,7 +98,7 @@ export function useMomentumBreakoutAlerts(
         setCancellingAlertId(null);
       }
     },
-    [accessToken, enabled, loadActive, loadHistory],
+    [accessToken, enabled, includeHistory, loadActive, loadHistory],
   );
 
   const manualRefresh = useCallback(async () => {
@@ -103,7 +112,9 @@ export function useMomentumBreakoutAlerts(
       setDisclaimer(result.disclaimer);
       setRefreshWarnings(result.warnings);
       setLastUpdated(Date.now());
-      await loadHistory();
+      if (includeHistory) {
+        await loadHistory();
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not refresh alerts.",
@@ -111,7 +122,7 @@ export function useMomentumBreakoutAlerts(
     } finally {
       setRefreshing(false);
     }
-  }, [accessToken, enabled, loadHistory]);
+  }, [accessToken, enabled, includeHistory, loadHistory]);
 
   useEffect(() => {
     void loadAll();

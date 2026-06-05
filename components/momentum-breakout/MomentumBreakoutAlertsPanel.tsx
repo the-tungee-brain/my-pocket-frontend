@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Bell, ListChecks, Loader2, RefreshCw } from "lucide-react";
 import { useMomentumBreakoutAlerts } from "@/app/hooks/useMomentumBreakoutAlerts";
-import { useMomentumBreakoutFeatureFlags } from "@/app/hooks/useMomentumBreakoutFeatureFlags";
 import { useMomentumBreakoutScan } from "@/app/hooks/useMomentumBreakoutScan";
 import { MomentumBreakoutInvestorBrief } from "@/components/momentum-breakout/MomentumBreakoutInvestorBrief";
 import { MomentumBreakoutPageHeader } from "@/components/momentum-breakout/MomentumBreakoutPageHeader";
@@ -12,11 +11,10 @@ import { MomentumBreakoutStructuredEmpty } from "@/components/momentum-breakout/
 import { AlertCard } from "@/components/momentum-breakout/AlertCard";
 import { MomentumBreakoutLaunchReadinessPanel } from "@/components/momentum-breakout/MomentumBreakoutLaunchReadinessPanel";
 import { MomentumBreakoutPaperPerformanceTab } from "@/components/momentum-breakout/MomentumBreakoutPaperPerformanceTab";
-import type { PaperTradeSummary } from "@/app/types/momentumBreakoutPaperPerformance";
+import type { MomentumBreakoutFeatureFlags } from "@/app/types/momentumBreakoutFeatureFlags";
 import { Button } from "@/components/ui/Button";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import { fetchMomentumBreakoutPaperSummary } from "@/lib/momentumBreakoutPaperPerformance";
 import {
   MB_WATCHLIST_SECTION_ID,
   mbAlertElementId,
@@ -39,11 +37,15 @@ type Tab = "active" | "history" | "performance";
 
 type Props = {
   accessToken: string;
+  flags: MomentumBreakoutFeatureFlags;
   className?: string;
 };
 
-export function MomentumBreakoutAlertsPanel({ accessToken, className }: Props) {
-  const { flags } = useMomentumBreakoutFeatureFlags(accessToken);
+export function MomentumBreakoutAlertsPanel({
+  accessToken,
+  flags,
+  className,
+}: Props) {
   const [tab, setTab] = useState<Tab>("active");
   const {
     activeAlerts,
@@ -58,33 +60,16 @@ export function MomentumBreakoutAlertsPanel({ accessToken, className }: Props) {
     manualRefresh,
     cancelAlert,
     cancellingAlertId,
-  } = useMomentumBreakoutAlerts(accessToken);
+  } = useMomentumBreakoutAlerts(accessToken, {
+    includeHistory: tab === "history",
+  });
   const {
     scan: scanSummary,
     loading: scanLoading,
     error: scanError,
   } = useMomentumBreakoutScan(accessToken, { tradableOnly: false });
 
-  const [paperSummary, setPaperSummary] = useState<PaperTradeSummary | null>(null);
   const [watchlistHighlight, setWatchlistHighlight] = useState(false);
-
-  useEffect(() => {
-    if (!accessToken || !flags.paperAnalyticsEnabled) {
-      setPaperSummary(null);
-      return;
-    }
-    let cancelled = false;
-    void fetchMomentumBreakoutPaperSummary(accessToken)
-      .then((res) => {
-        if (!cancelled) setPaperSummary(res.summary);
-      })
-      .catch(() => {
-        if (!cancelled) setPaperSummary(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [accessToken, flags.paperAnalyticsEnabled]);
 
   const displayed = tab === "active" ? activeAlerts : historyAlerts;
 
@@ -140,7 +125,6 @@ export function MomentumBreakoutAlertsPanel({ accessToken, className }: Props) {
             <div className={mbPanelBodyLgClass}>
               <MomentumBreakoutInvestorBrief
                 scan={scanSummary}
-                paperSummary={paperSummary}
                 loading={scanLoading}
                 error={scanError}
                 trackedSymbols={trackedSymbols}

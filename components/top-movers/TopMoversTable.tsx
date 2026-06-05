@@ -24,6 +24,7 @@ type Props = {
   items: RankingItem[];
   selectedSymbol: string | null;
   onSelect: (symbol: string) => void;
+  onHoverSymbol?: (symbol: string | null) => void;
   companyNames?: Record<string, string>;
   intelligenceBySymbol?: Record<string, PatternIntelligence | null | undefined>;
 };
@@ -32,6 +33,7 @@ export function TopMoversTable({
   items,
   selectedSymbol,
   onSelect,
+  onHoverSymbol,
   companyNames = {},
   intelligenceBySymbol = {},
 }: Props) {
@@ -55,6 +57,9 @@ export function TopMoversTable({
               <button
                 type="button"
                 onClick={() => onSelect(sym)}
+                onMouseEnter={() => onHoverSymbol?.(sym)}
+                onFocus={() => onHoverSymbol?.(sym)}
+                onMouseLeave={() => onHoverSymbol?.(null)}
                 className={cn(
                   moversRankedRowButtonClass,
                   selected ? moversRankedRowSelectedClass : moversRankedRowHoverClass,

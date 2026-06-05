@@ -58,7 +58,7 @@ export default function MomentumBreakoutAlertsPage() {
 
   return (
     <PageShell className={cn(appStackClass, "pt-4 pb-10 sm:pt-6")}>
-      <MomentumBreakoutAlertsPanel accessToken={accessToken} />
+      <MomentumBreakoutAlertsPanel accessToken={accessToken} flags={flags} />
     </PageShell>
   );
 }
