@@ -18,6 +18,7 @@ type TradeDecisionPanelProps = {
   symbol: string | null;
   accessToken?: string | null;
   enabled?: boolean;
+  compact?: boolean;
   className?: string;
 };
 
@@ -159,8 +160,56 @@ function ReasonBreakdown({
   );
 }
 
-function PipelineContent({ decision }: { decision: TradeDecision }) {
+function PipelineContent({
+  decision,
+  compact = false,
+}: {
+  decision: TradeDecision;
+  compact?: boolean;
+}) {
   const env = decision.regime.tradeEnvironment;
+
+  if (compact) {
+    return (
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
+        <div
+          className={cn(
+            "rounded-xl border px-4 py-3",
+            verdictTone(decision.verdict),
+          )}
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
+            Decision
+          </p>
+          <p className="mt-1 text-xl font-bold leading-tight">
+            {VERDICT_LABEL[decision.verdict]}
+          </p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wide opacity-80">
+            {ACTION_LABEL[decision.action]}
+          </p>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          <MetricCell
+            label="Regime"
+            value={env}
+            sub={decision.regime.regimeId ?? undefined}
+            valueClassName={regimeTone(env)}
+          />
+          <MetricCell
+            label="Quality"
+            value={`${decision.tradeQualityScore} / 100`}
+            valueClassName={cn("tabular-nums", scoreTone(decision.tradeQualityScore))}
+          />
+          <MetricCell
+            label="Bucket"
+            value={BUCKET_LABEL[decision.scoreBucket]}
+            valueClassName={bucketTone(decision.scoreBucket)}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -231,6 +280,7 @@ export function TradeDecisionPanel({
   symbol,
   accessToken,
   enabled = true,
+  compact = false,
   className,
 }: TradeDecisionPanelProps) {
   const { decision, isLoading, error } = useTradeDecision(symbol, {
@@ -241,7 +291,7 @@ export function TradeDecisionPanel({
   return (
     <ResearchSectionCard
       title="Trade decision"
-      description="Regime gate → score → bucket → verdict"
+      description={compact ? "Verdict, action, and key gates" : "Regime, score, bucket, and reasoning"}
       icon={Target}
       className={className}
     >
@@ -252,7 +302,7 @@ export function TradeDecisionPanel({
       ) : !decision ? (
         <p className="text-sm text-muted">Trade decision is not available.</p>
       ) : (
-        <PipelineContent decision={decision} />
+        <PipelineContent decision={decision} compact={compact} />
       )}
     </ResearchSectionCard>
   );

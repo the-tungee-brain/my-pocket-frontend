@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, FileSpreadsheet, Landmark, PieChart, Target, Users } from "lucide-react";
+import { BarChart3, FileSpreadsheet, Landmark, PieChart, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useFundamentals } from "@/app/hooks/useFundamentals";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
@@ -16,7 +16,6 @@ import { InvestmentThesisSection } from "./InvestmentThesisSection";
 import { ValuationConclusionSection } from "./ValuationConclusionSection";
 import { ValuationSignalsSection } from "./ValuationSignalsSection";
 import { ValuationSummarySection } from "./ValuationSummarySection";
-import { StreetAnalysisSection } from "./StreetAnalysisSection";
 import {
   hasStreetOwnership,
   StreetOwnershipSection,
@@ -149,19 +148,6 @@ export function FundamentalsPageContent({
               </ResearchSectionCard>
             </ResearchScrollSpySection>
           ) : null}
-
-          <ResearchScrollSpySection id="fundamentals-street" label="Street">
-            <ResearchSectionCard
-              title="Wall Street analysis"
-              description="Supporting consensus, targets, and estimate trends"
-              icon={Target}
-            >
-              <StreetAnalysisSection
-                street={fundamentals?.streetAnalysis}
-                isLoading={isLoading}
-              />
-            </ResearchSectionCard>
-          </ResearchScrollSpySection>
 
           {isLoading || hasStreetOwnership(fundamentals?.streetAnalysis) ? (
             <ResearchScrollSpySection id="fundamentals-ownership" label="Ownership">

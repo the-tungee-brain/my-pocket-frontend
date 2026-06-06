@@ -213,15 +213,17 @@ function IntelligenceRecentEventsList({
   timeline: EventTimelineEntry[];
   limit: number;
 }) {
+  const entries = timelineEntriesWithKeys(timeline.slice(0, limit));
+
   return (
     <ul className="space-y-2">
-      {timeline.slice(0, limit).map((entry) => {
+      {entries.map(({ entry, key }) => {
         const Icon = timelineIcon(entry.kind);
         const linkable = isTimelineExternalLink(entry);
 
         return (
           <li
-            key={`${entry.kind}-${entry.date}-${entry.title}-${entry.url ?? ""}`}
+            key={key}
             className="flex gap-3 rounded-xl border border-border bg-background/60 px-3 py-2"
           >
             <Icon
@@ -261,6 +263,26 @@ function IntelligenceRecentEventsList({
       })}
     </ul>
   );
+}
+
+function timelineEntryKeyBase(entry: EventTimelineEntry) {
+  return [
+    entry.kind,
+    entry.date,
+    entry.title || "untitled",
+    entry.url || "no-url",
+    entry.detail || "no-detail",
+  ].join("|");
+}
+
+function timelineEntriesWithKeys(timeline: EventTimelineEntry[]) {
+  const seen = new Map<string, number>();
+  return timeline.map((entry) => {
+    const base = timelineEntryKeyBase(entry);
+    const count = (seen.get(base) ?? 0) + 1;
+    seen.set(base, count);
+    return { entry, key: `${base}|${count}` };
+  });
 }
 
 export function IntelligenceRecentEventsPanel({

@@ -16,6 +16,7 @@ import {
   Target,
   TrendingUp,
   BarChart3,
+  ScanSearch,
   type LucideIcon,
 } from "lucide-react";
 import { appTabBarClass, appTabLinkClass } from "@/lib/appUi";
@@ -24,6 +25,7 @@ import type { AssetType } from "@/app/types/research";
 
 export type ResearchTabId =
   | "overview"
+  | "analysis"
   | "position"
   | "options"
   | "news"
@@ -53,6 +55,12 @@ const allTabs: Tab[] = [
     assetTypes: "all",
   },
   {
+    id: "analysis",
+    label: "Analysis",
+    icon: ScanSearch,
+    assetTypes: "all",
+  },
+  {
     id: "position",
     label: "Positions",
     icon: BriefcaseBusiness,
@@ -65,7 +73,7 @@ const allTabs: Tab[] = [
     assetTypes: "all",
     requiresOptions: true,
   },
-  { id: "news", label: "News", icon: Newspaper, assetTypes: "all" },
+  { id: "news", label: "Events", icon: Newspaper, assetTypes: "all" },
   {
     id: "holdings",
     label: "Composition",
@@ -255,6 +263,7 @@ export function ResearchTabBar({
     showOptionsTab,
     showWheelBacktestTab,
   );
+  const tabSignature = tabs.map((tab) => tab.id).join("|");
 
   const recalculateVisibleTabs = useCallback(() => {
     const container = containerRef.current;
@@ -273,11 +282,12 @@ export function ResearchTabBar({
     setVisibleCount(
       computeVisibleCount(container.clientWidth, tabWidths, moreWidth),
     );
-  }, [tabs]);
+  }, []);
 
   useLayoutEffect(() => {
+    void tabSignature;
     recalculateVisibleTabs();
-  }, [recalculateVisibleTabs]);
+  }, [recalculateVisibleTabs, tabSignature]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -321,6 +331,7 @@ export function ResearchTabBar({
   }, [moreOpen, updateMoreMenuPosition]);
 
   useEffect(() => {
+    void pathname;
     setMoreOpen(false);
   }, [pathname]);
 
@@ -397,7 +408,7 @@ export function ResearchTabBar({
 
   return (
     <div ref={containerRef} className={cn("relative min-w-0", className)}>
-      <nav
+      <div
         className={cn("flex min-w-0", appTabBarClass)}
         role="tablist"
         aria-label="Research sections"
@@ -433,7 +444,7 @@ export function ResearchTabBar({
             </button>
           </div>
         )}
-      </nav>
+      </div>
 
       {typeof document !== "undefined" && moreMenu
         ? createPortal(moreMenu, document.body)

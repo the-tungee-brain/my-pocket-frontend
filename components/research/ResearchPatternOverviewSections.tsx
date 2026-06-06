@@ -8,7 +8,19 @@ import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import { useSession } from "next-auth/react";
 import { hasPatternForecast } from "@/lib/patternForecast";
-import { hasPatternIntelligence } from "@/lib/patternIntelligence";
+import {
+  formatPatternPercent,
+  patternDirectionLabel,
+  patternDirectionSubtitle,
+  patternUpProbLabel,
+} from "@/lib/patternForecast";
+import {
+  hasChartAnalystSummary,
+  hasPatternIntelligence,
+  outlookHeadline,
+  patternIntelligencePatternSubtitle,
+  patternIntelligencePrimaryPattern,
+} from "@/lib/patternIntelligence";
 import { hasProFeature, PRO_FEATURE_LABELS } from "@/lib/planFeatures";
 import { cn } from "@/lib/utils";
 
@@ -16,13 +28,35 @@ type Props = {
   symbol: string;
   intelligence: SymbolIntelligence | null;
   loading?: boolean;
+  mode?: "summary" | "full";
   className?: string;
 };
+
+function SummaryMetric({
+  label,
+  value,
+  subValue,
+}: {
+  label: string;
+  value: string;
+  subValue?: string | null;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
+        {label}
+      </p>
+      <p className="mt-0.5 text-sm font-semibold text-foreground">{value}</p>
+      {subValue ? <p className="mt-0.5 text-xs text-muted">{subValue}</p> : null}
+    </div>
+  );
+}
 
 export function ResearchPatternOverviewSections({
   symbol,
   intelligence,
   loading = false,
+  mode = "full",
   className,
 }: Props) {
   const { data: session } = useSession();
@@ -80,6 +114,82 @@ export function ResearchPatternOverviewSections({
 
   if (!showForecast && !showUpsell && !showChartIntel) {
     return null;
+  }
+
+  if (mode === "summary") {
+    const chartSummary = patternIntel?.chartIntelligence?.summary;
+    const primaryPattern =
+      patternIntel && hasPatternIntelligence(patternIntel)
+        ? patternIntelligencePrimaryPattern(patternIntel)
+        : null;
+    const chartHeadline =
+      chartSummary && hasChartAnalystSummary(patternIntel?.chartIntelligence)
+        ? outlookHeadline(chartSummary.outlook)
+        : null;
+    const patternLine = primaryPattern
+      ? `${primaryPattern.label} · ${patternIntelligencePatternSubtitle(primaryPattern)}`
+      : null;
+
+    return (
+      <ResearchSectionCard
+        title="Trend & pattern"
+        description="5-session model and chart read"
+        icon={Activity}
+        className={className}
+      >
+        <div className="space-y-3">
+          <div className="grid gap-2 sm:grid-cols-3">
+            {showForecast && forecast ? (
+              <>
+                <SummaryMetric
+                  label="Model view"
+                  value={patternDirectionLabel(forecast)}
+                  subValue={patternDirectionSubtitle(forecast)}
+                />
+                <SummaryMetric
+                  label={patternUpProbLabel(forecast)}
+                  value={formatPatternPercent(forecast.upProb)}
+                />
+                <SummaryMetric
+                  label="Horizon"
+                  value={`${forecast.horizonDays} sessions`}
+                />
+              </>
+            ) : showUpsell ? (
+              <SummaryMetric
+                label="5D Alpha"
+                value="Pro feature"
+                subValue={PRO_FEATURE_LABELS.patternTrend.description}
+              />
+            ) : (
+              <SummaryMetric
+                label="Trend"
+                value="Unavailable"
+                subValue={patternGap ? unavailableReason : undefined}
+              />
+            )}
+          </div>
+
+          {chartHeadline || patternLine ? (
+            <div className="rounded-xl border border-border bg-background/40 px-3 py-3">
+              {chartHeadline ? (
+                <p className="text-sm font-semibold text-foreground">
+                  {chartHeadline}
+                </p>
+              ) : null}
+              {patternLine ? (
+                <p className="mt-1 text-xs text-muted">{patternLine}</p>
+              ) : null}
+              {chartSummary?.outlook.expectation ? (
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {chartSummary.outlook.expectation}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </ResearchSectionCard>
+    );
   }
 
   return (

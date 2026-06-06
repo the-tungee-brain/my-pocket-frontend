@@ -10,7 +10,6 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import {
   formatStreetPrice,
-  yahooEstimatesAttribution,
   formatStreetUpside,
   hasStreetAnalysis,
 } from "@/lib/streetAnalysisUtils";
@@ -18,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { StreetAnalysisSkeleton } from "./StreetAnalysisSection";
 import { StreetAnalysisEmptyState } from "./StreetAnalysisEmptyState";
 
-const WALL_STREET_ANALYSIS_SUBTITLE = "Analyst ratings, targets, and estimates";
+const WALL_STREET_ANALYSIS_SUBTITLE = "Consensus, target, and latest action";
 
 type StreetAnalysisOverviewProps = {
   symbol: string;
@@ -130,30 +129,6 @@ export function StreetAnalysisOverview({
           </p>
         ) : null}
 
-        {street.estimateDriftHeadline ? (
-          <p className="text-sm leading-relaxed text-foreground">
-            {street.estimateDriftHeadline}
-          </p>
-        ) : null}
-
-        {street.ratingTrendHeadline ? (
-          <p className="text-sm leading-relaxed text-foreground">
-            {street.ratingTrendHeadline}
-          </p>
-        ) : null}
-
-        {street.growthContextHeadline ? (
-          <p className="text-sm leading-relaxed text-muted">
-            {street.growthContextHeadline}
-          </p>
-        ) : null}
-
-        {street.estimateRevisionHeadline ? (
-          <p className="text-sm leading-relaxed text-muted">
-            {street.estimateRevisionHeadline}
-          </p>
-        ) : null}
-
         {street.recentRatingActions?.[0] ? (
           <p className="text-sm text-muted">
             Latest:{" "}
@@ -165,10 +140,6 @@ export function StreetAnalysisOverview({
             </span>
           </p>
         ) : null}
-
-        <p className="text-[11px] text-muted">
-          {yahooEstimatesAttribution(street.dataAsOf)}
-        </p>
       </div>
     </ResearchSectionCard>
   );

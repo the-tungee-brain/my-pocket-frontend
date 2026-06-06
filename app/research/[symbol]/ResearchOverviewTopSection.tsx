@@ -1,15 +1,9 @@
 "use client";
 
-import { useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
-import {
-  IntelligenceRecentEventsPanel,
-  SymbolIntelligencePanel,
-} from "@/components/SymbolIntelligencePanel";
+import { BarChart3 } from "lucide-react";
+import { IntelligenceRecentEventsPanel } from "@/components/SymbolIntelligencePanel";
 import { PageSplit } from "@/components/PageShell";
-import type { IntelligenceSignal } from "@/app/types/intelligence";
-import { symbolChatKey } from "@/lib/chatKeys";
 import { pageSectionClass, pageOverviewAsideClass, pageOverviewMainClass, pageOverviewSplitClass } from "@/lib/pageLayout";
 import { ResearchPatternOverviewSections } from "@/components/research/ResearchPatternOverviewSections";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
@@ -20,6 +14,9 @@ import { EtfFundsOverview } from "./EtfFundsOverview";
 import { StreetAnalysisOverview } from "./StreetAnalysisOverview";
 import { useResearchSymbolIntelligence } from "./ResearchSymbolIntelligenceContext";
 import { useResearchEvents } from "@/app/hooks/useResearchEvents";
+import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { TickerKeyStats } from "@/components/TickerKeyStats";
+import { TradeDecisionPanel } from "@/components/TradeDecisionPanel";
 
 type Props = {
   symbol: string;
@@ -28,18 +25,11 @@ type Props = {
 export function ResearchOverviewTopSection({ symbol }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
-  const { positionMap } = usePortfolioContext();
-  const { sendQuickAction } = useAppChatContext();
-  const symbolUpper = symbol.toUpperCase();
-  const chatKey = symbolChatKey(symbolUpper) ?? symbolUpper;
-
   const { isEtf } = useResearchAssetTypeContext();
 
   const symbolIntelligence = useResearchSymbolIntelligence();
   const intelligence = symbolIntelligence?.intelligence ?? null;
   const loading = symbolIntelligence?.loading ?? false;
-  const error = symbolIntelligence?.error ?? null;
-  const refetch = symbolIntelligence?.refetch;
   const researchEvents = useResearchEvents(symbol, accessToken);
   const intelligenceTimeline = intelligence?.eventTimeline ?? [];
   const recentEventsTimeline = researchEvents.events.length
@@ -50,29 +40,6 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
   const recentEventsError =
     recentEventsTimeline.length === 0 ? researchEvents.error : null;
 
-  const handleRunSignal = useCallback(
-    (_signal: IntelligenceSignal, actionId: string) => {
-      void sendQuickAction({
-        activeChatKey: chatKey,
-        selectedView: "research",
-        selectedSymbol: symbolUpper,
-        positionsForSelectedSymbol: positionMap[symbolUpper] ?? [],
-        actionId,
-      });
-    },
-    [chatKey, symbolUpper, sendQuickAction, positionMap],
-  );
-
-  const handleGoDeeper = useCallback(() => {
-    void sendQuickAction({
-      activeChatKey: chatKey,
-      selectedView: "research",
-      selectedSymbol: symbolUpper,
-      positionsForSelectedSymbol: positionMap[symbolUpper] ?? [],
-      actionId: "daily-summary",
-    });
-  }, [chatKey, symbolUpper, sendQuickAction, positionMap]);
-
   return (
     <div className="space-y-6">
       <PageSplit
@@ -81,28 +48,32 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
         asideClassName={pageOverviewAsideClass}
         main={
           <>
+            {!isEtf ? (
+              <TradeDecisionPanel
+                symbol={symbol}
+                accessToken={accessToken}
+                compact
+                className={pageSectionClass}
+              />
+            ) : null}
             <ResearchStockChart
               symbol={symbol}
               chartIntelligence={intelligence?.patternIntelligence?.chartIntelligence}
+              autoSwitchToChartIntelligence={false}
             />
+            <ResearchSectionCard
+              title="Key stats"
+              description="Core market snapshot"
+              icon={BarChart3}
+              className={pageSectionClass}
+            >
+              <TickerKeyStats symbol={symbol} />
+            </ResearchSectionCard>
             <ResearchPatternOverviewSections
               symbol={symbol}
               intelligence={intelligence}
               loading={loading}
-              className={pageSectionClass}
-            />
-            <SymbolIntelligencePanel
-              intelligence={intelligence}
-              loading={loading}
-              error={error}
-              onRefresh={refetch}
-              onRunSignal={handleRunSignal}
-              onGoDeeper={handleGoDeeper}
-              actionContext="research"
-              researchBasePath="/research"
-              isEtf={isEtf}
-              hideRecentEvents
-              hidePatternForecast
+              mode="summary"
               className={pageSectionClass}
             />
           </>
@@ -128,7 +99,7 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
               timeline={recentEventsTimeline}
               loading={recentEventsLoading}
               error={recentEventsError}
-              limit={6}
+              limit={3}
             />
           </>
         }

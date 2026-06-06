@@ -43,6 +43,8 @@ type Props = {
   error?: string | null;
   onRetry?: () => void;
   chartIntelligence?: ChartIntelligence | null;
+  enableChartIntelligence?: boolean;
+  autoSwitchToChartIntelligence?: boolean;
   className?: string;
 };
 
@@ -299,6 +301,8 @@ export function StockChart({
   error = null,
   onRetry,
   chartIntelligence,
+  enableChartIntelligence = true,
+  autoSwitchToChartIntelligence = true,
   className,
 }: Props) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -334,9 +338,11 @@ export function StockChart({
     () => computeChartFooterStats(data, selectedInterval),
     [data, selectedInterval],
   );
+  const activeChartIntelligence =
+    enableChartIntelligence && chartMode === "candle" ? chartIntelligence : null;
   const overlayLegendItems = useMemo(
-    () => buildChartIntelligenceLegendItems(chartIntelligence),
-    [chartIntelligence],
+    () => buildChartIntelligenceLegendItems(activeChartIntelligence),
+    [activeChartIntelligence],
   );
 
   useEffect(() => {
@@ -356,6 +362,7 @@ export function StockChart({
   }, []);
 
   useEffect(() => {
+    void isFullscreen;
     if (!chartRef.current || !containerRef.current) return;
 
     const resizeChart = () => {
@@ -379,10 +386,18 @@ export function StockChart({
   }, [isFullscreen]);
 
   useEffect(() => {
-    if (hasChartIntelligence(chartIntelligence)) {
+    if (
+      enableChartIntelligence &&
+      autoSwitchToChartIntelligence &&
+      hasChartIntelligence(chartIntelligence)
+    ) {
       setChartMode("candle");
     }
-  }, [chartIntelligence]);
+  }, [
+    chartIntelligence,
+    enableChartIntelligence,
+    autoSwitchToChartIntelligence,
+  ]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -435,8 +450,6 @@ export function StockChart({
 
     chartRef.current = chart;
 
-    let priceSeries;
-
     const candles = data.map((d) => ({
       time: toChartTime(d.date) as never,
       open: d.open,
@@ -444,6 +457,8 @@ export function StockChart({
       low: d.low,
       close: d.close,
     }));
+
+    let priceSeries: ReturnType<typeof chart.addSeries>;
 
     if (chartMode === "line") {
       priceSeries = chart.addSeries(LineSeries, {
@@ -465,7 +480,12 @@ export function StockChart({
       priceSeries.setData(candles);
     }
 
-    applyChartIntelligenceOverlays(chart, priceSeries, data, chartIntelligence);
+    applyChartIntelligenceOverlays(
+      chart,
+      priceSeries,
+      data,
+      activeChartIntelligence,
+    );
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
       color: upColor,
@@ -531,7 +551,7 @@ export function StockChart({
       chart.remove();
       chartRef.current = null;
     };
-  }, [chartIntelligence, chartMode, data, dataByTime]);
+  }, [activeChartIntelligence, chartMode, data, dataByTime]);
 
   useEffect(() => {
     setSelectedPeriod(period);
@@ -542,6 +562,10 @@ export function StockChart({
   }, [interval]);
 
   useEffect(() => {
+    void data;
+    void chartMode;
+    void selectedPeriod;
+    void selectedInterval;
     setHoveredPoint(null);
   }, [data, chartMode, selectedPeriod, selectedInterval]);
 
@@ -611,11 +635,8 @@ export function StockChart({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div
-              className="flex rounded-lg border border-border bg-background/60 p-0.5"
-              role="group"
-              aria-label="Chart style"
-            >
+            <fieldset className="flex rounded-lg border border-border bg-background/60 p-0.5">
+              <legend className="sr-only">Chart style</legend>
               <button
                 type="button"
                 aria-pressed={chartMode === "line"}
@@ -644,7 +665,7 @@ export function StockChart({
                 <CandlestickChart className="h-3.5 w-3.5" aria-hidden />
                 Candles
               </button>
-            </div>
+            </fieldset>
 
             <button
               type="button"
@@ -669,11 +690,8 @@ export function StockChart({
           </div>
         </div>
 
-        <div
-          className="flex flex-wrap gap-1"
-          role="group"
-          aria-label={`${symbol} chart time range`}
-        >
+        <fieldset className="flex flex-wrap gap-1">
+          <legend className="sr-only">{symbol} chart time range</legend>
           {PRESETS.map((preset) => {
             const active = preset.label === currentPreset;
             return (
@@ -694,7 +712,7 @@ export function StockChart({
               </button>
             );
           })}
-        </div>
+        </fieldset>
       </div>
 
       {advancedOpen && (

@@ -24,15 +24,12 @@ import { pageShellClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 import { ResearchOverviewProvider } from "@/app/research/ResearchOverviewContext";
 import { ResearchDataAsOfLabel } from "@/app/research/ResearchDataAsOfLabel";
-import { TickerKeyStats } from "@/components/TickerKeyStats";
 import {
   ResearchAssetTypeProvider,
   useResearchAssetTypeContext,
 } from "./ResearchAssetTypeContext";
 import { ResearchSymbolHeaderProvider } from "./ResearchSymbolHeaderContext";
 import { ResearchSymbolIntelligenceProvider } from "./ResearchSymbolIntelligenceContext";
-import { TradeDecisionPanel } from "@/components/TradeDecisionPanel";
-import { pageSectionClass } from "@/lib/pageLayout";
 
 type Props = {
   symbol: string;
@@ -153,7 +150,6 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
             showOptionsTab={showOptionsTab}
             showWheelBacktestTab={showWheelBacktestTab}
           />
-          {!collapsed ? <TickerKeyStats symbol={symbol} /> : null}
           {scrollCollapsed ? (
             <button
               type="button"
@@ -184,13 +180,6 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
       >
         {activeTab !== "overview" ? (
           <ResearchDataAsOfLabel className="-mt-4 mb-1" />
-        ) : null}
-        {!isEtf && activeTab === "overview" ? (
-          <TradeDecisionPanel
-            symbol={symbol}
-            accessToken={accessToken}
-            className={pageSectionClass}
-          />
         ) : null}
         {children}
       </div>

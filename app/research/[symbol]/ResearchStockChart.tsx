@@ -10,9 +10,16 @@ import { pageSectionClass } from "@/lib/pageLayout";
 type Props = {
   symbol: string;
   chartIntelligence?: ChartIntelligence | null;
+  enableChartIntelligence?: boolean;
+  autoSwitchToChartIntelligence?: boolean;
 };
 
-export function ResearchStockChart({ symbol, chartIntelligence }: Props) {
+export function ResearchStockChart({
+  symbol,
+  chartIntelligence,
+  enableChartIntelligence = true,
+  autoSwitchToChartIntelligence = true,
+}: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken ?? null;
 
@@ -44,6 +51,8 @@ export function ResearchStockChart({ symbol, chartIntelligence }: Props) {
       onPeriodChange={setPeriod}
       onIntervalChange={setInterval}
       chartIntelligence={chartIntelligence}
+      enableChartIntelligence={enableChartIntelligence}
+      autoSwitchToChartIntelligence={autoSwitchToChartIntelligence}
       className={pageSectionClass}
     />
   );
