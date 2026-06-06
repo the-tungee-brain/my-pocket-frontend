@@ -123,6 +123,80 @@ export type IntradayTradingBiasResponse = {
   isRealtime: false;
 };
 
+export type TraderPlaybookBestSetup =
+  | "BreakoutContinuation"
+  | "PullbackToSupport"
+  | "FailedBreakout"
+  | "RangeDay"
+  | "TrendContinuation"
+  | "None";
+
+export type TraderPlaybookStatus =
+  | "Valid"
+  | "Waiting"
+  | "Invalid"
+  | "NoSetup";
+
+export type TraderPlaybookRiskRewardLabel =
+  | "favorable"
+  | "mixed"
+  | "poor"
+  | "unavailable";
+
+export type TraderPlaybookExecutionReadiness = "ready" | "watch" | "avoid";
+export type TraderPlaybookAlignmentWithUnavailable =
+  | TradingBiasAlignmentState
+  | "unavailable";
+
+export type TraderPlaybookConditions = {
+  validIf: string[];
+  invalidIf: string[];
+};
+
+export type TraderPlaybookLevels = {
+  entry: number | null;
+  stop: number | null;
+  target1: number | null;
+  target2: number | null;
+  support: number | null;
+  resistance: number | null;
+  breakoutLevel: number | null;
+};
+
+export type TraderPlaybookRisk = {
+  riskPerShare: number | null;
+  rewardToTarget1: number | null;
+  rewardToTarget2: number | null;
+  rMultipleTarget1: number | null;
+  rMultipleTarget2: number | null;
+  riskRewardLabel: TraderPlaybookRiskRewardLabel;
+};
+
+export type TraderPlaybookAlignment = {
+  dailyBias: TradingBiasAlignmentState;
+  executionReadiness: TraderPlaybookExecutionReadiness;
+  marketRegime: TraderPlaybookAlignmentWithUnavailable;
+  relativeStrength: TraderPlaybookAlignmentWithUnavailable;
+  priceStructure: TraderPlaybookAlignmentWithUnavailable;
+  catalyst: TradingBiasCatalystAlignment;
+};
+
+export type TraderPlaybookResponse = {
+  direction: TradingBiasLabel;
+  confidence: TradingBiasConfidence;
+  horizon: "1-5 sessions";
+  dataMode: "daily";
+  bestSetup: TraderPlaybookBestSetup;
+  status: TraderPlaybookStatus;
+  conditions: TraderPlaybookConditions;
+  levels: TraderPlaybookLevels;
+  risk: TraderPlaybookRisk;
+  alignment: TraderPlaybookAlignment;
+  reasons: string[];
+  warnings: string[];
+  dataGaps: string[];
+};
+
 export type EtfHoldingItem = {
   ticker?: string | null;
   name: string;

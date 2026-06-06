@@ -38,6 +38,8 @@ const BIAS_DOT: Record<TradingBiasLabel, string> = {
   Bearish: "bg-danger",
 };
 
+const INACTIVE_STALENESS_SECONDS = 60 * 60;
+
 function formatMoney(value: number | null | undefined): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return "N/A";
   return `$${value.toFixed(2)}`;
@@ -82,6 +84,21 @@ function formatFreshness(data: IntradayTradingBiasResponse): string {
   }
   parts.push(data.provider);
   return parts.join(" · ");
+}
+
+function isInactiveIntradayRead(data: IntradayTradingBiasResponse): boolean {
+  if (
+    typeof data.stalenessSeconds === "number" &&
+    data.stalenessSeconds > INACTIVE_STALENESS_SECONDS
+  ) {
+    return true;
+  }
+  const inactiveCopy = [...data.warnings, ...data.dataGaps].join(" ").toLowerCase();
+  return (
+    inactiveCopy.includes("outside market hours") ||
+    inactiveCopy.includes("market is closed") ||
+    inactiveCopy.includes("intraday read is stale")
+  );
 }
 
 function ConfidenceBadge({
@@ -209,31 +226,42 @@ function IntradayBiasSkeleton() {
 }
 
 function IntradayBiasContent({ data }: { data: IntradayTradingBiasResponse }) {
+  const inactive = isInactiveIntradayRead(data);
   const openingRangeStatus =
     data.levels.openRangeHigh != null && data.levels.openRangeLow != null
       ? "Complete"
       : "Pending or unavailable";
+  const headerTone = inactive
+    ? "border-border bg-muted/30 text-foreground"
+    : BIAS_TONE[data.bias];
+  const dotTone = inactive ? "bg-muted" : BIAS_DOT[data.bias];
 
   return (
     <div className="space-y-4">
-      <div className={cn("rounded-xl border px-4 py-4", BIAS_TONE[data.bias])}>
+      <div className={cn("rounded-xl border px-4 py-4", headerTone)}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
-              Intraday signal. Separate from 1-5 session Trading Bias.
+              {inactive
+                ? "Previous session intraday read."
+                : "Intraday signal. Separate from 1-5 session Trading Bias."}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <span
-                className={cn("h-2.5 w-2.5 rounded-full", BIAS_DOT[data.bias])}
+                className={cn("h-2.5 w-2.5 rounded-full", dotTone)}
                 aria-hidden="true"
               />
-              <p className="text-2xl font-bold leading-tight">{data.bias}</p>
+              <p className="text-2xl font-bold leading-tight">
+                {inactive ? "Inactive intraday read" : data.bias}
+              </p>
               <ConfidenceBadge value={data.confidence} />
               <Badge variant="warning">Delayed</Badge>
+              {inactive ? <Badge variant="muted">Not current</Badge> : null}
             </div>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed opacity-85">
-              Uses delayed 5-minute market data. This does not replace the
-              1-5 session Trading Bias.
+              {inactive
+                ? "The latest 5-minute data is stale or outside market hours, so this is not shown as an active bearish or bullish signal."
+                : "Uses delayed 5-minute market data. This does not replace the 1-5 session Trading Bias."}
             </p>
           </div>
 
@@ -323,11 +351,18 @@ export function IntradayTradingBiasCard({
       enabled,
     },
   );
+  const inactive = intradayTradingBias
+    ? isInactiveIntradayRead(intradayTradingBias)
+    : false;
 
   return (
     <ResearchSectionCard
-      title="Delayed Intraday Bias"
-      description="Delayed 5-minute intraday setup read"
+      title={inactive ? "Previous Session Intraday Read" : "Delayed Intraday Bias"}
+      description={
+        inactive
+          ? "Inactive delayed 5-minute read"
+          : "Delayed 5-minute intraday setup read"
+      }
       icon={Clock}
       className={className}
     >

@@ -23,6 +23,7 @@ import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { TickerKeyStats } from "@/components/TickerKeyStats";
 import { TradeDecisionPanel } from "@/components/TradeDecisionPanel";
 import { IntradayTradingBiasCard } from "@/components/research/IntradayTradingBiasCard";
+import { TraderPlaybookCard } from "@/components/research/TraderPlaybookCard";
 import { TradingBiasCard } from "@/components/research/TradingBiasCard";
 
 type Props = {
@@ -58,6 +59,11 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             {!isEtf ? (
               <>
                 <TradingBiasCard
+                  symbol={symbol}
+                  accessToken={accessToken}
+                  className={pageSectionClass}
+                />
+                <TraderPlaybookCard
                   symbol={symbol}
                   accessToken={accessToken}
                   className={pageSectionClass}

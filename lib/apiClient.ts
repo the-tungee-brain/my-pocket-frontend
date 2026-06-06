@@ -16,6 +16,7 @@ import type { PressReleasesResponse } from "@/app/types/pressReleases";
 import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
 import type {
   IntradayTradingBiasResponse,
+  TraderPlaybookResponse,
   TradingBiasResponse,
 } from "@/app/types/research";
 import {
@@ -290,6 +291,24 @@ export async function fetchIntradayTradingBias(
   }
 
   return res.json() as Promise<IntradayTradingBiasResponse>;
+}
+
+export async function fetchTraderPlaybook(
+  accessToken: string,
+  symbol: string,
+): Promise<TraderPlaybookResponse> {
+  const res = await apiFetch(
+    `/research/trader-playbook${buildQuery({
+      symbol: symbol.toUpperCase(),
+    })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load trader playbook (${res.status})`);
+  }
+
+  return res.json() as Promise<TraderPlaybookResponse>;
 }
 
 export async function fetchRecentOrders(
