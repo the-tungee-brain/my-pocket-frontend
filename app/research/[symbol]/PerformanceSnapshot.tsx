@@ -24,8 +24,8 @@ export function PerformanceSnapshot({ symbol, className }: Props) {
 
   return (
     <ResearchSectionCard
-      title="Recent performance"
-      description="Price trends and volatility"
+      title="Performance evidence"
+      description="Recent return and volatility context"
       icon={BarChart3}
       className={className}
     >

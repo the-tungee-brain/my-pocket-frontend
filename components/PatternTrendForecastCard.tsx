@@ -41,8 +41,8 @@ function ProbabilityBar({
   value: number;
   selected: boolean;
 }) {
-  const isSpyUnderperform = label === "Underperform SPY";
-  const isSpyOutperform = label === "Outperform SPY";
+  const isSpyUnderperform = label === "Likely weaker than SPY";
+  const isSpyOutperform = label === "Likely stronger than SPY";
   const selectedToneClass = isSpyOutperform
     ? "text-success"
     : isSpyUnderperform
@@ -122,11 +122,11 @@ export function PatternTrendForecastCard({
 
   return (
     <ResearchSectionCard
-      title="Trend analysis"
+      title="Relative strength model"
       description={
         isBenchmark
           ? "Quantitative trend and regime inputs · Model C not applicable"
-          : "Model outputs and feature inputs for the next 5 trading sessions"
+          : "Market-relative model evidence for the next 5 trading sessions"
       }
       icon={TrendingUp}
       className={className}
@@ -154,7 +154,11 @@ export function PatternTrendForecastCard({
         ) : (
           <div className="rounded-xl border border-border bg-background/40 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-              Model outputs
+              Relative strength model
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-muted">
+              This measures market-relative strength, not whether the stock must
+              go up.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-3">
               {usesRanking ? (
@@ -169,7 +173,7 @@ export function PatternTrendForecastCard({
               />
               {predictedClass ? (
                 <KpiStat
-                  label="Predicted class"
+                  label="Relative strength class"
                   value={predictedClass}
                   tone={predictedClassTone}
                   subValue={

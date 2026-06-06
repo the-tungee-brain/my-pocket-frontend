@@ -98,7 +98,7 @@ export function ResearchPatternOverviewSections({
   if (loading && !intelligence) {
     return (
       <ResearchSectionCard
-        title="Trend analysis"
+        title="Price structure evidence"
         description="Loading pattern model…"
         icon={Activity}
         className={className}
@@ -116,7 +116,7 @@ export function ResearchPatternOverviewSections({
   if (patternTrendAllowed && intelligence && !showForecast && !showChartIntel) {
     return (
       <ResearchSectionCard
-        title="Trend analysis"
+        title="Price structure evidence"
         description="Unavailable"
         icon={Activity}
         className={className}
@@ -193,7 +193,7 @@ export function ResearchPatternOverviewSections({
             <div className="rounded-xl border border-border bg-background/40 px-3 py-3">
               {chartHeadline ? (
                 <p className="text-sm font-semibold text-foreground">
-                  {chartHeadline}
+                  Chart structure: {chartHeadline}
                 </p>
               ) : null}
               {patternLine ? (
@@ -230,9 +230,9 @@ export function ResearchPatternOverviewSections({
       {showChartIntel ? (
         <PatternIntelligenceCard intelligence={patternIntel} />
       ) : patternIntel && patternTrendAllowed ? (
-        <ResearchSectionCard title="Chart intelligence" icon={Sparkles}>
+        <ResearchSectionCard title="Price structure evidence" icon={Sparkles}>
           <p className="text-sm text-muted">
-            Analyst summary is not available for this symbol yet.
+            Chart structure summary is not available for this symbol yet.
           </p>
         </ResearchSectionCard>
       ) : null}

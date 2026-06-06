@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { StreetAnalysisSkeleton } from "./StreetAnalysisSection";
 import { StreetAnalysisEmptyState } from "./StreetAnalysisEmptyState";
 
-const WALL_STREET_ANALYSIS_SUBTITLE = "Consensus, target, and latest action";
+const ANALYST_SIGNAL_SUBTITLE = "External analyst consensus and target context";
 
 type StreetAnalysisOverviewProps = {
   symbol: string;
@@ -52,8 +52,8 @@ export function StreetAnalysisOverview({
   if (isLoading) {
     return (
       <ResearchSectionCard
-        title="Wall Street analysis"
-        description={WALL_STREET_ANALYSIS_SUBTITLE}
+        title="Analyst signal"
+        description={ANALYST_SIGNAL_SUBTITLE}
         icon={Target}
         className={className}
       >
@@ -65,8 +65,8 @@ export function StreetAnalysisOverview({
   if (error) {
     return (
       <ResearchSectionCard
-        title="Wall Street analysis"
-        description={WALL_STREET_ANALYSIS_SUBTITLE}
+        title="Analyst signal"
+        description={ANALYST_SIGNAL_SUBTITLE}
         icon={Target}
         className={className}
       >
@@ -78,8 +78,8 @@ export function StreetAnalysisOverview({
   if (!hasStreetAnalysis(street)) {
     return (
       <ResearchSectionCard
-        title="Wall Street analysis"
-        description={WALL_STREET_ANALYSIS_SUBTITLE}
+        title="Analyst signal"
+        description={ANALYST_SIGNAL_SUBTITLE}
         icon={Target}
         className={className}
       >
@@ -93,8 +93,8 @@ export function StreetAnalysisOverview({
 
   return (
     <ResearchSectionCard
-      title="Wall Street analysis"
-      description={WALL_STREET_ANALYSIS_SUBTITLE}
+      title="Analyst signal"
+      description={ANALYST_SIGNAL_SUBTITLE}
       icon={Target}
       action={detailsLink}
       className={className}

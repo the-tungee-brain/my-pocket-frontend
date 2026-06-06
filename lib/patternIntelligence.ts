@@ -46,16 +46,14 @@ export function patternIntelligencePrimaryPattern(
   intelligence: PatternIntelligence,
 ): PrimaryCandlestickPattern | null {
   return (
-    intelligence.primaryPattern ??
-    intelligence.activePatterns?.[0] ??
-    null
+    intelligence.primaryPattern ?? intelligence.activePatterns?.[0] ?? null
   );
 }
 
 export function formatPatternDirectionLabel(direction: string): string {
-  if (direction === "bullish") return "Bullish";
-  if (direction === "bearish") return "Bearish";
-  return "Neutral";
+  if (direction === "bullish") return "Chart structure: Bullish";
+  if (direction === "bearish") return "Chart structure: Bearish";
+  return "Chart structure: Neutral";
 }
 
 export function patternQualityLabel(strength: number): string {

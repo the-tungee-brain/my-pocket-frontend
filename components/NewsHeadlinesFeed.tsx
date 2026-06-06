@@ -5,10 +5,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import type { EnrichedNewsItem, Sentiment } from "@/app/hooks/useCompanyNews";
 import type { PortfolioHoldingsNewsItem } from "@/app/types/portfolioNews";
 import { Skeleton } from "@/components/ui/Skeleton";
-import {
-  LoadingStagger,
-  LoadingSurface,
-} from "@/components/ui/ContentLoading";
+import { LoadingStagger, LoadingSurface } from "@/components/ui/ContentLoading";
 import { LoadingRegion } from "@/components/ui/LoadingRegion";
 import { appTabBarClass, appTabLinkClass } from "@/lib/appUi";
 import { newsHeadlineIconPalette } from "@/lib/newsHeadlineIcon";
@@ -105,7 +102,6 @@ function sentimentColor(sentiment: Sentiment) {
       return "bg-accent-muted text-accent-strong ring-1 ring-accent/30";
     case "bearish":
       return "bg-danger/10 text-danger ring-1 ring-danger/30";
-    case "neutral":
     default:
       return "bg-muted-bg text-muted ring-1 ring-border";
   }
@@ -114,12 +110,17 @@ function sentimentColor(sentiment: Sentiment) {
 function sentimentLabel(sentiment: Sentiment) {
   switch (sentiment) {
     case "bullish":
-      return "Bullish";
+      return "Positive tone";
     case "bearish":
-      return "Bearish";
+      return "Negative tone";
     default:
-      return "Neutral";
+      return "Mixed/Neutral tone";
   }
+}
+
+function sentimentFilterLabel(sentiment: SentimentFilter) {
+  if (sentiment === "all") return "All";
+  return sentimentLabel(sentiment);
 }
 
 function countBySentiment(items: NewsHeadlineDisplayItem[]) {
@@ -147,7 +148,8 @@ export const NEWS_HEADLINES_PANEL_CONTAINER_CLASS =
 export const NEWS_HEADLINES_GRID_CLASS =
   "grid w-full min-w-0 max-w-full grid-cols-1 auto-rows-fr gap-3 sm:grid-cols-2 @max-headlines/md:grid-cols-1";
 
-export const NEWS_HEADLINES_LIST_CLASS = "flex w-full min-w-0 max-w-full flex-col gap-3";
+export const NEWS_HEADLINES_LIST_CLASS =
+  "flex w-full min-w-0 max-w-full flex-col gap-3";
 
 function NewsHeadlineClampedText({
   children,
@@ -163,9 +165,7 @@ function NewsHeadlineClampedText({
   const textClass = cn(NEWS_HEADLINE_CLAMP, className);
 
   return (
-    <div
-      className={cn(slotClass, "w-full min-w-0 shrink-0 overflow-hidden")}
-    >
+    <div className={cn(slotClass, "w-full min-w-0 shrink-0 overflow-hidden")}>
       {href ? (
         <a
           href={href}
@@ -303,7 +303,7 @@ export function NewsHeadlineCard({
 
         {(item.topics?.length ?? 0) > 0 ? (
           <p className="line-clamp-1 max-w-full overflow-hidden break-words text-[11px] text-muted">
-            {item.topics!.map((t) => t.replace(/_/g, " ")).join(" · ")}
+            {item.topics?.map((t) => t.replace(/_/g, " ")).join(" · ")}
           </p>
         ) : null}
       </div>
@@ -371,9 +371,8 @@ export function HeadlinesViewToggle({
   className?: string;
 }) {
   return (
-    <div
+    <fieldset
       className={cn(appTabBarClass, "shrink-0", className)}
-      role="group"
       aria-label="Headlines layout"
     >
       <button
@@ -394,7 +393,7 @@ export function HeadlinesViewToggle({
         <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
         Grid
       </button>
-    </div>
+    </fieldset>
   );
 }
 
@@ -423,16 +422,22 @@ export function NewsHeadlinesSkeleton({
       <LoadingStagger>
         {view === "grid" ? (
           <div className={NEWS_HEADLINES_GRID_CLASS}>
-            {Array.from({ length: rows }, (_, row) => (
-              <div key={row} className="min-h-0 min-w-0">
+            {Array.from(
+              { length: rows },
+              (_, row) => `grid-${rows}-${row}`,
+            ).map((key) => (
+              <div key={key} className="min-h-0 min-w-0">
                 {card}
               </div>
             ))}
           </div>
         ) : (
           <div className={NEWS_HEADLINES_LIST_CLASS}>
-            {Array.from({ length: rows }, (_, row) => (
-              <div key={row} className="min-w-0">
+            {Array.from(
+              { length: rows },
+              (_, row) => `list-${rows}-${row}`,
+            ).map((key) => (
+              <div key={key} className="min-w-0">
                 {card}
               </div>
             ))}
@@ -474,7 +479,8 @@ export function NewsHeadlinesPanel({
   hideViewToggle = false,
 }: NewsHeadlinesPanelProps) {
   const [filter, setFilter] = useState<SentimentFilter>("all");
-  const [headlinesView, setHeadlinesView] = useState<HeadlinesView>(defaultView);
+  const [headlinesView, setHeadlinesView] =
+    useState<HeadlinesView>(defaultView);
   const layoutView: HeadlinesView = hideViewToggle ? "grid" : headlinesView;
 
   const counts = useMemo(() => countBySentiment(items), [items]);
@@ -489,9 +495,6 @@ export function NewsHeadlinesPanel({
       itemLimit != null ? filteredItems.slice(0, itemLimit) : filteredItems,
     [filteredItems, itemLimit],
   );
-  const hasMore =
-    itemLimit != null && filteredItems.length > visibleItems.length;
-
   const hasSentimentSpread =
     showSentimentFilters &&
     (counts.bullish > 0 || counts.bearish > 0) &&
@@ -502,9 +505,8 @@ export function NewsHeadlinesPanel({
       {!hideToolbar ? (
         <div className="flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           {hasSentimentSpread ? (
-            <div
+            <fieldset
               className="flex min-w-0 flex-wrap gap-1.5"
-              role="group"
               aria-label="Filter by sentiment"
             >
               <FilterChip
@@ -515,23 +517,23 @@ export function NewsHeadlinesPanel({
               />
               <FilterChip
                 active={filter === "bullish"}
-                label="Bullish"
+                label="Positive tone"
                 count={counts.bullish}
                 onClick={() => setFilter("bullish")}
               />
               <FilterChip
                 active={filter === "neutral"}
-                label="Neutral"
+                label="Mixed/Neutral tone"
                 count={counts.neutral}
                 onClick={() => setFilter("neutral")}
               />
               <FilterChip
                 active={filter === "bearish"}
-                label="Bearish"
+                label="Negative tone"
                 count={counts.bearish}
                 onClick={() => setFilter("bearish")}
               />
-            </div>
+            </fieldset>
           ) : (
             <p className="text-[11px] text-muted">
               {items.length} headline{items.length === 1 ? "" : "s"}
@@ -570,7 +572,7 @@ export function NewsHeadlinesPanel({
         <p className="text-sm text-muted">
           {filter === "all" || !showSentimentFilters
             ? emptyMessage
-            : `No ${filter} headlines in this batch. Try another filter.`}
+            : `No ${sentimentFilterLabel(filter)} headlines in this batch. Try another filter.`}
         </p>
       )}
 
@@ -606,7 +608,11 @@ export function SentimentMixBar({ items }: { items: EnrichedNewsItem[] }) {
   ];
 
   return (
-    <div className="flex flex-col gap-2" aria-label="Sentiment mix in recent headlines">
+    <div
+      role="img"
+      className="flex flex-col gap-2"
+      aria-label="Sentiment mix in recent headlines"
+    >
       <div className="flex h-1.5 overflow-hidden rounded-full bg-muted-bg">
         {segments.map(
           (seg) =>

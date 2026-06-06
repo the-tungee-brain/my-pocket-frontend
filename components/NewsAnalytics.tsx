@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import type { StockNewsView, OverallSentiment } from "@/app/hooks/useCompanyNews";
+import type {
+  StockNewsView,
+  OverallSentiment,
+} from "@/app/hooks/useCompanyNews";
 import {
   enrichedNewsItemToDisplay,
   NewsHeadlinesPanel,
@@ -41,15 +44,15 @@ import { IconButton } from "@/components/ui/IconButton";
 function overallSentimentLabel(s: OverallSentiment) {
   switch (s) {
     case "strongly_bullish":
-      return "Strongly bullish";
+      return "Strong positive tone";
     case "bullish":
-      return "Bullish";
+      return "Positive tone";
     case "neutral":
-      return "Neutral";
+      return "Mixed/Neutral tone";
     case "bearish":
-      return "Bearish";
+      return "Negative tone";
     case "strongly_bearish":
-      return "Strongly bearish";
+      return "Strong negative tone";
   }
 }
 
@@ -185,7 +188,9 @@ export function NewsContextAside({ data }: { data: StockNewsView }) {
   return (
     <div className="app-stack">
       <ResearchTextBlock title="Dominant driver">
-        <p className="font-medium">{formatMetadataValue(data.dominant_driver)}</p>
+        <p className="font-medium">
+          {formatMetadataValue(data.dominant_driver)}
+        </p>
       </ResearchTextBlock>
 
       <ResearchTextBlock title="Impact horizon">
@@ -301,8 +306,8 @@ export function NewsAsideSections({
             <NewsContextAside data={data} />
           ) : (
             <p className="text-sm leading-relaxed text-muted">
-              Dominant driver, impact horizon, and actionability appear here after
-              you run Analyze news.
+              Dominant driver, impact horizon, and actionability appear here
+              after you run Analyze news.
             </p>
           )}
         </LoadingSurface>
@@ -316,7 +321,9 @@ export function NewsAsideSections({
         <LoadingSurface
           loading={!planResolved || (newsAiAllowed && pending)}
           refreshing={refreshing}
-          hasContent={showProUpsell || (hasContext && !!data && hasCoverageAnalysis(data))}
+          hasContent={
+            showProUpsell || (hasContext && !!data && hasCoverageAnalysis(data))
+          }
           label="Loading coverage analysis"
           skeleton={<NewsAnalysisLoading />}
         >
@@ -361,7 +368,6 @@ export default function NewsAnalytics({
   isLoading,
   isRefreshing = false,
   isAnalyzing = false,
-  lastAnalyzedAt = null,
   lastUpdated = null,
   onRefresh,
   onAnalyzeNews,
@@ -421,7 +427,10 @@ export default function NewsAnalytics({
           aria-label="Refresh news"
         >
           <RefreshCw
-            className={cn("h-3.5 w-3.5", (isLoading || isRefreshing) && "animate-spin")}
+            className={cn(
+              "h-3.5 w-3.5",
+              (isLoading || isRefreshing) && "animate-spin",
+            )}
             aria-hidden
           />
         </IconButton>

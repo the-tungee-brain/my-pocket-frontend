@@ -100,7 +100,7 @@ function AnalystSummaryBody({
         )}
       >
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          Outlook
+          Chart structure
         </p>
         <p
           className={cn(
@@ -108,7 +108,7 @@ function AnalystSummaryBody({
             isBenchmark ? "text-foreground" : signalToneClass[tone],
           )}
         >
-          {outlookHeadline(outlook)}
+          Chart structure: {outlookHeadline(outlook)}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-foreground">
           {outlook.expectation}
@@ -138,7 +138,7 @@ function AnalystSummaryBody({
       {whyThisOutlook.length > 0 ? (
         <div className="rounded-xl border border-border bg-background/30 p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Why this outlook
+            Why this chart read
           </p>
           <ul className="mt-3 space-y-2">
             {whyThisOutlook.map((bullet) => (
@@ -149,9 +149,7 @@ function AnalystSummaryBody({
                 <span
                   className={cn(
                     "shrink-0 font-semibold",
-                    bullet.tone === "caution"
-                      ? "text-warning"
-                      : "text-success",
+                    bullet.tone === "caution" ? "text-warning" : "text-success",
                   )}
                   aria-hidden
                 >
@@ -166,7 +164,7 @@ function AnalystSummaryBody({
 
       <div className="rounded-xl border border-border bg-background/40 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          Thesis
+          Structure thesis
         </p>
         <p className="mt-2 text-sm leading-relaxed text-foreground">{thesis}</p>
       </div>
@@ -195,11 +193,11 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
 
   return (
     <ResearchSectionCard
-      title="Chart intelligence"
+      title="Price structure evidence"
       description={
         isBenchmark
           ? "Qualitative 5-day read from price structure and patterns"
-          : "What to expect over the next 5 sessions — see Trend Analysis for model data"
+          : "Chart structure and pattern evidence for the next 5 sessions"
       }
       icon={Sparkles}
       className={className}

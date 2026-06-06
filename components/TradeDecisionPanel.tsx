@@ -22,10 +22,10 @@ type TradeDecisionPanelProps = {
   className?: string;
 };
 
-const VERDICT_LABEL: Record<TradeVerdict, string> = {
-  TRADE: "Trade",
-  WATCHLIST: "Watchlist",
-  NO_TRADE: "No trade",
+const READINESS_LABEL: Record<TradeVerdict, string> = {
+  TRADE: "Actionable",
+  WATCHLIST: "Wait for setup",
+  NO_TRADE: "Not actionable",
 };
 
 const BUCKET_LABEL: Record<ScoreBucket, string> = {
@@ -99,7 +99,9 @@ function MetricCell({
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
         {label}
       </p>
-      <p className={cn("mt-0.5 text-sm font-semibold", valueClassName)}>{value}</p>
+      <p className={cn("mt-0.5 text-sm font-semibold", valueClassName)}>
+        {value}
+      </p>
       {sub ? <p className="mt-0.5 text-xs text-muted">{sub}</p> : null}
     </div>
   );
@@ -134,7 +136,9 @@ function ReasonBreakdown({
 
       {breakdown.primaryWeakness ? (
         <div>
-          <p className="text-xs font-semibold text-foreground">Primary weakness</p>
+          <p className="text-xs font-semibold text-foreground">
+            Primary weakness
+          </p>
           <p className="mt-1 text-sm text-foreground before:mr-2 before:text-muted before:content-['•']">
             {breakdown.primaryWeakness}
           </p>
@@ -171,42 +175,43 @@ function PipelineContent({
 
   if (compact) {
     return (
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
+      <div className="grid gap-2 md:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(0,1fr))]">
         <div
           className={cn(
-            "rounded-xl border px-4 py-3",
+            "rounded-lg border px-3 py-2",
             verdictTone(decision.verdict),
           )}
         >
           <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
-            Decision
+            Is it actionable now?
           </p>
-          <p className="mt-1 text-xl font-bold leading-tight">
-            {VERDICT_LABEL[decision.verdict]}
+          <p className="mt-0.5 text-sm font-semibold leading-tight">
+            {READINESS_LABEL[decision.verdict]}
           </p>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-wide opacity-80">
+          <p className="mt-0.5 text-xs font-medium opacity-80">
             {ACTION_LABEL[decision.action]}
           </p>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          <MetricCell
-            label="Regime"
-            value={env}
-            sub={decision.regime.regimeId ?? undefined}
-            valueClassName={regimeTone(env)}
-          />
-          <MetricCell
-            label="Quality"
-            value={`${decision.tradeQualityScore} / 100`}
-            valueClassName={cn("tabular-nums", scoreTone(decision.tradeQualityScore))}
-          />
-          <MetricCell
-            label="Bucket"
-            value={BUCKET_LABEL[decision.scoreBucket]}
-            valueClassName={bucketTone(decision.scoreBucket)}
-          />
-        </div>
+        <MetricCell
+          label="Regime"
+          value={env}
+          sub={decision.regime.regimeId ?? undefined}
+          valueClassName={regimeTone(env)}
+        />
+        <MetricCell
+          label="Quality"
+          value={`${decision.tradeQualityScore} / 100`}
+          valueClassName={cn(
+            "tabular-nums",
+            scoreTone(decision.tradeQualityScore),
+          )}
+        />
+        <MetricCell
+          label="Gate"
+          value={BUCKET_LABEL[decision.scoreBucket]}
+          valueClassName={bucketTone(decision.scoreBucket)}
+        />
       </div>
     );
   }
@@ -223,7 +228,10 @@ function PipelineContent({
         <MetricCell
           label="Trade quality score"
           value={`${decision.tradeQualityScore} / 100`}
-          valueClassName={cn("tabular-nums", scoreTone(decision.tradeQualityScore))}
+          valueClassName={cn(
+            "tabular-nums",
+            scoreTone(decision.tradeQualityScore),
+          )}
         />
         <MetricCell
           label="Score bucket"
@@ -241,10 +249,10 @@ function PipelineContent({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
-              Final verdict
+              Is it actionable now?
             </p>
             <p className="text-lg font-bold leading-tight">
-              {VERDICT_LABEL[decision.verdict]}
+              {READINESS_LABEL[decision.verdict]}
             </p>
           </div>
           <div className="text-right">
@@ -290,11 +298,11 @@ export function TradeDecisionPanel({
 
   return (
     <ResearchSectionCard
-      title="Trade decision"
+      title="Execution readiness"
       description={
         compact
-          ? "Execution readiness and key gates"
-          : "Execution readiness, score, bucket, and reasoning"
+          ? "Whether the current setup is actionable now"
+          : "Actionability, score, gates, and execution reasoning"
       }
       icon={Target}
       className={className}
@@ -304,7 +312,9 @@ export function TradeDecisionPanel({
       ) : isLoading && !decision ? (
         <DecisionSkeleton />
       ) : !decision ? (
-        <p className="text-sm text-muted">Trade decision is not available.</p>
+        <p className="text-sm text-muted">
+          Execution readiness is not available.
+        </p>
       ) : (
         <PipelineContent decision={decision} compact={compact} />
       )}

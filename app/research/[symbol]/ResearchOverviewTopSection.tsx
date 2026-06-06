@@ -4,7 +4,12 @@ import { useSession } from "next-auth/react";
 import { BarChart3 } from "lucide-react";
 import { IntelligenceRecentEventsPanel } from "@/components/SymbolIntelligencePanel";
 import { PageSplit } from "@/components/PageShell";
-import { pageSectionClass, pageOverviewAsideClass, pageOverviewMainClass, pageOverviewSplitClass } from "@/lib/pageLayout";
+import {
+  pageSectionClass,
+  pageOverviewAsideClass,
+  pageOverviewMainClass,
+  pageOverviewSplitClass,
+} from "@/lib/pageLayout";
 import { ResearchPatternOverviewSections } from "@/components/research/ResearchPatternOverviewSections";
 import { PerformanceSnapshot } from "./PerformanceSnapshot";
 import { ResearchStockChart } from "./ResearchStockChart";
@@ -66,8 +71,17 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             ) : null}
             <ResearchStockChart
               symbol={symbol}
-              chartIntelligence={intelligence?.patternIntelligence?.chartIntelligence}
+              chartIntelligence={
+                intelligence?.patternIntelligence?.chartIntelligence
+              }
               autoSwitchToChartIntelligence={false}
+            />
+            <ResearchPatternOverviewSections
+              symbol={symbol}
+              intelligence={intelligence}
+              loading={loading}
+              mode="summary"
+              className={pageSectionClass}
             />
             <ResearchSectionCard
               title="Key stats"
@@ -77,20 +91,16 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             >
               <TickerKeyStats symbol={symbol} />
             </ResearchSectionCard>
-            <ResearchPatternOverviewSections
-              symbol={symbol}
-              intelligence={intelligence}
-              loading={loading}
-              mode="summary"
-              className={pageSectionClass}
-            />
           </>
         }
         aside={
           <>
             {isEtf ? (
               <>
-                <EtfFundsOverview symbol={symbol} className={pageSectionClass} />
+                <EtfFundsOverview
+                  symbol={symbol}
+                  className={pageSectionClass}
+                />
                 <EtfHoldingsOverviewPreview
                   symbol={symbol}
                   stacked
@@ -99,7 +109,10 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
               </>
             ) : null}
             {!isEtf ? (
-              <StreetAnalysisOverview symbol={symbol} className={pageSectionClass} />
+              <StreetAnalysisOverview
+                symbol={symbol}
+                className={pageSectionClass}
+              />
             ) : null}
             <PerformanceSnapshot symbol={symbol} className={pageSectionClass} />
             <IntelligenceRecentEventsPanel

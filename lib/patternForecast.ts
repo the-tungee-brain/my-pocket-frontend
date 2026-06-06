@@ -1,6 +1,10 @@
 import type { PatternTrendForecast } from "@/app/types/intelligence";
 
-export type PatternDirectionTone = "positive" | "negative" | "neutral" | "warning";
+export type PatternDirectionTone =
+  | "positive"
+  | "negative"
+  | "neutral"
+  | "warning";
 
 const INDICATOR_ROWS: Array<{
   key: string;
@@ -23,13 +27,17 @@ export function hasPatternForecast(
   return !!forecast?.asOfDate;
 }
 
-export function isBinaryPatternScheme(labelScheme: string | undefined): boolean {
+export function isBinaryPatternScheme(
+  labelScheme: string | undefined,
+): boolean {
   return (
     labelScheme === "binary_updown" || labelScheme === "binary_outperform_spy"
   );
 }
 
-export function isOutperformSpyScheme(labelScheme: string | undefined): boolean {
+export function isOutperformSpyScheme(
+  labelScheme: string | undefined,
+): boolean {
   return labelScheme === "binary_outperform_spy";
 }
 
@@ -38,7 +46,10 @@ function binaryClassLabels(labelScheme: string | undefined): {
   up: string;
 } {
   if (isOutperformSpyScheme(labelScheme)) {
-    return { down: "Underperform SPY", up: "Outperform SPY" };
+    return {
+      down: "Likely weaker than SPY",
+      up: "Likely stronger than SPY",
+    };
   }
   return { down: "Down", up: "Up" };
 }
@@ -60,7 +71,9 @@ export function patternPredictedClassProbability(
 
 export function patternDirectionLabel(forecast: PatternTrendForecast): string {
   if (isOutperformSpyScheme(forecast.labelScheme)) {
-    return forecast.prediction === 1 ? "Outperform SPY" : "Underperform SPY";
+    return forecast.prediction === 1
+      ? "Likely stronger than SPY"
+      : "Likely weaker than SPY";
   }
 
   if (isBinaryPatternScheme(forecast.labelScheme)) {
@@ -69,19 +82,21 @@ export function patternDirectionLabel(forecast: PatternTrendForecast): string {
 
   switch (forecast.prediction) {
     case 1:
-      return "Bullish";
+      return "Upward setup";
     case -1:
-      return "Bearish";
+      return "Downward setup";
     default:
-      return "Neutral";
+      return "Range/flat setup";
   }
 }
 
-export function patternDirectionSubtitle(forecast: PatternTrendForecast): string {
+export function patternDirectionSubtitle(
+  forecast: PatternTrendForecast,
+): string {
   if (isOutperformSpyScheme(forecast.labelScheme)) {
     return forecast.prediction === 1
-      ? "Model expects this name to beat SPY over the next 5 trading days."
-      : "Model expects this name to lag SPY over the next 5 trading days.";
+      ? "Model expects this name to show stronger relative performance than SPY over the next 5 trading days."
+      : "Model expects this name to show weaker relative performance than SPY over the next 5 trading days.";
   }
 
   if (isBinaryPatternScheme(forecast.labelScheme)) {
@@ -259,7 +274,7 @@ export function patternModelSummary(
 
 export function patternUpProbLabel(forecast: PatternTrendForecast): string {
   return isOutperformSpyScheme(forecast.labelScheme)
-    ? "P(outperform SPY)"
+    ? "P(stronger than SPY)"
     : "P(up)";
 }
 
