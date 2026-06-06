@@ -44,7 +44,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
 
     return (
       <header
-        className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+        className="app-panel flex flex-col gap-4 p-4 md:flex-row md:items-end md:justify-between"
         aria-hidden
       >
         <div className="space-y-2">
@@ -141,9 +141,9 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
   }
 
   return (
-    <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <header className="app-panel flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
       <div className="min-w-0 max-w-full space-y-1.5">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
           {researchLabel}
         </p>
         <div className="flex flex-wrap items-center gap-3">
@@ -153,7 +153,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
             size="md"
             isEtf={isEtf}
           />
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
             {snapshot.symbol} · {snapshot.name}
           </h1>
           <div className="flex flex-wrap items-center gap-2">
@@ -173,9 +173,9 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
         </div>
       </div>
 
-      <div className="shrink-0 rounded-xl border border-border bg-background/60 px-3 py-2 text-sm">
+      <div className="shrink-0 rounded-lg border border-border bg-muted-bg/30 px-3 py-2 text-sm">
         <div className="flex items-baseline gap-3">
-          <span className="text-2xl font-semibold tabular-nums">
+          <span className="font-mono text-2xl font-semibold tabular-nums">
             ${snapshot.price.toLocaleString()}
           </span>
           <span

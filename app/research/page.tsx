@@ -1,24 +1,35 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { History, Search, SearchX, Star, TrendingUp } from "lucide-react";
+import { History, Search, SearchX, Star } from "lucide-react";
 
-import { TickerSymbolItem, useSymbolSearch } from "../hooks/useSymbolSearch";
+import {
+  type TickerSymbolItem,
+  useSymbolSearch,
+} from "../hooks/useSymbolSearch";
 import { useRecentSymbols } from "../hooks/useRecentSymbols";
 import { useWatchlist } from "../hooks/useWatchlist";
 import { usePortfolioContext } from "@/app/contextSelectors";
 import { rememberAssetType } from "@/lib/researchAssetType";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { SymbolSearchResult } from "@/components/SymbolSearchResult";
 import { PageShell } from "@/components/PageShell";
 import { ResearchOnboarding } from "@/components/ResearchOnboarding";
 import { StrategyPlaybookQuickLinks } from "@/components/StrategyPlaybookQuickLinks";
+import { appStackClass } from "@/lib/appUi";
+import {
+  moversMetaBodyClass,
+  moversMetaCardClass,
+  moversMetaEyebrowClass,
+  moversMetaInsetClass,
+  moversMetaTitleClass,
+} from "@/lib/moversUi";
+import { cn } from "@/lib/utils";
 
 export default function ResearchPage() {
   const { data: session } = useSession();
@@ -41,10 +52,6 @@ export default function ResearchPage() {
   const showEmptyState =
     !isLoading && !error && results.length === 0 && query.trim().length > 0;
   const listboxId = "research-symbol-listbox";
-
-  useEffect(() => {
-    setActiveIndex(-1);
-  }, [query, results]);
 
   const openSymbol = (symbol: string) => {
     const upper = symbol.toUpperCase();
@@ -94,40 +101,68 @@ export default function ResearchPage() {
   const showIdleHelper = !query.trim() && !hasQuickAccess;
 
   return (
-    <PageShell className="pt-8 pb-4">
-      <div className="mb-5 flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-accent-muted text-accent-strong">
-          <TrendingUp className="h-5 w-5" aria-hidden="true" />
-        </div>
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">
-            Research
-          </h1>
-          <p className="mt-1 text-sm text-muted">
-            Search ticker or company name to open its research hub — stocks,
-            ETFs, and more.
-            <span className="hidden sm:inline"> Press </span>
-            <kbd className="mx-1 hidden rounded border border-border bg-muted-bg px-1.5 py-0.5 font-mono text-[10px] text-muted sm:inline">
-              /
-            </kbd>
-            <span className="hidden sm:inline"> or </span>
-            <kbd className="mx-0.5 hidden rounded border border-border bg-muted-bg px-1.5 py-0.5 font-mono text-[10px] text-muted sm:inline">
-              ⌘K
-            </kbd>
-            <span className="hidden sm:inline"> to search.</span>
-          </p>
-        </div>
-      </div>
+    <PageShell className={cn(appStackClass, "pt-4 pb-8 sm:pt-6")}>
+      <header className="space-y-1">
+        <h1 className="font-mono text-2xl font-semibold tracking-tight text-foreground">
+          Research
+        </h1>
+        <p className="text-sm text-muted">
+          Search a symbol, open its hub, and move from scan to decision.
+        </p>
+      </header>
 
       <ResearchOnboarding />
 
       <StrategyPlaybookQuickLinks />
 
-      <Card
-        as="div"
-        surface="subtle"
-        className="bg-secondary/80 p-3 shadow-lg shadow-black/10"
-      >
+      <section className={moversMetaCardClass} aria-label="Research workspace">
+        <p className={moversMetaEyebrowClass}>Research workspace</p>
+        <h2 className={moversMetaTitleClass}>Company context in one hub</h2>
+        <p className={moversMetaBodyClass}>
+          Start with ticker search, then use Overview, Analysis, Events,
+          Options, and Positions without leaving the symbol workspace.
+        </p>
+        <dl
+          className={cn(
+            moversMetaInsetClass,
+            "grid gap-2 text-xs sm:grid-cols-3",
+          )}
+        >
+          <div>
+            <dt className="text-muted">Watchlist</dt>
+            <dd className="font-mono font-semibold text-foreground">
+              {watchlist.length}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted">Recent</dt>
+            <dd className="font-mono font-semibold text-foreground">
+              {recentSymbols.length}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted">Shortcut</dt>
+            <dd className="font-mono font-semibold text-foreground">/ or ⌘K</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="app-panel p-3 sm:p-4" aria-label="Symbol search">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className={moversMetaEyebrowClass}>Symbol search</p>
+            <p className="mt-1 text-sm text-muted">
+              Search ticker or company name across stocks, ETFs, and more.
+            </p>
+          </div>
+          <Link
+            href="/watchlist"
+            className="text-xs font-medium text-accent-strong transition hover:underline"
+          >
+            Manage watchlist
+          </Link>
+        </div>
+
         <div className="relative">
           <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted">
             <Search className="h-4 w-4" aria-hidden="true" />
@@ -136,7 +171,10 @@ export default function ResearchPage() {
             ref={searchInputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setActiveIndex(-1);
+            }}
             onKeyDown={handleInputKeyDown}
             placeholder="Search symbol or company, e.g. NVDA"
             role="combobox"
@@ -149,7 +187,7 @@ export default function ResearchPage() {
                 ? `research-symbol-option-${activeIndex}`
                 : undefined
             }
-            className="w-full rounded-xl border border-border bg-background px-9 py-3.5 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+            className="min-h-12 w-full rounded-lg border border-border bg-background px-9 py-3 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
           />
         </div>
 
@@ -176,11 +214,9 @@ export default function ResearchPage() {
         )}
 
         {watchlist.length > 0 && (
-          <div className="mt-3">
+          <div className={cn(moversMetaInsetClass, "mt-3")}>
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-                Your watchlist
-              </p>
+              <p className={moversMetaEyebrowClass}>Your watchlist</p>
               <Link
                 href="/watchlist"
                 className="text-[11px] font-medium text-accent-strong hover:underline"
@@ -193,7 +229,7 @@ export default function ResearchPage() {
                 <button
                   key={symbol}
                   type="button"
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-accent/30 bg-accent-muted px-3.5 py-2 text-xs font-mono text-accent-strong transition hover:border-accent/50"
+                  className="app-chip min-h-9 flex-row items-center gap-1.5 px-3 py-2 font-mono text-xs text-accent-strong"
                   onClick={() => openSymbol(symbol)}
                 >
                   <Star className="h-3 w-3 fill-current" aria-hidden="true" />
@@ -205,11 +241,9 @@ export default function ResearchPage() {
         )}
 
         {recentWithoutWatchlist.length > 0 && (
-          <div className="mt-3">
+          <div className={cn(moversMetaInsetClass, "mt-3")}>
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-                Recently viewed
-              </p>
+              <p className={moversMetaEyebrowClass}>Recently viewed</p>
               <button
                 type="button"
                 onClick={clearRecentSymbols}
@@ -223,7 +257,7 @@ export default function ResearchPage() {
                 <button
                   key={symbol}
                   type="button"
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-border bg-background px-3.5 py-2 text-xs font-mono text-foreground transition hover:border-accent/50 hover:bg-secondary"
+                  className="app-chip min-h-9 flex-row items-center gap-1.5 px-3 py-2 font-mono text-xs text-foreground"
                   onClick={() => openSymbol(symbol)}
                 >
                   <History className="h-3 w-3 text-muted" aria-hidden="true" />
@@ -235,16 +269,14 @@ export default function ResearchPage() {
         )}
 
         {!hasQuickAccess && (
-          <div className="mt-3">
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-              Try an example
-            </p>
+          <div className={cn(moversMetaInsetClass, "mt-3")}>
+            <p className={cn(moversMetaEyebrowClass, "mb-2")}>Try an example</p>
             <div className="flex flex-wrap gap-2">
               {examples.map((symbol) => (
                 <button
                   key={symbol}
                   type="button"
-                  className="rounded-full border border-border bg-background px-3 py-1 text-xs font-mono text-foreground transition hover:border-accent/50 hover:bg-secondary"
+                  className="app-chip min-h-9 flex-row items-center px-3 py-2 font-mono text-xs text-foreground"
                   onClick={() => openSymbol(symbol)}
                 >
                   {symbol}
@@ -255,7 +287,7 @@ export default function ResearchPage() {
         )}
 
         {(isLoading || error || hasResults || showEmptyState) && (
-          <div className="mt-3 overflow-hidden rounded-xl border border-border bg-background text-sm">
+          <div className="mt-3 overflow-hidden rounded-lg border border-border bg-background text-sm">
             {isLoading && (
               <SkeletonList
                 rows={3}
@@ -283,7 +315,7 @@ export default function ResearchPage() {
             )}
 
             {hasResults && (
-              <ul
+              <div
                 id={listboxId}
                 role="listbox"
                 aria-label="Symbol search results"
@@ -299,11 +331,11 @@ export default function ResearchPage() {
                     onHover={() => setActiveIndex(index)}
                   />
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         )}
-      </Card>
+      </section>
     </PageShell>
   );
 }

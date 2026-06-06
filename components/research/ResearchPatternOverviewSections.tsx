@@ -12,6 +12,7 @@ import {
   formatPatternPercent,
   patternDirectionLabel,
   patternDirectionSubtitle,
+  patternDirectionTone,
   patternUpProbLabel,
 } from "@/lib/patternForecast";
 import {
@@ -36,18 +37,32 @@ function SummaryMetric({
   label,
   value,
   subValue,
+  tone = "default",
 }: {
   label: string;
   value: string;
   subValue?: string | null;
+  tone?: "default" | "positive" | "negative" | "neutral" | "warning";
 }) {
   return (
     <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
       <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
         {label}
       </p>
-      <p className="mt-0.5 text-sm font-semibold text-foreground">{value}</p>
-      {subValue ? <p className="mt-0.5 text-xs text-muted">{subValue}</p> : null}
+      <p
+        className={cn(
+          "mt-0.5 text-sm font-semibold",
+          tone === "positive" && "text-success",
+          tone === "negative" && "text-danger",
+          tone === "warning" && "text-warning",
+          (tone === "default" || tone === "neutral") && "text-foreground",
+        )}
+      >
+        {value}
+      </p>
+      {subValue ? (
+        <p className="mt-0.5 text-xs text-muted">{subValue}</p>
+      ) : null}
     </div>
   );
 }
@@ -88,7 +103,10 @@ export function ResearchPatternOverviewSections({
         icon={Activity}
         className={className}
       >
-        <div className="h-24 animate-pulse rounded-xl bg-muted-bg/50" aria-busy />
+        <div
+          className="h-24 animate-pulse rounded-xl bg-muted-bg/50"
+          aria-busy
+        />
       </ResearchSectionCard>
     );
   }
@@ -145,6 +163,7 @@ export function ResearchPatternOverviewSections({
                   label="Model view"
                   value={patternDirectionLabel(forecast)}
                   subValue={patternDirectionSubtitle(forecast)}
+                  tone={patternDirectionTone(forecast)}
                 />
                 <SummaryMetric
                   label={patternUpProbLabel(forecast)}
@@ -195,10 +214,7 @@ export function ResearchPatternOverviewSections({
   return (
     <div className={cn("flex flex-col gap-5", className)}>
       {showForecast ? (
-        <PatternTrendForecastCard
-          forecast={forecast}
-          symbol={symbol}
-        />
+        <PatternTrendForecastCard forecast={forecast} symbol={symbol} />
       ) : showUpsell ? (
         <ResearchSectionCard
           title="5D Alpha"
@@ -214,10 +230,7 @@ export function ResearchPatternOverviewSections({
       {showChartIntel ? (
         <PatternIntelligenceCard intelligence={patternIntel} />
       ) : patternIntel && patternTrendAllowed ? (
-        <ResearchSectionCard
-          title="Chart intelligence"
-          icon={Sparkles}
-        >
+        <ResearchSectionCard title="Chart intelligence" icon={Sparkles}>
           <p className="text-sm text-muted">
             Analyst summary is not available for this symbol yet.
           </p>

@@ -15,6 +15,7 @@ import {
   patternPredictedClassLabel,
   patternPredictedClassProbability,
   patternProbabilityRows,
+  patternDirectionTone,
   patternRankingScore,
   patternUpProbLabel,
 } from "@/lib/patternForecast";
@@ -40,13 +41,36 @@ function ProbabilityBar({
   value: number;
   selected: boolean;
 }) {
+  const isSpyUnderperform = label === "Underperform SPY";
+  const isSpyOutperform = label === "Outperform SPY";
+  const selectedToneClass = isSpyOutperform
+    ? "text-success"
+    : isSpyUnderperform
+      ? "text-danger"
+      : "text-foreground";
+  const selectedBarClass = isSpyOutperform
+    ? "bg-success"
+    : isSpyUnderperform
+      ? "bg-danger"
+      : "bg-accent-strong";
+
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-3 text-xs">
-        <span className={cn("font-medium", selected ? "text-foreground" : "text-muted")}>
+        <span
+          className={cn(
+            "font-medium",
+            selected ? selectedToneClass : "text-muted",
+          )}
+        >
           {label}
         </span>
-        <span className={cn("tabular-nums", selected ? "text-foreground" : "text-muted")}>
+        <span
+          className={cn(
+            "tabular-nums",
+            selected ? selectedToneClass : "text-muted",
+          )}
+        >
           {formatPatternPercent(value)}
         </span>
       </div>
@@ -54,7 +78,7 @@ function ProbabilityBar({
         <div
           className={cn(
             "h-full rounded-full transition-all",
-            selected ? "bg-accent-strong" : "bg-muted/50",
+            selected ? selectedBarClass : "bg-muted/50",
           )}
           style={{ width: `${Math.max(0, Math.min(100, value * 100))}%` }}
         />
@@ -63,7 +87,11 @@ function ProbabilityBar({
   );
 }
 
-export function PatternTrendForecastCard({ forecast, symbol, className }: Props) {
+export function PatternTrendForecastCard({
+  forecast,
+  symbol,
+  className,
+}: Props) {
   if (!hasPatternForecast(forecast)) return null;
 
   const isBenchmark = isPatternForecastBenchmark(forecast, symbol);
@@ -76,9 +104,18 @@ export function PatternTrendForecastCard({ forecast, symbol, className }: Props)
   const probabilities = isBenchmark ? [] : patternProbabilityRows(forecast);
   const rankingScore = patternRankingScore(forecast);
   const usesRanking = !isBenchmark && isRankingPortfolioStrategy(forecast);
-  const portfolioSummary = isBenchmark ? null : patternPortfolioSummary(forecast);
+  const portfolioSummary = isBenchmark
+    ? null
+    : patternPortfolioSummary(forecast);
   const modelSummary = isBenchmark ? null : patternModelSummary(forecast);
-  const predictedClass = isBenchmark ? null : patternPredictedClassLabel(forecast);
+  const predictedClass = isBenchmark
+    ? null
+    : patternPredictedClassLabel(forecast);
+  const predictedTone = isBenchmark
+    ? "default"
+    : patternDirectionTone(forecast);
+  const predictedClassTone =
+    predictedTone === "neutral" ? "default" : predictedTone;
   const predictedClassProb = isBenchmark
     ? null
     : patternPredictedClassProbability(forecast);
@@ -134,6 +171,7 @@ export function PatternTrendForecastCard({ forecast, symbol, className }: Props)
                 <KpiStat
                   label="Predicted class"
                   value={predictedClass}
+                  tone={predictedClassTone}
                   subValue={
                     predictedClassProb != null
                       ? formatPatternPercent(predictedClassProb)

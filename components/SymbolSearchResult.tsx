@@ -5,6 +5,11 @@ import { useWatchlistToggle } from "@/app/hooks/useWatchlistToggle";
 import type { TickerSymbolItem } from "@/app/hooks/useSymbolSearch";
 import { AssetTypeBadge } from "@/components/AssetTypeBadge";
 import { iconButtonClass } from "@/components/ui/IconButton";
+import {
+  moversRankedRowButtonClass,
+  moversRankedRowHoverClass,
+  moversRankedRowSelectedClass,
+} from "@/lib/moversUi";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -28,20 +33,24 @@ export function SymbolSearchResult({
     : `Add ${symbol} to watchlist`;
 
   return (
-    <li role="presentation">
+    <div role="presentation">
       <div
         className={cn(
           "flex w-full items-center gap-1",
-          index === activeIndex && "bg-muted-bg",
+          index === activeIndex && moversRankedRowSelectedClass,
         )}
-        onMouseEnter={onHover}
       >
         <button
           id={`research-symbol-option-${index}`}
           type="button"
           role="option"
           aria-selected={index === activeIndex}
-          className="flex min-w-0 flex-1 items-center justify-between gap-3 px-3 py-3 text-left transition hover:bg-secondary/80"
+          className={cn(
+            moversRankedRowButtonClass,
+            moversRankedRowHoverClass,
+            "min-w-0 flex-1 items-center justify-between",
+          )}
+          onMouseEnter={onHover}
           onClick={() => onSelect(item)}
         >
           <div className="min-w-0">
@@ -80,6 +89,6 @@ export function SymbolSearchResult({
           />
         </button>
       </div>
-    </li>
+    </div>
   );
 }

@@ -13,7 +13,14 @@ import { Button } from "@/components/ui/Button";
 import { PageShell } from "@/components/PageShell";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { appStackClass } from "@/lib/appUi";
-import { pageSectionClass } from "@/lib/pageLayout";
+import {
+  moversMetaBodyClass,
+  moversMetaCardClass,
+  moversMetaEyebrowClass,
+  moversMetaInsetClass,
+  moversMetaTitleClass,
+  moversRankedListLabelClass,
+} from "@/lib/moversUi";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +45,15 @@ export function WatchlistPage() {
   const [newFolderName, setNewFolderName] = useState("");
 
   const signedOut = status === "unauthenticated";
+  const folderCount = sortedFolderList.length;
+  const symbolCount = symbols.length;
+  const syncLabel = signedOut
+    ? "Local only"
+    : isAuthenticated
+      ? isSyncing
+        ? "Saving"
+        : "Synced"
+      : "Offline";
 
   const handleAddFolder = () => {
     const name = newFolderName.trim();
@@ -47,22 +63,21 @@ export function WatchlistPage() {
   };
 
   return (
-    <PageShell className={cn(appStackClass, pageSectionClass, "pt-4 pb-8 sm:pt-6")}>
+    <PageShell className={cn(appStackClass, "pt-4 pb-8 sm:pt-6")}>
       <header className="space-y-1">
-        <h1 className="font-mono text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+        <h1 className="font-mono text-2xl font-semibold tracking-tight text-foreground">
           Watchlist
         </h1>
-        <p className="max-w-2xl text-sm text-muted">
-          Save symbols into folders, synced with your account — same workspace as
-          the iOS app.
+        <p className="text-sm text-muted">
+          Saved symbols, folders, and live quote checks in one workspace.
         </p>
       </header>
 
       {signedOut && (
-        <div className="rounded-xl border border-border bg-muted-bg/30 px-4 py-3 text-sm text-muted">
+        <div className="app-panel space-y-2 px-4 py-3 text-sm text-muted">
           <p>
-            Sign in to sync folders and quotes across devices. You can still save
-            symbols locally from Research until then.
+            Sign in to sync folders and quotes across devices. You can still
+            save symbols locally from Research until then.
           </p>
           <Link
             href="/api/auth/signin"
@@ -73,46 +88,90 @@ export function WatchlistPage() {
         </div>
       )}
 
-      {error && (
-        <ErrorBanner message={error} onRetry={dismissError} />
-      )}
+      {error && <ErrorBanner message={error} onRetry={dismissError} />}
 
       {isAuthenticated && accessToken && (
-        <div className="space-y-3 rounded-xl border border-border bg-background/50 px-4 py-4">
-          <label className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Add symbol
-          </label>
-          <SymbolSearchField
-            accessToken={accessToken}
-            value={symbolQuery}
-            onChange={setSymbolQuery}
-            onSelect={(symbol) => {
-              requestAddSymbol(symbol);
-              setSymbolQuery(symbol);
-            }}
-            placeholder="Search symbol or company"
-            limit={8}
-          />
+        <section
+          className={moversMetaCardClass}
+          aria-label="Watchlist controls"
+        >
+          <p className={moversMetaEyebrowClass}>Watchlist workspace</p>
+          <h2 className={moversMetaTitleClass}>Folders built for scanning</h2>
+          <p className={moversMetaBodyClass}>
+            Add tickers, organize them by theme, then jump into Research when a
+            quote or move deserves a closer look.
+          </p>
+
+          <dl
+            className={cn(
+              moversMetaInsetClass,
+              "grid gap-2 text-xs sm:grid-cols-3",
+            )}
+          >
+            <div>
+              <dt className="text-muted">Folders</dt>
+              <dd className="font-mono font-semibold text-foreground">
+                {folderCount}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted">Symbols</dt>
+              <dd className="font-mono font-semibold text-foreground">
+                {symbolCount}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted">Status</dt>
+              <dd className="font-mono font-semibold text-foreground">
+                {syncLabel}
+              </dd>
+            </div>
+          </dl>
+
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,0.55fr)]">
+            <div className="space-y-2">
+              <p className={moversMetaEyebrowClass}>Add symbol</p>
+              <SymbolSearchField
+                accessToken={accessToken}
+                value={symbolQuery}
+                onChange={setSymbolQuery}
+                onSelect={(symbol) => {
+                  requestAddSymbol(symbol);
+                  setSymbolQuery(symbol);
+                }}
+                placeholder="Search symbol or company"
+                limit={8}
+              />
+            </div>
+            <div className="space-y-2">
+              <p className={moversMetaEyebrowClass}>New folder</p>
+              <div className="flex gap-2">
+                <input
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  placeholder="Folder name"
+                  aria-label="New folder name"
+                  className="min-h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddFolder();
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddFolder}
+                  disabled={!newFolderName.trim()}
+                  aria-label="Add folder"
+                >
+                  <FolderPlus className="h-4 w-4" aria-hidden />
+                  <span className="hidden sm:inline">Add</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-wrap items-center gap-2">
-            <input
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              placeholder="New folder name"
-              className="min-w-[12rem] flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddFolder();
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAddFolder}
-              disabled={!newFolderName.trim()}
-            >
-              <FolderPlus className="h-4 w-4" aria-hidden />
-              Add folder
-            </Button>
             <Button
               type="button"
               variant="ghost"
@@ -132,15 +191,15 @@ export function WatchlistPage() {
             >
               Refresh quotes
             </Button>
-            {isSyncing && (
-              <span className="text-xs text-muted">Saving…</span>
-            )}
+            {isSyncing && <span className="text-xs text-muted">Saving…</span>}
           </div>
-        </div>
+        </section>
       )}
 
       {isLoading && sortedFolderList.length === 0 && (
-        <SkeletonList rows={4} rowClassName="h-16 rounded-xl" />
+        <div className="app-panel p-4">
+          <SkeletonList rows={4} rowClassName="h-14 rounded-lg" />
+        </div>
       )}
 
       {!isLoading && isAuthenticated && sortedFolderList.length === 0 && (
@@ -187,14 +246,18 @@ export function WatchlistPage() {
         </section>
       )}
 
-      {isAuthenticated && (
-        <div className="space-y-4">
-          {sortedFolderList.map((folder) => (
-            <WatchlistFolderSection key={folder.id} folder={folder} />
-          ))}
-        </div>
+      {isAuthenticated && sortedFolderList.length > 0 && (
+        <section className="app-stack">
+          <div className="app-panel overflow-hidden">
+            <p className={moversRankedListLabelClass}>Watchlist folders</p>
+            <div className="space-y-4 p-3 sm:p-4">
+              {sortedFolderList.map((folder) => (
+                <WatchlistFolderSection key={folder.id} folder={folder} />
+              ))}
+            </div>
+          </div>
+        </section>
       )}
-
     </PageShell>
   );
 }
