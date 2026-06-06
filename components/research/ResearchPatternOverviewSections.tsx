@@ -150,8 +150,8 @@ export function ResearchPatternOverviewSections({
 
     return (
       <ResearchSectionCard
-        title="Trend & pattern"
-        description="5-session model and chart read"
+        title="Price structure evidence"
+        description="Relative strength model and chart read"
         icon={Activity}
         className={className}
       >
@@ -160,7 +160,7 @@ export function ResearchPatternOverviewSections({
             {showForecast && forecast ? (
               <>
                 <SummaryMetric
-                  label="Model view"
+                  label="Relative strength"
                   value={patternDirectionLabel(forecast)}
                   subValue={patternDirectionSubtitle(forecast)}
                   tone={patternDirectionTone(forecast)}

@@ -291,7 +291,11 @@ export function TradeDecisionPanel({
   return (
     <ResearchSectionCard
       title="Trade decision"
-      description={compact ? "Verdict, action, and key gates" : "Regime, score, bucket, and reasoning"}
+      description={
+        compact
+          ? "Execution readiness and key gates"
+          : "Execution readiness, score, bucket, and reasoning"
+      }
       icon={Target}
       className={className}
     >

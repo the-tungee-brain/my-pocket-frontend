@@ -8,6 +8,51 @@ export type AssetType =
   | "BOND"
   | "OPTION";
 
+export type TradingBiasLabel = "Bullish" | "Neutral" | "Bearish";
+export type TradingBiasConfidence = "High" | "Medium" | "Low";
+export type TradingBiasAction =
+  | "Watch"
+  | "Avoid"
+  | "Confirm breakout"
+  | "Pullback setup"
+  | "Risk-off";
+export type TradingBiasAlignmentState = "aligned" | "mixed" | "against";
+export type TradingBiasVolumeAlignment = "confirmed" | "neutral" | "warning";
+export type TradingBiasCatalystAlignment =
+  | "positive"
+  | "neutral"
+  | "negative"
+  | "none";
+
+export type TradingBiasLevels = {
+  support: number | null;
+  resistance: number | null;
+  breakoutLevel: number | null;
+  stopInvalidLevel: number | null;
+};
+
+export type TradingBiasAlignment = {
+  marketRegime: TradingBiasAlignmentState;
+  relativeStrength: TradingBiasAlignmentState;
+  patternTrend: TradingBiasAlignmentState;
+  volume: TradingBiasVolumeAlignment;
+  catalyst: TradingBiasCatalystAlignment;
+};
+
+export type TradingBiasResponse = {
+  symbol: string;
+  bias: TradingBiasLabel;
+  confidence: TradingBiasConfidence;
+  horizon: "1-5 sessions";
+  action: TradingBiasAction;
+  bullishFactors: string[];
+  bearishFactors: string[];
+  invalidation: string | null;
+  levels: TradingBiasLevels;
+  alignment: TradingBiasAlignment;
+  dataGaps: string[];
+};
+
 export type EtfHoldingItem = {
   ticker?: string | null;
   name: string;

@@ -14,6 +14,7 @@ import type {
 import type { PortfolioNewsResponse } from "@/app/types/portfolioNews";
 import type { PressReleasesResponse } from "@/app/types/pressReleases";
 import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
+import type { TradingBiasResponse } from "@/app/types/research";
 import {
   overviewBundleEtagKey,
   parseEtagHeader,
@@ -252,6 +253,22 @@ export async function fetchResearchEvents(
   }
 
   return res.json() as Promise<ResearchEventsResponse>;
+}
+
+export async function fetchTradingBias(
+  accessToken: string,
+  symbol: string,
+): Promise<TradingBiasResponse> {
+  const res = await apiFetch(
+    `/research/trading-bias${buildQuery({ symbol: symbol.toUpperCase() })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load trading bias (${res.status})`);
+  }
+
+  return res.json() as Promise<TradingBiasResponse>;
 }
 
 export async function fetchRecentOrders(
