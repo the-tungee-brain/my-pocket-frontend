@@ -1,8 +1,10 @@
 "use client";
 
 import { Activity, AlertTriangle, ShieldCheck } from "lucide-react";
+import { useTraderPlaybook } from "@/app/hooks/useTraderPlaybook";
 import { useTradingBias } from "@/app/hooks/useTradingBias";
 import type {
+  TraderPlaybookStatus,
   TradingBiasAlignment,
   TradingBiasLabel,
   TradingBiasLevels,
@@ -153,7 +155,18 @@ function TradingBiasSkeleton() {
   );
 }
 
-function TradingBiasContent({ data }: { data: TradingBiasResponse }) {
+function TradingBiasContent({
+  data,
+  playbookStatus,
+}: {
+  data: TradingBiasResponse;
+  playbookStatus?: TraderPlaybookStatus | null;
+}) {
+  const action =
+    playbookStatus === "NoSetup" || playbookStatus === "Waiting"
+      ? "Watch"
+      : data.action;
+
   return (
     <div className="space-y-4">
       <div className={cn("rounded-xl border px-4 py-4", BIAS_TONE[data.bias])}>
@@ -187,7 +200,7 @@ function TradingBiasContent({ data }: { data: TradingBiasResponse }) {
               <p className="text-[10px] font-semibold uppercase tracking-wide opacity-75">
                 Action
               </p>
-              <p className="text-sm font-semibold">{data.action}</p>
+              <p className="text-sm font-semibold">{action}</p>
             </div>
           </div>
         </div>
@@ -260,6 +273,9 @@ export function TradingBiasCard({
       enabled,
     },
   );
+  const { traderPlaybook } = useTraderPlaybook(symbol, accessToken ?? undefined, {
+    enabled,
+  });
 
   return (
     <ResearchSectionCard
@@ -275,7 +291,10 @@ export function TradingBiasCard({
       ) : !tradingBias ? (
         <p className="text-sm text-muted">Trading bias is not available.</p>
       ) : (
-        <TradingBiasContent data={tradingBias} />
+        <TradingBiasContent
+          data={tradingBias}
+          playbookStatus={traderPlaybook?.status}
+        />
       )}
     </ResearchSectionCard>
   );

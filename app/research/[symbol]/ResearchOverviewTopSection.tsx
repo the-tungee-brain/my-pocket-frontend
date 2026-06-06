@@ -21,7 +21,6 @@ import { useResearchSymbolIntelligence } from "./ResearchSymbolIntelligenceConte
 import { useResearchEvents } from "@/app/hooks/useResearchEvents";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { TickerKeyStats } from "@/components/TickerKeyStats";
-import { TradeDecisionPanel } from "@/components/TradeDecisionPanel";
 import { IntradayTradingBiasCard } from "@/components/research/IntradayTradingBiasCard";
 import { TraderPlaybookCard } from "@/components/research/TraderPlaybookCard";
 import { TradingBiasCard } from "@/components/research/TradingBiasCard";
@@ -50,6 +49,12 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
 
   return (
     <div className="space-y-6">
+      <ResearchStockChart
+        symbol={symbol}
+        chartIntelligence={intelligence?.patternIntelligence?.chartIntelligence}
+        autoSwitchToChartIntelligence={false}
+      />
+
       <PageSplit
         splitClassName={pageOverviewSplitClass}
         mainClassName={pageOverviewMainClass}
@@ -68,26 +73,8 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
                   accessToken={accessToken}
                   className={pageSectionClass}
                 />
-                <IntradayTradingBiasCard
-                  symbol={symbol}
-                  accessToken={accessToken}
-                  className={pageSectionClass}
-                />
-                <TradeDecisionPanel
-                  symbol={symbol}
-                  accessToken={accessToken}
-                  compact
-                  className={pageSectionClass}
-                />
               </>
             ) : null}
-            <ResearchStockChart
-              symbol={symbol}
-              chartIntelligence={
-                intelligence?.patternIntelligence?.chartIntelligence
-              }
-              autoSwitchToChartIntelligence={false}
-            />
             <ResearchPatternOverviewSections
               symbol={symbol}
               intelligence={intelligence}
@@ -137,6 +124,13 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
           </>
         }
       />
+      {!isEtf ? (
+        <IntradayTradingBiasCard
+          symbol={symbol}
+          accessToken={accessToken}
+          className={pageSectionClass}
+        />
+      ) : null}
     </div>
   );
 }

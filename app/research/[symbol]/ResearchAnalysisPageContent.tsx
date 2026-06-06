@@ -8,6 +8,7 @@ import { useStreetAnalysis } from "@/app/hooks/useStreetAnalysis";
 import type { IntelligenceSignal } from "@/app/types/intelligence";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { SymbolIntelligencePanel } from "@/components/SymbolIntelligencePanel";
+import { TradeDecisionPanel } from "@/components/TradeDecisionPanel";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { appStackClass } from "@/lib/appUi";
 import { symbolChatKey } from "@/lib/chatKeys";
@@ -76,6 +77,14 @@ export function ResearchAnalysisPageContent({ symbol }: Props) {
         mode="full"
         className={pageSectionClass}
       />
+
+      {!isEtf ? (
+        <TradeDecisionPanel
+          symbol={symbol}
+          accessToken={accessToken}
+          className={pageSectionClass}
+        />
+      ) : null}
 
       <SymbolIntelligencePanel
         intelligence={intelligence}

@@ -133,6 +133,10 @@ function MetricTile({
   );
 }
 
+function isNumber(value: number | null | undefined): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 function LevelsGrid({ levels }: { levels: IntradayTradingBiasLevels }) {
   const rows = [
     ["Premarket high", levels.premarketHigh],
@@ -144,10 +148,12 @@ function LevelsGrid({ levels }: { levels: IntradayTradingBiasLevels }) {
     ["Resistance", levels.resistance],
     ["Invalidation", levels.invalidation],
   ] as const;
+  const availableRows = rows.filter(([, value]) => isNumber(value));
+  if (!availableRows.length) return null;
 
   return (
     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-      {rows.map(([label, value]) => (
+      {availableRows.map(([label, value]) => (
         <div
           key={label}
           className="rounded-lg border border-border bg-muted/15 px-3 py-2"
@@ -227,14 +233,19 @@ function IntradayBiasSkeleton() {
 
 function IntradayBiasContent({ data }: { data: IntradayTradingBiasResponse }) {
   const inactive = isInactiveIntradayRead(data);
+  const hasVwap = isNumber(data.levels.vwap);
+  const hasOpeningRange =
+    isNumber(data.levels.openRangeHigh) && isNumber(data.levels.openRangeLow);
   const openingRangeStatus =
-    data.levels.openRangeHigh != null && data.levels.openRangeLow != null
-      ? "Complete"
-      : "Pending or unavailable";
+    hasOpeningRange ? "Complete" : "Pending or unavailable";
   const headerTone = inactive
     ? "border-border bg-muted/30 text-foreground"
     : BIAS_TONE[data.bias];
   const dotTone = inactive ? "bg-muted" : BIAS_DOT[data.bias];
+  const priorRead =
+    data.bias === "Neutral"
+      ? "Previous session ended neutral."
+      : `Previous session ended ${data.bias.toLowerCase()}.`;
 
   return (
     <div className="space-y-4">
@@ -243,7 +254,7 @@ function IntradayBiasContent({ data }: { data: IntradayTradingBiasResponse }) {
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
               {inactive
-                ? "Previous session intraday read."
+                ? priorRead
                 : "Intraday signal. Separate from 1-5 session Trading Bias."}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -252,7 +263,7 @@ function IntradayBiasContent({ data }: { data: IntradayTradingBiasResponse }) {
                 aria-hidden="true"
               />
               <p className="text-2xl font-bold leading-tight">
-                {inactive ? "Inactive intraday read" : data.bias}
+                {inactive ? "Latest Intraday Read" : data.bias}
               </p>
               <ConfidenceBadge value={data.confidence} />
               <Badge variant="warning">Delayed</Badge>
@@ -260,7 +271,7 @@ function IntradayBiasContent({ data }: { data: IntradayTradingBiasResponse }) {
             </div>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed opacity-85">
               {inactive
-                ? "The latest 5-minute data is stale or outside market hours, so this is not shown as an active bearish or bullish signal."
+                ? "Not a live signal. The latest 5-minute data is stale or outside market hours."
                 : "Uses delayed 5-minute market data. This does not replace the 1-5 session Trading Bias."}
             </p>
           </div>
@@ -287,16 +298,20 @@ function IntradayBiasContent({ data }: { data: IntradayTradingBiasResponse }) {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <MetricTile
-          label="VWAP state"
-          value={formatLabel(data.alignment.vwap)}
-          icon={Gauge}
-        />
-        <MetricTile
-          label="Opening range"
-          value={openingRangeStatus}
-          icon={LineChart}
-        />
+        {hasVwap ? (
+          <MetricTile
+            label="VWAP state"
+            value={formatLabel(data.alignment.vwap)}
+            icon={Gauge}
+          />
+        ) : null}
+        {hasOpeningRange ? (
+          <MetricTile
+            label="Opening range"
+            value={openingRangeStatus}
+            icon={LineChart}
+          />
+        ) : null}
         <MetricTile
           label="Market"
           value={formatLabel(data.alignment.market)}
@@ -357,10 +372,10 @@ export function IntradayTradingBiasCard({
 
   return (
     <ResearchSectionCard
-      title={inactive ? "Previous Session Intraday Read" : "Delayed Intraday Bias"}
+      title={inactive ? "Latest Intraday Read" : "Delayed Intraday Bias"}
       description={
         inactive
-          ? "Inactive delayed 5-minute read"
+          ? "Previous session read; not a live signal"
           : "Delayed 5-minute intraday setup read"
       }
       icon={Clock}

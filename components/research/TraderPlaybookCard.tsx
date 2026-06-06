@@ -4,10 +4,15 @@ import {
   AlertTriangle,
   CheckCircle2,
   ClipboardCheck,
+  ShieldCheck,
   ShieldAlert,
 } from "lucide-react";
 import { useState } from "react";
 import { useTraderPlaybook } from "@/app/hooks/useTraderPlaybook";
+import {
+  useTradeDecision,
+  type TradeAction,
+} from "@/app/hooks/useTradeDecision";
 import type {
   TraderPlaybookLevels,
   TraderPlaybookResponse,
@@ -52,6 +57,34 @@ const STATUS_COPY: Record<
   },
 };
 
+type ExecutionGate = "Ready" | "Watch" | "Avoid";
+type LevelRole = "actionable" | "context" | "major" | "unavailable";
+
+const EXECUTION_GATE_COPY: Record<
+  ExecutionGate,
+  {
+    badge: "success" | "warning" | "danger";
+    label: string;
+    description: string;
+  }
+> = {
+  Ready: {
+    badge: "success",
+    label: "Ready",
+    description: "Execution gate supports action if the plan is valid.",
+  },
+  Watch: {
+    badge: "warning",
+    label: "Watch",
+    description: "Execution gate says wait for the setup trigger.",
+  },
+  Avoid: {
+    badge: "danger",
+    label: "Avoid",
+    description: "Execution gate blocks a clean actionable plan.",
+  },
+};
+
 function formatMoney(value: number | null | undefined): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return "N/A";
   return `$${value.toFixed(2)}`;
@@ -75,6 +108,89 @@ function formatLabel(value: string): string {
   return value
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function executionGateFromAction(action: TradeAction | null | undefined): ExecutionGate | null {
+  if (action === "ENTER") return "Ready";
+  if (action === "WAIT_FOR_SETUP") return "Watch";
+  if (action === "AVOID") return "Avoid";
+  return null;
+}
+
+function executionGateFromPlaybook(data: TraderPlaybookResponse): ExecutionGate {
+  if (data.alignment.executionReadiness === "ready") return "Ready";
+  if (data.alignment.executionReadiness === "avoid") return "Avoid";
+  return "Watch";
+}
+
+function displayStatusForGate(
+  status: TraderPlaybookStatus,
+  gate: ExecutionGate,
+): TraderPlaybookStatus {
+  if (gate === "Avoid") return status === "Invalid" ? "Invalid" : "NoSetup";
+  if (gate === "Watch" && status === "Valid") return "Waiting";
+  return status;
+}
+
+function hasTradeLevels(levels: TraderPlaybookLevels): boolean {
+  return levels.entry != null && levels.stop != null;
+}
+
+function hasRiskReward(data: TraderPlaybookResponse): boolean {
+  return (
+    hasTradeLevels(data.levels) &&
+    (data.levels.target1 != null || data.levels.target2 != null) &&
+    data.risk.riskRewardLabel !== "unavailable"
+  );
+}
+
+function classifyLevelDistance({
+  entry,
+  level,
+}: {
+  entry: number | null | undefined;
+  level: number | null | undefined;
+}): LevelRole {
+  if (
+    typeof entry !== "number" ||
+    typeof level !== "number" ||
+    !Number.isFinite(entry) ||
+    !Number.isFinite(level) ||
+    entry <= 0 ||
+    level <= 0
+  ) {
+    return "unavailable";
+  }
+  const distance = Math.abs(entry - level) / entry;
+  if (distance <= 0.08) return "actionable";
+  if (distance <= 0.12) return "context";
+  return "major";
+}
+
+function levelRoleLabel(role: LevelRole): string {
+  switch (role) {
+    case "actionable":
+      return "Actionable";
+    case "context":
+      return "Context";
+    case "major":
+      return "Major";
+    case "unavailable":
+      return "Unavailable";
+  }
+}
+
+function levelRoleClass(role: LevelRole): string {
+  switch (role) {
+    case "actionable":
+      return "text-success";
+    case "context":
+      return "text-accent-highlight";
+    case "major":
+      return "text-muted";
+    case "unavailable":
+      return "text-muted";
+  }
 }
 
 function TraderPlaybookSkeleton() {
@@ -138,15 +254,23 @@ function Checklist({
 
 function LevelsGrid({ levels }: { levels: TraderPlaybookLevels }) {
   const rows = [
-    ["Entry", levels.entry],
-    ["Stop", levels.stop],
-    ["Target 1", levels.target1],
-    ["Target 2", levels.target2],
+    ["Entry", levels.entry, "Actionable trigger"],
+    ["Stop", levels.stop, levels.stop == null ? "No actionable stop" : "Actionable risk"],
+    [
+      "Target 1",
+      levels.target1,
+      levels.target1 == null ? "No actionable target" : "Actionable target",
+    ],
+    [
+      "Target 2",
+      levels.target2,
+      levels.target2 == null ? "Not forced" : "Secondary target",
+    ],
   ] as const;
 
   return (
     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-      {rows.map(([label, value]) => (
+      {rows.map(([label, value, role]) => (
         <div
           key={label}
           className="rounded-lg border border-border bg-muted/15 px-3 py-2"
@@ -154,6 +278,54 @@ function LevelsGrid({ levels }: { levels: TraderPlaybookLevels }) {
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
             {label}
           </p>
+          <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">
+            {formatMoney(value)}
+          </p>
+          <p className="mt-0.5 text-xs text-muted">{role}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SupportResistanceHierarchy({
+  levels,
+}: {
+  levels: TraderPlaybookLevels;
+}) {
+  const rows = [
+    [
+      "Support",
+      levels.support,
+      classifyLevelDistance({ entry: levels.entry, level: levels.support }),
+    ],
+    [
+      "Resistance",
+      levels.resistance,
+      classifyLevelDistance({ entry: levels.entry, level: levels.resistance }),
+    ],
+  ] as const;
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {rows.map(([label, value, role]) => (
+        <div
+          key={label}
+          className="rounded-lg border border-border bg-background/55 px-3 py-2"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+              {label}
+            </p>
+            <p
+              className={cn(
+                "text-[10px] font-semibold uppercase tracking-wide",
+                levelRoleClass(role),
+              )}
+            >
+              {levelRoleLabel(role)}
+            </p>
+          </div>
           <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">
             {formatMoney(value)}
           </p>
@@ -184,6 +356,39 @@ function RiskGrid({ data }: { data: TraderPlaybookResponse }) {
           <p className="mt-0.5 text-sm font-semibold text-foreground">{value}</p>
         </div>
       ))}
+    </div>
+  );
+}
+
+function NoSetupSummary({ data }: { data: TraderPlaybookResponse }) {
+  const explanation =
+    data.warnings[0] ??
+    data.conditions.invalidIf[0] ??
+    "No actionable entry, stop, and target are available from current daily levels.";
+
+  return (
+    <div className="rounded-lg border border-border bg-muted/20 px-3 py-3">
+      <p className="text-sm font-semibold text-foreground">
+        No clean setup available.
+      </p>
+      <p className="mt-1 text-sm leading-relaxed text-muted">{explanation}</p>
+    </div>
+  );
+}
+
+function WaitingSummary({ data }: { data: TraderPlaybookResponse }) {
+  return (
+    <div className="grid gap-3 lg:grid-cols-2">
+      <Checklist
+        title="Trigger"
+        items={data.conditions.validIf}
+        tone="valid"
+      />
+      <Checklist
+        title="Invalidation"
+        items={data.conditions.invalidIf}
+        tone="invalid"
+      />
     </div>
   );
 }
@@ -258,11 +463,54 @@ function ReasonsList({ reasons }: { reasons: string[] }) {
   );
 }
 
-function TraderPlaybookContent({ data }: { data: TraderPlaybookResponse }) {
+function ExecutionGatePanel({
+  gate,
+  loading,
+}: {
+  gate: ExecutionGate;
+  loading: boolean;
+}) {
+  const copy = EXECUTION_GATE_COPY[gate];
+
+  return (
+    <div className="rounded-lg border border-border bg-background/55 px-3 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-muted" aria-hidden="true" />
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Execution gate
+          </p>
+        </div>
+        {loading ? (
+          <Badge variant="muted">Checking</Badge>
+        ) : (
+          <Badge variant={copy.badge}>{copy.label}</Badge>
+        )}
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-foreground">
+        {loading ? "Checking actionability score and regime gate." : copy.description}
+      </p>
+    </div>
+  );
+}
+
+function TraderPlaybookContent({
+  data,
+  executionGate,
+  executionLoading,
+}: {
+  data: TraderPlaybookResponse;
+  executionGate: ExecutionGate;
+  executionLoading: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
-  const status = STATUS_COPY[data.status];
+  const displayStatus = displayStatusForGate(data.status, executionGate);
+  const status = STATUS_COPY[displayStatus];
   const headerTone =
-    data.status === "NoSetup" ? "border-border bg-muted/30 text-foreground" : DIRECTION_TONE[data.direction];
+    displayStatus === "NoSetup" ? "border-border bg-muted/30 text-foreground" : DIRECTION_TONE[data.direction];
+  const showTradeLevels = displayStatus !== "NoSetup" && hasTradeLevels(data.levels);
+  const showRiskReward = displayStatus !== "NoSetup" && hasRiskReward(data);
+  const showSrHierarchy = displayStatus !== "NoSetup" && showTradeLevels;
 
   return (
     <div className="space-y-4">
@@ -310,26 +558,34 @@ function TraderPlaybookContent({ data }: { data: TraderPlaybookResponse }) {
         </div>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Checklist
-          title="Valid if"
-          items={data.conditions.validIf}
-          tone="valid"
-        />
-        <Checklist
-          title="Invalid if"
-          items={data.conditions.invalidIf}
-          tone="invalid"
-        />
-      </div>
+      {displayStatus === "NoSetup" ? (
+        <NoSetupSummary data={data} />
+      ) : displayStatus === "Waiting" ? (
+        <WaitingSummary data={data} />
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Checklist
+            title="Valid if"
+            items={data.conditions.validIf}
+            tone="valid"
+          />
+          <Checklist
+            title="Invalid if"
+            items={data.conditions.invalidIf}
+            tone="invalid"
+          />
+        </div>
+      )}
 
-      <LevelsGrid levels={data.levels} />
-      <RiskGrid data={data} />
+      {showTradeLevels ? <LevelsGrid levels={data.levels} /> : null}
+      {showRiskReward ? <RiskGrid data={data} /> : null}
+      <ExecutionGatePanel gate={executionGate} loading={executionLoading} />
+      {showSrHierarchy ? <SupportResistanceHierarchy levels={data.levels} /> : null}
 
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="muted">Data mode: {formatLabel(data.dataMode)}</Badge>
         <Badge variant="muted">
-          Execution: {formatLabel(data.alignment.executionReadiness)}
+          Execution gate: {executionGate}
         </Badge>
         <Badge variant="muted">
           Market: {formatLabel(data.alignment.marketRegime)}
@@ -373,6 +629,15 @@ export function TraderPlaybookCard({
       enabled,
     },
   );
+  const { decision, isLoading: decisionLoading } = useTradeDecision(symbol, {
+    accessToken,
+    enabled,
+  });
+  const executionGate = decision
+    ? executionGateFromAction(decision.action)
+    : traderPlaybook
+      ? executionGateFromPlaybook(traderPlaybook)
+      : null;
 
   return (
     <ResearchSectionCard
@@ -388,7 +653,11 @@ export function TraderPlaybookCard({
       ) : !traderPlaybook ? (
         <p className="text-sm text-muted">Trader playbook is not available.</p>
       ) : (
-        <TraderPlaybookContent data={traderPlaybook} />
+        <TraderPlaybookContent
+          data={traderPlaybook}
+          executionGate={executionGate ?? executionGateFromPlaybook(traderPlaybook)}
+          executionLoading={decisionLoading && !decision}
+        />
       )}
     </ResearchSectionCard>
   );
