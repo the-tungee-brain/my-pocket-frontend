@@ -22,6 +22,7 @@ import { useResearchEvents } from "@/app/hooks/useResearchEvents";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { TickerKeyStats } from "@/components/TickerKeyStats";
 import { TradeDecisionPanel } from "@/components/TradeDecisionPanel";
+import { IntradayTradingBiasCard } from "@/components/research/IntradayTradingBiasCard";
 import { TradingBiasCard } from "@/components/research/TradingBiasCard";
 
 type Props = {
@@ -57,6 +58,11 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
             {!isEtf ? (
               <>
                 <TradingBiasCard
+                  symbol={symbol}
+                  accessToken={accessToken}
+                  className={pageSectionClass}
+                />
+                <IntradayTradingBiasCard
                   symbol={symbol}
                   accessToken={accessToken}
                   className={pageSectionClass}

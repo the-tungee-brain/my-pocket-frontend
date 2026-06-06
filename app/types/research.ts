@@ -53,6 +53,76 @@ export type TradingBiasResponse = {
   dataGaps: string[];
 };
 
+export type IntradayTradingBiasSetupType =
+  | "GapAndGo"
+  | "OpeningRangeBreakout"
+  | "VWAPReclaim"
+  | "GapFade"
+  | "TrendDay"
+  | "RangeDay"
+  | "FailedBreakout"
+  | "None";
+
+export type IntradayTradingBiasAction =
+  | "Watch"
+  | "Avoid"
+  | "ConfirmBreakout"
+  | "WaitForPullback"
+  | "RiskOff";
+
+export type IntradayTradingBiasVwapState =
+  | "above"
+  | "below"
+  | "reclaiming"
+  | "rejecting";
+
+export type IntradayTradingBiasVolumeState =
+  | "confirmed"
+  | "neutral"
+  | "weak";
+
+export type IntradayTradingBiasCatalystState =
+  | "positive"
+  | "neutral"
+  | "negative"
+  | "none";
+
+export type IntradayTradingBiasLevels = {
+  premarketHigh: number | null;
+  premarketLow: number | null;
+  openRangeHigh: number | null;
+  openRangeLow: number | null;
+  vwap: number | null;
+  support: number | null;
+  resistance: number | null;
+  invalidation: number | null;
+};
+
+export type IntradayTradingBiasAlignment = {
+  market: TradingBiasAlignmentState;
+  intradayTrend: TradingBiasAlignmentState;
+  vwap: IntradayTradingBiasVwapState;
+  volume: IntradayTradingBiasVolumeState;
+  catalyst: IntradayTradingBiasCatalystState;
+};
+
+export type IntradayTradingBiasResponse = {
+  bias: TradingBiasLabel;
+  confidence: TradingBiasConfidence;
+  horizon: "Intraday";
+  setupType: IntradayTradingBiasSetupType;
+  action: IntradayTradingBiasAction;
+  levels: IntradayTradingBiasLevels;
+  alignment: IntradayTradingBiasAlignment;
+  reasons: string[];
+  warnings: string[];
+  dataGaps: string[];
+  lastUpdated: string | null;
+  stalenessSeconds: number | null;
+  provider: "yfinance";
+  isRealtime: false;
+};
+
 export type EtfHoldingItem = {
   ticker?: string | null;
   name: string;

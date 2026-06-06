@@ -14,7 +14,10 @@ import type {
 import type { PortfolioNewsResponse } from "@/app/types/portfolioNews";
 import type { PressReleasesResponse } from "@/app/types/pressReleases";
 import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
-import type { TradingBiasResponse } from "@/app/types/research";
+import type {
+  IntradayTradingBiasResponse,
+  TradingBiasResponse,
+} from "@/app/types/research";
 import {
   overviewBundleEtagKey,
   parseEtagHeader,
@@ -269,6 +272,24 @@ export async function fetchTradingBias(
   }
 
   return res.json() as Promise<TradingBiasResponse>;
+}
+
+export async function fetchIntradayTradingBias(
+  accessToken: string,
+  symbol: string,
+): Promise<IntradayTradingBiasResponse> {
+  const res = await apiFetch(
+    `/research/intraday-trading-bias${buildQuery({
+      symbol: symbol.toUpperCase(),
+    })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load intraday trading bias (${res.status})`);
+  }
+
+  return res.json() as Promise<IntradayTradingBiasResponse>;
 }
 
 export async function fetchRecentOrders(
