@@ -1,10 +1,10 @@
 import type {
-  ProactiveAlert,
   PortfolioIntelligence,
+  ProactiveAlert,
 } from "@/app/types/intelligence";
 
 export type Instrument = {
-  assetType: "EQUITY" | "OPTION";
+  assetType: "EQUITY" | "OPTION" | "ETF" | "COLLECTIVE_INVESTMENT" | string;
   cusip: string;
   symbol: string;
   description?: string | null;

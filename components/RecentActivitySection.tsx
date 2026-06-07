@@ -69,27 +69,27 @@ function OrderLegSubRow({
   compact?: boolean;
 }) {
   return (
-    <tr className="border-t border-border/60 bg-surface-elevated/20">
-      <td className="px-4 py-2 text-left text-xs text-muted" />
-      <td className="px-4 py-2 text-left text-xs text-muted">
+    <tr className="border-t border-border/60">
+      <td className="py-3 text-left text-sm text-muted" />
+      <td className="py-3 text-left text-sm text-muted">
         <span className="pl-3">↳ {formatLegContractLabel(leg) ?? "Leg"}</span>
       </td>
-      <td className="px-4 py-2 text-left text-xs text-muted">
+      <td className="py-3 text-left text-sm text-muted">
         {formatOrderSide(leg.instruction)}
       </td>
-      <td className="px-4 py-2 text-right tabular-nums text-xs text-muted">
+      <td className="py-3 text-right tabular-nums text-sm text-muted">
         {formatLegQuantity(leg)}
       </td>
-      <td className="px-4 py-2 text-right tabular-nums text-xs text-muted">
+      <td className="py-3 text-right tabular-nums text-sm text-muted">
         {formatLegFillPrice(leg)}
       </td>
-      <td className="px-4 py-2 text-right tabular-nums text-xs text-muted">
+      <td className="py-3 text-right tabular-nums text-sm text-muted">
         {formatLegPremium(leg)}
       </td>
-      <td className="px-4 py-2 text-right tabular-nums text-xs text-muted">
+      <td className="py-3 text-right tabular-nums text-sm text-muted">
         {formatLegTotalCash(leg)}
       </td>
-      {!compact && <td className="px-4 py-2 text-left text-xs text-muted" />}
+      {!compact && <td className="py-3 text-left text-sm text-muted" />}
     </tr>
   );
 }
@@ -110,34 +110,36 @@ function OrderRow({
 
   return (
     <>
-      <tr className="border-t border-border">
-        <td className="px-4 py-2.5 text-left text-xs text-muted">
+      <tr className="border-t border-border/60">
+        <td className="py-3 text-left text-sm text-muted">
           {formatOrderFillTime(order.fillTime)}
         </td>
-        <td className="px-4 py-2.5 text-left text-xs">
-          <div className="font-mono font-medium">{order.symbol}</div>
+        <td className="py-3 text-left text-sm">
+          <div className="font-mono font-medium text-foreground">
+            {order.symbol}
+          </div>
           {contractLabel && (
             <div className="mt-0.5 text-[11px] text-muted">{contractLabel}</div>
           )}
           {strategyBadge && <StrategyBadge label={strategyBadge} />}
         </td>
-        <td className="px-4 py-2.5 text-left text-xs">
+        <td className="py-3 text-left text-sm">
           {formatOrderSide(order.side)}
         </td>
-        <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+        <td className="py-3 text-right tabular-nums text-sm">
           {formatOrderQuantity(order)}
         </td>
-        <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+        <td className="py-3 text-right tabular-nums text-sm">
           {formatOrderFillPrice(order)}
         </td>
-        <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+        <td className="py-3 text-right tabular-nums text-sm">
           {formatOrderPremiumPerContract(order)}
         </td>
-        <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+        <td className="py-3 text-right tabular-nums text-sm">
           {formatOrderTotalCash(order)}
         </td>
         {!compact && (
-          <td className="px-4 py-2.5 text-left text-xs text-muted">
+          <td className="py-3 text-left text-sm text-muted">
             {order.orderType ?? "—"}
           </td>
         )}
@@ -163,7 +165,7 @@ function OrderRows({
 }) {
   if (!orders.length) {
     return (
-      <p className="px-4 py-3 text-sm text-muted">
+      <p className="py-3 text-sm text-muted">
         No filled orders in the last 30 days.
       </p>
     );
@@ -174,17 +176,39 @@ function OrderRows({
   return (
     <>
       <div className="hidden overflow-x-auto scrollbar-dark md:block">
-        <table className="w-full min-w-[880px] table-auto text-sm">
-          <thead className="border-b border-border bg-surface-elevated/60 text-[11px] font-medium uppercase tracking-wide text-muted">
+        <table className="w-full table-fixed text-sm">
+          {compact ? (
+            <colgroup>
+              <col className="w-[13%]" />
+              <col className="w-[25%]" />
+              <col className="w-[12%]" />
+              <col className="w-[10%]" />
+              <col className="w-[12%]" />
+              <col className="w-[14%]" />
+              <col className="w-[14%]" />
+            </colgroup>
+          ) : (
+            <colgroup>
+              <col className="w-[12%]" />
+              <col className="w-[23%]" />
+              <col className="w-[11%]" />
+              <col className="w-[9%]" />
+              <col className="w-[11%]" />
+              <col className="w-[13%]" />
+              <col className="w-[13%]" />
+              <col className="w-[8%]" />
+            </colgroup>
+          )}
+          <thead className="border-b border-border/60 text-[11px] font-medium uppercase tracking-wide text-muted">
             <tr>
-              <th className="px-4 py-2.5 text-left">Filled</th>
-              <th className="px-4 py-2.5 text-left">Symbol / contract</th>
-              <th className="px-4 py-2.5 text-left">Side</th>
-              <th className="px-4 py-2.5 text-right">Qty</th>
-              <th className="px-4 py-2.5 text-right">Fill</th>
-              <th className="px-4 py-2.5 text-right">Premium</th>
-              <th className="px-4 py-2.5 text-right">Total cash</th>
-              {!compact && <th className="px-4 py-2.5 text-left">Type</th>}
+              <th className="py-2.5 text-left">Filled</th>
+              <th className="py-2.5 text-left">Symbol / contract</th>
+              <th className="py-2.5 text-left">Side</th>
+              <th className="py-2.5 text-right">Qty</th>
+              <th className="py-2.5 text-right">Fill</th>
+              <th className="py-2.5 text-right">Premium</th>
+              <th className="py-2.5 text-right">Total cash</th>
+              {!compact && <th className="py-2.5 text-left">Type</th>}
             </tr>
           </thead>
           <tbody>
@@ -192,10 +216,10 @@ function OrderRows({
               if (group.kind === "roll") {
                 return (
                   <Fragment key={group.groupId}>
-                    <tr className="border-t border-border bg-accent-muted/20">
+                    <tr className="border-t border-border/60">
                       <td
                         colSpan={compact ? 7 : 8}
-                        className="px-4 py-2 text-left text-[11px] font-medium text-accent-strong"
+                        className="py-3 text-left text-[11px] font-medium text-muted"
                       >
                         {group.label}
                       </td>
@@ -224,12 +248,12 @@ function OrderRows({
         </table>
       </div>
 
-      <div className="divide-y divide-border md:hidden">
+      <div className="divide-y divide-border/60 md:hidden">
         {displayGroups.map((group) => {
           if (group.kind === "roll") {
             return (
-              <div key={group.groupId} className="bg-accent-muted/10">
-                <div className="border-b border-border px-4 py-2 text-[11px] font-medium text-accent-strong">
+              <div key={group.groupId}>
+                <div className="border-b border-border/60 py-3 text-[11px] font-medium text-muted">
                   {group.label}
                 </div>
                 {group.orders.map((order, index) => (
@@ -267,7 +291,7 @@ function OrderMobileCard({
   const extraLegs = (order.legs ?? []).slice(1);
 
   return (
-    <div className="px-4 py-3">
+    <div className="py-3">
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-sm font-medium">{order.symbol}</span>
         <span className="text-xs text-muted">
@@ -629,18 +653,14 @@ export function RecentActivitySection({
   }
 
   return (
-    <section
-      className={cn(
-        "mx-auto w-full overflow-hidden border-t border-border/60 pt-4",
-        className,
-      )}
-      aria-label={title}
-    >
-      <div className="flex items-start justify-between gap-3 border-b border-border/60 pb-3">
+    <section className={cn("w-full space-y-4", className)} aria-label={title}>
+      <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2.5">
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-            <p className="text-[11px] text-muted">{subtitle}</p>
+            <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+              {title}
+            </h2>
+            <p className="mt-1 text-sm text-muted">{subtitle}</p>
             {lastUpdated != null && symbol && (
               <FreshnessLabel
                 updatedAt={lastUpdated}

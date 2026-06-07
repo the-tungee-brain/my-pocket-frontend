@@ -2,15 +2,21 @@ import type {
   IntelligenceSignal,
   OptionRollSuggestion,
   OptionsStrikeCandidate,
-  ProactiveAlert,
   PortfolioIntelligence,
+  ProactiveAlert,
   SignalSeverity,
   SymbolIntelligence,
 } from "@/app/types/intelligence";
-import type { Position, SchwabAccounts } from "@/app/types/schwab";
-import type { SuggestedAnalysisAction } from "@/app/types/schwab";
+import type {
+  Position,
+  SchwabAccounts,
+  SuggestedAnalysisAction,
+} from "@/app/types/schwab";
+import {
+  formatOptionExpiration,
+  optionDaysToExpiration,
+} from "@/lib/dateUtils";
 import { suggestedActionToQuickActionId } from "@/lib/recentOrders";
-import { formatOptionExpiration, optionDaysToExpiration } from "@/lib/dateUtils";
 
 const SEVERITY_ORDER: Record<SignalSeverity, number> = {
   critical: 0,
@@ -29,7 +35,9 @@ export function sortSignalsBySeverity<T extends { severity: SignalSeverity }>(
   );
 }
 
-export function sortAlertsByPriority(alerts: ProactiveAlert[]): ProactiveAlert[] {
+export function sortAlertsByPriority(
+  alerts: ProactiveAlert[],
+): ProactiveAlert[] {
   return [...alerts].sort((a, b) => a.priority - b.priority);
 }
 
@@ -64,9 +72,15 @@ const UNKNOWN_SECTOR_VALUES = new Set([
   "uncategorized",
 ]);
 
-export function formatSectorLabel(sector: string | null | undefined): string {
+export function formatSectorLabel(
+  sector: string | null | undefined,
+  options: { preserveUnknown?: boolean } = {},
+): string {
   const cleaned = sector?.trim() ?? "";
   if (!cleaned || UNKNOWN_SECTOR_VALUES.has(cleaned.toLowerCase())) {
+    if (options.preserveUnknown) {
+      return "Unknown";
+    }
     return "Misc";
   }
   return cleaned;
@@ -96,10 +110,7 @@ export function mergeDisplayAlerts(
   proactiveAlerts: ProactiveAlert[],
   portfolioBrief: PortfolioIntelligence | null = null,
 ): ProactiveAlert[] {
-  return dedupeAlerts([
-    ...(portfolioBrief?.alerts ?? []),
-    ...proactiveAlerts,
-  ]);
+  return dedupeAlerts([...(portfolioBrief?.alerts ?? []), ...proactiveAlerts]);
 }
 
 export function alertPriorityToSeverity(priority: number): SignalSeverity {
@@ -194,7 +205,7 @@ export function formatOptionCandidateSummary(
   }
 
   if (underlyingPrice != null && underlyingPrice > 0) {
-    const pctFromSpot = ((candidate.strike / underlyingPrice) - 1) * 100;
+    const pctFromSpot = (candidate.strike / underlyingPrice - 1) * 100;
     if (candidate.side === "put") {
       if (pctFromSpot < -0.5) {
         parts.push(`${Math.abs(pctFromSpot).toFixed(1)}% below stock price`);
@@ -224,8 +235,7 @@ export function buildOptionCandidatePrompt(
   candidate: OptionsStrikeCandidate,
   underlyingPrice?: number | null,
 ): string {
-  const side =
-    candidate.side === "call" ? "covered call" : "cash-secured put";
+  const side = candidate.side === "call" ? "covered call" : "cash-secured put";
   const expiration = formatOptionExpiration(candidate.expiration);
   const summary = formatOptionCandidateSummary(candidate, underlyingPrice);
 
@@ -276,8 +286,7 @@ export function filterNonTaxSuggestedActions(
   actions: SuggestedAnalysisAction[],
 ): SuggestedAnalysisAction[] {
   return actions.filter(
-    (action) =>
-      !isTaxAction(action.action) && !isWashSaleText(action.reason),
+    (action) => !isTaxAction(action.action) && !isWashSaleText(action.reason),
   );
 }
 
@@ -307,7 +316,11 @@ export function collectTaxAlertItems(
 
   for (const alert of alerts) {
     if (!isTaxAction(alert.action) && !isWashSaleText(alert.reason)) continue;
-    if (symbolUpper && alert.symbol && alert.symbol.toUpperCase() !== symbolUpper) {
+    if (
+      symbolUpper &&
+      alert.symbol &&
+      alert.symbol.toUpperCase() !== symbolUpper
+    ) {
       continue;
     }
     add({

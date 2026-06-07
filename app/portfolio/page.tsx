@@ -6,19 +6,14 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import { useToast } from "@/app/contexts/ToastContext";
-import { useMorningBrief } from "@/app/hooks/useMorningBrief";
-import { usePortfolioExitAttention } from "@/app/hooks/usePortfolioExitAttention";
 import { usePortfolioNews } from "@/app/hooks/usePortfolioNews";
-import type {
-  AttentionItem,
-  ProactiveAlert,
-  SectorWeight,
-} from "@/app/types/intelligence";
+import { usePortfolioOptimization } from "@/app/hooks/usePortfolioOptimization";
 import type { PortfolioHoldingsNewsItem } from "@/app/types/portfolioNews";
 import {
   buildSymbolSummaries,
@@ -26,26 +21,27 @@ import {
   sortSummaries,
 } from "@/components/analysis/analysisPanelHoldings";
 import { PageShell } from "@/components/PageShell";
-import { PortfolioAttentionSection } from "@/components/PortfolioAttentionSection";
 import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
+import {
+  DiversificationScoreSection,
+  OptimizationSuggestionsSection,
+  SectorDiversificationRows,
+  StockDiversificationSection,
+} from "@/components/PortfolioOptimizationSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { dismissPortfolioAlert } from "@/lib/apiClient";
 import { appStackClass } from "@/lib/appUi";
 import { parsePositionsSyncedAt } from "@/lib/dataFreshness";
-import type { TaxAlertItem } from "@/lib/intelligence";
 import {
-  alertToQuickActionId,
   buildLocalPortfolioBrief,
   buildSymbolAlertMap,
-  collectTaxAlertItems,
-  formatSectorLabel,
   mergeDisplayAlerts,
 } from "@/lib/intelligence";
 import { pageSectionClass } from "@/lib/pageLayout";
+import { buildLocalPortfolioOptimization } from "@/lib/portfolioOptimization";
 import { scrollToChat } from "@/lib/scrollToChat";
 import { cn } from "@/lib/utils";
 
@@ -72,62 +68,6 @@ function PortfolioSectionHeader({
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
-  );
-}
-
-function SectorDiversificationSection({
-  sectors,
-  className,
-}: {
-  sectors: SectorWeight[];
-  className?: string;
-}) {
-  const sorted = [...sectors].sort((a, b) => b.weightPct - a.weightPct);
-
-  return (
-    <section className={cn(sectionClass, "space-y-5", className)}>
-      <PortfolioSectionHeader
-        title="Diversification by sector"
-        description="Allocation by sector."
-      />
-      {sorted.length ? (
-        <div className="divide-y divide-border/60 border-t border-border/60">
-          {sorted.slice(0, 8).map((sector) => (
-            <div
-              key={sector.sector}
-              className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(10rem,20rem)_4.5rem] sm:items-center"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">
-                  {formatSectorLabel(sector.sector)}
-                </p>
-                {sector.symbols.length ? (
-                  <p className="mt-0.5 truncate text-xs text-muted">
-                    {sector.symbols.slice(0, 6).join(", ")}
-                    {sector.symbols.length > 6 ? "…" : ""}
-                  </p>
-                ) : null}
-              </div>
-              <div className="h-2 bg-border/50">
-                <div
-                  className="h-full bg-foreground"
-                  style={{
-                    width: `${Math.max(0, Math.min(100, sector.weightPct))}%`,
-                  }}
-                />
-              </div>
-              <p className="text-left text-sm font-medium tabular-nums text-foreground sm:text-right">
-                {sector.weightPct.toFixed(1)}%
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="border-t border-border/60 py-3 text-sm text-muted">
-          Sector weights are not available yet.
-        </p>
-      )}
-    </section>
   );
 }
 
@@ -234,7 +174,7 @@ export default function PortfolioPage() {
     schwabReauth,
   } = usePortfolioContext();
 
-  const { sendQuickAction, closeAllChatModelMenus } = useAppChatContext();
+  const { sendQuickAction } = useAppChatContext();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const schwabSuccessNotifiedRef = useRef(false);
@@ -267,26 +207,11 @@ export default function PortfolioPage() {
     return () => window.clearTimeout(id);
   }, [hasLoadedPositions]);
 
-  const {
-    morningBrief,
-    portfolioBrief: fetchedBrief,
-    loading: briefLoading,
-    refetch: refetchMorningBrief,
-  } = useMorningBrief(sessionAccessToken, {
-    enabled: hasLoadedPositions && secondaryPortfolioLoadsReady,
-    initialBrief: seedBrief,
-  });
-
-  const displayBrief = fetchedBrief ?? seedBrief;
+  const displayBrief = seedBrief;
 
   const mergedAlerts = mergeDisplayAlerts(proactiveAlerts, displayBrief);
 
   const symbolAlertMap = buildSymbolAlertMap(mergedAlerts, displayBrief);
-
-  const taxItems = collectTaxAlertItems(
-    mergedAlerts,
-    recentActivity?.suggestedActions ?? [],
-  );
 
   const handleSuggestedAction = useCallback(
     (actionId: string) => {
@@ -302,64 +227,30 @@ export default function PortfolioPage() {
     [allPositions, sendQuickAction],
   );
 
-  const handleRunAlert = useCallback(
-    (alert: ProactiveAlert) => {
-      const actionId = alertToQuickActionId(alert);
-      handleSuggestedAction(actionId);
-    },
-    [handleSuggestedAction],
-  );
-
-  const handleRunAttentionItem = useCallback(
-    (item: AttentionItem) => {
-      handleRunAlert({
-        action: item.action,
-        label: item.label,
-        reason: item.reason,
-        priority: item.priority,
-        symbol: item.symbol,
-      });
-    },
-    [handleRunAlert],
-  );
-
-  const handleDismissAttention = useCallback(
-    async (alertId: string) => {
-      if (!sessionAccessToken) return;
-      try {
-        await dismissPortfolioAlert(sessionAccessToken, alertId);
-        refetchMorningBrief();
-      } catch {
-        // ignore — user can retry refresh
-      }
-    },
-    [refetchMorningBrief, sessionAccessToken],
-  );
-
-  const handleAnalyzePortfolio = useCallback(() => {
-    closeAllChatModelMenus();
-    handleSuggestedAction("portfolio-review");
-  }, [closeAllChatModelMenus, handleSuggestedAction]);
-
-  const handleTaxAlert = useCallback(
-    (item: TaxAlertItem) => {
-      handleSuggestedAction(item.actionId);
-    },
-    [handleSuggestedAction],
-  );
-
   const showContent = hasLoadedPositions;
+  const localOptimization = useMemo(
+    () =>
+      showContent
+        ? buildLocalPortfolioOptimization({
+            positions: allPositions,
+            account,
+          })
+        : null,
+    [account, allPositions, showContent],
+  );
+  const { optimization: backendOptimization, loading: optimizationLoading } =
+    usePortfolioOptimization(sessionAccessToken, {
+      enabled: showContent && secondaryPortfolioLoadsReady,
+    });
+  const backendOptimizationHasHoldings =
+    (backendOptimization?.stockWeights.length ?? 0) > 0;
+  const optimization =
+    backendOptimizationHasHoldings || optimizationLoading
+      ? backendOptimization
+      : localOptimization;
   const { items: portfolioNewsItems, loading: portfolioNewsLoading } =
     usePortfolioNews(sessionAccessToken, {
       enabled: showContent && secondaryPortfolioLoadsReady,
-    });
-  const attentionQueue = morningBrief?.attentionQueue ?? [];
-
-  const { items: exitAttentionItems, isLoading: exitAttentionLoading } =
-    usePortfolioExitAttention({
-      accessToken: sessionAccessToken,
-      enabled: showContent && secondaryPortfolioLoadsReady,
-      limit: 10,
     });
 
   const liquidationValue =
@@ -370,9 +261,7 @@ export default function PortfolioPage() {
     symbolAlertMap,
   );
   const sectorWeights =
-    displayBrief?.digest?.sectorWeights ??
-    morningBrief?.digest?.sectorWeights ??
-    [];
+    optimization?.sectorWeights ?? displayBrief?.digest?.sectorWeights ?? [];
 
   return (
     <PageShell className={appStackClass}>
@@ -398,11 +287,7 @@ export default function PortfolioPage() {
           account={account}
           cashSecuredPutSummary={cashSecuredPutSummary}
           portfolioMetrics={portfolioMetrics}
-          briefPending={
-            briefLoading && !displayBrief
-              ? true
-              : positionsDataFreshness?.briefStatus === "pending"
-          }
+          briefPending={positionsDataFreshness?.briefStatus === "pending"}
           positionsSyncedAt={parsePositionsSyncedAt(
             positionsDataFreshness?.positionsSyncedAt,
           )}
@@ -411,13 +296,32 @@ export default function PortfolioPage() {
 
       {showContent && (
         <>
+          <DiversificationScoreSection
+            className={sectionClass}
+            optimization={optimization}
+            loading={optimizationLoading && !optimization}
+          />
+
+          <StockDiversificationSection
+            className={sectionClass}
+            stockWeights={optimization?.stockWeights ?? []}
+          />
+
+          <SectorDiversificationRows
+            className={sectionClass}
+            sectors={sectorWeights}
+          />
+
+          <OptimizationSuggestionsSection
+            className={sectionClass}
+            optimization={optimization}
+          />
+
           <section className={cn(sectionClass, "space-y-4")}>
             <div>
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Diversification by stock
-              </h2>
+              <h2 className={portfolioSectionTitleClass}>Holdings detail</h2>
               <p className="mt-1 text-sm text-muted">
-                Holdings sorted by portfolio weight.
+                Full position table for review after the allocation summary.
               </p>
             </div>
             <PortfolioHoldingsTable
@@ -432,27 +336,6 @@ export default function PortfolioPage() {
               }
             />
           </section>
-
-          <SectorDiversificationSection sectors={sectorWeights} />
-
-          <PortfolioAttentionSection
-            className={sectionClass}
-            taxItems={taxItems}
-            alerts={mergedAlerts}
-            attentionItems={attentionQueue}
-            suggestedActions={recentActivity?.suggestedActions ?? []}
-            exitItems={exitAttentionLoading ? [] : exitAttentionItems}
-            onRunAlert={handleRunAlert}
-            onRunAttentionItem={handleRunAttentionItem}
-            onDismissAttention={handleDismissAttention}
-            onRunTax={handleTaxAlert}
-            onRunActionId={handleSuggestedAction}
-            compact
-            compactTitle="Optimization suggestions"
-            compactActionLabel="Review with AI"
-            onCompactAction={handleAnalyzePortfolio}
-            maxVisible={5}
-          />
 
           {sessionAccessToken && (
             <RecentActivitySection
