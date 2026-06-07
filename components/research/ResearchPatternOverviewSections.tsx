@@ -1,15 +1,15 @@
 "use client";
 
 import { Activity, Sparkles } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
 import type { SymbolIntelligence } from "@/app/types/intelligence";
 import { PatternIntelligenceCard } from "@/components/PatternIntelligenceCard";
 import { PatternTrendForecastCard } from "@/components/PatternTrendForecastCard";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
-import { useAccountPlan } from "@/app/hooks/useAccountPlan";
-import { useSession } from "next-auth/react";
-import { hasPatternForecast } from "@/lib/patternForecast";
 import {
   formatPatternPercent,
+  hasPatternForecast,
   patternDirectionLabel,
   patternDirectionSubtitle,
   patternDirectionTone,
@@ -45,7 +45,7 @@ function SummaryMetric({
   tone?: "default" | "positive" | "negative" | "neutral" | "warning";
 }) {
   return (
-    <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
+    <div className="border border-border bg-background/60 px-3 py-2">
       <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
         {label}
       </p>
@@ -103,10 +103,7 @@ export function ResearchPatternOverviewSections({
         icon={Activity}
         className={className}
       >
-        <div
-          className="h-24 animate-pulse rounded-xl bg-muted-bg/50"
-          aria-busy
-        />
+        <div className="h-24 animate-pulse bg-muted-bg/50" aria-busy />
       </ResearchSectionCard>
     );
   }
@@ -190,7 +187,7 @@ export function ResearchPatternOverviewSections({
           </div>
 
           {chartHeadline || patternLine ? (
-            <div className="rounded-xl border border-border bg-background/40 px-3 py-3">
+            <div className="border border-border bg-background/40 px-3 py-3">
               {chartHeadline ? (
                 <p className="text-sm font-semibold text-foreground">
                   Chart structure: {chartHeadline}

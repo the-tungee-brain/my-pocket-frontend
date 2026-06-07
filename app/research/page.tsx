@@ -1,26 +1,16 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent } from "react";
-import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { History, Search, SearchX, Star } from "lucide-react";
-
-import {
-  type TickerSymbolItem,
-  useSymbolSearch,
-} from "../hooks/useSymbolSearch";
-import { useRecentSymbols } from "../hooks/useRecentSymbols";
-import { useWatchlist } from "../hooks/useWatchlist";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { type KeyboardEvent, useRef, useState } from "react";
 import { usePortfolioContext } from "@/app/contextSelectors";
-import { rememberAssetType } from "@/lib/researchAssetType";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { SkeletonList } from "@/components/ui/Skeleton";
-import { SymbolSearchResult } from "@/components/SymbolSearchResult";
 import { PageShell } from "@/components/PageShell";
-import { ResearchOnboarding } from "@/components/ResearchOnboarding";
-import { StrategyPlaybookQuickLinks } from "@/components/StrategyPlaybookQuickLinks";
+import { SymbolSearchResult } from "@/components/SymbolSearchResult";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { appStackClass } from "@/lib/appUi";
 import {
   moversMetaBodyClass,
@@ -29,7 +19,14 @@ import {
   moversMetaInsetClass,
   moversMetaTitleClass,
 } from "@/lib/moversUi";
+import { rememberAssetType } from "@/lib/researchAssetType";
 import { cn } from "@/lib/utils";
+import { useRecentSymbols } from "../hooks/useRecentSymbols";
+import {
+  type TickerSymbolItem,
+  useSymbolSearch,
+} from "../hooks/useSymbolSearch";
+import { useWatchlist } from "../hooks/useWatchlist";
 
 export default function ResearchPage() {
   const { data: session } = useSession();
@@ -111,11 +108,10 @@ export default function ResearchPage() {
         </p>
       </header>
 
-      <ResearchOnboarding />
-
-      <StrategyPlaybookQuickLinks />
-
-      <section className={moversMetaCardClass} aria-label="Research workspace">
+      <section
+        className={cn(moversMetaCardClass, "px-0")}
+        aria-label="Research workspace"
+      >
         <p className={moversMetaEyebrowClass}>Research workspace</p>
         <h2 className={moversMetaTitleClass}>Company context in one hub</h2>
         <p className={moversMetaBodyClass}>
@@ -147,7 +143,10 @@ export default function ResearchPage() {
         </dl>
       </section>
 
-      <section className="app-panel p-3 sm:p-4" aria-label="Symbol search">
+      <section
+        className="app-panel overflow-visible! py-3 sm:py-4"
+        aria-label="Symbol search"
+      >
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className={moversMetaEyebrowClass}>Symbol search</p>
@@ -187,7 +186,7 @@ export default function ResearchPage() {
                 ? `research-symbol-option-${activeIndex}`
                 : undefined
             }
-            className="min-h-12 w-full rounded-lg border border-border bg-background px-9 py-3 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+            className="min-h-12 w-full border border-border bg-background px-9 py-3 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
           />
         </div>
 
@@ -224,12 +223,12 @@ export default function ResearchPage() {
                 Manage folders
               </Link>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2 overflow-visible">
               {watchlist.map((symbol) => (
                 <button
                   key={symbol}
                   type="button"
-                  className="app-chip min-h-9 flex-row items-center gap-1.5 px-3 py-2 font-mono text-xs text-accent-strong"
+                  className="app-chip min-h-9 flex-row! items-center! justify-center! gap-1.5 whitespace-nowrap px-3 py-2 font-mono text-xs text-accent-strong"
                   onClick={() => openSymbol(symbol)}
                 >
                   <Star className="h-3 w-3 fill-current" aria-hidden="true" />
@@ -252,12 +251,12 @@ export default function ResearchPage() {
                 Clear
               </button>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2 overflow-visible">
               {recentWithoutWatchlist.map((symbol) => (
                 <button
                   key={symbol}
                   type="button"
-                  className="app-chip min-h-9 flex-row items-center gap-1.5 px-3 py-2 font-mono text-xs text-foreground"
+                  className="app-chip min-h-9 flex-row! items-center! justify-center! gap-1.5 whitespace-nowrap px-3 py-2 font-mono text-xs text-foreground"
                   onClick={() => openSymbol(symbol)}
                 >
                   <History className="h-3 w-3 text-muted" aria-hidden="true" />
@@ -287,13 +286,9 @@ export default function ResearchPage() {
         )}
 
         {(isLoading || error || hasResults || showEmptyState) && (
-          <div className="mt-3 overflow-hidden rounded-lg border border-border bg-background text-sm">
+          <div className="mt-3 overflow-hidden border border-border bg-background text-sm">
             {isLoading && (
-              <SkeletonList
-                rows={3}
-                rowClassName="h-9 rounded-lg"
-                className="p-3"
-              />
+              <SkeletonList rows={3} rowClassName="h-9" className="p-3" />
             )}
 
             {error && (

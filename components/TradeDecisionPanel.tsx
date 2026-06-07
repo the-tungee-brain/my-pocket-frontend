@@ -95,7 +95,7 @@ function MetricCell({
   valueClassName?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
+    <div className="border border-border bg-background/60 px-3 py-2">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
         {label}
       </p>
@@ -113,7 +113,7 @@ function ReasonBreakdown({
   breakdown: TradeDecision["reasonBreakdown"];
 }) {
   return (
-    <div className="space-y-3 rounded-lg border border-border bg-muted/20 px-3 py-3">
+    <div className="space-y-3 border border-border bg-muted/20 px-3 py-3">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
         Reason breakdown
       </p>
@@ -178,7 +178,7 @@ function PipelineContent({
       <div className="grid gap-2 md:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(0,1fr))]">
         <div
           className={cn(
-            "rounded-lg border px-3 py-2",
+            "border px-3 py-2",
             verdictTone(decision.verdict),
           )}
         >
@@ -242,7 +242,7 @@ function PipelineContent({
 
       <div
         className={cn(
-          "rounded-xl border px-4 py-3",
+          "border px-4 py-3",
           verdictTone(decision.verdict),
         )}
       >
@@ -275,11 +275,11 @@ function DecisionSkeleton() {
   return (
     <div className="space-y-3">
       <div className="grid gap-2 sm:grid-cols-3">
-        <Skeleton className="h-14 rounded-lg" />
-        <Skeleton className="h-14 rounded-lg" />
-        <Skeleton className="h-14 rounded-lg" />
+        <Skeleton className="h-14" />
+        <Skeleton className="h-14" />
+        <Skeleton className="h-14" />
       </div>
-      <Skeleton className="h-16 w-full rounded-xl" />
+      <Skeleton className="h-16 w-full" />
     </div>
   );
 }

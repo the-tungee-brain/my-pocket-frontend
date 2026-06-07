@@ -127,14 +127,14 @@ export function MarkdownRenderer({
               return (
                 <code
                   {...rest}
-                  className="rounded bg-muted-bg px-1.5 py-0.5 text-[13px] text-accent-strong"
+                  className="bg-muted-bg px-1.5 py-0.5 text-[13px] text-accent-strong"
                 >
                   {children}
                 </code>
               );
             }
             return (
-              <pre className="my-3 overflow-x-auto rounded-md bg-muted-bg p-3 text-[13px] leading-relaxed">
+              <pre className="my-3 overflow-x-auto bg-muted-bg p-3 text-[13px] leading-relaxed">
                 <code {...rest} className="font-mono text-foreground">
                   {children}
                 </code>
@@ -145,13 +145,13 @@ export function MarkdownRenderer({
             <img
               src={src ?? ""}
               alt={alt ?? ""}
-              className="my-4 max-h-100 w-full rounded-md object-contain"
+              className="my-4 max-h-100 w-full object-contain"
             />
           ),
           hr: () => <hr className="my-5 border-border/70" />,
 
           table: ({ children }) => (
-            <div className="my-4 overflow-x-auto rounded-2xl border border-border bg-secondary">
+            <div className="my-4 overflow-x-auto border border-border bg-secondary">
               <table className="markdown-table w-full table-fixed text-sm">
                 {children}
               </table>

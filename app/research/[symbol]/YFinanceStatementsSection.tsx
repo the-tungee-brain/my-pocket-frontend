@@ -24,7 +24,7 @@ export function YFinanceStatementsSection({
   const [tab, setTab] = useState<StatementTab>("income");
 
   if (isLoading) {
-    return <Skeleton className="h-56 rounded-xl" />;
+    return <Skeleton className="h-56" />;
   }
 
   if (!snapshot?.periods.length) {
@@ -51,14 +51,14 @@ export function YFinanceStatementsSection({
 
   return (
     <div className="space-y-3">
-      <div className="inline-flex rounded-lg border border-border bg-muted-bg/50 p-0.5">
+      <div className="inline-flex border border-border bg-muted-bg/50 p-0.5">
         {sections.map((section) => (
           <button
             key={section.id}
             type="button"
             onClick={() => setTab(section.id)}
             className={cn(
-              "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+              "px-3 py-1 text-xs font-medium transition-colors",
               tab === section.id
                 ? "bg-secondary text-foreground shadow-sm"
                 : "text-muted hover:text-foreground",
@@ -94,7 +94,7 @@ function StatementTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-border">
+    <div className="overflow-x-auto border border-border">
       <table className="min-w-full text-left text-sm">
         <caption className="sr-only">{title} statement</caption>
         <thead>

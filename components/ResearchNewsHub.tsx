@@ -82,7 +82,7 @@ function NewsFeedScopeTabs({
             {tab.count != null && tab.count > 0 ? (
               <span
                 className={cn(
-                  "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
+                  "inline-flex min-w-5 items-center justify-center px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
                   active
                     ? "bg-accent/20 text-accent-strong"
                     : "bg-muted-bg text-muted",
@@ -119,7 +119,7 @@ function ViewAllLink({
 
 function OfficialEmptyHint() {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-muted-bg/40 px-4 py-5 text-sm text-muted">
+    <div className="border border-dashed border-border bg-muted-bg/40 px-4 py-5 text-sm text-muted">
       <p className="font-medium text-foreground">No recent press releases</p>
       <p className="mt-1 leading-relaxed">
         When the company issues IR announcements, they appear here—separate from

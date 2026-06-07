@@ -95,9 +95,9 @@ function ScoreBar({
           {score}/100 · {rankLabel}
         </span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-muted-bg">
+      <div className="h-1.5 overflow-hidden bg-muted-bg">
         <div
-          className={cn("h-full rounded-full transition-all", barClass)}
+          className={cn("h-full transition-all", barClass)}
           style={{ width: `${score}%` }}
         />
       </div>
@@ -110,7 +110,7 @@ export function FinancialStrengthSection({
   isLoading,
 }: FinancialStrengthSectionProps) {
   if (isLoading) {
-    return <Skeleton className="h-32 rounded-xl" />;
+    return <Skeleton className="h-32" />;
   }
 
   if (!strength) {
@@ -133,7 +133,7 @@ export function FinancialStrengthSection({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-background/60 p-4 ring-1",
+        "border border-border bg-background/60 p-4 ring-1",
         style.ring,
       )}
     >
@@ -141,7 +141,7 @@ export function FinancialStrengthSection({
         <div className="flex items-start gap-3">
           <div
             className={cn(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border",
+              "flex h-10 w-10 shrink-0 items-center justify-center border",
               style.badge,
             )}
           >
@@ -155,7 +155,7 @@ export function FinancialStrengthSection({
             <div className="flex flex-wrap items-center gap-2">
               <span
                 className={cn(
-                  "rounded-md border px-2 py-0.5 text-xs font-semibold tracking-wide",
+                  "border px-2 py-0.5 text-xs font-semibold tracking-wide",
                   style.badge,
                 )}
               >

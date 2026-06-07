@@ -50,7 +50,7 @@ function RecommendationBar({
 
   return (
     <div className="space-y-2">
-      <div className="flex h-2 overflow-hidden rounded-full bg-muted-bg">
+      <div className="flex h-2 overflow-hidden bg-muted-bg">
         {segments.map((segment) =>
           segment.count > 0 ? (
             <div
@@ -104,7 +104,7 @@ function EstimatePeriodChips({
             type="button"
             onClick={() => onSelect(key)}
             className={cn(
-              "rounded-full border px-2 py-0.5 text-[10px] font-semibold transition",
+              "border px-2 py-0.5 text-[10px] font-semibold transition",
               selected === key
                 ? "border-accent/40 bg-accent-muted text-accent-strong"
                 : "border-border bg-background/60 text-muted hover:text-foreground",
@@ -120,7 +120,7 @@ function EstimatePeriodChips({
 
 function EstimateInsight({ headline }: { headline: string }) {
   return (
-    <p className="rounded-lg border border-accent/20 bg-accent-muted/30 px-3 py-2 text-xs leading-relaxed text-foreground">
+    <p className="border border-accent/20 bg-accent-muted/30 px-3 py-2 text-xs leading-relaxed text-foreground">
       {headline}
     </p>
   );
@@ -169,7 +169,7 @@ export function StreetAnalysisSkeleton() {
     <ResearchSectionSkeleton
       headerWidth="w-32"
       rows={2}
-      rowClassName="h-16 rounded-lg"
+      rowClassName="h-16"
     />
   );
 }
@@ -198,7 +198,7 @@ export function StreetAnalysisSection({
               Analyst consensus
             </span>
             {street.consensusLabel ? (
-              <span className="rounded-full border border-accent/30 bg-accent-muted px-2 py-0.5 text-[11px] font-semibold text-accent-strong">
+              <span className="border border-accent/30 bg-accent-muted px-2 py-0.5 text-[11px] font-semibold text-accent-strong">
                 {street.consensusLabel}
               </span>
             ) : null}
@@ -216,19 +216,19 @@ export function StreetAnalysisSection({
             Price vs Street
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+            <div className="border border-border bg-background/60 px-2.5 py-2">
               <p className="text-[10px] text-muted">Current price</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {formatStreetPrice(targets.current)}
               </p>
             </div>
-            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+            <div className="border border-border bg-background/60 px-2.5 py-2">
               <p className="text-[10px] text-muted">Mean target</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {formatStreetPrice(targets.mean)}
               </p>
             </div>
-            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+            <div className="border border-border bg-background/60 px-2.5 py-2">
               <p className="text-[10px] text-muted">Vs mean target</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {formatPremiumDiscountToTarget(
@@ -248,7 +248,7 @@ export function StreetAnalysisSection({
             ].map((item) => (
               <div
                 key={item.label}
-                className="rounded-lg border border-border bg-background/60 px-2.5 py-2"
+                className="border border-border bg-background/60 px-2.5 py-2"
               >
                 <p className="text-[10px] text-muted">{item.label}</p>
                 <p className="text-sm font-semibold tabular-nums text-foreground">
@@ -303,7 +303,7 @@ function EstimateMetricCard({
   estimate: PeriodEstimate;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-background/60 px-3 py-2.5">
+    <div className="border border-border bg-background/60 px-3 py-2.5">
       <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
         {title}
       </p>

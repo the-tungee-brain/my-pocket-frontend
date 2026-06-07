@@ -16,13 +16,13 @@ export function SecCompanyBadge({ symbol }: SecCompanyBadgeProps) {
 
   if (isLoading) {
     return (
-      <Skeleton className="h-10 rounded-xl border border-border bg-muted-bg/40" />
+      <Skeleton className="h-10 border border-border bg-muted-bg/40" />
     );
   }
 
   if (error || !lookup) {
     return (
-      <p className="rounded-xl border border-border bg-secondary/40 px-4 py-3 text-xs text-muted">
+      <p className="border border-border bg-secondary/40 px-4 py-3 text-xs text-muted">
         SEC filing data is available for US-listed symbols. This ticker may not
         have SEC coverage.
       </p>
@@ -30,7 +30,7 @@ export function SecCompanyBadge({ symbol }: SecCompanyBadgeProps) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-secondary/40 px-4 py-3">
+    <div className="border border-border bg-secondary/40 px-4 py-3">
       <p className="text-sm font-medium text-foreground">{lookup.name}</p>
       <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
         <span>CIK {lookup.cik}</span>

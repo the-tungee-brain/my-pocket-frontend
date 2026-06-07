@@ -57,12 +57,6 @@ const topNavItems = [
     isActive: (pathname: string) => pathname.startsWith("/emerging-leaders"),
     view: "research" as const,
   },
-  {
-    href: "/settings",
-    label: "Settings",
-    isActive: (pathname: string) => pathname.startsWith("/settings"),
-    view: "research" as const,
-  },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -104,10 +98,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     : pathname.match(/^\/research\/([^/]+)(?:\/([^/]+))?/);
   const researchSymbol = researchMatch?.[1]?.toUpperCase();
   const { symbol: routeSymbol } = parseResearchRoute(pathname);
+  const isResearchRoute = !!routeSymbol;
+  const effectiveView = isResearchRoute ? ("research" as const) : selectedView;
 
   const [inputRows, setInputRows] = useState(MIN_ROWS);
   const [mobileChatExpanded, setMobileChatExpanded] = useState(false);
-  const [portfolioAssistantOpen, setPortfolioAssistantOpen] = useState(false);
+  const [floatingAssistantOpen, setFloatingAssistantOpen] = useState(false);
 
   const activeChatKey = resolveActiveChatKey({
     selectedView,
@@ -129,37 +125,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [activeChatKey]);
 
   const isPortfolioPage = pathname === "/portfolio";
+  const isResearchSymbolPage = isResearchRoute;
 
   useEffect(() => {
     const openChat = () => {
-      if (isPortfolioPage) {
-        setPortfolioAssistantOpen(true);
+      if (isPortfolioPage || isResearchSymbolPage) {
+        setFloatingAssistantOpen(true);
         return;
       }
       setMobileChatExpanded(true);
     };
     window.addEventListener(OPEN_CHAT_EVENT, openChat);
     return () => window.removeEventListener(OPEN_CHAT_EVENT, openChat);
-  }, [isPortfolioPage]);
+  }, [isPortfolioPage, isResearchSymbolPage]);
 
   useEffect(() => {
-    if (!isPortfolioPage) {
-      setPortfolioAssistantOpen(false);
+    if (!isPortfolioPage && !isResearchSymbolPage) {
+      setFloatingAssistantOpen(false);
     }
-  }, [isPortfolioPage]);
+  }, [isPortfolioPage, isResearchSymbolPage]);
 
   useEffect(() => {
-    if (!portfolioAssistantOpen) return;
+    if (!floatingAssistantOpen) return;
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setPortfolioAssistantOpen(false);
+        setFloatingAssistantOpen(false);
       }
     };
 
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [portfolioAssistantOpen]);
+  }, [floatingAssistantOpen]);
 
   const researchPositions =
     researchSymbol && positionMap[researchSymbol]
@@ -167,24 +164,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       : [];
 
   const insightsPositions =
-    selectedView === "portfolio"
+    effectiveView === "portfolio"
       ? allPositions
-      : selectedView === "research"
+      : effectiveView === "research"
         ? researchPositions
         : positionsForSelectedSymbol;
 
   const showChat =
-    selectedView === "research"
+    effectiveView === "research"
       ? !!researchSymbol
-      : selectedView === "portfolio" || !!selectedSymbol;
+      : effectiveView === "portfolio" || !!selectedSymbol;
 
   const chatDisabled =
-    selectedView === "research" ? false : !insightsPositions?.length;
+    effectiveView === "research" ? false : !insightsPositions?.length;
 
   useEffect(() => {
     if (!showChat || activeChatKey === "__NONE__") return;
-    void hydrateChatFromServer(activeChatKey, selectedView);
-  }, [activeChatKey, showChat, selectedView, hydrateChatFromServer]);
+    void hydrateChatFromServer(activeChatKey, effectiveView);
+  }, [activeChatKey, showChat, effectiveView, hydrateChatFromServer]);
 
   const handleChatInputChange = (value: string) => {
     if (activeChatKey === "__NONE__") return;
@@ -221,7 +218,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [activeChatKey, setChatModelMenuOpen]);
 
   const resolveChatContext = () => {
-    if (selectedView === "research" && researchSymbol) {
+    if (effectiveView === "research" && researchSymbol) {
       return {
         view: "research" as const,
         symbol: researchSymbol,
@@ -229,10 +226,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       };
     }
     return {
-      view: selectedView,
+      view: effectiveView,
       symbol: selectedSymbol,
       positions:
-        selectedView === "portfolio"
+        effectiveView === "portfolio"
           ? allPositions
           : positionsForSelectedSymbol,
     };
@@ -313,26 +310,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const labelSymbol =
-    selectedView === "portfolio"
+    effectiveView === "portfolio"
       ? "PORTFOLIO"
-      : selectedView === "research" && isMomentumBreakoutAlertsRoute
+      : effectiveView === "research" && isMomentumBreakoutAlertsRoute
         ? "MB TRADE PLANS"
-        : selectedView === "research"
+        : effectiveView === "research"
           ? researchSymbol
           : selectedSymbol;
 
   const showConversation =
-    selectedView === "portfolio" ||
-    (selectedView === "research" && !!routeSymbol);
+    effectiveView === "portfolio" ||
+    (effectiveView === "research" && !!routeSymbol);
 
   const researchTab = pathname.split("/")[3];
   const isPositionTab =
-    selectedView === "research" &&
+    effectiveView === "research" &&
     researchTab === "position" &&
     !!researchSymbol &&
     (positionMap[researchSymbol]?.length ?? 0) > 0;
   const isOptionsTab =
-    selectedView === "research" &&
+    effectiveView === "research" &&
     researchTab === "options" &&
     !!researchSymbol;
 
@@ -340,11 +337,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? "options"
     : isPositionTab
       ? "position"
-      : selectedView;
+      : effectiveView;
 
   const portfolioSection = searchParams.get("section");
   const chatContextLabel =
-    selectedView === "portfolio"
+    effectiveView === "portfolio"
       ? `Portfolio · ${
           portfolioSection === "holdings"
             ? "Holdings"
@@ -352,17 +349,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               ? "Activity"
               : "Today"
         }`
-      : selectedView === "research" && researchSymbol
+      : effectiveView === "research" && researchSymbol
         ? `${researchSymbol} · ${researchTabLabel(pathname.split("/")[3])}`
         : selectedSymbol
           ? `${selectedSymbol} · Position`
           : undefined;
 
   const chatBoxProps = {
-    mode: selectedView,
+    mode: effectiveView,
     quickActionMode,
     selectedSymbol:
-      selectedView === "research" ? (researchSymbol ?? null) : selectedSymbol,
+      effectiveView === "research" ? (researchSymbol ?? null) : selectedSymbol,
     currentChat,
     disabled: chatDisabled,
     inputRows,
@@ -375,18 +372,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     contextLabel: chatContextLabel,
   };
 
-  const showEmbeddedConversation = showConversation && !isPortfolioPage;
-  const showEmbeddedChatBox = showChat && !isPortfolioPage;
-  const showPortfolioFloatingAssistant = showChat && isPortfolioPage;
+  const showFloatingAssistant =
+    showChat && (isPortfolioPage || isResearchSymbolPage);
+  const showEmbeddedConversation = showConversation && !showFloatingAssistant;
+  const showEmbeddedChatBox = showChat && !showFloatingAssistant;
+  const floatingAssistantTitle =
+    effectiveView === "research" && researchSymbol
+      ? `Ask AI about ${researchSymbol}`
+      : "Portfolio assistant";
+  const floatingAssistantDescription =
+    effectiveView === "research" && researchSymbol
+      ? "Ask about the chart, bias, playbook, fundamentals, events, and positions."
+      : "Ask about risk, concentration, taxes, and what changed.";
+  const floatingAssistantAriaLabel =
+    effectiveView === "research" && researchSymbol
+      ? `Research AI assistant for ${researchSymbol}`
+      : "Portfolio AI assistant";
+  const floatingButtonAriaLabel =
+    effectiveView === "research" && researchSymbol
+      ? `Open AI assistant for ${researchSymbol}`
+      : "Open portfolio AI assistant";
 
   const mobileChatLabel =
-    selectedView === "portfolio"
+    effectiveView === "portfolio"
       ? "Ask about your portfolio"
       : isPositionTab
         ? `Analyze ${researchSymbol} position`
-        : selectedView === "research" && isMomentumBreakoutAlertsRoute
+        : effectiveView === "research" && isMomentumBreakoutAlertsRoute
           ? "Ask about MB trade plans"
-          : selectedView === "research"
+          : effectiveView === "research"
             ? `Ask about ${researchSymbol ?? "this symbol"}`
             : `Ask about ${selectedSymbol ?? "this position"}`;
 
@@ -591,48 +605,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </section>
       </main>
-      {showPortfolioFloatingAssistant && (
+      {showFloatingAssistant && (
         <>
           <button
             type="button"
-            aria-label="Open portfolio AI assistant"
-            onClick={() => setPortfolioAssistantOpen(true)}
+            aria-label={floatingButtonAriaLabel}
+            onClick={() => setFloatingAssistantOpen(true)}
             className={cn(
               "fixed right-5 z-40 border border-border bg-foreground px-4 py-2 text-sm font-medium text-background shadow-lg shadow-black/20 transition hover:opacity-90",
               "bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 md:right-6",
-              portfolioAssistantOpen && "hidden",
+              floatingAssistantOpen && "hidden",
             )}
           >
             Ask AI
           </button>
 
-          {portfolioAssistantOpen && labelSymbol && (
+          {floatingAssistantOpen && labelSymbol && (
             <div
               className="fixed inset-0 z-50 bg-background/35 backdrop-blur-sm"
               aria-hidden="true"
-              onClick={() => setPortfolioAssistantOpen(false)}
+              onClick={() => setFloatingAssistantOpen(false)}
             />
           )}
 
-          {portfolioAssistantOpen && labelSymbol && (
+          {floatingAssistantOpen && labelSymbol && (
             <section
               id="assistant-chat"
-              aria-label="Portfolio AI assistant"
+              aria-label={floatingAssistantAriaLabel}
               className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] top-20 z-50 flex flex-col border border-border bg-background shadow-2xl shadow-black/30 md:inset-auto md:bottom-6 md:right-6 md:top-24 md:h-[min(44rem,calc(100vh-8rem))] md:w-[30rem]"
             >
               <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                    Portfolio assistant
+                    {floatingAssistantTitle}
                   </p>
                   <p className="text-sm text-muted">
-                    Ask about risk, concentration, taxes, and what changed.
+                    {floatingAssistantDescription}
                   </p>
                 </div>
                 <button
                   type="button"
-                  aria-label="Close portfolio AI assistant"
-                  onClick={() => setPortfolioAssistantOpen(false)}
+                  aria-label="Close AI assistant"
+                  onClick={() => setFloatingAssistantOpen(false)}
                   className="inline-flex h-9 w-9 items-center justify-center border border-border text-muted transition hover:text-foreground"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
@@ -671,7 +685,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
               <ChatBox
                 {...chatBoxProps}
-                onCollapse={() => setPortfolioAssistantOpen(false)}
+                onCollapse={() => setFloatingAssistantOpen(false)}
               />
             </section>
           )}

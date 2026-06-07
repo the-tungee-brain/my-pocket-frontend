@@ -34,8 +34,8 @@ export function SecFinancialsTrendSection({
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2">
-        <Skeleton className="h-40 rounded-xl" />
-        <Skeleton className="h-40 rounded-xl" />
+        <Skeleton className="h-40" />
+        <Skeleton className="h-40" />
       </div>
     );
   }
@@ -116,9 +116,9 @@ function MetricTrendCard({
                   {formatLargeUsd(point.value)}
                 </span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted-bg">
+              <div className="h-2 overflow-hidden bg-muted-bg">
                 <div
-                  className="h-full rounded-full bg-accent-strong/80"
+                  className="h-full bg-accent-strong/80"
                   style={{ width: `${width}%` }}
                 />
               </div>

@@ -204,7 +204,7 @@ function EtfSectorDonut({
             <li
               key={slice.label}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-xs transition-colors duration-150",
+                "flex cursor-pointer items-center gap-2 px-1.5 py-1 text-xs transition-colors duration-150",
                 isActive && "bg-muted-bg/70",
               )}
               onMouseEnter={() => setHoveredLabel(slice.label)}
@@ -212,7 +212,7 @@ function EtfSectorDonut({
             >
               <span
                 className={cn(
-                  "h-2 w-2 shrink-0 rounded-full transition-transform duration-150",
+                  "h-2 w-2 shrink-0 transition-transform duration-150",
                   isActive && "scale-125",
                 )}
                 style={{ backgroundColor: slice.color }}
@@ -274,9 +274,9 @@ function EtfWeightBarList({ items }: { items: WeightBarItem[] }) {
             <EtfWeightBarLabel label={item.label} href={item.href} />
             <span className={WEIGHT_CLASS}>{item.weight.toFixed(2)}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted-bg">
+          <div className="h-2 overflow-hidden bg-muted-bg">
             <div
-              className={`h-full rounded-full ${BAR_CLASS}`}
+              className={`h-full ${BAR_CLASS}`}
               style={{
                 width: `${barWidth(item.weight, maxWeight)}%`,
               }}
@@ -444,7 +444,7 @@ export function EtfFundStats({
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="min-w-0 rounded-xl border border-border bg-background/60 px-2.5 py-2 sm:px-3 sm:py-2.5"
+          className="min-w-0 border border-border bg-background/60 px-2.5 py-2 sm:px-3 sm:py-2.5"
         >
           <p className="truncate text-[10px] font-medium uppercase tracking-wide text-muted">
             {stat.label}
@@ -480,7 +480,7 @@ function EtfQualityTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border">
+    <div className="overflow-hidden border border-border">
       <table className="w-full min-w-[240px] text-left text-xs">
         <thead className="bg-background/60 text-muted">
           <tr>

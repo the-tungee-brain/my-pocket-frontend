@@ -24,7 +24,7 @@ export function SecFilingsRecentSection({ symbol }: SecFilingsRecentSectionProps
   const [showAll, setShowAll] = useState(false);
 
   if (isLoading) {
-    return <SkeletonList rows={3} rowClassName="h-10 rounded-lg" />;
+    return <SkeletonList rows={3} rowClassName="h-10" />;
   }
 
   if (error) {
@@ -50,7 +50,7 @@ export function SecFilingsRecentSection({ symbol }: SecFilingsRecentSectionProps
 
   return (
     <div className="space-y-3">
-      <ul className="divide-y divide-border rounded-xl border border-border">
+      <ul className="divide-y divide-border border border-border">
         {visible.map((filing) => {
           const href =
             cikInt != null
@@ -68,7 +68,7 @@ export function SecFilingsRecentSection({ symbol }: SecFilingsRecentSectionProps
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-md bg-accent-muted px-2 py-0.5 text-xs font-semibold text-accent-strong">
+                  <span className="bg-accent-muted px-2 py-0.5 text-xs font-semibold text-accent-strong">
                     {filing.form}
                   </span>
                   <span className="text-xs text-muted">

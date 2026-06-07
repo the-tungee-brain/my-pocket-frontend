@@ -33,8 +33,8 @@ function FundamentalsOverviewSkeleton() {
       <Skeleton className="h-4 w-full" />
       <Skeleton className="h-4 w-5/6" />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Skeleton className="h-24 rounded-lg" />
-        <Skeleton className="h-24 rounded-lg" />
+        <Skeleton className="h-24" />
+        <Skeleton className="h-24" />
       </div>
     </div>
   );
@@ -141,7 +141,7 @@ export function FundamentalsPageContent({
                 icon={BarChart3}
               >
                 {isLoading ? (
-                  <Skeleton className="h-24 rounded-lg" />
+                  <Skeleton className="h-24" />
                 ) : (
                   <ValuationSignalsSection signals={overview?.valuationSignals} />
                 )}

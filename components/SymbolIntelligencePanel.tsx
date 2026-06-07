@@ -67,7 +67,7 @@ type Props = {
 function PanelLoadingSkeleton({
   titleWidth = "w-56",
   rows = 2,
-  rowClassName = "h-16 rounded-xl",
+  rowClassName = "h-16",
 }: {
   titleWidth?: string;
   rows?: number;
@@ -182,7 +182,7 @@ function IntelligenceSection({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-background/40">
+    <div className="overflow-hidden border border-border bg-background/40">
       <button
         type="button"
         aria-expanded={open}
@@ -305,7 +305,7 @@ export function IntelligenceRecentEventsPanel({
   if (loading && timeline.length === 0) {
     return (
       <ResearchAsideCard title="Recent events" className={className}>
-        <SkeletonList rows={3} rowClassName="h-14 rounded-lg" />
+        <SkeletonList rows={3} rowClassName="h-14" />
       </ResearchAsideCard>
     );
   }
@@ -372,7 +372,7 @@ export function SymbolIntelligencePanel({
           title={symbol ? `${symbol} intelligence` : "Symbol intelligence"}
           description="Signals, peers, and timeline"
           icon={
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
               <Sparkles className="h-4 w-4" aria-hidden />
             </div>
           }
@@ -405,7 +405,7 @@ export function SymbolIntelligencePanel({
         )}
 
         {intelligence?.partial && !intelligence.reauthRequired && (
-          <p className="rounded-lg border border-border bg-background/60 px-3 py-2 text-xs text-muted">
+          <p className="border border-border bg-background/60 px-3 py-2 text-xs text-muted">
             Some live Schwab data is unavailable. Research signals are still
             shown.
           </p>
@@ -434,12 +434,12 @@ export function SymbolIntelligencePanel({
                 return (
                   <li
                     key={`${signal.kind}-${signal.message}-${signal.symbol ?? ""}`}
-                    className="rounded-xl border border-border bg-background/60 px-3 py-2"
+                    className="border border-border bg-background/60 px-3 py-2"
                   >
                     <div className="flex items-start gap-2">
                       <span
                         className={cn(
-                          "mt-0.5 inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                          "mt-0.5 inline-flex shrink-0 border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                           signalSeverityClass(signal.severity),
                         )}
                       >
@@ -453,7 +453,7 @@ export function SymbolIntelligencePanel({
                       <button
                         type="button"
                         onClick={() => onRunSignal(signal, actionId)}
-                        className="mt-2 inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
+                        className="mt-2 inline-flex items-center gap-1 border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
                       >
                         <ActionIcon className="h-3 w-3" aria-hidden />
                         {quickAction.label}
@@ -475,9 +475,9 @@ export function SymbolIntelligencePanel({
               icon={Sparkles}
               compact={compact}
             >
-              <div className="space-y-2 rounded-xl border border-border bg-background/60 px-3 py-3">
+              <div className="space-y-2 border border-border bg-background/60 px-3 py-3">
                 {research.sentiment && (
-                  <span className="inline-flex rounded-full bg-muted-bg px-2 py-0.5 text-[10px] capitalize text-muted">
+                  <span className="inline-flex bg-muted-bg px-2 py-0.5 text-[10px] capitalize text-muted">
                     {research.sentiment}
                   </span>
                 )}
@@ -521,7 +521,7 @@ export function SymbolIntelligencePanel({
             {peers.summary && (
               <p className="mb-2 text-sm text-foreground">{peers.summary}</p>
             )}
-            <div className="overflow-x-auto rounded-xl border border-border">
+            <div className="overflow-x-auto border border-border">
               <table className="w-full min-w-[280px] text-left text-xs">
                 <thead className="bg-background/60 text-muted">
                   <tr>
@@ -666,7 +666,7 @@ export function SymbolOptionsWorkspace({
           title={symbol ? `${symbol} options` : "Options"}
           description="Chain, rolls, and strike candidates"
           icon={
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
               <Target className="h-4 w-4" aria-hidden />
             </div>
           }
@@ -691,7 +691,7 @@ export function SymbolOptionsWorkspace({
           <PanelLoadingSkeleton
             titleWidth="w-48"
             rows={1}
-            rowClassName="h-32 rounded-xl"
+            rowClassName="h-32"
           />
         )}
 
@@ -705,7 +705,7 @@ export function SymbolOptionsWorkspace({
         )}
 
         {intelligence?.partial && !intelligence.reauthRequired && (
-          <p className="rounded-lg border border-border bg-background/60 px-3 py-2 text-xs text-muted">
+          <p className="border border-border bg-background/60 px-3 py-2 text-xs text-muted">
             Some live option data is unavailable right now.
           </p>
         )}
@@ -721,7 +721,7 @@ export function SymbolOptionsWorkspace({
               {rollSuggestions.slice(0, compact ? 2 : 4).map((suggestion) => (
                 <li
                   key={`${suggestion.side}-${suggestion.currentStrike}-${suggestion.suggestedStrike}`}
-                  className="rounded-xl border border-border bg-background/60 px-3 py-2.5"
+                  className="border border-border bg-background/60 px-3 py-2.5"
                 >
                   <p className="text-sm font-medium text-foreground">
                     {formatUsd(suggestion.currentStrike, {
@@ -746,7 +746,7 @@ export function SymbolOptionsWorkspace({
                           buildRollSuggestionPrompt(symbol, suggestion),
                         )
                       }
-                      className="mt-2 inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
+                      className="mt-2 inline-flex items-center gap-1 border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
                     >
                       Analyze roll
                     </button>
@@ -787,7 +787,7 @@ export function SymbolOptionsWorkspace({
                     {options.assignmentFlags.map((flag) => (
                       <li
                         key={flag}
-                        className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
+                        className="border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
                       >
                         {flag}
                       </li>
@@ -805,7 +805,7 @@ export function SymbolOptionsWorkspace({
                           `Review assignment and call-away risk for my ${symbol} short options over the next two weeks. ${options.assignmentFlags?.join(" ") ?? ""}`,
                         )
                       }
-                      className="mb-3 inline-flex items-center gap-1 rounded-lg border border-danger/30 bg-danger/10 px-2.5 py-1 text-[11px] font-medium text-danger transition hover:bg-danger/15"
+                      className="mb-3 inline-flex items-center gap-1 border border-danger/30 bg-danger/10 px-2.5 py-1 text-[11px] font-medium text-danger transition hover:bg-danger/15"
                     >
                       Analyze assignment risk
                     </button>
@@ -951,7 +951,7 @@ function OptionSpotPriceDivider({ price }: { price: number }) {
   return (
     <div className="flex items-center gap-3 py-1">
       <div className="h-px flex-1 bg-accent/35" aria-hidden />
-      <span className="shrink-0 rounded-full border border-accent/40 bg-background px-3 py-1 text-xs font-semibold tabular-nums text-accent-strong shadow-sm">
+      <span className="shrink-0 border border-accent/40 bg-background px-3 py-1 text-xs font-semibold tabular-nums text-accent-strong shadow-sm">
         {formatUnderlyingPrice(price)}
       </span>
       <div className="h-px flex-1 bg-accent/35" aria-hidden />
@@ -1009,7 +1009,7 @@ function OptionChainPreviewTable({
         </div>
       )}
 
-      <div className="w-full max-w-none overflow-hidden rounded-xl border border-border">
+      <div className="w-full max-w-none overflow-hidden border border-border">
         <p className="border-b border-border/70 px-3 py-2 text-[11px] text-muted">
           Bid and ask need a live quote. When they&apos;re missing, last is
           usually yesterday&apos;s close and mark is an estimated price.
@@ -1204,7 +1204,7 @@ function OptionsCandidateTable({
         {sortedCandidates.map((candidate) => (
           <li
             key={`${candidate.side}-${candidate.strike}-${candidate.expiration}`}
-            className="rounded-xl border border-border bg-background/60 px-3 py-2.5"
+            className="border border-border bg-background/60 px-3 py-2.5"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
@@ -1236,7 +1236,7 @@ function OptionsCandidateTable({
                       ),
                     )
                   }
-                  className="shrink-0 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
+                  className="shrink-0 border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
                 >
                   Analyze strike
                 </button>

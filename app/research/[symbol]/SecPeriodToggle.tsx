@@ -17,7 +17,7 @@ export function SecPeriodToggle({
   return (
     <div
       className={cn(
-        "inline-flex rounded-lg border border-border bg-muted-bg/50 p-0.5",
+        "inline-flex border border-border bg-muted-bg/50 p-0.5",
         className,
       )}
     >
@@ -32,7 +32,7 @@ export function SecPeriodToggle({
           type="button"
           onClick={() => onChange(value)}
           className={cn(
-            "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+            "px-3 py-1 text-xs font-medium transition-colors",
             period === value
               ? "bg-secondary text-foreground shadow-sm"
               : "text-muted hover:text-foreground",

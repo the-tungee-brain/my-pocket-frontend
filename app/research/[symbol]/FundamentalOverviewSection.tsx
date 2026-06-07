@@ -83,8 +83,8 @@ export function FundamentalOverviewSkeleton() {
         <Skeleton className="h-4 w-5/6" />
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
-        <Skeleton className="h-24 rounded-lg" />
-        <Skeleton className="h-24 rounded-lg" />
+        <Skeleton className="h-24" />
+        <Skeleton className="h-24" />
       </div>
     </div>
   );

@@ -212,8 +212,8 @@ function TraderPlaybookSkeleton() {
       <Skeleton className="h-7 w-64" />
       <Skeleton className="h-4 w-full max-w-xl" />
       <div className="grid gap-3 md:grid-cols-2">
-        <Skeleton className="h-16 rounded-lg" />
-        <Skeleton className="h-16 rounded-lg" />
+        <Skeleton className="h-16" />
+        <Skeleton className="h-16" />
       </div>
     </div>
   );
@@ -248,7 +248,7 @@ function Checklist({
             >
               <span
                 className={cn(
-                  "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
+                  "mt-1.5 h-1.5 w-1.5 shrink-0",
                   tone === "valid" ? "bg-success" : "bg-danger",
                 )}
                 aria-hidden="true"
@@ -485,7 +485,7 @@ function ReasonsList({ reasons }: { reasons: string[] }) {
             className="flex gap-2 text-sm leading-snug text-foreground"
           >
             <span
-              className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+              className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent"
               aria-hidden="true"
             />
             <span>{reason}</span>

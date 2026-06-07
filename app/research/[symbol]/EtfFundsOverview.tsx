@@ -98,7 +98,7 @@ export function EtfFundsOverview({ symbol, className }: EtfFundsOverviewProps) {
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           {funds.category ? (
-            <span className="rounded-full border border-accent/30 bg-accent-muted px-2 py-0.5 text-[11px] font-semibold text-accent-strong">
+            <span className="border border-accent/30 bg-accent-muted px-2 py-0.5 text-[11px] font-semibold text-accent-strong">
               {funds.category}
             </span>
           ) : null}

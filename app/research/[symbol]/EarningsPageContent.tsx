@@ -67,7 +67,7 @@ function BeatBadge({ label }: { label: EarningsEvent["beatLabel"] }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+        "inline-flex items-center border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
         classes,
       )}
     >
@@ -92,7 +92,7 @@ function MetricsGrid({ event }: { event: EarningsEvent }) {
   ];
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-border">
+    <div className="overflow-x-auto border border-border">
       <table className="min-w-full divide-y divide-border text-sm">
         <tbody className="divide-y divide-border">
           {rows.map((row) => (
@@ -135,7 +135,7 @@ function QuarterPicker({
             onClick={() => onSelect(key)}
             aria-pressed={isActive}
             className={cn(
-              "flex flex-none cursor-pointer flex-col items-start rounded-lg border px-3 py-2 text-left transition-all",
+              "flex flex-none cursor-pointer flex-col items-start border px-3 py-2 text-left transition-all",
               isActive
                 ? "border-accent/40 bg-accent-muted/40 shadow-sm ring-1 ring-accent/20"
                 : "border-border bg-surface-elevated/40 hover:border-accent/20 hover:bg-surface-elevated/70",
@@ -177,7 +177,7 @@ function TranscriptSection({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between rounded-lg border border-border bg-surface-elevated/40 px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-surface-elevated/70"
+        className="flex w-full items-center justify-between border border-border bg-surface-elevated/40 px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-surface-elevated/70"
       >
         <span>View full transcript ({transcript.length} speakers)</span>
         <ChevronDown
@@ -188,7 +188,7 @@ function TranscriptSection({
         />
       </button>
       {open && (
-        <div className="mt-3 max-h-112 space-y-4 overflow-y-auto rounded-xl border border-border bg-secondary/20 p-4 scrollbar-dark">
+        <div className="mt-3 max-h-112 space-y-4 overflow-y-auto border border-border bg-secondary/20 p-4 scrollbar-dark">
           {transcript.map((segment, index) => (
             <div key={`${segment.speaker}-${index}`}>
               <p className="text-xs font-semibold text-accent-strong">
@@ -214,23 +214,23 @@ function TranscriptSection({
 function EarningsAnalysisSkeleton() {
   return (
     <div className="space-y-6 border-t border-border pt-6" aria-hidden>
-      <Skeleton className="h-20 rounded-xl" />
+      <Skeleton className="h-20" />
       <ResearchSectionSkeleton
         headerWidth="w-20"
         rows={1}
-        rowClassName="h-14 rounded-xl"
+        rowClassName="h-14"
       />
       <ResearchSectionSkeleton
         headerWidth="w-28"
         rows={2}
-        rowClassName="h-12 rounded-xl"
+        rowClassName="h-12"
       />
       <ResearchSectionSkeleton
         headerWidth="w-32"
         rows={3}
-        rowClassName="h-8 rounded-lg"
+        rowClassName="h-8"
       />
-      <Skeleton className="h-16 rounded-xl" />
+      <Skeleton className="h-16" />
     </div>
   );
 }
@@ -249,16 +249,16 @@ function EarningsPageSkeleton() {
               {Array.from({ length: 4 }).map((_, index) => (
                 <Skeleton
                   key={index}
-                  className="h-16 w-28 flex-none rounded-lg"
+                  className="h-16 w-28 flex-none"
                 />
               ))}
             </div>
             <ResearchSectionSkeleton
               headerWidth="w-40"
               rows={1}
-              rowClassName="h-12 rounded-xl"
+              rowClassName="h-12"
             />
-            <SkeletonList rows={8} rowClassName="h-10 rounded-lg" />
+            <SkeletonList rows={8} rowClassName="h-10" />
             <EarningsAnalysisSkeleton />
           </div>
         </ResearchSectionCard>
@@ -272,7 +272,7 @@ function EarningsPageSkeleton() {
           <ResearchSectionSkeleton
             headerWidth="w-36"
             rows={3}
-            rowClassName="h-12 rounded-xl"
+            rowClassName="h-12"
           />
         </ResearchSectionCard>
       }
@@ -349,7 +349,7 @@ function EarningsDetailPanel({
 
           {!showAnalysisLoading && analysis ? (
             <div className="space-y-6">
-              <div className="rounded-xl border border-accent/25 bg-accent-muted/30 px-4 py-3">
+              <div className="border border-accent/25 bg-accent-muted/30 px-4 py-3">
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent-strong">
                   Headline
                 </h3>

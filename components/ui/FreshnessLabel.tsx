@@ -48,7 +48,7 @@ export function FreshnessLabel({
 
   const baseClass =
     variant === "badge"
-      ? "inline-flex items-center gap-1 rounded-full border border-border bg-muted-bg/60 px-2 py-0.5 font-mono text-[10px] text-muted"
+      ? "inline-flex items-center gap-1 border border-border bg-muted-bg/60 px-2 py-0.5 font-mono text-[10px] text-muted"
       : "inline-flex items-center gap-1 text-[11px] text-muted";
 
   return (

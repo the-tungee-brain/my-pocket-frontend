@@ -80,7 +80,7 @@ export function WatchlistPage() {
 
       {isAuthenticated && accessToken && (
         <section
-          className={cn(moversMetaCardClass, "!overflow-visible px-0")}
+          className={cn(moversMetaCardClass, "overflow-visible! px-0")}
           aria-label="Watchlist controls"
         >
           <p className={moversMetaEyebrowClass}>Watchlist workspace</p>

@@ -14,7 +14,7 @@ export function ErrorBanner({ message, onRetry, className }: ErrorBannerProps) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-lg border border-danger/25 border-l-[3px] border-l-danger bg-danger/5 px-4 py-3",
+        "flex flex-col gap-3 border border-danger/25 border-l-[3px] border-l-danger bg-danger/5 px-4 py-3",
         className,
       )}
       role="alert"

@@ -37,9 +37,9 @@ export function PerformanceSnapshot({ symbol, className }: Props) {
             className="space-y-2"
           />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Skeleton className="h-12 rounded-xl" />
-            <Skeleton className="h-12 rounded-xl" />
-            <Skeleton className="h-12 rounded-xl" />
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
           </div>
         </div>
       ) : error ? (

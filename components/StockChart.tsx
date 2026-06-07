@@ -184,7 +184,7 @@ function ChartLegend({
   return (
     <div
       className={cn(
-        "pointer-events-none absolute left-3 top-3 z-10 max-w-[calc(100%-1.5rem)] rounded-lg border border-border/80 bg-background/95 px-3 py-2 shadow-sm backdrop-blur-sm",
+        "pointer-events-none absolute left-3 top-3 z-10 max-w-[calc(100%-1.5rem)] border border-border/80 bg-background/95 px-3 py-2 shadow-sm backdrop-blur-sm",
         !hovering && "opacity-80",
       )}
     >
@@ -238,7 +238,7 @@ function ChartOverlayLegendSwatch({ item }: { item: ChartOverlayLegendItem }) {
     return (
       <span
         aria-hidden
-        className="h-2.5 w-4 shrink-0 rounded-sm border"
+        className="h-2.5 w-4 shrink-0 border"
         style={{
           backgroundColor: `${item.color}22`,
           borderColor: `${item.color}88`,
@@ -251,7 +251,7 @@ function ChartOverlayLegendSwatch({ item }: { item: ChartOverlayLegendItem }) {
     return (
       <span
         aria-hidden
-        className="h-2 w-2 shrink-0 rounded-xs"
+        className="h-2 w-2 shrink-0"
         style={{ backgroundColor: item.color }}
       />
     );
@@ -274,7 +274,7 @@ function ChartOverlayLegend({ items }: { items: ChartOverlayLegendItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="pointer-events-none absolute bottom-14 left-3 z-10 max-w-[min(100%-1.5rem,16rem)] rounded-lg border border-border/80 bg-background/92 px-2.5 py-2 shadow-sm backdrop-blur-sm">
+    <div className="pointer-events-none absolute bottom-14 left-3 z-10 max-w-[min(100%-1.5rem,16rem)] border border-border/80 bg-background/92 px-2.5 py-2 shadow-sm backdrop-blur-sm">
       <p className="text-[9px] font-semibold uppercase tracking-wide text-muted">
         Chart overlays
       </p>
@@ -474,8 +474,10 @@ export function StockChart({
     let priceSeries: ReturnType<typeof chart.addSeries>;
 
     if (chartMode === "line") {
+      const lineColor =
+        periodReturn == null ? accent : periodReturn >= 0 ? upColor : downColor;
       priceSeries = chart.addSeries(LineSeries, {
-        color: accent,
+        color: lineColor,
         lineWidth: 2,
         crosshairMarkerRadius: 4,
       });
@@ -564,7 +566,7 @@ export function StockChart({
       chart.remove();
       chartRef.current = null;
     };
-  }, [activeChartIntelligence, chartMode, data, dataByTime]);
+  }, [activeChartIntelligence, chartMode, data, dataByTime, periodReturn]);
 
   useEffect(() => {
     setSelectedPeriod(period);
@@ -628,7 +630,7 @@ export function StockChart({
         className,
       )}
     >
-      <div className="shrink-0 space-y-3 border-b border-border px-4 py-3">
+      <div className="shrink-0 space-y-3 border-b border-border py-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
             {periodReturn != null && (
@@ -647,14 +649,14 @@ export function StockChart({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <fieldset className="flex rounded-lg border border-border bg-background/60 p-0.5">
+            <fieldset className="flex border border-border bg-background/60 p-0.5">
               <legend className="sr-only">Chart style</legend>
               <button
                 type="button"
                 aria-pressed={chartMode === "line"}
                 onClick={() => setChartMode("line")}
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                  "inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium transition-colors",
                   chartMode === "line"
                     ? "bg-foreground text-background"
                     : "text-muted hover:text-foreground",
@@ -668,7 +670,7 @@ export function StockChart({
                 aria-pressed={chartMode === "candle"}
                 onClick={() => setChartMode("candle")}
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                  "inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium transition-colors",
                   chartMode === "candle"
                     ? "bg-foreground text-background"
                     : "text-muted hover:text-foreground",
@@ -684,7 +686,7 @@ export function StockChart({
               aria-expanded={advancedOpen}
               onClick={() => setAdvancedOpen((open) => !open)}
               className={cn(
-                "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition",
+                "inline-flex items-center gap-1 border px-2.5 py-1 text-[11px] font-medium transition",
                 advancedOpen
                   ? "border-foreground bg-foreground text-background"
                   : "border-border bg-background/60 text-muted hover:text-foreground",
@@ -714,7 +716,7 @@ export function StockChart({
                 aria-label={`${preset.label} time range`}
                 onClick={() => handlePresetClick(preset)}
                 className={cn(
-                  "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  "border px-2.5 py-1 text-[11px] font-medium transition-colors",
                   active
                     ? "border-foreground bg-foreground text-background"
                     : "border-border text-foreground hover:bg-background/60",
@@ -728,7 +730,7 @@ export function StockChart({
       </div>
 
       {advancedOpen && (
-        <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border bg-background/40 px-4 py-3 text-xs">
+        <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border bg-background/40 py-3 text-xs">
           <label className="flex items-center gap-2">
             <span className="text-muted">Period</span>
             <select
@@ -739,7 +741,7 @@ export function StockChart({
                 setSelectedPeriod(newPeriod);
                 onPeriodChange?.(newPeriod);
               }}
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground"
+              className="border border-border bg-background px-2 py-1 text-xs text-foreground"
             >
               <option value="1d">1 day</option>
               <option value="5d">5 days</option>
@@ -765,7 +767,7 @@ export function StockChart({
                 setSelectedInterval(newInterval);
                 onIntervalChange?.(newInterval);
               }}
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground"
+              className="border border-border bg-background px-2 py-1 text-xs text-foreground"
             >
               <option value="1m">1 minute</option>
               <option value="2m">2 minutes</option>
@@ -786,7 +788,7 @@ export function StockChart({
           <button
             type="button"
             onClick={handleReset}
-            className="ml-auto rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground transition hover:bg-background/60"
+            className="ml-auto border border-border px-2 py-1 text-xs font-medium text-foreground transition hover:bg-background/60"
           >
             Reset to 3M
           </button>
@@ -851,13 +853,13 @@ export function StockChart({
           )}
 
           {chartState === "ready" && loading && (
-            <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-background/95 px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-border">
+            <div className="pointer-events-none absolute right-3 top-3 bg-background/95 px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-border">
               Updating…
             </div>
           )}
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-background/40 px-3 py-1.5">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-background/40 py-1.5">
           <div className="min-w-0 text-[11px] leading-relaxed text-muted">
             {footerStats ? (
               <p className="truncate">

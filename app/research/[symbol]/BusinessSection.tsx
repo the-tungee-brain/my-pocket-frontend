@@ -21,7 +21,7 @@ type BusinessSectionProps = {
 function SnapshotRow({ label, value }: { label: string; value: string }) {
   const display = value.trim() || "—";
   return (
-    <div className="rounded-lg border border-border bg-background/50 px-3 py-2.5">
+    <div className="border border-border bg-background/50 px-3 py-2.5">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
         {label}
       </p>
@@ -97,15 +97,15 @@ function BusinessOverviewSkeleton() {
   return (
     <div className="space-y-4">
       <div className="grid gap-2 sm:grid-cols-2">
-        <Skeleton className="h-14 rounded-lg" />
-        <Skeleton className="h-14 rounded-lg" />
-        <Skeleton className="h-14 rounded-lg" />
-        <Skeleton className="h-14 rounded-lg" />
+        <Skeleton className="h-14" />
+        <Skeleton className="h-14" />
+        <Skeleton className="h-14" />
+        <Skeleton className="h-14" />
       </div>
-      <Skeleton className="h-20 rounded-lg" />
+      <Skeleton className="h-20" />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Skeleton className="h-24 rounded-lg" />
-        <Skeleton className="h-24 rounded-lg" />
+        <Skeleton className="h-24" />
+        <Skeleton className="h-24" />
       </div>
     </div>
   );

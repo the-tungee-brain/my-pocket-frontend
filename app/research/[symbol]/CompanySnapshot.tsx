@@ -9,7 +9,6 @@ import {
 import Link from "next/link";
 import { usePortfolioContext } from "@/app/contextSelectors";
 import { AssetTypeBadge } from "@/components/AssetTypeBadge";
-import { CompanyLogo } from "@/components/CompanyLogo";
 import { StrategySymbolBadge } from "@/components/StrategySymbolBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { iconButtonClass } from "@/components/ui/IconButton";
@@ -28,9 +27,8 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
   const userPositions = positionMap[upperSymbol];
 
   const { snapshot, isLoading, error } = useResearchSymbolHeader();
-  const { assetType, logoUrl, isEtf } = useResearchAssetTypeContext();
+  const { assetType, isEtf } = useResearchAssetTypeContext();
   const researchLabel = isEtf ? "ETF research" : "Stock research";
-  const displayLogo = logoUrl ?? snapshot?.logo;
 
   if (isLoading) {
     if (compact) {
@@ -52,7 +50,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           <Skeleton className="h-7 w-64" />
           <Skeleton className="h-4 w-40" />
         </div>
-        <Skeleton className="h-16 w-56 rounded-xl" />
+        <Skeleton className="h-16 w-56" />
       </header>
     );
   }
@@ -79,12 +77,6 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
-          <CompanyLogo
-            symbol={snapshot.symbol}
-            logo={displayLogo}
-            size="sm"
-            isEtf={isEtf}
-          />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">
               {snapshot.symbol}
@@ -147,12 +139,6 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           {researchLabel}
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <CompanyLogo
-            symbol={snapshot.symbol}
-            logo={displayLogo}
-            size="md"
-            isEtf={isEtf}
-          />
           <h1 className="font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
             {snapshot.symbol} · {snapshot.name}
           </h1>

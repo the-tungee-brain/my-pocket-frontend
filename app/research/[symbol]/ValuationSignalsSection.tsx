@@ -16,7 +16,7 @@ export function ValuationSignalsSection({
       {signals.map((signal) => (
         <div
           key={`${signal.label}-${signal.value}`}
-          className="rounded-lg border border-border bg-background/60 px-3 py-2.5"
+          className="border border-border bg-background/60 px-3 py-2.5"
         >
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
             {signal.label}

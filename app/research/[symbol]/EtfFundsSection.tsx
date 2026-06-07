@@ -49,9 +49,9 @@ function WeightingBars({ rows, max = 6 }: { rows: FundWeighting[]; max?: number 
               {formatFundPct(row.weightPct)}
             </span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted-bg">
+          <div className="h-1.5 overflow-hidden bg-muted-bg">
             <div
-              className="h-full rounded-full bg-accent/70"
+              className="h-full bg-accent/70"
               style={{ width: `${Math.min(row.weightPct, 100)}%` }}
             />
           </div>
@@ -66,7 +66,7 @@ export function EtfFundsSkeleton() {
     <ResearchSectionSkeleton
       headerWidth="w-36"
       rows={1}
-      rowClassName="h-24 rounded-lg"
+      rowClassName="h-24"
     />
   );
 }
@@ -95,17 +95,17 @@ export function EtfFundsSection({ funds, isLoading }: EtfFundsSectionProps) {
       {(funds.category || funds.family || funds.legalType) && (
         <div className="flex flex-wrap gap-2">
           {funds.category ? (
-            <span className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[11px] font-medium text-foreground">
+            <span className="border border-border bg-background/60 px-2 py-0.5 text-[11px] font-medium text-foreground">
               {funds.category}
             </span>
           ) : null}
           {funds.family ? (
-            <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted">
+            <span className="border border-border px-2 py-0.5 text-[11px] text-muted">
               {funds.family}
             </span>
           ) : null}
           {funds.legalType ? (
-            <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted">
+            <span className="border border-border px-2 py-0.5 text-[11px] text-muted">
               {funds.legalType}
             </span>
           ) : null}
@@ -121,7 +121,7 @@ export function EtfFundsSection({ funds, isLoading }: EtfFundsSectionProps) {
         funds.totalNetAssets != null) && (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {expenseDisplay ? (
-            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+            <div className="border border-border bg-background/60 px-2.5 py-2">
               <p className="text-[10px] text-muted">Expense ratio</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {expenseDisplay}
@@ -134,7 +134,7 @@ export function EtfFundsSection({ funds, isLoading }: EtfFundsSectionProps) {
             </div>
           ) : null}
           {funds.holdingsTurnoverPct != null ? (
-            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+            <div className="border border-border bg-background/60 px-2.5 py-2">
               <p className="text-[10px] text-muted">Turnover</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {formatFundPct(funds.holdingsTurnoverPct)}
@@ -142,7 +142,7 @@ export function EtfFundsSection({ funds, isLoading }: EtfFundsSectionProps) {
             </div>
           ) : null}
           {funds.totalNetAssets != null ? (
-            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+            <div className="border border-border bg-background/60 px-2.5 py-2">
               <p className="text-[10px] text-muted">Net assets</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {formatCompactNumber(funds.totalNetAssets)}

@@ -120,8 +120,8 @@ function TradingBiasSkeleton() {
     <div className="space-y-3">
       <Skeleton className="h-7 w-64" />
       <div className="grid gap-3 md:grid-cols-2">
-        <Skeleton className="h-20 rounded-lg" />
-        <Skeleton className="h-20 rounded-lg" />
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
       </div>
     </div>
   );

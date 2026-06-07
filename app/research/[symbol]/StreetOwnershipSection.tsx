@@ -32,7 +32,7 @@ export function StreetOwnershipSkeleton() {
     <ResearchSectionSkeleton
       headerWidth="w-40"
       rows={1}
-      rowClassName="h-20 rounded-lg"
+      rowClassName="h-20"
     />
   );
 }
@@ -69,7 +69,7 @@ export function StreetOwnershipSection({
         ownership?.institutionsPctHeld != null) && (
         <div className="grid grid-cols-2 gap-2">
           {ownership?.insidersPctHeld != null ? (
-            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+            <div className="border border-border bg-background/60 px-2.5 py-2">
               <p className="text-[10px] text-muted">Insiders</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {formatPctHeld(ownership.insidersPctHeld)}
@@ -77,7 +77,7 @@ export function StreetOwnershipSection({
             </div>
           ) : null}
           {ownership?.institutionsPctHeld != null ? (
-            <div className="rounded-lg border border-border bg-background/60 px-2.5 py-2">
+            <div className="border border-border bg-background/60 px-2.5 py-2">
               <p className="text-[10px] text-muted">Institutions</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {formatPctHeld(ownership.institutionsPctHeld)}

@@ -95,7 +95,7 @@ export function ResearchCardLoading({
     <LoadingRegion label={label} className={className}>
       <LoadingStagger className="space-y-3">
         {Array.from({ length: rows }, (_, index) => (
-          <Skeleton key={index} className="h-12 rounded-xl" />
+          <Skeleton key={index} className="h-12" />
         ))}
       </LoadingStagger>
     </LoadingRegion>
@@ -120,7 +120,7 @@ export function NewsOverviewLoading({
         </div>
         <div className="space-y-2">
           <Skeleton className="h-3 w-28" />
-          <Skeleton className="h-1.5 w-full rounded-full" />
+          <Skeleton className="h-1.5 w-full" />
           <div className="flex gap-3">
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-3 w-16" />
@@ -155,7 +155,7 @@ export function NewsContextLoading({
             <Skeleton className="h-3 w-24" />
             <Skeleton className="h-3 w-8" />
           </div>
-          <Skeleton className="h-1.5 w-full rounded-full" />
+          <Skeleton className="h-1.5 w-full" />
         </div>
       </LoadingStagger>
     </LoadingRegion>
@@ -176,13 +176,13 @@ export function NewsAnalysisLoading({
         <div className="space-y-2">
           <Skeleton className="h-3 w-24" />
           {[1, 2, 3].map((row) => (
-            <Skeleton key={row} className="h-10 rounded-lg" />
+            <Skeleton key={row} className="h-10" />
           ))}
         </div>
         <div className="space-y-2">
           <Skeleton className="h-3 w-16" />
           {[1, 2].map((row) => (
-            <Skeleton key={row} className="h-10 rounded-lg" />
+            <Skeleton key={row} className="h-10" />
           ))}
         </div>
       </LoadingStagger>

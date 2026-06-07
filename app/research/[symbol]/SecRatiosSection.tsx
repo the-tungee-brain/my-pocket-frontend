@@ -39,7 +39,7 @@ export function SecRatiosSection({ symbol, period }: SecRatiosSectionProps) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-border">
+    <div className="overflow-x-auto border border-border">
       <table className="min-w-full divide-y divide-border text-sm">
         <thead className="bg-surface-elevated/60">
           <tr>
@@ -114,7 +114,7 @@ function LoadingTable({ rows }: { rows: number }) {
       {Array.from({ length: rows }).map((_, i) => (
         <Skeleton
           key={i}
-          className="h-8 rounded"
+          className="h-8"
           style={{ width: `${100 - i * 5}%` }}
         />
       ))}

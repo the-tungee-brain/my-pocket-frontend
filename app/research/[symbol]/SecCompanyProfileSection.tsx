@@ -19,7 +19,7 @@ export function SecCompanyProfileSection({ symbol }: SecCompanyProfileSectionPro
   });
 
   if (isLoading) {
-    return <Skeleton className="h-8 rounded-lg" />;
+    return <Skeleton className="h-8" />;
   }
 
   if (error || !lookup) {
@@ -37,7 +37,7 @@ export function SecCompanyProfileSection({ symbol }: SecCompanyProfileSectionPro
   ].filter(Boolean);
 
   return (
-    <div className="rounded-lg border border-border bg-background/40">
+    <div className="border border-border bg-background/40">
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}

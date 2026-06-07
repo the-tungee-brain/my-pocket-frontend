@@ -50,7 +50,7 @@ function SectionAccordion({
         return (
           <div
             key={`${section.id}-${index}`}
-            className="overflow-hidden rounded-xl border border-border/80 bg-background/40"
+            className="overflow-hidden border border-border/80 bg-background/40"
           >
             <button
               type="button"
@@ -124,7 +124,7 @@ export function ConversationalMarkdown({
         <p className="whitespace-pre-wrap text-[15px] leading-[1.65] text-foreground">
           {displayContent}
           <span
-            className="ml-0.5 inline-block h-[1em] w-0.5 animate-pulse rounded-full bg-accent-strong align-[-0.12em]"
+            className="ml-0.5 inline-block h-[1em] w-0.5 animate-pulse bg-accent-strong align-[-0.12em]"
             aria-hidden
           />
         </p>

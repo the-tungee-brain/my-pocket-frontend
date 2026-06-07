@@ -21,7 +21,7 @@ export function SecFilingsSection({ symbol }: SecFilingsSectionProps) {
   });
 
   if (isLoading) {
-    return <SkeletonList rows={5} rowClassName="h-10 rounded-lg" />;
+    return <SkeletonList rows={5} rowClassName="h-10" />;
   }
 
   if (error) {
@@ -43,7 +43,7 @@ export function SecFilingsSection({ symbol }: SecFilingsSectionProps) {
   const cikInt = lookup?.cik_int;
 
   return (
-    <ul className="divide-y divide-border rounded-xl border border-border">
+    <ul className="divide-y divide-border border border-border">
       {filings.filings.map((filing) => {
         const href =
           cikInt != null
@@ -61,7 +61,7 @@ export function SecFilingsSection({ symbol }: SecFilingsSectionProps) {
           >
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="rounded-md bg-accent-muted px-2 py-0.5 text-xs font-semibold text-accent-strong">
+                <span className="bg-accent-muted px-2 py-0.5 text-xs font-semibold text-accent-strong">
                   {filing.form}
                 </span>
                 <span className="text-xs text-muted">

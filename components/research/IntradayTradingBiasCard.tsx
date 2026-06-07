@@ -240,7 +240,7 @@ function IntradayBiasContent({ data }: { data: IntradayTradingBiasResponse }) {
                 className="flex gap-2 text-sm leading-snug text-foreground"
               >
                 <span
-                  className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+                  className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent"
                   aria-hidden="true"
                 />
                 <span>{reason}</span>

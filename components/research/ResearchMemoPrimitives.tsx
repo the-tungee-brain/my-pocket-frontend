@@ -211,7 +211,7 @@ export function ResearchDecisionBlock({
             {why.slice(0, 3).map((item) => (
               <li key={item} className="flex gap-2">
                 <span
-                  className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-muted"
+                  className="mt-2 h-1.5 w-1.5 shrink-0 bg-muted"
                   aria-hidden
                 />
                 <span>{item}</span>

@@ -108,7 +108,7 @@ function SnowballScenarioControlsPanel({
         {children}
         {applyButton}
       </div>
-      <div className="overflow-hidden rounded-xl border border-border bg-surface-elevated/30 md:hidden">
+      <div className="overflow-hidden border border-border bg-surface-elevated/30 md:hidden">
         <button
           type="button"
           aria-expanded={open}
@@ -481,7 +481,7 @@ function DividendScenarioPositionInputs({
 
   return (
     <>
-      <div className="grid gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 border border-border bg-surface-elevated/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="space-y-1 text-xs text-muted">
           Investment
           <SnowballCurrencyInput
@@ -499,7 +499,7 @@ function DividendScenarioPositionInputs({
                 annualContributionUsd,
               });
             }}
-            className="w-full rounded-md border border-border bg-background py-1.5 pr-2 text-sm tabular-nums text-foreground"
+            className="w-full border border-border bg-background py-1.5 pr-2 text-sm tabular-nums text-foreground"
           />
         </label>
         <label className="space-y-1 text-xs text-muted">
@@ -510,7 +510,7 @@ function DividendScenarioPositionInputs({
             value={sharePrice}
             disabled
             onCommit={() => {}}
-            className="w-full rounded-md border border-border bg-muted-bg/40 py-1.5 pr-2 text-sm tabular-nums text-foreground"
+            className="w-full border border-border bg-muted-bg/40 py-1.5 pr-2 text-sm tabular-nums text-foreground"
           />
         </label>
         <label className="space-y-1 text-xs text-muted">
@@ -530,7 +530,7 @@ function DividendScenarioPositionInputs({
                 annualContributionUsd,
               });
             }}
-            className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+            className="w-full border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
           />
         </label>
         <label className="space-y-1 text-xs text-muted">
@@ -545,12 +545,12 @@ function DividendScenarioPositionInputs({
               updateScenario({ annualContributionUsd: next });
             }}
             onClear={() => updateScenario({ annualContributionUsd: 0 })}
-            className="w-full rounded-md border border-border bg-background py-1.5 pr-2 text-sm tabular-nums text-foreground"
+            className="w-full border border-border bg-background py-1.5 pr-2 text-sm tabular-nums text-foreground"
           />
         </label>
       </div>
 
-      <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
+      <div className="space-y-3 border border-border bg-surface-elevated/20 p-3">
         <label className="flex items-start gap-3 text-sm text-foreground">
           <input
             type="checkbox"
@@ -805,7 +805,7 @@ function ChartHoverReadout({
     <div className="mb-2 h-14 shrink-0" aria-live="polite">
       <div
         className={cn(
-          "flex h-full items-center justify-between gap-3 rounded-lg border px-3 py-2 transition-colors duration-150",
+          "flex h-full items-center justify-between gap-3 border px-3 py-2 transition-colors duration-150",
           highlighted
             ? "border-border/70 bg-surface-elevated/50"
             : "border-border/40 bg-surface-elevated/25",
@@ -833,7 +833,7 @@ type StatProps = {
 
 function StatCard({ label, value, hint }: StatProps) {
   return (
-    <div className="flex h-full flex-col rounded-xl border border-border bg-surface-elevated/40 px-3 py-2.5">
+    <div className="flex h-full flex-col border border-border bg-surface-elevated/40 px-3 py-2.5">
       <p className="min-h-10 text-[11px] font-medium uppercase leading-snug tracking-wide text-muted">
         {label}
       </p>
@@ -1481,7 +1481,7 @@ export function DividendHistoricalBacktestCard({
             dripHint="Reinvest each year's dividend cash into more shares at modeled prices over the backtest window."
           />
 
-          <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
+          <div className="space-y-3 border border-border bg-surface-elevated/20 p-3">
             <div>
               <p className="text-xs font-medium text-foreground">Backtest window</p>
               <p className="mt-1 text-[11px] text-muted">
@@ -1503,7 +1503,7 @@ export function DividendHistoricalBacktestCard({
                     type="button"
                     onClick={() => updateLookbackYears(years)}
                     className={cn(
-                      "rounded-full border px-3 py-1 text-xs tabular-nums transition-colors",
+                      "border px-3 py-1 text-xs tabular-nums transition-colors",
                       draftWindowYears === years
                         ? "border-accent/60 bg-accent/10 text-foreground"
                         : "border-border bg-background text-muted hover:text-foreground",
@@ -1526,7 +1526,7 @@ export function DividendHistoricalBacktestCard({
                     Math.max(1, Math.min(maxLookbackYears, Math.round(next))),
                   )
                 }
-                className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+                className="w-full border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
               />
             </label>
           </div>
@@ -1534,7 +1534,7 @@ export function DividendHistoricalBacktestCard({
       ) : null}
 
       <div className="grid gap-2 sm:grid-cols-2">
-        <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
+        <div className="border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
             Total dividend income
           </p>
@@ -1547,7 +1547,7 @@ export function DividendHistoricalBacktestCard({
               : "Sum of calendar-year dividend income across the window"}
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
+        <div className="border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
             Annual income · {backtest.endYear}
           </p>
@@ -1570,7 +1570,7 @@ export function DividendHistoricalBacktestCard({
 
       {drip ? (
         <div className="grid gap-2 sm:grid-cols-3">
-          <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+          <div className="border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
               Portfolio value
             </p>
@@ -1584,7 +1584,7 @@ export function DividendHistoricalBacktestCard({
                 : "modeled prices"}
             </p>
           </div>
-          <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+          <div className="border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
               Shares after DRIP
             </p>
@@ -1596,7 +1596,7 @@ export function DividendHistoricalBacktestCard({
               {backtest.startYear}
             </p>
           </div>
-          <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+          <div className="border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
               Reinvested
             </p>
@@ -1624,7 +1624,7 @@ export function DividendHistoricalBacktestCard({
       ) : null}
 
       {yearlyRows.length > 0 ? (
-        <div className="overflow-hidden rounded-xl border border-border">
+        <div className="overflow-hidden border border-border">
           <table className="min-w-full text-left text-xs text-foreground">
             <thead className="bg-surface-elevated/40">
               <tr className="border-b border-border">
@@ -1667,7 +1667,7 @@ export function DividendHistoricalBacktestCard({
         </div>
       ) : null}
 
-      <p className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2 text-xs text-muted">
+      <p className="border border-border/70 bg-muted-bg/40 px-3 py-2 text-xs text-muted">
         Backtest uses recorded dividend amounts with{" "}
         {formatSnowballShares(backtestShares)} shares at{" "}
         {backtestUsesHistoricalPrices(drip)
@@ -1798,7 +1798,7 @@ export function DividendSnowballScenarioCard({
             dripHint={`Use each year's dividend cash to buy more shares over the next ${draftProjectYears} years.`}
           />
 
-          <div className="space-y-3 rounded-xl border border-border bg-surface-elevated/20 p-3">
+          <div className="space-y-3 border border-border bg-surface-elevated/20 p-3">
             <div>
               <p className="text-xs font-medium text-foreground">
                 Projection horizon
@@ -1816,7 +1816,7 @@ export function DividendSnowballScenarioCard({
                   type="button"
                   onClick={() => updateScenario({ projectYears: years })}
                   className={cn(
-                    "rounded-full border px-3 py-1 text-xs tabular-nums transition-colors",
+                    "border px-3 py-1 text-xs tabular-nums transition-colors",
                     draftProjectYears === years
                       ? "border-accent/60 bg-accent/10 text-foreground"
                       : "border-border bg-background text-muted hover:text-foreground",
@@ -1838,7 +1838,7 @@ export function DividendSnowballScenarioCard({
                     projectYears: Math.max(1, Math.min(50, Math.round(next))),
                   })
                 }
-                className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
+                className="w-full border border-border bg-background px-2 py-1.5 text-sm tabular-nums text-foreground"
               />
             </label>
           </div>
@@ -1846,7 +1846,7 @@ export function DividendSnowballScenarioCard({
       ) : null}
 
       <div className="grid gap-2 sm:grid-cols-2">
-        <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
+        <div className="border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
             Est. annual dividend · {currentYear}
           </p>
@@ -1861,7 +1861,7 @@ export function DividendSnowballScenarioCard({
               : "Cash per year at today's dividend rate"}
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-surface-elevated/40 px-3 py-3">
+        <div className="border border-border bg-surface-elevated/40 px-3 py-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
             Est. annual dividend · {endYear}
           </p>
@@ -1886,7 +1886,7 @@ export function DividendSnowballScenarioCard({
 
       {advanced ? (
         <div className="grid gap-2 sm:grid-cols-3">
-          <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+          <div className="border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
               Portfolio value
             </p>
@@ -1901,7 +1901,7 @@ export function DividendSnowballScenarioCard({
                 : "Flat share count with price growth"}
             </p>
           </div>
-          <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+          <div className="border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
               {reinvestDividends ? "Shares after DRIP" : "Shares"}
             </p>
@@ -1913,7 +1913,7 @@ export function DividendSnowballScenarioCard({
               {currentYear}
             </p>
           </div>
-          <div className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2">
+          <div className="border border-border/70 bg-muted-bg/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-muted">
               {advanced.totalAnnualContributionsUsd != null &&
               advanced.totalAnnualContributionsUsd > 0
@@ -1939,7 +1939,7 @@ export function DividendSnowballScenarioCard({
         </div>
       ) : null}
 
-      <p className="rounded-lg border border-border/70 bg-muted-bg/40 px-3 py-2 text-xs text-muted">
+      <p className="border border-border/70 bg-muted-bg/40 px-3 py-2 text-xs text-muted">
         {`Uses ${scenario.dividendCagrPct.toFixed(1)}% dividend growth and ${
           advanced?.priceCagrPct != null
             ? `${advanced.priceCagrPct.toFixed(1)}%`
@@ -2017,11 +2017,11 @@ export function DividendSnowballSkeleton() {
     <div className="space-y-4">
       <div className={DIVIDEND_KPI_GRID_CLASS}>
         {Array.from({ length: 6 }).map((_, index) => (
-          <Skeleton key={index} className="h-24 rounded-xl" />
+          <Skeleton key={index} className="h-24" />
         ))}
       </div>
-      <Skeleton className="h-56 rounded-xl" />
-      <Skeleton className="h-56 rounded-xl" />
+      <Skeleton className="h-56" />
+      <Skeleton className="h-56" />
     </div>
   );
 }
@@ -2040,7 +2040,7 @@ export function DividendsPageSkeleton() {
           className={panelClass}
           bodyClassName={panelBodyClass}
         >
-          <Skeleton className="h-full min-h-112 rounded-xl" />
+          <Skeleton className="h-full min-h-112" />
         </ResearchSectionCard>
 
         <ResearchSectionCard
@@ -2052,7 +2052,7 @@ export function DividendsPageSkeleton() {
         >
           <SkeletonList
             rows={RECENT_PAYMENTS_ROW_COUNT}
-            rowClassName="h-9 shrink-0 rounded-lg"
+            rowClassName="h-9 shrink-0"
           />
         </ResearchSectionCard>
       </div>

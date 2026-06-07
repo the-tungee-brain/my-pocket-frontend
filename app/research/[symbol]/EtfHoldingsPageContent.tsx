@@ -28,18 +28,18 @@ function LoadingBlock() {
     <div className="app-stack">
       <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3">
         {STATS_SKELETON_KEYS.map((key) => (
-          <Skeleton key={key} className="h-16 rounded-xl" />
+          <Skeleton key={key} className="h-16" />
         ))}
       </div>
       <div className="grid gap-4">
         {SECTION_SKELETON_KEYS.map((key) => (
           <div key={key} className="space-y-2">
             <Skeleton className="h-3 w-28" />
-            <Skeleton className="h-52 rounded-xl" />
+            <Skeleton className="h-52" />
           </div>
         ))}
       </div>
-      <Skeleton className="h-52 rounded-xl" />
+      <Skeleton className="h-52" />
     </div>
   );
 }

@@ -1,27 +1,33 @@
 "use client";
 
-import Link from "next/link";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { usePathname } from "next/navigation";
 import {
+  BarChart3,
   BriefcaseBusiness,
   ChevronDown,
   CircleDollarSign,
   FileSpreadsheet,
-  LayoutDashboard,
   Layers,
+  LayoutDashboard,
   LineChart,
+  type LucideIcon,
   Newspaper,
+  ScanSearch,
   Target,
   TrendingUp,
-  BarChart3,
-  ScanSearch,
-  type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
+import type { AssetType } from "@/app/types/research";
 import { appTabBarClass, appTabLinkClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
-import type { AssetType } from "@/app/types/research";
 
 export type ResearchTabId =
   | "overview"
@@ -372,7 +378,7 @@ export function ResearchTabBar({
           top: moreMenuPosition.top,
           right: moreMenuPosition.right,
         }}
-        className="fixed z-[50] min-w-44 overflow-hidden rounded-xl border border-border bg-background py-1 shadow-lg"
+        className="fixed z-[50] min-w-44 overflow-hidden border border-border bg-background py-1 shadow-lg"
       >
         {overflowTabs.map((tab) => {
           const isActive = tab.id === activeTab;
@@ -464,10 +470,7 @@ export function ResearchTabBar({
             measure
           />
         ))}
-        <span
-          data-more-measure
-          className={tabLinkClassName(false)}
-        >
+        <span data-more-measure className={tabLinkClassName(false)}>
           <span className="text-xs font-medium">More</span>
           <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
         </span>
