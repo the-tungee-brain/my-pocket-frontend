@@ -79,7 +79,7 @@ export function ChatBox({
   const isChatLoading = !!currentChat?.loading;
   const isBusy = isChatLoading || disabled;
   const canSend = !isBusy && inputValue.trim().length > 0;
-  const selectedModel = resolveChatModelForPlan(currentChat?.model, plan);
+  const selectedModel = currentChat?.model ?? resolveChatModelForPlan(null, plan);
   const modelMenuOpen = !!currentChat?.modelMenuOpen;
   const modelButtonLabel = getModelButtonLabel(selectedModel, plan);
   const modelMenuRef = useRef<HTMLDivElement>(null);
@@ -120,7 +120,7 @@ export function ChatBox({
   }, [modelMenuOpen, dismissModelMenu]);
 
   return (
-    <div className="relative w-full px-5 pb-4 pt-3 sm:px-8 md:pb-5 md:pt-4">
+    <div className="relative w-full px-1 pb-4 pt-3 md:pb-5 md:pt-4">
       <div className={pageShellClass}>
         <div
           className={cn(

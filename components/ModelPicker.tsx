@@ -198,14 +198,8 @@ export function ModelPicker({
                   aria-selected={isActive}
                   aria-disabled={locked}
                   disabled={locked}
-                  onPointerDown={(event) => {
-                    if (locked) {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      return;
-                    }
-                    event.preventDefault();
-                    event.stopPropagation();
+                  onClick={() => {
+                    if (locked) return;
                     onChange(option.id);
                   }}
                   className={cn(

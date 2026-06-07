@@ -10,6 +10,9 @@
   --accent-strong: #ffffff;
   --muted: #a1a1aa;
   --muted-bg: #111111;
+  --loading-base: #1f1f23;
+  --loading-highlight: #3f3f46;
+  --loading-accent: rgb(255 255 255 / 0.38);
   --success: #34d399;
   --danger: #fb7185;
   --warning: #fbbf24;
@@ -54,6 +57,9 @@
     --accent-strong: #000000;
     --muted: #71717a;
     --muted-bg: #f4f4f5;
+    --loading-base: #fafafa;
+    --loading-highlight: #ffffff;
+    --loading-accent: rgb(0 0 0 / 0.18);
     --success: #047857;
     --danger: #be123c;
     --warning: #b45309;
@@ -86,6 +92,9 @@
   --accent-strong: #ffffff;
   --muted: #a1a1aa;
   --muted-bg: #111111;
+  --loading-base: #1f1f23;
+  --loading-highlight: #3f3f46;
+  --loading-accent: rgb(255 255 255 / 0.38);
   --success: #34d399;
   --danger: #fb7185;
   --warning: #fbbf24;
@@ -117,6 +126,9 @@
   --accent-strong: #000000;
   --muted: #71717a;
   --muted-bg: #f4f4f5;
+  --loading-base: #fafafa;
+  --loading-highlight: #ffffff;
+  --loading-accent: rgb(0 0 0 / 0.18);
   --success: #047857;
   --danger: #be123c;
   --warning: #b45309;
@@ -147,6 +159,9 @@
   --color-accent-strong: var(--accent-strong);
   --color-muted: var(--muted);
   --color-muted-bg: var(--muted-bg);
+  --color-loading-base: var(--loading-base);
+  --color-loading-highlight: var(--loading-highlight);
+  --color-loading-accent: var(--loading-accent);
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
@@ -827,9 +842,9 @@ body {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    var(--muted-bg) 0%,
-    color-mix(in oklab, var(--muted-bg) 55%, var(--foreground)) 50%,
-    var(--muted-bg) 100%
+    var(--loading-base) 0%,
+    var(--loading-highlight) 50%,
+    var(--loading-base) 100%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
@@ -883,7 +898,7 @@ body {
 .loading-progress {
   height: 2px;
   overflow: hidden;
-  background: color-mix(in oklab, var(--accent) 12%, transparent);
+  background: var(--loading-base);
 }
 
 .loading-progress::before {
@@ -894,7 +909,7 @@ body {
   background: linear-gradient(
     90deg,
     transparent,
-    var(--accent-strong),
+    var(--loading-accent),
     transparent
   );
   animation: loading-progress-slide 1.15s ease-in-out infinite;
@@ -903,7 +918,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .skeleton-shimmer {
     animation: none;
-    background: var(--muted-bg);
+    background: var(--loading-base);
   }
 
   .animate-pulse {

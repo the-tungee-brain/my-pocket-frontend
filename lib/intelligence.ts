@@ -56,7 +56,7 @@ export function signalSeverityClass(severity: SignalSeverity): string {
     case "warning":
       return "border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-300";
     case "watch":
-      return "border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-200";
+      return "border-warning/40 bg-warning-muted text-warning";
     default:
       return "border-border bg-secondary/70 text-muted";
   }

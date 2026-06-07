@@ -16,12 +16,10 @@ import {
   formatPatternPercent,
   hasPatternForecast,
   isOutperformSpyScheme,
-  isRankingPortfolioStrategy,
   patternIndicatorRows,
   patternPredictedClassLabel,
   patternPredictedClassProbability,
   patternProbabilityRows,
-  patternRankingScore,
 } from "@/lib/patternForecast";
 import { cn } from "@/lib/utils";
 
@@ -122,8 +120,6 @@ export function PatternTrendForecastCard({
       : forecast.indicators,
   );
   const probabilities = isBenchmark ? [] : patternProbabilityRows(forecast);
-  const rankingScore = patternRankingScore(forecast);
-  const usesRanking = !isBenchmark && isRankingPortfolioStrategy(forecast);
   const predictedClass = isBenchmark
     ? null
     : patternPredictedClassLabel(forecast);
@@ -136,14 +132,6 @@ export function PatternTrendForecastCard({
         { label: "Horizon", value: `${forecast.horizonDays} sessions` },
       ]
     : [
-        ...(usesRanking
-          ? [
-              {
-                label: "Relative strength score",
-                value: formatPatternPercent(rankingScore),
-              },
-            ]
-          : []),
         {
           label: probabilityLabel(forecast),
           value: formatPatternPercent(forecast.upProb),

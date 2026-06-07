@@ -11,8 +11,8 @@ function RedirectingScreen() {
     <main className="flex min-h-screen items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-3">
         <div className="relative flex h-8 w-8 items-center justify-center">
-          <span className="absolute h-8 w-8 animate-ping rounded-full bg-accent/20" />
-          <span className="relative h-3 w-3 rounded-full bg-accent-strong" />
+          <span className="absolute h-8 w-8 animate-ping rounded-full bg-loading-accent" />
+          <span className="relative h-3 w-3 rounded-full bg-loading-highlight" />
         </div>
         <p className="text-sm text-muted">Loading…</p>
       </div>

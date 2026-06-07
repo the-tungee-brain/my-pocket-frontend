@@ -44,7 +44,7 @@ export function AnalyzePrompt({
     "mt-5 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     loading
-      ? "cursor-wait border-border bg-muted-bg text-muted"
+      ? "cursor-wait border-border bg-loading-base text-muted"
       : "border-accent/30 bg-accent-muted/40 text-accent-strong hover:border-accent/50 hover:bg-accent-muted disabled:opacity-60",
   );
 
@@ -80,8 +80,8 @@ export function AnalyzePrompt({
                 className="relative flex h-3.5 w-3.5 items-center justify-center"
                 aria-hidden
               >
-                <span className="absolute h-3.5 w-3.5 rounded-full bg-accent/10 loading-soft-ring motion-reduce:opacity-40" />
-                <span className="relative h-1.5 w-1.5 rounded-full bg-accent/75 loading-soft-core motion-reduce:opacity-80" />
+                <span className="absolute h-3.5 w-3.5 rounded-full bg-loading-accent loading-soft-ring motion-reduce:opacity-40" />
+                <span className="relative h-1.5 w-1.5 rounded-full bg-loading-highlight loading-soft-core motion-reduce:opacity-80" />
               </span>
               {loadingLabel}
             </>

@@ -9,7 +9,6 @@ import type {
   PrimaryCandlestickPattern,
 } from "@/app/types/intelligence";
 import { ResearchSection } from "@/components/research/ResearchMemoPrimitives";
-import { formatFriendlyDate } from "@/lib/dateUtils";
 import {
   isPatternIntelligenceBenchmark,
   patternIntelligenceBenchmarkNotice,
@@ -35,8 +34,16 @@ type Props = {
 type LevelListRow = {
   key: string;
   title: string;
-  zone: ChartIntelligenceZone;
-};
+} & (
+  | {
+      kind: "zone";
+      zone: ChartIntelligenceZone;
+    }
+  | {
+      kind: "price";
+      value: number;
+    }
+);
 
 function PatternHelpButton({ patternId }: { patternId: string }) {
   const description = patternCandlestickDescription(patternId);
@@ -166,28 +173,29 @@ function isActiveResistance(
 }
 
 function LevelRow({
-  title,
-  zone,
+  row,
 }: {
-  title: string;
-  zone: ChartIntelligenceZone;
+  row: LevelListRow;
 }) {
-  const displayPrice = zoneDisplayPrice(zone);
-  const distance =
-    zone.distancePctFromCurrent != null
-      ? `${Math.abs(zone.distancePctFromCurrent).toFixed(1)}% from current price`
-      : "Distance unavailable";
+  const displayPrice =
+    row.kind === "zone" ? zoneDisplayPrice(row.zone) : row.value;
+  const detail =
+    row.kind === "zone"
+      ? row.zone.distancePctFromCurrent != null
+        ? `${Math.abs(row.zone.distancePctFromCurrent).toFixed(1)}% from current price`
+        : "Distance unavailable"
+      : "Reference price";
 
   return (
     <div className="grid gap-1 border-b border-border/60 py-3 last:border-b-0 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-6">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-        {title}
+        {row.title}
       </p>
       <div className="min-w-0">
         <p className="font-mono text-sm font-semibold text-foreground">
           {formatMoney(displayPrice)}
         </p>
-        <p className="mt-1 text-xs text-muted">{distance}</p>
+        <p className="mt-1 text-xs text-muted">{detail}</p>
       </div>
     </div>
   );
@@ -213,10 +221,35 @@ function ChartLevelsSection({
   const nextSupport = selectedLevels?.nextSupport;
   const nearestResistance = selectedLevels?.nearestResistance;
   const nextResistance = selectedLevels?.nextResistance;
+  if (isActiveResistance(nextResistance, referencePrice)) {
+    selectedRows.push({
+      key: "next-resistance",
+      title: "Next resistance",
+      kind: "zone",
+      zone: nextResistance,
+    });
+  }
+  if (isActiveResistance(nearestResistance, referencePrice)) {
+    selectedRows.push({
+      key: "nearest-resistance",
+      title: "Nearest resistance",
+      kind: "zone",
+      zone: nearestResistance,
+    });
+  }
+  if (typeof referencePrice === "number" && Number.isFinite(referencePrice)) {
+    selectedRows.push({
+      key: "current-price",
+      title: "Current price",
+      kind: "price",
+      value: referencePrice,
+    });
+  }
   if (isActiveSupport(nearestSupport, referencePrice)) {
     selectedRows.push({
       key: "nearest-support",
       title: "Nearest support",
+      kind: "zone",
       zone: nearestSupport,
     });
   }
@@ -224,53 +257,55 @@ function ChartLevelsSection({
     selectedRows.push({
       key: "next-support",
       title: "Next support",
+      kind: "zone",
       zone: nextSupport,
     });
   }
-  if (isActiveResistance(nearestResistance, referencePrice)) {
-    selectedRows.push({
-      key: "nearest-resistance",
-      title: "Nearest resistance",
-      zone: nearestResistance,
-    });
-  }
-  if (isActiveResistance(nextResistance, referencePrice)) {
-    selectedRows.push({
-      key: "next-resistance",
-      title: "Next resistance",
-      zone: nextResistance,
-    });
-  }
 
+  const fallbackSupports = supports
+    .filter((zone) => isActiveSupport(zone, referencePrice))
+    .sort(
+      (a, b) =>
+        (zoneDisplayPrice(b) ?? Number.NEGATIVE_INFINITY) -
+        (zoneDisplayPrice(a) ?? Number.NEGATIVE_INFINITY),
+    )
+    .slice(0, 2)
+    .map((zone, index) => ({
+      key: `support-${index}`,
+      title: levelTitle("support", index),
+      kind: "zone" as const,
+      zone,
+    }));
+  const fallbackResistances = resistances
+    .filter((zone) => isActiveResistance(zone, referencePrice))
+    .sort(
+      (a, b) =>
+        (zoneDisplayPrice(a) ?? Number.POSITIVE_INFINITY) -
+        (zoneDisplayPrice(b) ?? Number.POSITIVE_INFINITY),
+    )
+    .slice(0, 2)
+    .map((zone, index) => ({
+      key: `resistance-${index}`,
+      title: levelTitle("resistance", index),
+      kind: "zone" as const,
+      zone,
+    }));
   const fallbackRows: LevelListRow[] = [
-    ...supports
-      .filter((zone) => isActiveSupport(zone, referencePrice))
-      .sort(
-        (a, b) =>
-          (zoneDisplayPrice(b) ?? Number.NEGATIVE_INFINITY) -
-          (zoneDisplayPrice(a) ?? Number.NEGATIVE_INFINITY),
-      )
-      .slice(0, 2)
-      .map((zone, index) => ({
-        key: `support-${index}`,
-        title: levelTitle("support", index),
-        zone,
-      })),
-    ...resistances
-      .filter((zone) => isActiveResistance(zone, referencePrice))
-      .sort(
-        (a, b) =>
-          (zoneDisplayPrice(a) ?? Number.POSITIVE_INFINITY) -
-          (zoneDisplayPrice(b) ?? Number.POSITIVE_INFINITY),
-      )
-      .slice(0, 2)
-      .map((zone, index) => ({
-        key: `resistance-${index}`,
-        title: levelTitle("resistance", index),
-        zone,
-      })),
-  ];
-  const rows = (selectedRows.length ? selectedRows : fallbackRows).slice(0, 4);
+    fallbackResistances[1],
+    fallbackResistances[0],
+    typeof referencePrice === "number" && Number.isFinite(referencePrice)
+      ? {
+          key: "current-price",
+          title: "Current price",
+          kind: "price",
+          value: referencePrice,
+        }
+      : undefined,
+    fallbackSupports[0],
+    fallbackSupports[1],
+  ].filter((row): row is LevelListRow => Boolean(row));
+  const hasSelectedZoneRows = selectedRows.some((row) => row.kind === "zone");
+  const rows = (hasSelectedZoneRows ? selectedRows : fallbackRows).slice(0, 5);
 
   if (!rows.length) return null;
 
@@ -280,8 +315,8 @@ function ChartLevelsSection({
         Important price levels
       </p>
       <div className="mt-2">
-        {rows.map(({ key, title, zone }) => (
-          <LevelRow key={key} title={title} zone={zone} />
+        {rows.map((row) => (
+          <LevelRow key={row.key} row={row} />
         ))}
       </div>
     </div>
@@ -293,7 +328,6 @@ function AnalystSummaryBody({
   isBenchmark,
   benchmarkNotice,
   pattern,
-  asOfDate,
   supports,
   resistances,
   selectedLevels,
@@ -303,7 +337,6 @@ function AnalystSummaryBody({
   isBenchmark: boolean;
   benchmarkNotice: string;
   pattern: PrimaryCandlestickPattern | null;
-  asOfDate: string;
   supports: ChartIntelligenceZone[];
   resistances: ChartIntelligenceZone[];
   selectedLevels?: ChartIntelligenceSelectedLevels | null;
@@ -389,12 +422,6 @@ function AnalystSummaryBody({
         <p className="mt-2 text-sm leading-relaxed text-foreground">{thesis}</p>
       </div>
 
-      <p className="text-[11px] leading-relaxed text-muted">
-        {summary.disclaimer}
-      </p>
-      <p className="text-[11px] text-muted">
-        As of {formatFriendlyDate(asOfDate)}
-      </p>
     </>
   );
 }
@@ -423,7 +450,6 @@ export function PatternIntelligenceCard({
           isBenchmark={isBenchmark}
           benchmarkNotice={benchmarkNotice}
           pattern={primaryPattern}
-          asOfDate={intelligence.asOfDate}
           supports={intelligence.chartIntelligence?.supportZones ?? []}
           resistances={intelligence.chartIntelligence?.resistanceZones ?? []}
           selectedLevels={intelligence.chartIntelligence?.selectedLevels}
