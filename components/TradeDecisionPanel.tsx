@@ -2,14 +2,18 @@
 
 import { Target } from "lucide-react";
 import {
-  useTradeDecision,
   type ScoreBucket,
   type TradeAction,
   type TradeDecision,
   type TradeEnvironment,
   type TradeVerdict,
+  useTradeDecision,
 } from "@/app/hooks/useTradeDecision";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import {
+  ResearchMetricList,
+  ResearchSection,
+} from "@/components/research/ResearchMemoPrimitives";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
@@ -19,6 +23,10 @@ type TradeDecisionPanelProps = {
   accessToken?: string | null;
   enabled?: boolean;
   compact?: boolean;
+  diagnosticsOnly?: boolean;
+  decisionOverride?: TradeDecision | null;
+  isLoadingOverride?: boolean;
+  errorOverride?: string | null;
   className?: string;
 };
 
@@ -83,6 +91,45 @@ function scoreTone(score: number): string {
   return "text-danger";
 }
 
+function setupQualityExplanation(score: number): string {
+  if (score >= 80) return "The setup quality is strong.";
+  if (score >= 60)
+    return "The setup quality is constructive but still needs confirmation.";
+  if (score >= 40) return "The setup quality is mixed.";
+  return "The setup quality is weak right now.";
+}
+
+function formatTradeEnvironment(env: TradeEnvironment): string {
+  switch (env) {
+    case "FAVORABLE":
+      return "Supportive market";
+    case "NEUTRAL":
+      return "Mixed market";
+    case "AVOID":
+      return "Difficult market";
+  }
+}
+
+function formatRegimeId(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  const normalized = value.toLowerCase();
+  const labels: Record<string, string> = {
+    risk_on_chop: "Choppy market",
+    risk_on_trend: "Risk-on trend",
+    risk_off: "Risk-off market",
+    neutral: "Mixed market",
+  };
+  return labels[normalized] ?? `Technical: ${value.replace(/_/g, " ")}`;
+}
+
+function formatDiagnosticLine(value: string): string {
+  return value
+    .replace(/weak breakout quality/gi, "Breakout not yet confirmed")
+    .replace(/breakout quality is weak/gi, "Breakout not yet confirmed")
+    .replace(/wait for setup/gi, "Wait for a cleaner trigger")
+    .replace(/\bwatch\b/gi, "Watch for confirmation");
+}
+
 function MetricCell({
   label,
   value,
@@ -113,21 +160,23 @@ function ReasonBreakdown({
   breakdown: TradeDecision["reasonBreakdown"];
 }) {
   return (
-    <div className="space-y-3 border border-border bg-muted/20 px-3 py-3">
+    <div className="space-y-3">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
         Reason breakdown
       </p>
 
       {breakdown.hardBlockers.length > 0 ? (
         <div>
-          <p className="text-xs font-semibold text-danger">Hard blockers</p>
+          <p className="text-xs font-semibold text-danger">
+            What blocks the setup
+          </p>
           <ul className="mt-1 space-y-1">
             {breakdown.hardBlockers.map((line) => (
               <li
                 key={line}
                 className="text-sm text-foreground before:mr-2 before:text-danger before:content-['•']"
               >
-                {line}
+                {formatDiagnosticLine(line)}
               </li>
             ))}
           </ul>
@@ -137,29 +186,75 @@ function ReasonBreakdown({
       {breakdown.primaryWeakness ? (
         <div>
           <p className="text-xs font-semibold text-foreground">
-            Primary weakness
+            Main weak spot
           </p>
           <p className="mt-1 text-sm text-foreground before:mr-2 before:text-muted before:content-['•']">
-            {breakdown.primaryWeakness}
+            {formatDiagnosticLine(breakdown.primaryWeakness)}
           </p>
         </div>
       ) : null}
 
       {breakdown.secondaryFactors.length > 0 ? (
         <div>
-          <p className="text-xs font-semibold text-muted">Secondary factors</p>
+          <p className="text-xs font-semibold text-muted">
+            Other things to watch
+          </p>
           <ul className="mt-1 space-y-1">
             {breakdown.secondaryFactors.map((line) => (
               <li
                 key={line}
                 className="text-sm text-foreground before:mr-2 before:text-muted before:content-['•']"
               >
-                {line}
+                {formatDiagnosticLine(line)}
               </li>
             ))}
           </ul>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function ExecutionDiagnosticsContent({
+  decision,
+}: {
+  decision: TradeDecision;
+}) {
+  const env = decision.regime.tradeEnvironment;
+  const blockers = decision.reasonBreakdown.hardBlockers;
+  const secondary = decision.reasonBreakdown.secondaryFactors;
+  const hasReasonDetails =
+    blockers.length > 0 ||
+    !!decision.reasonBreakdown.primaryWeakness ||
+    secondary.length > 0;
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-foreground">
+        {setupQualityExplanation(decision.tradeQualityScore)}
+      </p>
+      <ResearchMetricList
+        items={[
+          {
+            label: "Market environment",
+            value: formatTradeEnvironment(env),
+            note: formatRegimeId(decision.regime.regimeId),
+          },
+          {
+            label: "Setup quality score",
+            value: `${decision.tradeQualityScore} / 100`,
+          },
+        ]}
+        columns={2}
+      />
+
+      {hasReasonDetails ? (
+        <ReasonBreakdown breakdown={decision.reasonBreakdown} />
+      ) : (
+        <p className="text-sm text-muted">
+          No major setup-quality issues were returned.
+        </p>
+      )}
     </div>
   );
 }
@@ -176,12 +271,7 @@ function PipelineContent({
   if (compact) {
     return (
       <div className="grid gap-2 md:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(0,1fr))]">
-        <div
-          className={cn(
-            "border px-3 py-2",
-            verdictTone(decision.verdict),
-          )}
-        >
+        <div className={cn("border px-3 py-2", verdictTone(decision.verdict))}>
           <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
             Is it actionable now?
           </p>
@@ -194,9 +284,9 @@ function PipelineContent({
         </div>
 
         <MetricCell
-          label="Regime"
-          value={env}
-          sub={decision.regime.regimeId ?? undefined}
+          label="Market environment"
+          value={formatTradeEnvironment(env)}
+          sub={formatRegimeId(decision.regime.regimeId)}
           valueClassName={regimeTone(env)}
         />
         <MetricCell
@@ -220,13 +310,13 @@ function PipelineContent({
     <div className="space-y-4">
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         <MetricCell
-          label="Regime"
-          value={env}
-          sub={decision.regime.regimeId ?? undefined}
+          label="Market environment"
+          value={formatTradeEnvironment(env)}
+          sub={formatRegimeId(decision.regime.regimeId)}
           valueClassName={regimeTone(env)}
         />
         <MetricCell
-          label="Trade quality score"
+          label="Setup quality score"
           value={`${decision.tradeQualityScore} / 100`}
           valueClassName={cn(
             "tabular-nums",
@@ -240,12 +330,7 @@ function PipelineContent({
         />
       </div>
 
-      <div
-        className={cn(
-          "border px-4 py-3",
-          verdictTone(decision.verdict),
-        )}
-      >
+      <div className={cn("border px-4 py-3", verdictTone(decision.verdict))}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
@@ -289,20 +374,51 @@ export function TradeDecisionPanel({
   accessToken,
   enabled = true,
   compact = false,
+  diagnosticsOnly = false,
+  decisionOverride,
+  isLoadingOverride,
+  errorOverride,
   className,
 }: TradeDecisionPanelProps) {
-  const { decision, isLoading, error } = useTradeDecision(symbol, {
+  const fetched = useTradeDecision(symbol, {
     accessToken,
-    enabled,
+    enabled: enabled && decisionOverride === undefined,
   });
+  const decision =
+    decisionOverride !== undefined ? decisionOverride : fetched.decision;
+  const isLoading =
+    isLoadingOverride !== undefined ? isLoadingOverride : fetched.isLoading;
+  const error = errorOverride !== undefined ? errorOverride : fetched.error;
+
+  if (diagnosticsOnly) {
+    return (
+      <ResearchSection
+        title="Setup quality"
+        subtitle="Why the setup quality is high or low. Technical execution details are shown below."
+        className={className}
+      >
+        {error && !decision ? (
+          <ErrorBanner message={error} />
+        ) : isLoading && !decision ? (
+          <DecisionSkeleton />
+        ) : !decision ? (
+          <p className="text-sm text-muted">Setup quality is not available.</p>
+        ) : (
+          <ExecutionDiagnosticsContent decision={decision} />
+        )}
+      </ResearchSection>
+    );
+  }
 
   return (
     <ResearchSectionCard
-      title="Execution readiness"
+      title={diagnosticsOnly ? "Setup quality" : "Execution readiness"}
       description={
-        compact
-          ? "Whether the current setup is actionable now"
-          : "Actionability, score, gates, and execution reasoning"
+        diagnosticsOnly
+          ? "Market environment, setup score, blockers, and secondary factors"
+          : compact
+            ? "Whether the current setup is actionable now"
+            : "Actionability, score, gates, and execution reasoning"
       }
       icon={Target}
       className={className}
@@ -313,8 +429,12 @@ export function TradeDecisionPanel({
         <DecisionSkeleton />
       ) : !decision ? (
         <p className="text-sm text-muted">
-          Execution readiness is not available.
+          {diagnosticsOnly
+            ? "Setup quality is not available."
+            : "Execution readiness is not available."}
         </p>
+      ) : diagnosticsOnly ? (
+        <ExecutionDiagnosticsContent decision={decision} />
       ) : (
         <PipelineContent decision={decision} compact={compact} />
       )}

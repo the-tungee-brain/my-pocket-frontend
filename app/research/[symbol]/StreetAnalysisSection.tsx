@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Target } from "lucide-react";
 import type {
   AnalystRatingAction,
   EstimatePeriodKey,
@@ -9,21 +8,20 @@ import type {
   StreetAnalysisSnapshot,
 } from "@/app/hooks/streetAnalysisTypes";
 import { ESTIMATE_PERIOD_KEYS } from "@/app/hooks/streetAnalysisTypes";
+import { ResearchSectionSkeleton } from "@/components/ui/Skeleton";
 import {
-  formatEstimateGrowth,
-  yahooEstimatesAttribution,
-  formatEstimateRange,
-  formatRatingActionDate,
   estimateForPeriod,
-  formatRatingActionLine,
+  formatEstimateGrowth,
+  formatEstimateRange,
   formatPremiumDiscountToTarget,
+  formatRatingActionDate,
+  formatRatingActionLine,
   formatStreetPrice,
-  formatStreetUpside,
   hasStreetAnalysis,
   hasStreetEarningsEstimates,
+  yahooEstimatesAttribution,
 } from "@/lib/streetAnalysisUtils";
 import { cn } from "@/lib/utils";
-import { ResearchSectionSkeleton } from "@/components/ui/Skeleton";
 import { StreetAnalysisEmptyState } from "./StreetAnalysisEmptyState";
 import { StreetEstimatesEmptyState } from "./StreetEstimatesEmptyState";
 
@@ -39,40 +37,47 @@ function RecommendationBar({
   recommendation: NonNullable<StreetAnalysisSnapshot["recommendation"]>;
 }) {
   const segments = [
-    { key: "strongBuy", label: "Strong buy", count: recommendation.strongBuy, className: "bg-accent-strong" },
-    { key: "buy", label: "Buy", count: recommendation.buy, className: "bg-accent/70" },
-    { key: "hold", label: "Hold", count: recommendation.hold, className: "bg-muted" },
-    { key: "sell", label: "Sell", count: recommendation.sell, className: "bg-danger/60" },
-    { key: "strongSell", label: "Strong sell", count: recommendation.strongSell, className: "bg-danger" },
+    {
+      key: "strongBuy",
+      label: "Strong buy",
+      count: recommendation.strongBuy,
+      className: "bg-accent-strong",
+    },
+    {
+      key: "buy",
+      label: "Buy",
+      count: recommendation.buy,
+      className: "bg-accent/70",
+    },
+    {
+      key: "hold",
+      label: "Hold",
+      count: recommendation.hold,
+      className: "bg-muted",
+    },
+    {
+      key: "sell",
+      label: "Sell",
+      count: recommendation.sell,
+      className: "bg-danger/60",
+    },
+    {
+      key: "strongSell",
+      label: "Strong sell",
+      count: recommendation.strongSell,
+      className: "bg-danger",
+    },
   ];
   const total = segments.reduce((sum, s) => sum + s.count, 0);
   if (total <= 0) return null;
 
   return (
-    <div className="space-y-2">
-      <div className="flex h-2 overflow-hidden bg-muted-bg">
-        {segments.map((segment) =>
-          segment.count > 0 ? (
-            <div
-              key={segment.key}
-              className={cn(segment.className, "min-w-0.5")}
-              style={{ width: `${(segment.count / total) * 100}%` }}
-              title={`${segment.label}: ${segment.count}`}
-            />
-          ) : null,
-        )}
-      </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted">
-        {segments.map(
-          (segment) =>
-            segment.count > 0 && (
-              <span key={segment.key}>
-                {segment.label} {segment.count}
-              </span>
-            ),
-        )}
-      </div>
-    </div>
+    <p className="text-xs text-muted">
+      {segments
+        .filter((segment) => segment.count > 0)
+        .map((segment) => `${segment.label} ${segment.count}`)
+        .join(" · ")}
+    </p>
   );
 }
 
@@ -128,10 +133,18 @@ function EstimateInsight({ headline }: { headline: string }) {
 
 function ratingActionTone(action: AnalystRatingAction): string {
   const token = `${action.action ?? ""} ${action.toGrade}`.toLowerCase();
-  if (token.includes("down") || token.includes("sell") || token.includes("under")) {
+  if (
+    token.includes("down") ||
+    token.includes("sell") ||
+    token.includes("under")
+  ) {
     return "text-danger";
   }
-  if (token.includes("up") || token.includes("buy") || token.includes("outperform")) {
+  if (
+    token.includes("up") ||
+    token.includes("buy") ||
+    token.includes("outperform")
+  ) {
     return "text-success";
   }
   return "text-foreground";
@@ -139,14 +152,15 @@ function ratingActionTone(action: AnalystRatingAction): string {
 
 function RecentRatingActions({ actions }: { actions: AnalystRatingAction[] }) {
   if (actions.length === 0) return null;
+  const visibleActions = actions.slice(0, 5);
 
   return (
     <div className="space-y-2">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-        Recent analyst actions
+        Recent analyst changes
       </p>
       <ul className="space-y-1.5">
-        {actions.map((item) => (
+        {visibleActions.map((item) => (
           <li
             key={`${item.date}-${item.firm}-${item.toGrade}`}
             className="flex gap-2 text-xs leading-snug"
@@ -160,17 +174,18 @@ function RecentRatingActions({ actions }: { actions: AnalystRatingAction[] }) {
           </li>
         ))}
       </ul>
+      {actions.length > visibleActions.length ? (
+        <p className="text-xs text-muted">
+          {actions.length - visibleActions.length} older actions hidden.
+        </p>
+      ) : null}
     </div>
   );
 }
 
 export function StreetAnalysisSkeleton() {
   return (
-    <ResearchSectionSkeleton
-      headerWidth="w-32"
-      rows={2}
-      rowClassName="h-16"
-    />
+    <ResearchSectionSkeleton headerWidth="w-32" rows={2} rowClassName="h-16" />
   );
 }
 
@@ -192,17 +207,13 @@ export function StreetAnalysisSection({
   return (
     <div className={cn("space-y-4", compact ? "" : "")}>
       {(street.consensusLabel || street.recommendation) && (
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-              Analyst consensus
-            </span>
-            {street.consensusLabel ? (
-              <span className="border border-accent/30 bg-accent-muted px-2 py-0.5 text-[11px] font-semibold text-accent-strong">
-                {street.consensusLabel}
-              </span>
-            ) : null}
-          </div>
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Consensus view
+          </p>
+          <p className="text-sm font-medium text-foreground">
+            {street.consensusLabel ?? "Consensus detail available"}
+          </p>
           {street.recommendation ? (
             <RecommendationBar recommendation={street.recommendation} />
           ) : null}
@@ -211,24 +222,23 @@ export function StreetAnalysisSection({
 
       {targets && (targets.mean != null || targets.current != null) ? (
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
-            <Target className="h-3 w-3" aria-hidden />
-            Price vs Street
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="border border-border bg-background/60 px-2.5 py-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Analyst target range
+          </p>
+          <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
+            <div>
               <p className="text-[10px] text-muted">Current price</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {formatStreetPrice(targets.current)}
               </p>
             </div>
-            <div className="border border-border bg-background/60 px-2.5 py-2">
+            <div>
               <p className="text-[10px] text-muted">Mean target</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {formatStreetPrice(targets.mean)}
               </p>
             </div>
-            <div className="border border-border bg-background/60 px-2.5 py-2">
+            <div className="sm:col-span-2">
               <p className="text-[10px] text-muted">Vs mean target</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
                 {formatPremiumDiscountToTarget(
@@ -239,17 +249,14 @@ export function StreetAnalysisSection({
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
             {[
               { label: "Low", value: targets.low },
               { label: "Mean", value: targets.mean },
               { label: "Median", value: targets.median },
               { label: "High", value: targets.high },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="border border-border bg-background/60 px-2.5 py-2"
-              >
+              <div key={item.label}>
                 <p className="text-[10px] text-muted">{item.label}</p>
                 <p className="text-sm font-semibold tabular-nums text-foreground">
                   {formatStreetPrice(item.value)}
@@ -259,10 +266,15 @@ export function StreetAnalysisSection({
           </div>
           {targets.upsideToMeanPct != null ? (
             <p className="text-xs text-muted">
-              Implied upside if the stock reaches the mean target:{" "}
+              Mean target is{" "}
               <span className="text-foreground">
-                {formatStreetUpside(targets.upsideToMeanPct)}
+                {formatPremiumDiscountToTarget(
+                  targets.current,
+                  targets.mean,
+                  targets.upsideToMeanPct,
+                )}
               </span>
+              .
             </p>
           ) : null}
         </div>
@@ -374,8 +386,7 @@ export function StreetEarningsEstimates({
     estimateForPeriod(street.revenueEstimates, activePeriod) ??
     (activePeriod === "+1q" ? street.nextQuarterRevenue : null);
   const hasEstimates = eps?.avg != null || revenue?.avg != null;
-  const periodLabel =
-    eps?.label ?? revenue?.label ?? "Selected period";
+  const periodLabel = eps?.label ?? revenue?.label ?? "Selected period";
 
   const estimatePeriodHint =
     defaultEstimatePeriod === "0q" && activePeriod === "0q"
@@ -383,12 +394,7 @@ export function StreetEarningsEstimates({
       : null;
 
   return (
-    <div
-      className={cn(
-        "space-y-3",
-        embedded && "border-t border-border pt-4",
-      )}
-    >
+    <div className={cn("space-y-3", embedded && "border-t border-border pt-4")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
           Analyst estimates

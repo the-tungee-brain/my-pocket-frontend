@@ -97,11 +97,11 @@ function LevelsGrid({ levels }: { levels: TradingBiasLevels }) {
 
 function AlignmentGrid({ alignment }: { alignment: TradingBiasAlignment }) {
   const items = [
-    ["Market", alignment.marketRegime],
-    ["Relative strength", alignment.relativeStrength],
-    ["Price structure", alignment.patternTrend],
+    ["Market environment", alignment.marketRegime],
+    ["Market strength", alignment.relativeStrength],
+    ["Chart trend", alignment.patternTrend],
     ["Volume", alignment.volume],
-    ["Catalyst", alignment.catalyst],
+    ["News/events", alignment.catalyst],
   ] as const;
 
   return (

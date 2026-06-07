@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useIntradayTradingBias } from "@/app/hooks/useIntradayTradingBias";
 import { useResearchEvents } from "@/app/hooks/useResearchEvents";
+import { useResearchSnapshot } from "@/app/hooks/useResearchSnapshot";
 import { useTraderPlaybook } from "@/app/hooks/useTraderPlaybook";
 import type {
   ChartIntelligenceZone,
@@ -48,6 +49,54 @@ function zoneDisplayPrice(zone: ChartIntelligenceZone | null | undefined) {
     return zone.midpoint;
   }
   return (zone.priceLow + zone.priceHigh) / 2;
+}
+
+function zoneBreakoutPrice(zone: ChartIntelligenceZone | null | undefined) {
+  if (!zone) return null;
+  if (
+    typeof zone.breakoutLevel === "number" &&
+    Number.isFinite(zone.breakoutLevel)
+  ) {
+    return zone.breakoutLevel;
+  }
+  return zoneDisplayPrice(zone);
+}
+
+function activeSupport(
+  zone: ChartIntelligenceZone | null | undefined,
+  visiblePrice: number | null | undefined,
+) {
+  const price = zoneDisplayPrice(zone);
+  if (
+    !zone ||
+    typeof price !== "number" ||
+    typeof visiblePrice !== "number" ||
+    !Number.isFinite(visiblePrice) ||
+    price >= visiblePrice
+  ) {
+    return null;
+  }
+  return zone;
+}
+
+function activeResistance(
+  zone: ChartIntelligenceZone | null | undefined,
+  visiblePrice: number | null | undefined,
+) {
+  const price = zoneDisplayPrice(zone);
+  const breakout = zoneBreakoutPrice(zone);
+  if (
+    !zone ||
+    typeof price !== "number" ||
+    typeof breakout !== "number" ||
+    typeof visiblePrice !== "number" ||
+    !Number.isFinite(visiblePrice) ||
+    price <= visiblePrice ||
+    breakout <= visiblePrice
+  ) {
+    return null;
+  }
+  return zone;
 }
 
 function zoneNote(zone: ChartIntelligenceZone | null | undefined) {
@@ -268,6 +317,7 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
   const { intradayTradingBias } = useIntradayTradingBias(symbol, accessToken, {
     enabled: !isEtf,
   });
+  const { snapshot } = useResearchSnapshot(symbol, { accessToken });
   const { traderPlaybook } = useTraderPlaybook(symbol, accessToken, {
     enabled: !isEtf,
   });
@@ -282,9 +332,23 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
   const selectedLevels =
     intelligence?.patternIntelligence?.chartIntelligence?.selectedLevels;
   const dataGaps = intelligence?.dataGaps ?? [];
-  const actionableSupport = selectedLevels?.actionableSupport ?? null;
-  const actionableResistance = selectedLevels?.actionableResistance ?? null;
-  const breakoutLevel = actionableResistance?.breakoutLevel ?? null;
+  const visiblePrice =
+    snapshot?.price ?? selectedLevels?.referencePrice ?? null;
+  const actionableSupport = activeSupport(
+    selectedLevels?.actionableSupport ?? null,
+    visiblePrice,
+  );
+  const actionableResistance = activeResistance(
+    selectedLevels?.actionableResistance ?? null,
+    visiblePrice,
+  );
+  const rawBreakoutLevel = actionableResistance?.breakoutLevel ?? null;
+  const breakoutLevel =
+    typeof rawBreakoutLevel === "number" &&
+    typeof visiblePrice === "number" &&
+    rawBreakoutLevel > visiblePrice
+      ? rawBreakoutLevel
+      : null;
   const invalidation =
     traderPlaybook?.levels.stop ??
     traderPlaybook?.conditions.invalidIf[0] ??

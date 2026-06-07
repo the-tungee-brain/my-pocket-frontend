@@ -620,8 +620,8 @@ function TraderPlaybookContent({
       ) : null}
 
       <p className="text-xs leading-relaxed text-muted">
-        {formatLabel(data.dataMode)} data · Market{" "}
-        {formatLabel(data.alignment.marketRegime)} · Price structure{" "}
+        {formatLabel(data.dataMode)} data · Market environment{" "}
+        {formatLabel(data.alignment.marketRegime)} · Chart trend{" "}
         {formatLabel(data.alignment.priceStructure)}
       </p>
 

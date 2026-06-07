@@ -243,8 +243,11 @@ export type ChartIntelligenceZone = {
 };
 
 export type ChartIntelligenceSelectedLevels = {
+  referencePrice?: number | null;
   nearestSupport?: ChartIntelligenceZone | null;
+  nextSupport?: ChartIntelligenceZone | null;
   nearestResistance?: ChartIntelligenceZone | null;
+  nextResistance?: ChartIntelligenceZone | null;
   actionableSupport?: ChartIntelligenceZone | null;
   actionableResistance?: ChartIntelligenceZone | null;
   majorSupport?: ChartIntelligenceZone | null;
@@ -305,9 +308,14 @@ export type ChartIntelligence = {
   trendlines?: ChartIntelligenceTrendline[];
   supportZones?: ChartIntelligenceZone[];
   resistanceZones?: ChartIntelligenceZone[];
+  referencePrice?: number | null;
   selectedLevels?: ChartIntelligenceSelectedLevels | null;
   annotations?: ChartIntelligenceAnnotation[];
-  highlightedCandles?: { barIndex?: number; date?: string; patternId?: string }[];
+  highlightedCandles?: {
+    barIndex?: number;
+    date?: string;
+    patternId?: string;
+  }[];
   breakoutEvents?: ChartIntelligenceBreakoutEvent[];
   fibChannel?: ChartIntelligenceFibChannel | null;
   patternMetadata?: ChartIntelligencePatternMetadata[];

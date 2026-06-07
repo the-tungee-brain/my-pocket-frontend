@@ -12,13 +12,25 @@ const INDICATOR_ROWS: Array<{
   format: "price" | "decimal" | "percent";
   decimals?: number;
 }> = [
-  { key: "rs_vs_spy_21d", label: "RS vs SPY (21d)", format: "percent" },
-  { key: "rs_vs_spy_63d", label: "RS vs SPY (63d)", format: "percent" },
-  { key: "rs_vs_spy_126d", label: "RS vs SPY (126d)", format: "percent" },
-  { key: "close_vs_sma20", label: "Close vs SMA 20", format: "percent" },
-  { key: "close_vs_sma200", label: "Close vs SMA 200", format: "percent" },
-  { key: "ret_21d", label: "Return (21d)", format: "percent" },
-  { key: "ret_63d", label: "Return (63d)", format: "percent" },
+  { key: "rs_vs_spy_21d", label: "21-day strength vs SPY", format: "percent" },
+  { key: "rs_vs_spy_63d", label: "63-day strength vs SPY", format: "percent" },
+  {
+    key: "rs_vs_spy_126d",
+    label: "126-day strength vs SPY",
+    format: "percent",
+  },
+  {
+    key: "close_vs_sma20",
+    label: "Price vs 20-day average",
+    format: "percent",
+  },
+  {
+    key: "close_vs_sma200",
+    label: "Price vs 200-day average",
+    format: "percent",
+  },
+  { key: "ret_21d", label: "21-day return", format: "percent" },
+  { key: "ret_63d", label: "63-day return", format: "percent" },
 ];
 
 export function hasPatternForecast(
@@ -95,23 +107,23 @@ export function patternDirectionSubtitle(
 ): string {
   if (isOutperformSpyScheme(forecast.labelScheme)) {
     return forecast.prediction === 1
-      ? "Model expects this name to show stronger relative performance than SPY over the next 5 trading days."
-      : "Model expects this name to show weaker relative performance than SPY over the next 5 trading days.";
+      ? "This stock has been setting up to act stronger than SPY over the next 5 trading days."
+      : "This stock has been setting up to act weaker than SPY over the next 5 trading days.";
   }
 
   if (isBinaryPatternScheme(forecast.labelScheme)) {
     return forecast.prediction === 1
-      ? "Model expects a positive move over the next 5 trading days."
-      : "Model expects a negative move over the next 5 trading days.";
+      ? "The recent setup points to a positive move over the next 5 trading days."
+      : "The recent setup points to a negative move over the next 5 trading days.";
   }
 
   switch (forecast.prediction) {
     case 1:
-      return "Model expects a move above +0.5% over the next 5 trading days.";
+      return "The recent setup points to a move above +0.5% over the next 5 trading days.";
     case -1:
-      return "Model expects a move below −0.5% over the next 5 trading days.";
+      return "The recent setup points to a move below -0.5% over the next 5 trading days.";
     default:
-      return "Model expects a flat move within ±0.5% over the next 5 trading days.";
+      return "The recent setup points to a flat move within +/-0.5% over the next 5 trading days.";
   }
 }
 
@@ -257,7 +269,7 @@ export function patternPortfolioSummary(
   if (!strategy) return null;
 
   const universe = strategy.universe.toUpperCase();
-  return `Ranking portfolio · ${universe} · top ${strategy.topN} · ${strategy.rebalanceDays}d rebalance`;
+  return `Technical details: ranking universe ${universe}, top ${strategy.topN}, ${strategy.rebalanceDays}d rebalance.`;
 }
 
 export function patternModelSummary(
@@ -274,8 +286,8 @@ export function patternModelSummary(
 
 export function patternUpProbLabel(forecast: PatternTrendForecast): string {
   return isOutperformSpyScheme(forecast.labelScheme)
-    ? "P(stronger than SPY)"
-    : "P(up)";
+    ? "Performance vs market"
+    : "Chance of moving up";
 }
 
 export function patternTradeSignalLabel(

@@ -1,13 +1,14 @@
 "use client";
 
-import { CircleHelp, Sparkles } from "lucide-react";
+import { CircleHelp } from "lucide-react";
 import type {
   ChartAnalystSummary,
+  ChartIntelligenceSelectedLevels,
   ChartIntelligenceZone,
   PatternIntelligence,
   PrimaryCandlestickPattern,
 } from "@/app/types/intelligence";
-import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { ResearchSection } from "@/components/research/ResearchMemoPrimitives";
 import { formatFriendlyDate } from "@/lib/dateUtils";
 import {
   isPatternIntelligenceBenchmark,
@@ -27,7 +28,14 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   intelligence: PatternIntelligence | null | undefined;
+  currentPrice?: number | null;
   className?: string;
+};
+
+type LevelListRow = {
+  key: string;
+  title: string;
+  zone: ChartIntelligenceZone;
 };
 
 function PatternHelpButton({ patternId }: { patternId: string }) {
@@ -79,33 +87,15 @@ function formatMoney(value: number | null | undefined): string {
   return `$${value.toFixed(2)}`;
 }
 
-function formatLevelRole(role: ChartIntelligenceZone["levelRole"]): string {
-  if (role === "actionable") return "Actionable";
-  if (role === "majorHistorical") return "Major";
-  return "Context";
-}
-
-function levelRoleClass(role: ChartIntelligenceZone["levelRole"]): string {
-  if (role === "actionable") return "text-success";
-  if (role === "majorHistorical") return "text-muted";
-  return "text-accent-strong";
-}
-
-function formatZoneState(zone: ChartIntelligenceZone): string {
-  switch (zone.zoneState) {
-    case "insideZone":
-      return "Price inside zone";
-    case "brokenAbove":
-      return "Broken above";
-    case "brokenBelow":
-      return "Broken below";
-    case "belowPrice":
-      return "Below price";
-    case "abovePrice":
-      return "Above price";
-    default:
-      return "Chart context";
+function levelTitle(kind: "support" | "resistance", index: number) {
+  if (kind === "support") {
+    if (index === 0) return "Nearest support";
+    if (index === 1) return "Next support";
+    return "Major support";
   }
+  if (index === 0) return "Nearest resistance";
+  if (index === 1) return "Next resistance";
+  return "Major resistance";
 }
 
 function zoneDisplayPrice(zone: ChartIntelligenceZone): number | null {
@@ -129,6 +119,52 @@ function zoneDisplayPrice(zone: ChartIntelligenceZone): number | null {
   return null;
 }
 
+function zoneBreakoutPrice(zone: ChartIntelligenceZone): number | null {
+  if (
+    typeof zone.breakoutLevel === "number" &&
+    Number.isFinite(zone.breakoutLevel)
+  ) {
+    return zone.breakoutLevel;
+  }
+  return zoneDisplayPrice(zone);
+}
+
+function isActiveSupport(
+  zone: ChartIntelligenceZone | null | undefined,
+  referencePrice: number | null | undefined,
+): zone is ChartIntelligenceZone {
+  if (
+    !zone ||
+    typeof referencePrice !== "number" ||
+    !Number.isFinite(referencePrice)
+  ) {
+    return false;
+  }
+  const price = zoneDisplayPrice(zone);
+  return typeof price === "number" && price < referencePrice;
+}
+
+function isActiveResistance(
+  zone: ChartIntelligenceZone | null | undefined,
+  referencePrice: number | null | undefined,
+): zone is ChartIntelligenceZone {
+  if (
+    !zone ||
+    typeof referencePrice !== "number" ||
+    !Number.isFinite(referencePrice)
+  ) {
+    return false;
+  }
+  const price = zoneDisplayPrice(zone);
+  const breakout = zoneBreakoutPrice(zone);
+  return (
+    typeof price === "number" &&
+    typeof breakout === "number" &&
+    price > referencePrice &&
+    breakout > referencePrice
+  );
+}
+
 function LevelRow({
   title,
   zone,
@@ -136,45 +172,23 @@ function LevelRow({
   title: string;
   zone: ChartIntelligenceZone;
 }) {
-  const role = formatLevelRole(zone.levelRole);
-  const state = formatZoneState(zone);
   const displayPrice = zoneDisplayPrice(zone);
-  const mechanics: string[] = [];
-  if (zone.actionableFor?.tradeStop) mechanics.push("Trade stop");
-  if (zone.actionableFor?.tradeTarget) mechanics.push("Trade target");
-  if (zone.actionableFor?.breakoutTrigger && zone.breakoutLevel != null) {
-    mechanics.push(`Breakout ${formatMoney(zone.breakoutLevel)}`);
-  }
+  const distance =
+    zone.distancePctFromCurrent != null
+      ? `${Math.abs(zone.distancePctFromCurrent).toFixed(1)}% from current price`
+      : "Distance unavailable";
 
   return (
-    <div className="py-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-          {title}
+    <div className="grid gap-1 border-b border-border/60 py-3 last:border-b-0 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-6">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+        {title}
+      </p>
+      <div className="min-w-0">
+        <p className="font-mono text-sm font-semibold text-foreground">
+          {formatMoney(displayPrice)}
         </p>
-        <span
-          className={cn(
-            "text-[10px] font-semibold uppercase tracking-wide",
-            levelRoleClass(zone.levelRole),
-          )}
-        >
-          {role}
-        </span>
+        <p className="mt-1 text-xs text-muted">{distance}</p>
       </div>
-      <p className="mt-1 font-mono text-sm font-semibold text-foreground">
-        {formatMoney(displayPrice)}
-      </p>
-      <p className="mt-1 text-xs text-muted">
-        {state}
-        {zone.distancePctFromCurrent != null
-          ? ` · ${zone.distancePctFromCurrent.toFixed(1)}% from price`
-          : ""}
-      </p>
-      {mechanics.length ? (
-        <p className="mt-1 text-xs font-medium text-foreground">
-          {mechanics.join(" · ")}
-        </p>
-      ) : null}
     </div>
   );
 }
@@ -182,35 +196,92 @@ function LevelRow({
 function ChartLevelsSection({
   supports,
   resistances,
+  selectedLevels,
+  currentPrice,
 }: {
   supports: ChartIntelligenceZone[];
   resistances: ChartIntelligenceZone[];
+  selectedLevels?: ChartIntelligenceSelectedLevels | null;
+  currentPrice?: number | null;
 }) {
-  const rows = [
-    ...supports.slice(0, 3).map((zone, index) => ({
-      key: `support-${index}`,
-      title: `Support ${index + 1}`,
-      zone,
-    })),
-    ...resistances.slice(0, 3).map((zone, index) => ({
-      key: `resistance-${index}`,
-      title: `Resistance ${index + 1}`,
-      zone,
-    })),
+  const referencePrice =
+    typeof currentPrice === "number" && Number.isFinite(currentPrice)
+      ? currentPrice
+      : selectedLevels?.referencePrice;
+  const selectedRows: LevelListRow[] = [];
+  const nearestSupport = selectedLevels?.nearestSupport;
+  const nextSupport = selectedLevels?.nextSupport;
+  const nearestResistance = selectedLevels?.nearestResistance;
+  const nextResistance = selectedLevels?.nextResistance;
+  if (isActiveSupport(nearestSupport, referencePrice)) {
+    selectedRows.push({
+      key: "nearest-support",
+      title: "Nearest support",
+      zone: nearestSupport,
+    });
+  }
+  if (isActiveSupport(nextSupport, referencePrice)) {
+    selectedRows.push({
+      key: "next-support",
+      title: "Next support",
+      zone: nextSupport,
+    });
+  }
+  if (isActiveResistance(nearestResistance, referencePrice)) {
+    selectedRows.push({
+      key: "nearest-resistance",
+      title: "Nearest resistance",
+      zone: nearestResistance,
+    });
+  }
+  if (isActiveResistance(nextResistance, referencePrice)) {
+    selectedRows.push({
+      key: "next-resistance",
+      title: "Next resistance",
+      zone: nextResistance,
+    });
+  }
+
+  const fallbackRows: LevelListRow[] = [
+    ...supports
+      .filter((zone) => isActiveSupport(zone, referencePrice))
+      .sort(
+        (a, b) =>
+          (zoneDisplayPrice(b) ?? Number.NEGATIVE_INFINITY) -
+          (zoneDisplayPrice(a) ?? Number.NEGATIVE_INFINITY),
+      )
+      .slice(0, 2)
+      .map((zone, index) => ({
+        key: `support-${index}`,
+        title: levelTitle("support", index),
+        zone,
+      })),
+    ...resistances
+      .filter((zone) => isActiveResistance(zone, referencePrice))
+      .sort(
+        (a, b) =>
+          (zoneDisplayPrice(a) ?? Number.POSITIVE_INFINITY) -
+          (zoneDisplayPrice(b) ?? Number.POSITIVE_INFINITY),
+      )
+      .slice(0, 2)
+      .map((zone, index) => ({
+        key: `resistance-${index}`,
+        title: levelTitle("resistance", index),
+        zone,
+      })),
   ];
+  const rows = (selectedRows.length ? selectedRows : fallbackRows).slice(0, 4);
 
   if (!rows.length) return null;
 
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-        Chart levels
+        Important price levels
       </p>
-      <div className="mt-2 grid divide-y divide-border/60 md:grid-cols-2 md:divide-x md:divide-y-0">
+      <div className="mt-2">
         {rows.map(({ key, title, zone }) => (
-          <div key={key} className="md:px-3 first:md:pl-0">
-            <LevelRow title={title} zone={zone} />
-          </div>
+          <LevelRow key={key} title={title} zone={zone} />
         ))}
       </div>
     </div>
@@ -225,6 +296,8 @@ function AnalystSummaryBody({
   asOfDate,
   supports,
   resistances,
+  selectedLevels,
+  currentPrice,
 }: {
   summary: ChartAnalystSummary;
   isBenchmark: boolean;
@@ -233,6 +306,8 @@ function AnalystSummaryBody({
   asOfDate: string;
   supports: ChartIntelligenceZone[];
   resistances: ChartIntelligenceZone[];
+  selectedLevels?: ChartIntelligenceSelectedLevels | null;
+  currentPrice?: number | null;
 }) {
   const { outlook, keyLevel, whyThisOutlook, thesis } = summary;
   const tone = outlookTone(outlook);
@@ -240,16 +315,13 @@ function AnalystSummaryBody({
   return (
     <>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          Chart structure
-        </p>
         <p
           className={cn(
-            "mt-2 text-2xl font-semibold tracking-tight",
+            "text-sm font-semibold",
             isBenchmark ? "text-foreground" : signalToneClass[tone],
           )}
         >
-          Chart structure: {outlookHeadline(outlook)}
+          Chart trend: {outlookHeadline(outlook)}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-foreground">
           {outlook.expectation}
@@ -265,7 +337,7 @@ function AnalystSummaryBody({
       {keyLevel.available !== false && keyLevel.price != null ? (
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Key level
+            Key chart level
           </p>
           <p className="mt-2 text-sm font-semibold text-foreground">
             {keyLevel.display}
@@ -276,12 +348,17 @@ function AnalystSummaryBody({
         </div>
       ) : null}
 
-      <ChartLevelsSection supports={supports} resistances={resistances} />
+      <ChartLevelsSection
+        supports={supports}
+        resistances={resistances}
+        selectedLevels={selectedLevels}
+        currentPrice={currentPrice}
+      />
 
       {whyThisOutlook.length > 0 ? (
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Why this chart read
+            Why
           </p>
           <ul className="mt-3 space-y-2">
             {whyThisOutlook.map((bullet) => (
@@ -307,7 +384,7 @@ function AnalystSummaryBody({
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          Structure thesis
+          Chart summary
         </p>
         <p className="mt-2 text-sm leading-relaxed text-foreground">{thesis}</p>
       </div>
@@ -322,7 +399,11 @@ function AnalystSummaryBody({
   );
 }
 
-export function PatternIntelligenceCard({ intelligence, className }: Props) {
+export function PatternIntelligenceCard({
+  intelligence,
+  currentPrice,
+  className,
+}: Props) {
   if (!hasPatternIntelligence(intelligence)) return null;
 
   const summary = intelligence.chartIntelligence?.summary;
@@ -335,16 +416,7 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
   const primaryPattern = patternIntelligencePrimaryPattern(intelligence);
 
   return (
-    <ResearchSectionCard
-      title="Price structure evidence"
-      description={
-        isBenchmark
-          ? "Qualitative 5-day read from price structure and patterns"
-          : "Chart structure and pattern evidence for the next 5 sessions"
-      }
-      icon={Sparkles}
-      className={className}
-    >
+    <ResearchSection title="Chart trend" className={className}>
       <div className="app-stack">
         <AnalystSummaryBody
           summary={summary}
@@ -354,8 +426,10 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
           asOfDate={intelligence.asOfDate}
           supports={intelligence.chartIntelligence?.supportZones ?? []}
           resistances={intelligence.chartIntelligence?.resistanceZones ?? []}
+          selectedLevels={intelligence.chartIntelligence?.selectedLevels}
+          currentPrice={currentPrice}
         />
       </div>
-    </ResearchSectionCard>
+    </ResearchSection>
   );
 }

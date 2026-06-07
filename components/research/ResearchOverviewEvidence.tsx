@@ -59,7 +59,7 @@ function priceStructureSummary(
       description:
         traderPlaybook.warnings[0] ??
         traderPlaybook.reasons[0] ??
-        "Price structure is not confirming a clean long setup.",
+        "The chart trend is not confirming a clean long setup.",
     };
   }
 
@@ -81,13 +81,12 @@ function priceStructureSummary(
       description:
         patternLine ??
         summary.outlook.expectation ??
-        "Chart structure evidence is available in Analysis.",
+        "Chart trend evidence is available in Analysis.",
     };
   }
   return {
     status: "Unavailable",
-    description:
-      "Price structure evidence is not available for this symbol yet.",
+    description: "Chart trend evidence is not available for this symbol yet.",
   };
 }
 
@@ -104,8 +103,7 @@ function relativeStrengthSummary(intelligence: SymbolIntelligence | null) {
   }
   return {
     status: "Unavailable",
-    description:
-      "Relative strength model output is not available for this symbol yet.",
+    description: "Market-strength data is not available for this symbol yet.",
   };
 }
 
@@ -158,14 +156,14 @@ export function ResearchOverviewEvidence({
     <ResearchSection title="Evidence" className={className}>
       <div className="divide-y divide-border/60">
         <ResearchRow
-          label="Price structure"
+          label="Chart trend"
           status={priceStructure.status}
           body={truncateSentence(priceStructure.description)}
           href={symbolHubPath(symbol, "analysis")}
           loading={intelligenceLoading && !intelligence}
         />
         <ResearchRow
-          label="Relative strength"
+          label="Market strength"
           status={relativeStrength.status}
           body={truncateSentence(relativeStrength.description)}
           href={symbolHubPath(symbol, "analysis")}
@@ -173,7 +171,7 @@ export function ResearchOverviewEvidence({
         />
         {!isEtf ? (
           <ResearchRow
-            label="Analyst signal"
+            label="Analyst view"
             status={
               hasStreetAnalysis(street)
                 ? (street.consensusLabel ?? "Analyst context available")

@@ -52,7 +52,7 @@ export function StreetAnalysisOverview({
   if (isLoading) {
     return (
       <ResearchSectionCard
-        title="Analyst signal"
+        title="Analyst view"
         description={ANALYST_SIGNAL_SUBTITLE}
         icon={Target}
         className={className}
@@ -65,7 +65,7 @@ export function StreetAnalysisOverview({
   if (error) {
     return (
       <ResearchSectionCard
-        title="Analyst signal"
+        title="Analyst view"
         description={ANALYST_SIGNAL_SUBTITLE}
         icon={Target}
         className={className}
@@ -78,7 +78,7 @@ export function StreetAnalysisOverview({
   if (!hasStreetAnalysis(street)) {
     return (
       <ResearchSectionCard
-        title="Analyst signal"
+        title="Analyst view"
         description={ANALYST_SIGNAL_SUBTITLE}
         icon={Target}
         className={className}
@@ -93,7 +93,7 @@ export function StreetAnalysisOverview({
 
   return (
     <ResearchSectionCard
-      title="Analyst signal"
+      title="Analyst view"
       description={ANALYST_SIGNAL_SUBTITLE}
       icon={Target}
       action={detailsLink}

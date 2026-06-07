@@ -51,9 +51,9 @@ export function patternIntelligencePrimaryPattern(
 }
 
 export function formatPatternDirectionLabel(direction: string): string {
-  if (direction === "bullish") return "Chart structure: Bullish";
-  if (direction === "bearish") return "Chart structure: Bearish";
-  return "Chart structure: Neutral";
+  if (direction === "bullish") return "Chart trend: Bullish";
+  if (direction === "bearish") return "Chart trend: Bearish";
+  return "Chart trend: Neutral";
 }
 
 export function patternQualityLabel(strength: number): string {

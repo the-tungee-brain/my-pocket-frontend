@@ -59,6 +59,9 @@ type Props = {
   compact?: boolean;
   hideRecentEvents?: boolean;
   hidePatternForecast?: boolean;
+  hideNavigationLinks?: boolean;
+  title?: string;
+  description?: string;
   className?: string;
   researchBasePath?: string;
   isEtf?: boolean;
@@ -159,19 +162,21 @@ function IntelligenceSection({
   icon: Icon,
   defaultOpen = false,
   compact = false,
+  className,
   children,
 }: {
   title: string;
   icon: LucideIcon;
   defaultOpen?: boolean;
   compact?: boolean;
+  className?: string;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
   if (!compact) {
     return (
-      <div>
+      <div className={className}>
         <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
           <Icon className="h-3.5 w-3.5" aria-hidden />
           {title}
@@ -346,6 +351,9 @@ export function SymbolIntelligencePanel({
   compact = false,
   hideRecentEvents = false,
   hidePatternForecast = false,
+  hideNavigationLinks = false,
+  title,
+  description,
   className,
   researchBasePath,
   isEtf = false,
@@ -357,26 +365,18 @@ export function SymbolIntelligencePanel({
   const timeline = intelligence?.eventTimeline ?? [];
   const research = intelligence?.cachedResearch;
   const symbol = intelligence?.symbol;
+  const panelTitle =
+    title ?? (symbol ? `${symbol} intelligence` : "Symbol intelligence");
+  const panelDescription = description ?? "Signals, peers, and timeline";
 
   if (!loading && !error && !hasContent) {
     return null;
   }
 
   return (
-    <Card
-      className={className}
-      aria-label={symbol ? `${symbol} intelligence` : "Symbol intelligence"}
-    >
+    <Card className={className} aria-label={panelTitle}>
       <CardHeader>
-        <CardTitle
-          title={symbol ? `${symbol} intelligence` : "Symbol intelligence"}
-          description="Signals, peers, and timeline"
-          icon={
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
-              <Sparkles className="h-4 w-4" aria-hidden />
-            </div>
-          }
-        />
+        <CardTitle title={panelTitle} description={panelDescription} />
         {onRefresh && (
           <IconButton
             size="sm"
@@ -420,11 +420,16 @@ export function SymbolIntelligencePanel({
 
         {!!signals.length && (
           <IntelligenceSection
-            title="Signals"
+            title="Company signals"
             icon={AlertTriangle}
             defaultOpen
             compact={compact}
+            className="pt-2"
           >
+            <p className="text-sm leading-relaxed text-foreground">
+              These company-specific signals highlight items that may affect
+              risk, research quality, or follow-up work.
+            </p>
             <ul className="space-y-2">
               {signals.slice(0, compact ? 3 : 6).map((signal) => {
                 const actionId = signalToQuickActionId(signal, actionContext);
@@ -434,7 +439,7 @@ export function SymbolIntelligencePanel({
                 return (
                   <li
                     key={`${signal.kind}-${signal.message}-${signal.symbol ?? ""}`}
-                    className="border border-border bg-background/60 px-3 py-2"
+                    className="border-b border-border/60 py-3 last:border-b-0"
                   >
                     <div className="flex items-start gap-2">
                       <span
@@ -471,13 +476,13 @@ export function SymbolIntelligencePanel({
             (research.keyStrengths?.length ?? 0) > 0 ||
             (research.keyRisks?.length ?? 0) > 0) && (
             <IntelligenceSection
-              title="Cached thesis"
+              title="Research thesis"
               icon={Sparkles}
               compact={compact}
             >
-              <div className="space-y-2 border border-border bg-background/60 px-3 py-3">
+              <div className="space-y-3 border-b border-border/60 pb-4">
                 {research.sentiment && (
-                  <span className="inline-flex bg-muted-bg px-2 py-0.5 text-[10px] capitalize text-muted">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                     {research.sentiment}
                   </span>
                 )}
@@ -514,16 +519,16 @@ export function SymbolIntelligencePanel({
 
         {peers && (peers.peers.length > 0 || peers.summary) && (
           <IntelligenceSection
-            title="Peer comparison"
+            title="Compared with peers"
             icon={GitCompareArrows}
             compact={compact}
           >
             {peers.summary && (
               <p className="mb-2 text-sm text-foreground">{peers.summary}</p>
             )}
-            <div className="overflow-x-auto border border-border">
+            <div className="overflow-x-auto">
               <table className="w-full min-w-[280px] text-left text-xs">
-                <thead className="bg-background/60 text-muted">
+                <thead className="text-muted">
                   <tr>
                     <th className="px-3 py-2 font-medium">Symbol</th>
                     <th className="px-3 py-2 font-medium">1Y return</th>
@@ -531,7 +536,7 @@ export function SymbolIntelligencePanel({
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-t border-border bg-accent-muted/20 font-medium">
+                  <tr className="border-t border-border/60 font-medium">
                     <td className="px-3 py-2 font-mono">
                       {peers.targetSymbol}
                     </td>
@@ -543,7 +548,7 @@ export function SymbolIntelligencePanel({
                     </td>
                   </tr>
                   {peers.peers.slice(0, compact ? 3 : 5).map((peer) => (
-                    <tr key={peer.symbol} className="border-t border-border">
+                    <tr key={peer.symbol} className="border-t border-border/60">
                       <td className="px-3 py-2 font-mono">{peer.symbol}</td>
                       <td className="px-3 py-2 tabular-nums">
                         {peer.oneYearReturn ?? "—"}
@@ -572,7 +577,7 @@ export function SymbolIntelligencePanel({
           </IntelligenceSection>
         )}
 
-        {researchBasePath && symbol && !compact && (
+        {researchBasePath && symbol && !compact && !hideNavigationLinks && (
           <div className="flex flex-wrap gap-2 pt-1">
             {isEtf ? (
               <>

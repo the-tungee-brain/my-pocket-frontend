@@ -1,23 +1,22 @@
 "use client";
 
-import { useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { Target } from "lucide-react";
-import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
+import { useResearchSnapshot } from "@/app/hooks/useResearchSnapshot";
 import { useStreetAnalysis } from "@/app/hooks/useStreetAnalysis";
-import type { IntelligenceSignal } from "@/app/types/intelligence";
-import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { useTradeDecision } from "@/app/hooks/useTradeDecision";
+import { ResearchSection } from "@/components/research/ResearchMemoPrimitives";
+import { ResearchPatternOverviewSections } from "@/components/research/ResearchPatternOverviewSections";
 import { SymbolIntelligencePanel } from "@/components/SymbolIntelligencePanel";
 import { TradeDecisionPanel } from "@/components/TradeDecisionPanel";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { appStackClass } from "@/lib/appUi";
-import { symbolChatKey } from "@/lib/chatKeys";
-import { symbolHubPath } from "@/lib/symbolRoutes";
 import { pageSectionClass } from "@/lib/pageLayout";
-import { ResearchPatternOverviewSections } from "@/components/research/ResearchPatternOverviewSections";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { useResearchSymbolIntelligence } from "./ResearchSymbolIntelligenceContext";
-import { StreetAnalysisSection, StreetAnalysisSkeleton } from "./StreetAnalysisSection";
+import {
+  StreetAnalysisSection,
+  StreetAnalysisSkeleton,
+} from "./StreetAnalysisSection";
 
 type Props = {
   symbol: string;
@@ -26,16 +25,13 @@ type Props = {
 export function ResearchAnalysisPageContent({ symbol }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
-  const { positionMap } = usePortfolioContext();
-  const { sendQuickAction } = useAppChatContext();
   const { isEtf } = useResearchAssetTypeContext();
-  const symbolUpper = symbol.toUpperCase();
-  const chatKey = symbolChatKey(symbolUpper) ?? symbolUpper;
   const symbolIntelligence = useResearchSymbolIntelligence();
   const intelligence = symbolIntelligence?.intelligence ?? null;
   const loading = symbolIntelligence?.loading ?? false;
   const error = symbolIntelligence?.error ?? null;
   const refetch = symbolIntelligence?.refetch;
+  const { snapshot } = useResearchSnapshot(symbol, { accessToken });
   const {
     street,
     isLoading: streetLoading,
@@ -44,29 +40,14 @@ export function ResearchAnalysisPageContent({ symbol }: Props) {
     accessToken,
     enabled: !isEtf,
   });
-
-  const handleRunSignal = useCallback(
-    (_signal: IntelligenceSignal, actionId: string) => {
-      void sendQuickAction({
-        activeChatKey: chatKey,
-        selectedView: "research",
-        selectedSymbol: symbolUpper,
-        positionsForSelectedSymbol: positionMap[symbolUpper] ?? [],
-        actionId,
-      });
-    },
-    [chatKey, symbolUpper, sendQuickAction, positionMap],
-  );
-
-  const handleGoDeeper = useCallback(() => {
-    void sendQuickAction({
-      activeChatKey: chatKey,
-      selectedView: "research",
-      selectedSymbol: symbolUpper,
-      positionsForSelectedSymbol: positionMap[symbolUpper] ?? [],
-      actionId: "daily-summary",
-    });
-  }, [chatKey, symbolUpper, sendQuickAction, positionMap]);
+  const {
+    decision,
+    isLoading: decisionLoading,
+    error: decisionError,
+  } = useTradeDecision(symbol, {
+    accessToken,
+    enabled: !isEtf,
+  });
 
   return (
     <div className={appStackClass}>
@@ -75,6 +56,7 @@ export function ResearchAnalysisPageContent({ symbol }: Props) {
         intelligence={intelligence}
         loading={loading}
         mode="full"
+        currentPrice={snapshot?.price}
         className={pageSectionClass}
       />
 
@@ -82,6 +64,10 @@ export function ResearchAnalysisPageContent({ symbol }: Props) {
         <TradeDecisionPanel
           symbol={symbol}
           accessToken={accessToken}
+          decisionOverride={decision}
+          isLoadingOverride={decisionLoading}
+          errorOverride={decisionError}
+          diagnosticsOnly
           className={pageSectionClass}
         />
       ) : null}
@@ -91,22 +77,21 @@ export function ResearchAnalysisPageContent({ symbol }: Props) {
         loading={loading}
         error={error}
         onRefresh={refetch}
-        onRunSignal={handleRunSignal}
-        onGoDeeper={handleGoDeeper}
         actionContext="research"
+        title="Company context"
+        description="Company signals, risks, peer context, research thesis, and data quality."
         researchBasePath="/research"
         isEtf={isEtf}
         hideRecentEvents
         hidePatternForecast
+        hideNavigationLinks
         className={pageSectionClass}
       />
 
       {!isEtf ? (
-        <ResearchSectionCard
-          title="Wall Street analysis"
-          description="Consensus, targets, estimates, and recent rating actions"
-          icon={Target}
-          titleHref={symbolHubPath(symbolUpper, "fundamentals")}
+        <ResearchSection
+          title="Analyst view"
+          subtitle="Consensus view, target range, estimate changes, and recent analyst updates."
           className={pageSectionClass}
         >
           {streetError ? (
@@ -116,7 +101,7 @@ export function ResearchAnalysisPageContent({ symbol }: Props) {
           ) : (
             <StreetAnalysisSection street={street} />
           )}
-        </ResearchSectionCard>
+        </ResearchSection>
       ) : null}
     </div>
   );

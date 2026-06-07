@@ -10,8 +10,8 @@ export const researchMemo = {
   rowPadding: "py-3",
   sectionTitle: "text-[11px] font-semibold uppercase tracking-wide text-muted",
   decisionHeadline:
-    "text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl",
-  decisionConclusion: "text-lg font-medium leading-snug text-foreground",
+    "text-sm font-semibold leading-relaxed tracking-normal text-foreground",
+  decisionConclusion: "text-sm font-medium leading-relaxed text-foreground",
   rowLabel: "text-[11px] font-semibold uppercase tracking-wide text-muted",
   rowStatus: "text-sm font-semibold text-foreground",
   rowBody: "text-sm leading-relaxed text-muted",
