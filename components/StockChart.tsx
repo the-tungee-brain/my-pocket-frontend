@@ -1,25 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  createChart,
   CandlestickSeries,
+  createChart,
   HistogramSeries,
   LineSeries,
 } from "lightweight-charts";
+import { CandlestickChart, ChevronDown, LineChart } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChartIntelligence } from "@/app/types/intelligence";
+import { Button } from "@/components/ui/Button";
+import { iconButtonClass } from "@/components/ui/IconButton";
+import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 import {
   applyChartIntelligenceOverlays,
   buildChartIntelligenceLegendItems,
-  hasChartIntelligence,
   type ChartOverlayLegendItem,
+  hasChartIntelligence,
 } from "@/lib/chartIntelligenceOverlays";
-import { ChevronDown, LineChart, CandlestickChart } from "lucide-react";
-import { iconButtonClass } from "@/components/ui/IconButton";
-import { cn } from "@/lib/utils";
 import { formatUsd } from "@/lib/formatCurrency";
-import { Button } from "@/components/ui/Button";
-import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
+import { cn } from "@/lib/utils";
 
 type StockData = {
   date: string;
@@ -251,7 +251,7 @@ function ChartOverlayLegendSwatch({ item }: { item: ChartOverlayLegendItem }) {
     return (
       <span
         aria-hidden
-        className="h-2 w-2 shrink-0 rounded-[2px]"
+        className="h-2 w-2 shrink-0 rounded-xs"
         style={{ backgroundColor: item.color }}
       />
     );
@@ -800,7 +800,7 @@ export function StockChart({
         <div
           className={cn(
             "relative w-full",
-            isFullscreen ? "min-h-0 flex-1" : "h-[500px]",
+            isFullscreen ? "min-h-0 flex-1" : "h-125",
           )}
         >
           {legendPoint && chartState === "ready" && (
