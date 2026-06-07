@@ -212,10 +212,43 @@ export type ChartAnalystSummary = {
 export type ChartIntelligenceZone = {
   priceLow: number;
   priceHigh: number;
+  midpoint?: number | null;
   label?: string;
   zoneType?: string;
+  type?: string;
   touches?: number;
   strength?: number;
+  timeframe?: "shortTerm" | "intermediate" | "longTerm" | string;
+  source?: string;
+  sources?: string[];
+  recencyBars?: number | null;
+  distancePctFromCurrent?: number | null;
+  atrDistance?: number | null;
+  levelRole?: "actionable" | "nearbyContext" | "majorHistorical" | string;
+  actionableFor?: {
+    chartContext?: boolean;
+    tradeStop?: boolean;
+    tradeTarget?: boolean;
+    breakoutTrigger?: boolean;
+  };
+  zoneState?:
+    | "belowPrice"
+    | "abovePrice"
+    | "insideZone"
+    | "brokenAbove"
+    | "brokenBelow"
+    | string;
+  displayLevel?: number | null;
+  breakoutLevel?: number | null;
+};
+
+export type ChartIntelligenceSelectedLevels = {
+  nearestSupport?: ChartIntelligenceZone | null;
+  nearestResistance?: ChartIntelligenceZone | null;
+  actionableSupport?: ChartIntelligenceZone | null;
+  actionableResistance?: ChartIntelligenceZone | null;
+  majorSupport?: ChartIntelligenceZone | null;
+  majorResistance?: ChartIntelligenceZone | null;
 };
 
 export type ChartIntelligenceTrendline = {
@@ -272,6 +305,7 @@ export type ChartIntelligence = {
   trendlines?: ChartIntelligenceTrendline[];
   supportZones?: ChartIntelligenceZone[];
   resistanceZones?: ChartIntelligenceZone[];
+  selectedLevels?: ChartIntelligenceSelectedLevels | null;
   annotations?: ChartIntelligenceAnnotation[];
   highlightedCandles?: { barIndex?: number; date?: string; patternId?: string }[];
   breakoutEvents?: ChartIntelligenceBreakoutEvent[];

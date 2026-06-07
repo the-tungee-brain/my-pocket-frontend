@@ -1,69 +1,218 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import {
-  usePortfolioSection,
-  type PortfolioSectionId,
-} from "@/app/contexts/PortfolioSectionContext";
-import { useStrategyContext } from "@/app/contexts/StrategyContext";
-import { useSchwabConnect } from "@/app/hooks/useSchwabConnect";
-import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
-import { PortfolioAttentionSection, countAttentionItems } from "@/components/PortfolioAttentionSection";
-import { PortfolioExitAttentionRows } from "@/components/PositionGuidancePanel";
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
+import { useToast } from "@/app/contexts/ToastContext";
+import { useMorningBrief } from "@/app/hooks/useMorningBrief";
 import { usePortfolioExitAttention } from "@/app/hooks/usePortfolioExitAttention";
-import { PortfolioBriefSection } from "@/components/PortfolioBriefSection";
-import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
-import { AnalysisPanel, type PortfolioNavigationRequest } from "@/components/AnalysisPanel";
-import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
-import { PortfolioStrategyNudge } from "@/components/portfolio/PortfolioStrategyNudge";
-import { StrategyPlaybookPanel } from "@/components/StrategyPlaybookPanel";
-import { StrategyOnboardingWizard } from "@/components/StrategyOnboardingWizard";
-import { PortfolioSectionTabBar } from "@/components/PortfolioSectionTabBar";
-import { PortfolioNewsSection } from "@/components/PortfolioNewsSection";
 import { usePortfolioNews } from "@/app/hooks/usePortfolioNews";
+import type {
+  AttentionItem,
+  ProactiveAlert,
+  SectorWeight,
+} from "@/app/types/intelligence";
+import type { PortfolioHoldingsNewsItem } from "@/app/types/portfolioNews";
+import {
+  buildSymbolSummaries,
+  PortfolioHoldingsTable,
+  sortSummaries,
+} from "@/components/analysis/analysisPanelHoldings";
+import { PageShell } from "@/components/PageShell";
+import { PortfolioAttentionSection } from "@/components/PortfolioAttentionSection";
+import { PortfolioOnboarding } from "@/components/PortfolioOnboarding";
+import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
+import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { useToast } from "@/app/contexts/ToastContext";
-import { useMorningBrief } from "@/app/hooks/useMorningBrief";
-import type { AttentionItem, ProactiveAlert } from "@/app/types/intelligence";
+import { dismissPortfolioAlert } from "@/lib/apiClient";
+import { appStackClass } from "@/lib/appUi";
+import { parsePositionsSyncedAt } from "@/lib/dataFreshness";
+import type { TaxAlertItem } from "@/lib/intelligence";
 import {
   alertToQuickActionId,
   buildLocalPortfolioBrief,
   buildSymbolAlertMap,
   collectTaxAlertItems,
+  formatSectorLabel,
   mergeDisplayAlerts,
 } from "@/lib/intelligence";
-import type { TaxAlertItem } from "@/lib/intelligence";
-import { dismissPortfolioAlert } from "@/lib/apiClient";
-import {
-  clearStrategyOnboardingDismissed,
-  dismissStrategyOnboarding,
-  isStrategyOnboardingDismissed,
-} from "@/lib/onboardingStorage";
-import { scrollToChat } from "@/lib/scrollToChat";
-import {
-  hasPortfolioAnalysis,
-  PORTFOLIO_ANALYSIS_SECTION_ID,
-  scrollToAnalysisSection,
-} from "@/lib/positionAnalysis";
-import type { StrategyNextAction } from "@/app/types/strategy";
-import {
-  playbookActionAskable,
-} from "@/lib/strategyPlaybook";
-import {
-  appStackClass,
-  portfolioTodayPairGridClass,
-  portfolioTodayPairGridPairedClass,
-} from "@/lib/appUi";
-import { parsePositionsSyncedAt } from "@/lib/dataFreshness";
 import { pageSectionClass } from "@/lib/pageLayout";
-import { PageShell, PageSplit } from "@/components/PageShell";
+import { scrollToChat } from "@/lib/scrollToChat";
 import { cn } from "@/lib/utils";
 
 const sectionClass = pageSectionClass;
+const portfolioSectionTitleClass =
+  "text-[11px] font-semibold uppercase tracking-wide text-muted";
+
+function PortfolioSectionHeader({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h2 className={portfolioSectionTitleClass}>{title}</h2>
+        {description ? (
+          <p className="mt-1 text-sm text-muted">{description}</p>
+        ) : null}
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
+  );
+}
+
+function SectorDiversificationSection({
+  sectors,
+  className,
+}: {
+  sectors: SectorWeight[];
+  className?: string;
+}) {
+  const sorted = [...sectors].sort((a, b) => b.weightPct - a.weightPct);
+
+  return (
+    <section className={cn(sectionClass, "space-y-5", className)}>
+      <PortfolioSectionHeader
+        title="Diversification by sector"
+        description="Allocation by sector."
+      />
+      {sorted.length ? (
+        <div className="divide-y divide-border/60 border-t border-border/60">
+          {sorted.slice(0, 8).map((sector) => (
+            <div
+              key={sector.sector}
+              className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(10rem,20rem)_4.5rem] sm:items-center"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                  {formatSectorLabel(sector.sector)}
+                </p>
+                {sector.symbols.length ? (
+                  <p className="mt-0.5 truncate text-xs text-muted">
+                    {sector.symbols.slice(0, 6).join(", ")}
+                    {sector.symbols.length > 6 ? "…" : ""}
+                  </p>
+                ) : null}
+              </div>
+              <div className="h-2 bg-border/50">
+                <div
+                  className="h-full bg-foreground"
+                  style={{
+                    width: `${Math.max(0, Math.min(100, sector.weightPct))}%`,
+                  }}
+                />
+              </div>
+              <p className="text-left text-sm font-medium tabular-nums text-foreground sm:text-right">
+                {sector.weightPct.toFixed(1)}%
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="border-t border-border/60 py-3 text-sm text-muted">
+          Sector weights are not available yet.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function PortfolioNewsPreview({
+  items,
+  loading,
+  className,
+}: {
+  items: PortfolioHoldingsNewsItem[];
+  loading?: boolean;
+  className?: string;
+}) {
+  const visibleItems = items.slice(0, 5);
+  const viewAllAction = (
+    <Link
+      href="/portfolio/news"
+      className="text-xs font-medium text-foreground hover:underline"
+    >
+      View all →
+    </Link>
+  );
+
+  return (
+    <section className={cn(sectionClass, "space-y-4", className)}>
+      <PortfolioSectionHeader
+        title="Portfolio news"
+        description="Latest headlines from larger holdings."
+        action={viewAllAction}
+      />
+      {loading ? (
+        <p className="border-t border-border/60 py-3 text-sm text-muted">
+          Loading headlines…
+        </p>
+      ) : items.length ? (
+        <ul className="divide-y divide-border/60 border-t border-border/60">
+          {visibleItems.map((item) => (
+            <li key={`${item.symbol}-${item.headline}`} className="py-3">
+              {item.url ? (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium text-foreground hover:underline"
+                >
+                  <span className="font-mono">{item.symbol}</span>{" "}
+                  {item.headline}
+                </a>
+              ) : (
+                <p className="text-sm font-medium text-foreground">
+                  <span className="font-mono">{item.symbol}</span>{" "}
+                  {item.headline}
+                </p>
+              )}
+              {[item.source, formatNewsTimestamp(item.publishedAt)].filter(
+                Boolean,
+              ).length > 0 ? (
+                <p className="mt-1 text-xs text-muted">
+                  {[item.source, formatNewsTimestamp(item.publishedAt)]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="border-t border-border/60 py-3 text-sm text-muted">
+          No portfolio headlines available right now.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function formatNewsTimestamp(value?: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
 
 export default function PortfolioPage() {
   const {
@@ -85,34 +234,10 @@ export default function PortfolioPage() {
     schwabReauth,
   } = usePortfolioContext();
 
-  const {
-    sendQuickAction,
-    sendPlaybookAsk,
-    closeAllChatModelMenus,
-  } = useAppChatContext();
-  const { activeSection, setActiveSection } = usePortfolioSection();
+  const { sendQuickAction, closeAllChatModelMenus } = useAppChatContext();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const schwabSuccessNotifiedRef = useRef(false);
-  const [showStrategySetup, setShowStrategySetup] = useState(false);
-  const [strategyDismissed, setStrategyDismissed] = useState(true);
-  const [pendingPortfolioAnalysis, setPendingPortfolioAnalysis] = useState(false);
-  const [portfolioAnalysisLoading, setPortfolioAnalysisLoading] = useState(false);
-  const [portfolioNavigation, setPortfolioNavigation] =
-    useState<PortfolioNavigationRequest | null>(null);
-  const pendingGoToAnalysisRef = useRef<{ forceAnalyze: boolean } | null>(null);
-
-  const handleSectionChange = useCallback(
-    (section: PortfolioSectionId) => {
-      closeAllChatModelMenus();
-      setActiveSection(section);
-    },
-    [closeAllChatModelMenus, setActiveSection],
-  );
-
-  useEffect(() => {
-    setStrategyDismissed(isStrategyOnboardingDismissed());
-  }, []);
 
   useEffect(() => {
     if (schwabSuccessNotifiedRef.current) return;
@@ -121,56 +246,11 @@ export default function PortfolioPage() {
     showToast("Schwab account connected.");
   }, [searchParams, showToast]);
 
-  const startPortfolioAnalysis = useCallback(() => {
-    setPendingPortfolioAnalysis(true);
-    scrollToAnalysisSection(PORTFOLIO_ANALYSIS_SECTION_ID);
-  }, []);
-
-  useEffect(() => {
-    if (!pendingPortfolioAnalysis) return;
-    const timer = window.setTimeout(() => setPendingPortfolioAnalysis(false), 0);
-    return () => window.clearTimeout(timer);
-  }, [pendingPortfolioAnalysis]);
-
-  useEffect(() => {
-    if (activeSection !== "today") return;
-
-    const pending = pendingGoToAnalysisRef.current;
-    if (!pending) return;
-
-    pendingGoToAnalysisRef.current = null;
-    setPortfolioNavigation({
-      token: Date.now(),
-      forceAnalyze: pending.forceAnalyze,
-    });
-    scrollToAnalysisSection(PORTFOLIO_ANALYSIS_SECTION_ID);
-  }, [activeSection]);
-
-  const {
-    catalog,
-    profile: strategyProfile,
-    recommendations: strategyRecommendations,
-    needsOnboarding,
-    loading: strategyLoading,
-    chooseStrategy,
-    completeOnboarding,
-    saveProfile,
-  } = useStrategyContext();
-  const { connect: connectSchwab, connecting: connectingSchwab } = useSchwabConnect();
-  const showStrategyWizard =
-    !!sessionAccessToken &&
-    !strategyLoading &&
-    (needsOnboarding || showStrategySetup) &&
-    catalog.length > 0 &&
-    (!strategyDismissed || showStrategySetup);
-
-  const showStrategyJourney =
-    !!sessionAccessToken &&
-    !!strategyProfile?.onboardingCompletedAt &&
-    !!strategyProfile.primaryStrategy &&
-    !showStrategySetup;
-
-  const localBrief = buildLocalPortfolioBrief(allPositions, account, proactiveAlerts);
+  const localBrief = buildLocalPortfolioBrief(
+    allPositions,
+    account,
+    proactiveAlerts,
+  );
   const seedBrief = accountBrief ?? localBrief;
   const hasLoadedPositions = !loading && allPositions.length > 0;
   const [secondaryPortfolioLoadsReady, setSecondaryPortfolioLoadsReady] =
@@ -191,8 +271,6 @@ export default function PortfolioPage() {
     morningBrief,
     portfolioBrief: fetchedBrief,
     loading: briefLoading,
-    error: briefError,
-    lastUpdated: briefLastUpdated,
     refetch: refetchMorningBrief,
   } = useMorningBrief(sessionAccessToken, {
     enabled: hasLoadedPositions && secondaryPortfolioLoadsReady,
@@ -208,19 +286,6 @@ export default function PortfolioPage() {
   const taxItems = collectTaxAlertItems(
     mergedAlerts,
     recentActivity?.suggestedActions ?? [],
-  );
-
-  const handlePlaybookAsk = useCallback(
-    (action: StrategyNextAction) => {
-      if (!playbookActionAskable(action) || !strategyProfile?.primaryStrategy) return;
-      void sendPlaybookAsk({
-        activeChatKey: "__PORTFOLIO_CHAT__",
-        action,
-        strategy: strategyProfile.primaryStrategy,
-      });
-      scrollToChat();
-    },
-    [sendPlaybookAsk, strategyProfile?.primaryStrategy],
   );
 
   const handleSuggestedAction = useCallback(
@@ -271,43 +336,10 @@ export default function PortfolioPage() {
     [refetchMorningBrief, sessionAccessToken],
   );
 
-  const handleCompleteStrategyOnboarding = useCallback(
-    async (payload: Parameters<typeof completeOnboarding>[0]) => {
-      if (!payload.primaryStrategy) return;
-      clearStrategyOnboardingDismissed();
-      setStrategyDismissed(false);
-      await chooseStrategy(payload.primaryStrategy);
-      await completeOnboarding(payload);
-      setShowStrategySetup(false);
-    },
-    [chooseStrategy, completeOnboarding],
-  );
-
-  const handleDismissStrategyWizard = useCallback(() => {
-    dismissStrategyOnboarding();
-    setStrategyDismissed(true);
-    setShowStrategySetup(false);
-  }, []);
-
   const handleAnalyzePortfolio = useCallback(() => {
-    const forceAnalyze = !hasPortfolioAnalysis(allPositions);
-
-    if (forceAnalyze) {
-      startPortfolioAnalysis();
-    }
-
-    if (activeSection !== "today") {
-      pendingGoToAnalysisRef.current = { forceAnalyze };
-      setActiveSection("today");
-      return;
-    }
-
-    setPortfolioNavigation({
-      token: Date.now(),
-      forceAnalyze,
-    });
-    scrollToAnalysisSection(PORTFOLIO_ANALYSIS_SECTION_ID);
-  }, [activeSection, allPositions, setActiveSection, startPortfolioAnalysis]);
+    closeAllChatModelMenus();
+    handleSuggestedAction("portfolio-review");
+  }, [closeAllChatModelMenus, handleSuggestedAction]);
 
   const handleTaxAlert = useCallback(
     (item: TaxAlertItem) => {
@@ -317,72 +349,30 @@ export default function PortfolioPage() {
   );
 
   const showContent = hasLoadedPositions;
-  const showBriefSection = showContent && sessionAccessToken;
-  const {
-    items: portfolioNewsItems,
-    loading: portfolioNewsLoading,
-    refreshing: portfolioNewsRefreshing,
-    error: portfolioNewsError,
-    lastUpdated: portfolioNewsLastUpdated,
-    refetch: refetchPortfolioNews,
-  } = usePortfolioNews(sessionAccessToken, {
-    enabled: showContent && activeSection === "news",
-  });
+  const { items: portfolioNewsItems, loading: portfolioNewsLoading } =
+    usePortfolioNews(sessionAccessToken, {
+      enabled: showContent && secondaryPortfolioLoadsReady,
+    });
   const attentionQueue = morningBrief?.attentionQueue ?? [];
 
-  const {
-    items: exitAttentionItems,
-    isLoading: exitAttentionLoading,
-  } = usePortfolioExitAttention({
-    accessToken: sessionAccessToken,
-    enabled:
-      showContent && secondaryPortfolioLoadsReady && activeSection === "today",
-    limit: 10,
-  });
+  const { items: exitAttentionItems, isLoading: exitAttentionLoading } =
+    usePortfolioExitAttention({
+      accessToken: sessionAccessToken,
+      enabled: showContent && secondaryPortfolioLoadsReady,
+      limit: 10,
+    });
 
-  const todayBadgeCount = useMemo(
-    () =>
-      countAttentionItems({
-        taxItems,
-        alerts: mergedAlerts,
-        attentionItems: attentionQueue,
-        suggestedActions: recentActivity?.suggestedActions ?? [],
-      }),
-    [attentionQueue, mergedAlerts, recentActivity?.suggestedActions, taxItems],
+  const liquidationValue =
+    account?.securitiesAccount.currentBalances.liquidationValue ?? null;
+  const symbolSummaries = sortSummaries(
+    buildSymbolSummaries(positionMap, liquidationValue),
+    "weight",
+    symbolAlertMap,
   );
-
-  const activityBadgeCount = recentActivity?.recentOrderCount ?? 0;
-
-  const openStrategySetup = useCallback(() => {
-    clearStrategyOnboardingDismissed();
-    setStrategyDismissed(false);
-    setShowStrategySetup(true);
-  }, []);
-
-  const hasStrategyPlaybook =
-    showStrategyJourney && !!strategyProfile?.primaryStrategy;
-  const showPlaybookColumn = hasStrategyPlaybook || !showStrategyJourney;
-  const briefPlaybookPaired = showBriefSection && showPlaybookColumn;
-
-  const strategyPlaybook = hasStrategyPlaybook && strategyProfile?.primaryStrategy && (
-    <StrategyPlaybookPanel
-      className={sectionClass}
-      strategy={strategyProfile.primaryStrategy}
-      accessToken={sessionAccessToken}
-      wheelSymbols={strategyProfile.wheel?.wheelSymbols ?? []}
-      wheelTargetDeltaMin={strategyProfile.wheel?.targetDeltaMin}
-      wheelTargetDeltaMax={strategyProfile.wheel?.targetDeltaMax}
-      wheelDteDays={30}
-      recommendations={strategyRecommendations}
-      loading={strategyLoading}
-      catalogItem={
-        catalog.find((item) => item.id === strategyProfile.primaryStrategy) ?? null
-      }
-      onRunAction={handlePlaybookAsk}
-      onConnectSchwab={() => void connectSchwab()}
-      connectingSchwab={connectingSchwab}
-    />
-  );
+  const sectorWeights =
+    displayBrief?.digest?.sectorWeights ??
+    morningBrief?.digest?.sectorWeights ??
+    [];
 
   return (
     <PageShell className={appStackClass}>
@@ -394,20 +384,6 @@ export default function PortfolioPage() {
       )}
 
       {error && !schwabReauth && <ErrorBanner message={error} />}
-
-      {showStrategyWizard && sessionAccessToken && (
-        <StrategyOnboardingWizard
-          accessToken={sessionAccessToken}
-          catalog={catalog}
-          onSaveDraft={async (payload) => {
-            if (!payload.primaryStrategy) return;
-            await chooseStrategy(payload.primaryStrategy);
-            await saveProfile(payload);
-          }}
-          onComplete={handleCompleteStrategyOnboarding}
-          onClose={handleDismissStrategyWizard}
-        />
-      )}
 
       {!showContent && !loading && (
         <PortfolioOnboarding className={sectionClass} />
@@ -435,167 +411,66 @@ export default function PortfolioPage() {
 
       {showContent && (
         <>
-          {!showStrategyWizard && needsOnboarding && sessionAccessToken && (
-            <PortfolioStrategyNudge
-              className={sectionClass}
-              onStart={openStrategySetup}
-            />
-          )}
-
-          <div className="sticky top-14 z-10 -mx-1 border-b border-border/60 bg-background/95 px-1 py-3 backdrop-blur-md sm:-mx-0">
-            <PortfolioSectionTabBar
-              activeSection={activeSection}
-              onChange={handleSectionChange}
-              badges={{
-                today: todayBadgeCount,
-                activity: activityBadgeCount,
-              }}
-            />
-          </div>
-
-          {activeSection === "today" && (
-            <div
-              id="portfolio-panel-today"
-              role="tabpanel"
-              aria-labelledby="portfolio-tab-today"
-              className={appStackClass}
-            >
-              <PortfolioAttentionSection
-                className={sectionClass}
-                taxItems={taxItems}
-                alerts={mergedAlerts}
-                attentionItems={attentionQueue}
-                suggestedActions={recentActivity?.suggestedActions ?? []}
-                onRunAlert={handleRunAlert}
-                onRunAttentionItem={handleRunAttentionItem}
-                onDismissAttention={handleDismissAttention}
-                onRunTax={handleTaxAlert}
-                onRunActionId={handleSuggestedAction}
-              />
-
-              {!exitAttentionLoading && exitAttentionItems.length > 0 && (
-                <section className={sectionClass} aria-label="Exit guidance attention">
-                  <PortfolioExitAttentionRows items={exitAttentionItems} />
-                </section>
-              )}
-
-              {(showBriefSection || strategyPlaybook || !showStrategyJourney) && (
-                <div
-                  className={cn(
-                    portfolioTodayPairGridClass,
-                    briefPlaybookPaired && portfolioTodayPairGridPairedClass,
-                  )}
-                >
-                  {showBriefSection && (
-                    <PortfolioBriefSection
-                      className={sectionClass}
-                      brief={displayBrief}
-                      changes={morningBrief?.changes}
-                      changesLoading={briefLoading && !morningBrief}
-                      fallbackAlerts={proactiveAlerts}
-                      loading={briefLoading && !displayBrief}
-                      error={displayBrief ? null : briefError}
-                      lastUpdated={briefLastUpdated}
-                      onGoDeeper={handleAnalyzePortfolio}
-                      analyzeLoading={portfolioAnalysisLoading}
-                      hideSuggestedActions
-                    />
-                  )}
-
-                  {strategyPlaybook ??
-                    (!showStrategyJourney ? (
-                      <PortfolioOnboarding className={sectionClass} />
-                    ) : null)}
-                </div>
-              )}
-
-              <AnalysisPanel
-                mode="portfolio"
-                portfolioView="analysis"
-                positions={allPositions}
-                positionMap={positionMap}
-                liquidationValue={
-                  account?.securitiesAccount.currentBalances.liquidationValue
-                }
-                symbolAlertMap={symbolAlertMap}
-                autoStart={pendingPortfolioAnalysis}
-                progressiveDisclosure
-                portfolioNavigation={portfolioNavigation}
-                onLoadingChange={setPortfolioAnalysisLoading}
-                onAskFollowUp={() => scrollToChat()}
-                className={sectionClass}
-              />
+          <section className={cn(sectionClass, "space-y-4")}>
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                Diversification by stock
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                Holdings sorted by portfolio weight.
+              </p>
             </div>
-          )}
-
-          {activeSection === "news" && sessionAccessToken && (
-            <div
-              id="portfolio-panel-news"
-              role="tabpanel"
-              aria-labelledby="portfolio-tab-news"
-            >
-            <PortfolioNewsSection
-              className={sectionClass}
-              items={portfolioNewsItems}
-              loading={portfolioNewsLoading}
-              refreshing={portfolioNewsRefreshing}
-              error={portfolioNewsError}
-              lastUpdated={portfolioNewsLastUpdated}
-              onRefresh={() => void refetchPortfolioNews()}
+            <PortfolioHoldingsTable
+              summaries={symbolSummaries}
+              symbolAlertMap={symbolAlertMap}
             />
-            </div>
-          )}
-
-          {activeSection === "holdings" && (
-            <div
-              id="portfolio-panel-holdings"
-              role="tabpanel"
-              aria-labelledby="portfolio-tab-holdings"
-            >
-            <PageSplit
-              main={
-                <AnalysisPanel
-                  mode="portfolio"
-                  portfolioView="holdings"
-                  positions={allPositions}
-                  positionMap={positionMap}
-                  liquidationValue={
-                    account?.securitiesAccount.currentBalances.liquidationValue
-                  }
-                  symbolAlertMap={symbolAlertMap}
-                  className={sectionClass}
-                />
-              }
-              aside={
-                <PortfolioRiskSection
-                  cashSecuredPutSummary={cashSecuredPutSummary}
-                  assignmentRiskSummary={assignmentRiskSummary}
-                  cashBalance={
-                    account?.securitiesAccount.currentBalances.cashBalance
-                  }
-                  className={sectionClass}
-                />
+            <PortfolioRiskSection
+              cashSecuredPutSummary={cashSecuredPutSummary}
+              assignmentRiskSummary={assignmentRiskSummary}
+              cashBalance={
+                account?.securitiesAccount.currentBalances.cashBalance
               }
             />
-            </div>
-          )}
+          </section>
 
-          {activeSection === "activity" && sessionAccessToken && (
-            <div
-              id="portfolio-panel-activity"
-              role="tabpanel"
-              aria-labelledby="portfolio-tab-activity"
-            >
+          <SectorDiversificationSection sectors={sectorWeights} />
+
+          <PortfolioAttentionSection
+            className={sectionClass}
+            taxItems={taxItems}
+            alerts={mergedAlerts}
+            attentionItems={attentionQueue}
+            suggestedActions={recentActivity?.suggestedActions ?? []}
+            exitItems={exitAttentionLoading ? [] : exitAttentionItems}
+            onRunAlert={handleRunAlert}
+            onRunAttentionItem={handleRunAttentionItem}
+            onDismissAttention={handleDismissAttention}
+            onRunTax={handleTaxAlert}
+            onRunActionId={handleSuggestedAction}
+            compact
+            compactTitle="Optimization suggestions"
+            compactActionLabel="Review with AI"
+            onCompactAction={handleAnalyzePortfolio}
+            maxVisible={5}
+          />
+
+          {sessionAccessToken && (
             <RecentActivitySection
               className={sectionClass}
               accessToken={sessionAccessToken}
               summary={recentActivity}
-              showFullHistory
               onRefresh={() => refreshPositions(true)}
               onRunSuggestedAction={handleSuggestedAction}
+              compact
               hideSuggestedActions
             />
-            </div>
+          )}
+
+          {sessionAccessToken && (
+            <PortfolioNewsPreview
+              items={portfolioNewsItems}
+              loading={portfolioNewsLoading}
+            />
           )}
         </>
       )}

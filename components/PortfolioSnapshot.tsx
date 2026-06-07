@@ -1,23 +1,19 @@
 "use client";
 
-import { AlertTriangle, BriefcaseBusiness, ShieldCheck } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
-import { Badge } from "@/components/ui/Badge";
-import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
-import { KpiStat } from "@/components/ui/KpiStat";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { LoadingRegion } from "@/components/ui/LoadingRegion";
-import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
+import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { type ReactNode, useState } from "react";
 import type {
   CashSecuredPutSummary,
   PortfolioMetrics,
   Position,
   SchwabAccounts,
 } from "@/app/types/schwab";
+import { PortfolioSnapshotHeaderActionsContext } from "@/components/portfolioSnapshotHeaderActions";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
+import { LoadingRegion } from "@/components/ui/LoadingRegion";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { formatSignedUsd, formatUsd } from "@/lib/formatCurrency";
 import { sumOpenProfitLoss } from "@/lib/positionMetrics";
-import { appIconBoxClass, appStatGridClass } from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -39,30 +35,46 @@ function SnapshotSkeleton({ className }: { className?: string }) {
       label="Loading portfolio"
       className={cn("mx-auto w-full", className)}
     >
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="mt-2 h-3 w-48" />
-        </CardHeader>
-        <CardBody spacious>
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <div className="space-y-2">
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="h-10 w-40" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-        </div>
-        <div className={appStatGridClass}>
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-[4.5rem] rounded-lg" />
+      <section className="space-y-5 border-t border-border/60 pt-5">
+        <Skeleton className="h-4 w-28" />
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-5">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-6 w-28" />
+            </div>
           ))}
         </div>
-        </CardBody>
-      </Card>
+      </section>
     </LoadingRegion>
+  );
+}
+
+function BalanceMetric({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "positive" | "negative" | "warning";
+}) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-1 text-base font-semibold tabular-nums text-foreground sm:text-lg",
+          tone === "positive" && "text-success",
+          tone === "negative" && "text-danger",
+          tone === "warning" && "text-warning",
+        )}
+      >
+        {value}
+      </p>
+    </div>
   );
 }
 
@@ -122,50 +134,45 @@ export function PortfolioSnapshot({
         : "negative";
 
   return (
-    <Card className={className} aria-label="Portfolio snapshot">
-      <CardHeader tone={isInCall ? "danger" : "default"}>
-        <CardTitle
-          headingLevel={1}
-          title="My portfolio"
-          description={
-            <>
-              {`${symbols.length} ${symbols.length === 1 ? "symbol" : "symbols"} · ${allPositions.length} ${allPositions.length === 1 ? "position" : "positions"}`}
-              {(briefPending || positionsSyncedAt != null) && (
-                <span className="mt-0.5 block">
-                  <FreshnessLabel
-                    updatedAt={positionsSyncedAt}
-                    pending={briefPending}
-                    pendingLabel="Today's briefing · updating…"
-                  />
-                </span>
-              )}
-            </>
-          }
-          icon={
-            <div className={appIconBoxClass}>
-              <BriefcaseBusiness className="h-4 w-4" aria-hidden />
-            </div>
-          }
-          badge={
-            <>
-              <Badge variant="muted" className="gap-1 px-2 py-0.5">
-                <ShieldCheck className="h-3 w-3 text-accent-strong" aria-hidden />
-                Read-only Schwab
-              </Badge>
-              {isInCall && (
-                <Badge variant="danger" className="gap-1 font-semibold uppercase tracking-wide">
-                  <AlertTriangle className="h-3 w-3" aria-hidden />
-                  In call
-                </Badge>
-              )}
-            </>
-          }
-        />
+    <section
+      className={cn("mx-auto w-full", className)}
+      aria-label="Portfolio snapshot"
+    >
+      <header className="flex flex-col gap-4 border-b border-border/60 pb-4 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+            Portfolio balance
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+            <span>
+              {symbols.length} {symbols.length === 1 ? "symbol" : "symbols"} ·{" "}
+              {allPositions.length}{" "}
+              {allPositions.length === 1 ? "position" : "positions"}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <ShieldCheck className="h-3 w-3" aria-hidden />
+              Read-only Schwab
+            </span>
+            {(briefPending || positionsSyncedAt != null) && (
+              <FreshnessLabel
+                updatedAt={positionsSyncedAt}
+                pending={briefPending}
+                pendingLabel="Updating…"
+              />
+            )}
+            {isInCall && (
+              <span className="inline-flex items-center gap-1 text-danger">
+                <AlertTriangle className="h-3 w-3" aria-hidden />
+                In call
+              </span>
+            )}
+          </div>
+        </div>
         <div
           ref={setHeaderActionsEl}
-          className="flex shrink-0 items-center gap-2"
+          className="flex shrink-0 items-center gap-2 md:pt-1"
         />
-      </CardHeader>
+      </header>
 
       {isInCall && (
         <div className="border-y border-danger/30 bg-danger/5 px-5 py-3 text-sm text-danger">
@@ -179,72 +186,55 @@ export function PortfolioSnapshot({
         </div>
       )}
 
-      <CardBody spacious className="space-y-5">
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <KpiStat
-            variant="hero"
+      <div className="pt-5">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3 xl:grid-cols-6">
+          <BalanceMetric
             label="Total value"
             value={formatUsd(totalValue, { maximumFractionDigits: 0 })}
-            subValue={
-              totalOpenPL != null
-                ? `${formatSignedUsd(totalOpenPL)} open P/L`
-                : undefined
-            }
           />
-          <KpiStat
-            variant="hero"
-            label="Today"
+          <BalanceMetric
+            label="Today P/L"
             value={formatSignedUsd(totalDayPL)}
             tone={dayTone}
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border/70 pt-4 text-xs text-muted md:grid-cols-3 xl:grid-cols-6">
           {totalOpenPL != null && (
-            <div
-              className={cn(
-                "min-w-0 tabular-nums",
-                openTone === "positive" && "text-success",
-                openTone === "negative" && "text-danger",
-              )}
-            >
-              Open P/L {formatSignedUsd(totalOpenPL)}
-            </div>
-          )}
-          {account && cspReserved > 0 && (
-            <div className="min-w-0 tabular-nums text-warning">
-              CSP reserved {formatUsd(cspReserved)}
-            </div>
+            <BalanceMetric
+              label="Open P/L"
+              value={formatSignedUsd(totalOpenPL)}
+              tone={openTone}
+            />
           )}
           {account && cashAfterCsp != null && cspReserved > 0 && (
-            <div className="min-w-0 tabular-nums">
-              Cash after CSP {formatUsd(cashAfterCsp)}
-            </div>
-          )}
-          {account && (
-            <div className="min-w-0 tabular-nums">
-              Liquidation{" "}
-              {formatUsd(balances?.liquidationValue ?? totalValue, {
-                maximumFractionDigits: 0,
-              })}
-            </div>
+            <BalanceMetric
+              label="Cash after CSP"
+              value={formatUsd(cashAfterCsp)}
+            />
           )}
           {balances?.cashBalance != null && (
-            <div className="min-w-0 tabular-nums">
-              Cash {formatUsd(balances.cashBalance)}
-            </div>
+            <BalanceMetric
+              label="Cash"
+              value={formatUsd(balances.cashBalance)}
+            />
           )}
           {balances?.buyingPower != null && (
-            <div className="min-w-0 tabular-nums">
-              Buying power {formatUsd(balances.buyingPower)}
-            </div>
+            <BalanceMetric
+              label="Buying power"
+              value={formatUsd(balances.buyingPower)}
+            />
+          )}
+          {account && cspReserved > 0 && (
+            <BalanceMetric
+              label="CSP reserve"
+              value={formatUsd(cspReserved)}
+              tone="warning"
+            />
           )}
         </div>
-      </CardBody>
+      </div>
 
       <PortfolioSnapshotHeaderActionsContext.Provider value={headerActionsEl}>
         {children}
       </PortfolioSnapshotHeaderActionsContext.Provider>
-    </Card>
+    </section>
   );
 }

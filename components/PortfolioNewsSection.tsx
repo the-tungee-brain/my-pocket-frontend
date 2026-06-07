@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
 import { List, RefreshCw } from "lucide-react";
+import { useMemo } from "react";
 import type { PortfolioHoldingsNewsItem } from "@/app/types/portfolioNews";
 import {
   NewsHeadlinesPanel,
@@ -52,7 +52,10 @@ export function PortfolioNewsSection({
         aria-label="Refresh news"
       >
         <RefreshCw
-          className={cn("h-3.5 w-3.5", (loading || refreshing) && "animate-spin")}
+          className={cn(
+            "h-3.5 w-3.5",
+            (loading || refreshing) && "animate-spin",
+          )}
           aria-hidden
         />
       </IconButton>

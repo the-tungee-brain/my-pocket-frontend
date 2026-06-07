@@ -1,24 +1,24 @@
 "use client";
 
-import Link from "next/link";
-import { useResearchSymbolHeader } from "./ResearchSymbolHeaderContext";
 import {
-  ArrowUpRight,
   ArrowDownRight,
   ArrowLeft,
+  ArrowUpRight,
   BriefcaseBusiness,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { usePortfolioContext } from "@/app/contextSelectors";
+import { AssetTypeBadge } from "@/components/AssetTypeBadge";
+import { CompanyLogo } from "@/components/CompanyLogo";
+import { StrategySymbolBadge } from "@/components/StrategySymbolBadge";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { iconButtonClass } from "@/components/ui/IconButton";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { WatchlistButton } from "@/components/WatchlistButton";
-import { iconButtonClass } from "@/components/ui/IconButton";
-import { usePortfolioContext } from "@/app/contextSelectors";
-import { CompanyLogo } from "@/components/CompanyLogo";
 import { symbolHubPath } from "@/lib/symbolRoutes";
+import { cn } from "@/lib/utils";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
-import { AssetTypeBadge } from "@/components/AssetTypeBadge";
-import { StrategySymbolBadge } from "@/components/StrategySymbolBadge";
+import { useResearchSymbolHeader } from "./ResearchSymbolHeaderContext";
 
 type Props = { symbol: string; compact?: boolean };
 
@@ -44,7 +44,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
 
     return (
       <header
-        className="app-panel flex flex-col gap-4 p-4 md:flex-row md:items-end md:justify-between"
+        className="flex flex-col gap-4 py-2 md:flex-row md:items-end md:justify-between"
         aria-hidden
       >
         <div className="space-y-2">
@@ -105,7 +105,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           {userPositions?.length ? (
             <Link
               href={symbolHubPath(upperSymbol, "position")}
-              className="hidden shrink-0 rounded-full border border-accent/40 bg-accent-muted px-2 py-0.5 text-[10px] font-medium text-accent-strong sm:inline-flex"
+              className="hidden shrink-0 border-b border-border pb-0.5 text-[10px] font-medium text-muted transition hover:text-foreground sm:inline-flex"
             >
               Your position
             </Link>
@@ -141,7 +141,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
   }
 
   return (
-    <header className="app-panel flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+    <header className="flex flex-col gap-4 py-2 md:flex-row md:items-center md:justify-between">
       <div className="min-w-0 max-w-full space-y-1.5">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
           {researchLabel}
@@ -163,7 +163,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
           {userPositions?.length ? (
             <Link
               href={symbolHubPath(upperSymbol, "position")}
-              className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent-muted px-2.5 py-0.5 text-[11px] font-medium text-accent-strong transition hover:bg-accent-muted/80"
+              className="inline-flex items-center gap-1.5 border-b border-border pb-0.5 text-[11px] font-medium text-muted transition hover:text-foreground"
             >
               <BriefcaseBusiness className="h-3 w-3" aria-hidden="true" />
               Your position
@@ -173,7 +173,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
         </div>
       </div>
 
-      <div className="shrink-0 rounded-lg border border-border bg-muted-bg/30 px-3 py-2 text-sm">
+      <div className="shrink-0 text-sm md:text-right">
         <div className="flex items-baseline gap-3">
           <span className="font-mono text-2xl font-semibold tabular-nums">
             ${snapshot.price.toLocaleString()}

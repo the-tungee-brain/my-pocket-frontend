@@ -12,7 +12,7 @@ export function EmergingLeadersHeader({ className }: Props) {
     <header className={cn("space-y-3", className)}>
       <MoversSectionNav />
       <div className="space-y-1">
-        <h1 className="font-mono text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Emerging Leaders
         </h1>
         <p className="text-sm text-muted">

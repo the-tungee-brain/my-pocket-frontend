@@ -1,22 +1,22 @@
 "use client";
 
+import { Command, Search, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
+  type KeyboardEvent,
   useCallback,
   useEffect,
   useId,
   useRef,
   useState,
-  type KeyboardEvent,
 } from "react";
-import { useRouter } from "next/navigation";
-import { Command, Search, X } from "lucide-react";
-import { useSymbolSearch } from "@/app/hooks/useSymbolSearch";
 import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
+import type { TickerSymbolItem } from "@/app/hooks/useSymbolSearch";
+import { useSymbolSearch } from "@/app/hooks/useSymbolSearch";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { rememberAssetType } from "@/lib/researchAssetType";
 import { symbolHubPath } from "@/lib/symbolRoutes";
-import type { TickerSymbolItem } from "@/app/hooks/useSymbolSearch";
 import { cn } from "@/lib/utils";
-import { SkeletonList } from "@/components/ui/Skeleton";
 
 type HeaderSymbolSearchProps = {
   accessToken: string | null | undefined;
@@ -53,6 +53,7 @@ export function HeaderSymbolSearch({
     },
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset the highlighted result when search input/results change.
   useEffect(() => {
     setActiveIndex(-1);
   }, [query, results]);
@@ -105,17 +106,13 @@ export function HeaderSymbolSearch({
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setActiveIndex((index) =>
-        index < results.length - 1 ? index + 1 : 0,
-      );
+      setActiveIndex((index) => (index < results.length - 1 ? index + 1 : 0));
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex((index) =>
-        index > 0 ? index - 1 : results.length - 1,
-      );
+      setActiveIndex((index) => (index > 0 ? index - 1 : results.length - 1));
     }
   };
 
@@ -147,7 +144,7 @@ export function HeaderSymbolSearch({
           aria-controls={showPanel ? listboxId : undefined}
           aria-autocomplete="list"
           className={cn(
-            "h-9 w-full rounded-lg border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/30",
+            "h-9 w-full border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted focus:border-foreground/40 focus:outline-none focus:ring-1 focus:ring-foreground/20",
             "[&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
             showClear && "pr-9",
             "md:pr-8",
@@ -164,15 +161,21 @@ export function HeaderSymbolSearch({
                 setActiveIndex(-1);
                 inputRef.current?.focus();
               }}
-              className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted transition hover:bg-muted-bg hover:text-foreground"
+              className="flex h-5 w-5 shrink-0 items-center justify-center text-muted transition hover:bg-muted-bg hover:text-foreground"
               aria-label="Clear search"
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           ) : null}
-          <kbd className="pointer-events-none hidden h-5 min-w-5 shrink-0 items-center justify-center gap-0.5 rounded border border-border bg-muted-bg px-1 font-mono text-[10px] font-medium leading-none text-muted md:flex">
-            <Command className="size-2.5 shrink-0" strokeWidth={2} aria-hidden="true" />
-            <span className="inline-flex h-2.5 items-center leading-none">K</span>
+          <kbd className="pointer-events-none hidden h-5 min-w-5 shrink-0 items-center justify-center gap-0.5 border border-border bg-transparent px-1 font-mono text-[10px] font-medium leading-none text-muted md:flex">
+            <Command
+              className="size-2.5 shrink-0"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <span className="inline-flex h-2.5 items-center leading-none">
+              K
+            </span>
           </kbd>
         </div>
       </div>
@@ -181,7 +184,7 @@ export function HeaderSymbolSearch({
         <div
           id={listboxId}
           role="listbox"
-          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-y-auto rounded-lg border border-border bg-background py-1 text-sm shadow-lg scrollbar-dark"
+          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-y-auto border border-border bg-background py-1 text-sm shadow-lg scrollbar-dark"
         >
           {isLoading && (
             <SkeletonList

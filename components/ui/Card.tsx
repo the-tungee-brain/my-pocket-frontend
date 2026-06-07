@@ -21,11 +21,11 @@ const surfaceClass: Record<CardSurface, string> = {
   default: appPanelClass,
   subtle: appPanelSubtleClass,
   marketing:
-    "w-full max-w-none overflow-hidden rounded-2xl border border-border bg-background/40 shadow-none",
+    "w-full max-w-none overflow-hidden border-0 bg-transparent shadow-none",
   accent:
-    "w-full max-w-none overflow-hidden rounded-lg border border-accent/30 bg-accent-muted/20 shadow-sm",
+    "w-full max-w-none overflow-hidden border-0 bg-transparent shadow-none",
   accentSoft:
-    "w-full max-w-none overflow-hidden rounded-lg border border-accent/20 bg-accent-muted/40 shadow-sm",
+    "w-full max-w-none overflow-hidden border-0 bg-transparent shadow-none",
 };
 
 export function Card({
@@ -41,7 +41,7 @@ export function Card({
       className={cn(
         surfaceClass[surface],
         interactive &&
-          "transition-colors hover:border-accent/35 hover:bg-surface-elevated/80",
+          "transition-colors hover:border-border hover:bg-surface-elevated",
         className,
       )}
       {...props}
@@ -130,13 +130,15 @@ export function CardTitle({
       {icon}
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <Heading className="font-mono text-xs font-semibold uppercase tracking-wide text-foreground">
+          <Heading className="text-xs font-semibold uppercase tracking-wide text-muted">
             {title}
           </Heading>
           {badge}
         </div>
         {description != null && description !== "" && (
-          <p className="mt-0.5 text-xs leading-snug text-muted">{description}</p>
+          <p className="mt-0.5 text-xs leading-snug text-muted">
+            {description}
+          </p>
         )}
       </div>
     </div>

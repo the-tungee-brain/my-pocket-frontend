@@ -1,13 +1,13 @@
 "use client";
 
-import { forwardRef, type ButtonHTMLAttributes } from "react";
+import { type ButtonHTMLAttributes, forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 export const iconButtonTransitionClass =
   "transition-[color,background-color] duration-200 ease-out";
 
 export const iconButtonClass = [
-  "inline-flex shrink-0 items-center justify-center rounded-md border-0 bg-transparent text-muted",
+  "inline-flex shrink-0 items-center justify-center border-0 bg-transparent text-muted",
   iconButtonTransitionClass,
   "hover:enabled:bg-muted-bg hover:enabled:text-foreground active:enabled:bg-muted-bg/80",
   "disabled:cursor-not-allowed disabled:opacity-40",

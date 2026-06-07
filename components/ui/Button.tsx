@@ -1,12 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { iconButtonTransitionClass } from "@/components/ui/IconButton";
-import { forwardRef, ButtonHTMLAttributes } from "react";
 import { Loader2 } from "lucide-react";
+import { type ButtonHTMLAttributes, forwardRef } from "react";
+import { iconButtonTransitionClass } from "@/components/ui/IconButton";
+import { cn } from "@/lib/utils";
 
 export const compactTextButtonClass =
-  "inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-semibold text-muted transition hover:bg-muted-bg hover:text-foreground";
+  "inline-flex h-7 items-center gap-1 px-2 text-[11px] font-semibold text-muted transition hover:bg-muted-bg hover:text-foreground";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline" | "ghost" | "destructive" | "icon";
@@ -31,16 +31,16 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         className={cn(
           // base
-          "inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors",
+          "inline-flex items-center justify-center gap-2 font-semibold transition-colors",
           "disabled:cursor-not-allowed disabled:opacity-50",
 
           // variants
           variant === "default" &&
-            "bg-foreground text-background hover:opacity-90",
+            "bg-foreground text-background hover:bg-foreground/90",
           variant === "outline" &&
-            "border border-border bg-background hover:bg-muted-bg hover:text-foreground",
+            "border border-border bg-transparent text-foreground hover:bg-muted-bg",
           variant === "ghost" &&
-            "hover:bg-muted-bg hover:text-foreground active:bg-muted-bg/80",
+            "bg-transparent text-foreground hover:bg-muted-bg active:bg-muted-bg/80",
           variant === "icon" &&
             cn(
               "border-0 bg-transparent text-muted",
@@ -51,11 +51,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             "bg-destructive text-destructive-foreground hover:bg-destructive/90",
 
           // sizes
-          size === "xs" && "h-7 px-2 text-[11px] rounded-md",
-          size === "sm" && "h-9 px-3 text-sm rounded-md",
-          size === "default" && "h-10 px-4 text-sm rounded-lg",
-          size === "lg" && "h-12 px-6 text-base rounded-xl",
-          size === "icon" && "h-8 w-8 p-0 rounded-md",
+          size === "xs" && "h-7 px-2 text-[11px]",
+          size === "sm" && "h-9 px-3 text-sm",
+          size === "default" && "h-10 px-4 text-sm",
+          size === "lg" && "h-12 px-6 text-base",
+          size === "icon" && "h-8 w-8 p-0",
 
           className,
         )}

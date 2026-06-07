@@ -1,17 +1,16 @@
 "use client";
 
+import { LayoutGrid, List } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import type { EnrichedNewsItem, Sentiment } from "@/app/hooks/useCompanyNews";
 import type { PortfolioHoldingsNewsItem } from "@/app/types/portfolioNews";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { LoadingStagger, LoadingSurface } from "@/components/ui/ContentLoading";
 import { LoadingRegion } from "@/components/ui/LoadingRegion";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { appTabBarClass, appTabLinkClass } from "@/lib/appUi";
-import { newsHeadlineIconPalette } from "@/lib/newsHeadlineIcon";
-import { cn } from "@/lib/utils";
 import { symbolHubPath } from "@/lib/symbolRoutes";
-import { FileText, LayoutGrid, List, Newspaper } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type HeadlinesView = "list" | "grid";
 export type NewsFeedKind = "official" | "coverage";
@@ -182,27 +181,6 @@ function NewsHeadlineClampedText({
   );
 }
 
-function NewsHeadlineIcon({ item }: { item: NewsHeadlineDisplayItem }) {
-  const palette = newsHeadlineIconPalette(
-    `${item.id}:${item.source ?? ""}:${item.headline}`,
-  );
-  const Icon = item.feedKind === "official" ? FileText : Newspaper;
-
-  return (
-    <div
-      className={cn(
-        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border",
-        palette.bg,
-        palette.border,
-        palette.text,
-      )}
-      aria-hidden
-    >
-      <Icon className="h-4 w-4" aria-hidden />
-    </div>
-  );
-}
-
 function feedKindBadgeClass(kind: NewsFeedKind) {
   return kind === "official"
     ? "border-accent/25 bg-accent-muted/50 text-accent-strong"
@@ -229,7 +207,6 @@ export function NewsHeadlineCard({
 
   const cardInner = (
     <>
-      <NewsHeadlineIcon item={item} />
       <div className="flex min-h-0 w-full max-w-full flex-1 flex-col gap-1.5 overflow-hidden">
         {showFeedKind && kind ? (
           <span
@@ -313,7 +290,7 @@ export function NewsHeadlineCard({
   return (
     <article
       className={cn(
-        "group flex h-full min-h-0 min-w-0 max-w-full gap-3 overflow-hidden rounded-xl border border-border bg-background/60 p-3 transition-colors",
+        "group flex h-full min-h-0 min-w-0 max-w-full gap-3 overflow-hidden border border-border bg-background/60 p-3 transition-colors",
         "hover:border-accent/30 hover:bg-surface-elevated/50",
         view === "grid"
           ? "w-full flex-col items-stretch sm:flex-row sm:items-start @max-headlines/md:flex-col @max-headlines/md:items-stretch"
@@ -407,8 +384,7 @@ export function NewsHeadlinesSkeleton({
   label?: string;
 }) {
   const card = (
-    <div className="flex gap-3 rounded-xl border border-border bg-background/40 p-3">
-      <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+    <div className="flex gap-3 border border-border bg-background/40 p-3">
       <div className="min-w-0 flex-1 space-y-2">
         <Skeleton className="h-4 w-4/5" />
         <Skeleton className="h-3 w-full" />

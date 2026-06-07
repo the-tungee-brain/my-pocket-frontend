@@ -1,14 +1,18 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
 import { ArrowRightLeft, RefreshCw } from "lucide-react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import type {
   RecentActivitySummary,
   RecentOrderEntry,
   RecentOrderLegEntry,
   SuggestedAnalysisAction,
 } from "@/app/types/schwab";
+import { Button } from "@/components/ui/Button";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
 import { fetchRecentOrders } from "@/lib/apiClient";
+import { findQuickAction } from "@/lib/quickActions";
 import {
   formatLegContractLabel,
   formatLegFillPrice,
@@ -16,22 +20,18 @@ import {
   formatLegQuantity,
   formatLegTotalCash,
   formatOrderContractLabel,
-  formatOrderFillTime,
   formatOrderFillPrice,
+  formatOrderFillTime,
   formatOrderPremiumPerContract,
   formatOrderQuantity,
-  formatOrderTotalCash,
   formatOrderSide,
   formatOrderStrategyBadge,
+  formatOrderTotalCash,
   groupOrdersForDisplay,
   isMultiLegOrder,
   pickSuggestedActions,
   suggestedActionToQuickActionId,
 } from "@/lib/recentOrders";
-import { findQuickAction } from "@/lib/quickActions";
-import { FreshnessLabel } from "@/components/ui/FreshnessLabel";
-import { Button } from "@/components/ui/Button";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -184,9 +184,7 @@ function OrderRows({
               <th className="px-4 py-2.5 text-right">Fill</th>
               <th className="px-4 py-2.5 text-right">Premium</th>
               <th className="px-4 py-2.5 text-right">Total cash</th>
-              {!compact && (
-                <th className="px-4 py-2.5 text-left">Type</th>
-              )}
+              {!compact && <th className="px-4 py-2.5 text-left">Type</th>}
             </tr>
           </thead>
           <tbody>
@@ -391,7 +389,10 @@ function ActivityFilters({
                 type="button"
                 disabled={disabled}
                 onClick={() => onDaysBackChange(days)}
-                className={cn(symbolPillClass(active), disabled && "opacity-60")}
+                className={cn(
+                  symbolPillClass(active),
+                  disabled && "opacity-60",
+                )}
               >
                 {days}d
               </button>
@@ -408,10 +409,7 @@ function ActivityFilters({
               type="button"
               disabled={disabled}
               onClick={() => onSymbolFilterChange(null)}
-              className={cn(
-                symbolPillClass(symbolFilter == null),
-                "w-full",
-              )}
+              className={cn(symbolPillClass(symbolFilter == null), "w-full")}
             >
               All
             </button>
@@ -426,7 +424,9 @@ function ActivityFilters({
                   className={cn(symbolPillClass(active), "w-full")}
                 >
                   <span className="font-mono">{sym}</span>
-                  <span className="tabular-nums text-[10px] opacity-80">{count}</span>
+                  <span className="tabular-nums text-[10px] opacity-80">
+                    {count}
+                  </span>
                 </button>
               );
             })}
@@ -527,6 +527,7 @@ export function RecentActivitySection({
   const usesPagination = Boolean(symbol || showFullHistory) && !compact;
   const totalPages = Math.max(1, Math.ceil(totalOrders / ACTIVITY_PAGE_SIZE));
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset pagination when the selected activity scope changes.
   useEffect(() => {
     setPage(1);
   }, [daysBack, symbolFilter, symbol]);
@@ -617,23 +618,26 @@ export function RecentActivitySection({
       : `${totalOrders || displayOrders.length} filled orders · last ${daysBack} days`;
   })();
 
-  if (!symbol && !summary && !showFullHistory && !loading && !displayOrders.length) {
+  if (
+    !symbol &&
+    !summary &&
+    !showFullHistory &&
+    !loading &&
+    !displayOrders.length
+  ) {
     return null;
   }
 
   return (
     <section
       className={cn(
-        "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm",
+        "mx-auto w-full overflow-hidden border-t border-border/60 pt-4",
         className,
       )}
       aria-label={title}
     >
-      <div className="flex items-start justify-between gap-3 border-b border-border bg-surface-elevated/50 px-4 py-3">
+      <div className="flex items-start justify-between gap-3 border-b border-border/60 pb-3">
         <div className="flex min-w-0 items-start gap-2.5">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
-            <ArrowRightLeft className="h-4 w-4" aria-hidden />
-          </div>
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-foreground">{title}</h2>
             <p className="text-[11px] text-muted">{subtitle}</p>
@@ -682,13 +686,13 @@ export function RecentActivitySection({
       )}
 
       {error && (
-        <div className="px-4 pt-3">
+        <div className="pt-3">
           <ErrorBanner message={error} onRetry={() => void load(true)} />
         </div>
       )}
 
       {loading && !displayOrders.length ? (
-        <div className="space-y-2 px-4 py-4">
+        <div className="space-y-2 py-4">
           {[1, 2, 3].map((row) => (
             <div
               key={row}
@@ -697,8 +701,10 @@ export function RecentActivitySection({
           ))}
         </div>
       ) : displayOrders.length === 0 ? (
-        <div className="px-4 py-8 text-center">
-          <p className="text-sm font-medium text-foreground">No fills in this range</p>
+        <div className="py-8 text-center">
+          <p className="text-sm font-medium text-foreground">
+            No fills in this range
+          </p>
           <p className="mt-1 text-xs text-muted">
             {symbolFilter
               ? `No filled orders for ${symbolFilter} in the last ${daysBack} days.`

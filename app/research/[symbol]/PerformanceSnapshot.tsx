@@ -1,8 +1,8 @@
 "use client";
 
 import { BarChart3 } from "lucide-react";
-import { usePerformanceSnapshot } from "@/app/hooks/usePerformance";
 import { useSession } from "next-auth/react";
+import { usePerformanceSnapshot } from "@/app/hooks/usePerformance";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { ResearchSectionSkeleton, Skeleton } from "@/components/ui/Skeleton";
@@ -51,7 +51,7 @@ export function PerformanceSnapshot({ symbol, className }: Props) {
           <p className="text-sm leading-relaxed text-foreground">
             {perf.trendLabel}
           </p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 rounded-xl border border-border bg-background/40 p-3 text-xs">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-3 text-xs sm:grid-cols-3">
             {(
               [
                 ["1 month", perf.oneMonth],
@@ -72,7 +72,9 @@ export function PerformanceSnapshot({ symbol, className }: Props) {
               </div>
             ))}
           </div>
-          <p className="text-xs text-foreground">{perf.volatilityNote}</p>
+          <p className="text-xs leading-relaxed text-muted">
+            {perf.volatilityNote}
+          </p>
         </div>
       )}
     </ResearchSectionCard>

@@ -1,30 +1,30 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import type { ReactNode } from "react";
 import {
+  Bell,
   BriefcaseBusiness,
   CircleDollarSign,
   Link2,
   Search,
-  Star,
   Sprout,
+  Star,
   TrendingUp,
-  Bell,
   X,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import type { ReactNode } from "react";
+import { useToast } from "@/app/contexts/ToastContext";
 import { useMomentumBreakoutFeatureFlags } from "@/app/hooks/useMomentumBreakoutFeatureFlags";
 import { useWatchlist } from "@/app/hooks/useWatchlist";
-import { useToast } from "@/app/contexts/ToastContext";
-import { cn } from "@/lib/utils";
-import { IconButton } from "./ui/IconButton";
-import { SkeletonList } from "./ui/Skeleton";
-import { EmptyState } from "./ui/EmptyState";
-import { AlertBadge } from "./AlertBadge";
 import type { SymbolAlertSummary } from "@/lib/intelligence";
 import { symbolHubPath } from "@/lib/symbolRoutes";
+import { cn } from "@/lib/utils";
+import { AlertBadge } from "./AlertBadge";
+import { EmptyState } from "./ui/EmptyState";
+import { IconButton } from "./ui/IconButton";
+import { SkeletonList } from "./ui/Skeleton";
 
 export type MainView = "portfolio" | "symbol" | "research";
 
@@ -41,9 +41,9 @@ interface NavListProps {
 }
 
 const navItemActive =
-  "border border-border bg-muted-bg text-foreground shadow-sm";
+  "border-l border-foreground bg-transparent text-foreground";
 const navItemInactive =
-  "border border-transparent text-muted hover:bg-muted-bg/60 hover:text-foreground";
+  "border-l border-transparent text-muted hover:bg-muted-bg hover:text-foreground";
 
 const navSectionHeaderClass = "mb-1 px-1";
 const navSectionTitleClass =
@@ -51,13 +51,13 @@ const navSectionTitleClass =
 const navSectionSubtitleClass = "mt-0.5 text-[10px] text-muted/80";
 const navSymbolListClass = "space-y-1 overflow-y-auto px-1";
 const navSymbolRowButtonClass =
-  "flex w-full min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-xs font-medium transition-all";
+  "flex w-full min-h-10 items-center gap-2.5 px-2.5 text-left text-xs font-medium transition-colors";
 const navSymbolLabelClass = "min-w-0 flex-1 truncate font-mono text-xs";
 /** Space for trailing icon actions (search, remove, alert badge). */
 const navSymbolRowTrailingInset = "pr-[5.25rem]";
 const navSymbolRowTrailingInsetCompact = "pr-11";
 const navSymbolIconClass = (active: boolean) =>
-  cn("h-3.5 w-3.5 shrink-0", active ? "text-accent-strong" : "text-muted");
+  cn("h-3.5 w-3.5 shrink-0", active ? "text-foreground" : "text-muted");
 
 export function NavList({
   loading,
@@ -96,12 +96,7 @@ export function NavList({
   const activeResearchSymbol = hubSymbol;
 
   return (
-    <div
-      className={cn(
-        "flex h-full flex-col rounded-2xl bg-secondary/60 py-3",
-        containerClassName,
-      )}
-    >
+    <div className={cn("flex h-full flex-col py-1", containerClassName)}>
       <button
         type="button"
         disabled={loading}
@@ -112,17 +107,15 @@ export function NavList({
           router.replace("/portfolio");
         }}
         className={cn(
-          "group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
+          "group flex w-full items-center gap-2 px-2 py-2 text-left text-xs font-medium transition-colors",
           isPortfolio ? navItemActive : navItemInactive,
           portfolioButtonClassName,
         )}
       >
         <span
           className={cn(
-            "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
-            isPortfolio
-              ? "border-accent/60 bg-accent-muted text-accent-strong"
-              : "border-border bg-muted-bg text-muted",
+            "flex h-6 w-6 items-center justify-center text-[11px] font-semibold",
+            isPortfolio ? "text-foreground" : "text-muted",
           )}
         >
           <BriefcaseBusiness className="h-3.5 w-3.5" aria-hidden="true" />
@@ -131,9 +124,6 @@ export function NavList({
           <span>My portfolio</span>
           <span className="truncate text-[10px] text-muted">Overview</span>
         </div>
-        {isPortfolio && (
-          <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
-        )}
       </button>
 
       <button
@@ -146,16 +136,14 @@ export function NavList({
           router.replace("/research");
         }}
         className={cn(
-          "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
+          "group mb-1 flex w-full items-center gap-2 px-2 py-2 text-left text-xs font-medium transition-colors",
           isResearch ? navItemActive : navItemInactive,
         )}
       >
         <span
           className={cn(
-            "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
-            isResearch
-              ? "border-accent/60 bg-accent-muted text-accent-strong"
-              : "border-border bg-muted-bg text-muted",
+            "flex h-6 w-6 items-center justify-center text-[11px] font-semibold",
+            isResearch ? "text-foreground" : "text-muted",
           )}
         >
           <Search className="h-3.5 w-3.5" aria-hidden="true" />
@@ -166,9 +154,6 @@ export function NavList({
             Company snapshots
           </span>
         </div>
-        {isResearch && !isWatchlistPage && (
-          <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
-        )}
       </button>
 
       <button
@@ -181,16 +166,14 @@ export function NavList({
           router.replace("/watchlist");
         }}
         className={cn(
-          "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
+          "group mb-1 flex w-full items-center gap-2 px-2 py-2 text-left text-xs font-medium transition-colors",
           isWatchlistPage ? navItemActive : navItemInactive,
         )}
       >
         <span
           className={cn(
-            "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
-            isWatchlistPage
-              ? "border-accent/60 bg-accent-muted text-accent-strong"
-              : "border-border bg-muted-bg text-muted",
+            "flex h-6 w-6 items-center justify-center text-[11px] font-semibold",
+            isWatchlistPage ? "text-foreground" : "text-muted",
           )}
         >
           <Star className="h-3.5 w-3.5" aria-hidden="true" />
@@ -201,9 +184,6 @@ export function NavList({
             Folders & live quotes
           </span>
         </div>
-        {isWatchlistPage && (
-          <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
-        )}
       </button>
 
       <button
@@ -216,16 +196,14 @@ export function NavList({
           router.replace("/top-movers");
         }}
         className={cn(
-          "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
+          "group mb-1 flex w-full items-center gap-2 px-2 py-2 text-left text-xs font-medium transition-colors",
           isTopMovers ? navItemActive : navItemInactive,
         )}
       >
         <span
           className={cn(
-            "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
-            isTopMovers
-              ? "border-accent/60 bg-accent-muted text-accent-strong"
-              : "border-border bg-muted-bg text-muted",
+            "flex h-6 w-6 items-center justify-center text-[11px] font-semibold",
+            isTopMovers ? "text-foreground" : "text-muted",
           )}
         >
           <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" />
@@ -236,9 +214,6 @@ export function NavList({
             Pipeline rankings
           </span>
         </div>
-        {isTopMovers && (
-          <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
-        )}
       </button>
 
       <button
@@ -251,16 +226,14 @@ export function NavList({
           router.replace("/emerging-leaders");
         }}
         className={cn(
-          "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
+          "group mb-1 flex w-full items-center gap-2 px-2 py-2 text-left text-xs font-medium transition-colors",
           isEmergingLeaders ? navItemActive : navItemInactive,
         )}
       >
         <span
           className={cn(
-            "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
-            isEmergingLeaders
-              ? "border-accent/60 bg-accent-muted text-accent-strong"
-              : "border-border bg-muted-bg text-muted",
+            "flex h-6 w-6 items-center justify-center text-[11px] font-semibold",
+            isEmergingLeaders ? "text-foreground" : "text-muted",
           )}
         >
           <Sprout className="h-3.5 w-3.5" aria-hidden="true" />
@@ -271,9 +244,6 @@ export function NavList({
             Pre-breakout setups
           </span>
         </div>
-        {isEmergingLeaders && (
-          <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
-        )}
       </button>
 
       {mbFlags.alertsEnabled && (
@@ -287,16 +257,14 @@ export function NavList({
             router.replace("/research/momentum-breakout-alerts");
           }}
           className={cn(
-            "group mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium transition-all",
+            "group mb-1 flex w-full items-center gap-2 px-2 py-2 text-left text-xs font-medium transition-colors",
             isMomentumBreakoutAlerts ? navItemActive : navItemInactive,
           )}
         >
           <span
             className={cn(
-              "flex h-6 w-6 items-center justify-center rounded-lg border text-[11px] font-semibold",
-              isMomentumBreakoutAlerts
-                ? "border-accent/60 bg-accent-muted text-accent-strong"
-                : "border-border bg-muted-bg text-muted",
+              "flex h-6 w-6 items-center justify-center text-[11px] font-semibold",
+              isMomentumBreakoutAlerts ? "text-foreground" : "text-muted",
             )}
           >
             <Bell className="h-3.5 w-3.5" aria-hidden="true" />
@@ -307,9 +275,6 @@ export function NavList({
               Active alerts & history
             </span>
           </div>
-          {isMomentumBreakoutAlerts && (
-            <span className="h-1.5 w-1.5 rounded-full bg-accent-strong" />
-          )}
         </button>
       )}
 
@@ -346,7 +311,7 @@ export function NavList({
             action={
               <Link
                 href="/settings"
-                className="inline-flex text-xs font-medium text-accent-strong transition hover:underline"
+                className="inline-flex text-xs font-medium text-foreground transition hover:underline"
               >
                 Go to Settings
               </Link>
@@ -393,7 +358,7 @@ export function NavList({
                       setSelectedSymbol(null);
                       router.replace(symbolHubPath(sym, "overview"));
                     }}
-                    className="hover:enabled:text-accent-strong"
+                    className="hover:enabled:text-foreground"
                   >
                     <Search className="h-3.5 w-3.5" aria-hidden="true" />
                   </IconButton>
@@ -427,7 +392,7 @@ export function NavList({
         <p className={navSectionSubtitleClass}>
           <Link
             href="/watchlist"
-            className="text-accent-strong/90 transition hover:text-accent-strong hover:underline"
+            className="text-foreground/90 transition hover:text-foreground hover:underline"
           >
             Folders & quotes
           </Link>
@@ -440,7 +405,7 @@ export function NavList({
           {!isResearch && (
             <Link
               href="/research"
-              className="mt-2 inline-flex text-xs font-medium text-accent-strong transition hover:underline"
+              className="mt-2 inline-flex text-xs font-medium text-foreground transition hover:underline"
             >
               Go to Research
             </Link>
@@ -459,7 +424,7 @@ export function NavList({
                 icon={Star}
                 iconClassName={cn(
                   navSymbolIconClass(isActive),
-                  isActive && "fill-accent-strong",
+                  isActive && "fill-foreground",
                 )}
                 trailingInset={navSymbolRowTrailingInsetCompact}
                 onSelect={() => {

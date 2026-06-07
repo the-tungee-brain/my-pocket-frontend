@@ -1,8 +1,8 @@
 "use client";
 
+import { BriefcaseBusiness, Search, Settings, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, Search, Settings, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -39,7 +39,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-md md:hidden"
+      className="safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background md:hidden"
       aria-label="Primary"
     >
       <div className="mx-auto grid max-w-lg grid-cols-4">
@@ -53,9 +53,7 @@ export function MobileBottomNav() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center gap-1 px-3 py-2.5 text-[11px] font-medium transition",
-                active
-                  ? "text-accent-strong"
-                  : "text-muted hover:text-foreground",
+                active ? "text-foreground" : "text-muted hover:text-foreground",
               )}
               aria-current={active ? "page" : undefined}
             >

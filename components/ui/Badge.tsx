@@ -15,12 +15,12 @@ type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
 };
 
 const variantClass: Record<BadgeVariant, string> = {
-  default: "border-border bg-muted-bg text-foreground",
-  accent: "border-accent/30 bg-accent-muted text-accent-strong",
+  default: "border-border bg-transparent text-foreground",
+  accent: "border-border bg-transparent text-foreground",
   success: "border-success/30 bg-success/10 text-success",
   warning: "border-warning/30 bg-warning-muted text-warning",
   danger: "border-danger/30 bg-danger/10 text-danger",
-  muted: "border-border bg-secondary/80 text-muted",
+  muted: "border-border bg-transparent text-muted",
 };
 
 export function Badge({
@@ -32,7 +32,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full items-center rounded-md border px-2 py-0.5 text-[10px] font-medium tracking-wide",
+        "inline-flex max-w-full items-center border px-2 py-0.5 text-[10px] font-medium tracking-wide",
         variantClass[variant],
         className,
       )}

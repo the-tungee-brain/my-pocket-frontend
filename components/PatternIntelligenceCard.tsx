@@ -3,6 +3,7 @@
 import { CircleHelp, Sparkles } from "lucide-react";
 import type {
   ChartAnalystSummary,
+  ChartIntelligenceZone,
   PatternIntelligence,
   PrimaryCandlestickPattern,
 } from "@/app/types/intelligence";
@@ -20,7 +21,6 @@ import {
   outlookTone,
   patternIntelligencePatternSubtitle,
   patternIntelligencePrimaryPattern,
-  signalToneBorderClass,
   signalToneClass,
 } from "@/lib/patternIntelligence";
 import { cn } from "@/lib/utils";
@@ -73,32 +73,173 @@ function CompactPatternLine({
   );
 }
 
+function formatMoney(value: number | null | undefined): string {
+  if (typeof value !== "number" || !Number.isFinite(value))
+    return "Unavailable";
+  return `$${value.toFixed(2)}`;
+}
+
+function formatLevelRole(role: ChartIntelligenceZone["levelRole"]): string {
+  if (role === "actionable") return "Actionable";
+  if (role === "majorHistorical") return "Major";
+  return "Context";
+}
+
+function levelRoleClass(role: ChartIntelligenceZone["levelRole"]): string {
+  if (role === "actionable") return "text-success";
+  if (role === "majorHistorical") return "text-muted";
+  return "text-accent-strong";
+}
+
+function formatZoneState(zone: ChartIntelligenceZone): string {
+  switch (zone.zoneState) {
+    case "insideZone":
+      return "Price inside zone";
+    case "brokenAbove":
+      return "Broken above";
+    case "brokenBelow":
+      return "Broken below";
+    case "belowPrice":
+      return "Below price";
+    case "abovePrice":
+      return "Above price";
+    default:
+      return "Chart context";
+  }
+}
+
+function zoneDisplayPrice(zone: ChartIntelligenceZone): number | null {
+  if (
+    typeof zone.displayLevel === "number" &&
+    Number.isFinite(zone.displayLevel)
+  ) {
+    return zone.displayLevel;
+  }
+  if (typeof zone.midpoint === "number" && Number.isFinite(zone.midpoint)) {
+    return zone.midpoint;
+  }
+  if (
+    typeof zone.priceLow === "number" &&
+    Number.isFinite(zone.priceLow) &&
+    typeof zone.priceHigh === "number" &&
+    Number.isFinite(zone.priceHigh)
+  ) {
+    return (zone.priceLow + zone.priceHigh) / 2;
+  }
+  return null;
+}
+
+function LevelRow({
+  title,
+  zone,
+}: {
+  title: string;
+  zone: ChartIntelligenceZone;
+}) {
+  const role = formatLevelRole(zone.levelRole);
+  const state = formatZoneState(zone);
+  const displayPrice = zoneDisplayPrice(zone);
+  const mechanics: string[] = [];
+  if (zone.actionableFor?.tradeStop) mechanics.push("Trade stop");
+  if (zone.actionableFor?.tradeTarget) mechanics.push("Trade target");
+  if (zone.actionableFor?.breakoutTrigger && zone.breakoutLevel != null) {
+    mechanics.push(`Breakout ${formatMoney(zone.breakoutLevel)}`);
+  }
+
+  return (
+    <div className="py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+          {title}
+        </p>
+        <span
+          className={cn(
+            "text-[10px] font-semibold uppercase tracking-wide",
+            levelRoleClass(zone.levelRole),
+          )}
+        >
+          {role}
+        </span>
+      </div>
+      <p className="mt-1 font-mono text-sm font-semibold text-foreground">
+        {formatMoney(displayPrice)}
+      </p>
+      <p className="mt-1 text-xs text-muted">
+        {state}
+        {zone.distancePctFromCurrent != null
+          ? ` · ${zone.distancePctFromCurrent.toFixed(1)}% from price`
+          : ""}
+      </p>
+      {mechanics.length ? (
+        <p className="mt-1 text-xs font-medium text-foreground">
+          {mechanics.join(" · ")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function ChartLevelsSection({
+  supports,
+  resistances,
+}: {
+  supports: ChartIntelligenceZone[];
+  resistances: ChartIntelligenceZone[];
+}) {
+  const rows = [
+    ...supports.slice(0, 3).map((zone, index) => ({
+      key: `support-${index}`,
+      title: `Support ${index + 1}`,
+      zone,
+    })),
+    ...resistances.slice(0, 3).map((zone, index) => ({
+      key: `resistance-${index}`,
+      title: `Resistance ${index + 1}`,
+      zone,
+    })),
+  ];
+
+  if (!rows.length) return null;
+
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+        Chart levels
+      </p>
+      <div className="mt-2 grid divide-y divide-border/60 md:grid-cols-2 md:divide-x md:divide-y-0">
+        {rows.map(({ key, title, zone }) => (
+          <div key={key} className="md:px-3 first:md:pl-0">
+            <LevelRow title={title} zone={zone} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AnalystSummaryBody({
   summary,
   isBenchmark,
   benchmarkNotice,
   pattern,
   asOfDate,
+  supports,
+  resistances,
 }: {
   summary: ChartAnalystSummary;
   isBenchmark: boolean;
   benchmarkNotice: string;
   pattern: PrimaryCandlestickPattern | null;
   asOfDate: string;
+  supports: ChartIntelligenceZone[];
+  resistances: ChartIntelligenceZone[];
 }) {
   const { outlook, keyLevel, whyThisOutlook, thesis } = summary;
   const tone = outlookTone(outlook);
 
   return (
     <>
-      <div
-        className={cn(
-          "rounded-xl border p-4",
-          isBenchmark
-            ? "border-border bg-background/40"
-            : signalToneBorderClass[tone],
-        )}
-      >
+      <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
           Chart structure
         </p>
@@ -122,7 +263,7 @@ function AnalystSummaryBody({
       </div>
 
       {keyLevel.available !== false && keyLevel.price != null ? (
-        <div className="rounded-xl border border-border bg-background/40 p-4">
+        <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
             Key level
           </p>
@@ -135,8 +276,10 @@ function AnalystSummaryBody({
         </div>
       ) : null}
 
+      <ChartLevelsSection supports={supports} resistances={resistances} />
+
       {whyThisOutlook.length > 0 ? (
-        <div className="rounded-xl border border-border bg-background/30 p-4">
+        <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
             Why this chart read
           </p>
@@ -162,7 +305,7 @@ function AnalystSummaryBody({
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-border bg-background/40 p-4">
+      <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
           Structure thesis
         </p>
@@ -209,6 +352,8 @@ export function PatternIntelligenceCard({ intelligence, className }: Props) {
           benchmarkNotice={benchmarkNotice}
           pattern={primaryPattern}
           asOfDate={intelligence.asOfDate}
+          supports={intelligence.chartIntelligence?.supportZones ?? []}
+          resistances={intelligence.chartIntelligence?.resistanceZones ?? []}
         />
       </div>
     </ResearchSectionCard>

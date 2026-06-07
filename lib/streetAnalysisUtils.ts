@@ -20,18 +20,14 @@ export function formatYahooDataAsOf(
   });
 }
 
-export function yahooEstimatesAttribution(
-  dataAsOf?: string | null,
-): string {
+export function yahooEstimatesAttribution(dataAsOf?: string | null): string {
   const asOf = formatYahooDataAsOf(dataAsOf);
   return asOf
     ? `${ANALYST_DATA_ATTRIBUTION} · as of ${asOf}`
     : ANALYST_DATA_ATTRIBUTION;
 }
 
-export function yahooFundProfileAttribution(
-  dataAsOf?: string | null,
-): string {
+export function yahooFundProfileAttribution(dataAsOf?: string | null): string {
   const base = "Fund profile from Yahoo Finance";
   const asOf = formatYahooDataAsOf(dataAsOf);
   return asOf ? `${base} · as of ${asOf}` : base;
@@ -59,24 +55,29 @@ export function formatPremiumDiscountToTarget(
 ): string {
   if (upsideToMeanPct != null && !Number.isNaN(upsideToMeanPct)) {
     if (upsideToMeanPct >= 0.5) {
-      return `${upsideToMeanPct.toFixed(1)}% below mean target`;
+      return `about ${upsideToMeanPct.toFixed(1)}% above current price`;
     }
     if (upsideToMeanPct <= -0.5) {
-      return `${Math.abs(upsideToMeanPct).toFixed(1)}% above mean target`;
+      return `about ${Math.abs(upsideToMeanPct).toFixed(1)}% below current price`;
     }
-    return "At mean target";
+    return "near current price";
   }
-  if (current == null || mean == null || mean === 0) return "—";
-  const pct = ((current - mean) / mean) * 100;
-  if (pct <= -0.5) return `${Math.abs(pct).toFixed(1)}% below mean target`;
-  if (pct >= 0.5) return `${pct.toFixed(1)}% above mean target`;
-  return "At mean target";
+  if (current == null || mean == null || current === 0) return "—";
+  const pct = ((mean - current) / current) * 100;
+  if (pct >= 0.5) return `about ${pct.toFixed(1)}% above current price`;
+  if (pct <= -0.5) {
+    return `about ${Math.abs(pct).toFixed(1)}% below current price`;
+  }
+  return "near current price";
 }
 
-export function formatEstimateRange(estimate: PeriodEstimate | null | undefined): string {
+export function formatEstimateRange(
+  estimate: PeriodEstimate | null | undefined,
+): string {
   if (!estimate?.avg) return "—";
   const low = estimate.low != null ? formatCompactNumber(estimate.low) : null;
-  const high = estimate.high != null ? formatCompactNumber(estimate.high) : null;
+  const high =
+    estimate.high != null ? formatCompactNumber(estimate.high) : null;
   const avg = formatCompactNumber(estimate.avg);
   if (low && high) return `${low} – ${high} (avg ${avg})`;
   return avg;
@@ -85,13 +86,16 @@ export function formatEstimateRange(estimate: PeriodEstimate | null | undefined)
 export function formatCompactNumber(value: number): string {
   const abs = Math.abs(value);
   const sign = value < 0 ? "-" : "";
-  if (abs >= 1_000_000_000) return `${sign}$${(abs / 1_000_000_000).toFixed(2)}B`;
+  if (abs >= 1_000_000_000)
+    return `${sign}$${(abs / 1_000_000_000).toFixed(2)}B`;
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
   if (abs < 10) return `${sign}$${abs.toFixed(2)}`;
   return `${sign}$${abs.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
-export function formatEstimateGrowth(pct: number | null | undefined): string | null {
+export function formatEstimateGrowth(
+  pct: number | null | undefined,
+): string | null {
   if (pct == null || Number.isNaN(pct)) return null;
   const prefix = pct >= 0 ? "+" : "";
   return `${prefix}${pct.toFixed(1)}% YoY`;

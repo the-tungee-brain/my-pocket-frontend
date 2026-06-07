@@ -1,10 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSession, signOut } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Check,
@@ -18,22 +13,31 @@ import {
   Trash2,
   TrendingUp,
 } from "lucide-react";
-import { SchwabConnectionSettings } from "@/components/SchwabConnectionSettings";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useStrategyContext } from "@/app/contexts/StrategyContext";
+import { useAccountPlan } from "@/app/hooks/useAccountPlan";
+import { useDeleteAccount } from "@/app/hooks/useDeleteAccount";
+import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
+import {
+  type ThemePreference,
+  useThemePreference,
+} from "@/app/hooks/useThemePreference";
+import type { InvestmentStrategy } from "@/app/types/strategy";
 import { AccountPlanCard } from "@/components/AccountPlanCard";
+import { PageShell } from "@/components/PageShell";
+import { SchwabConnectionSettings } from "@/components/SchwabConnectionSettings";
 import {
   SettingsSectionTabBar,
   type SettingsTabId,
 } from "@/components/SettingsSectionTabBar";
-import { useStrategyContext } from "@/app/contexts/StrategyContext";
-import { useSchwabStatus } from "@/app/hooks/useSchwabStatus";
-import { useAccountPlan } from "@/app/hooks/useAccountPlan";
-import { useDeleteAccount } from "@/app/hooks/useDeleteAccount";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import type { InvestmentStrategy } from "@/app/types/strategy";
 import type { StrategyFormValues } from "@/lib/strategyProfileForm";
-import { PageShell } from "@/components/PageShell";
 import { cn } from "@/lib/utils";
 
 const STRATEGY_ICONS: Record<InvestmentStrategy, typeof RefreshCw> = {
@@ -75,14 +79,11 @@ export function SettingsPageContent() {
   const accessToken = session?.accessToken;
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<SettingsTabId>("connection");
+  const { preference: themePreference, setPreference: setThemePreference } =
+    useThemePreference();
 
-  const {
-    catalog,
-    profile,
-    loading,
-    error,
-    saveStrategySettings,
-  } = useStrategyContext();
+  const { catalog, profile, loading, error, saveStrategySettings } =
+    useStrategyContext();
 
   const { authorized, loading: schwabLoading } = useSchwabStatus();
   const { plan, loading: planLoading } = useAccountPlan(accessToken);
@@ -237,11 +238,19 @@ export function SettingsPageContent() {
       )}
 
       {activeTab === "account" && (
-        <section aria-labelledby="settings-account-heading" className="space-y-4">
+        <section
+          aria-labelledby="settings-account-heading"
+          className="space-y-4"
+        >
           <SettingsSectionHeader
             id="settings-account-heading"
             title="Account & privacy"
             description="Your sign-in, Tomcrest plan, AI access, and session controls."
+          />
+
+          <AppearancePreference
+            preference={themePreference}
+            onChange={setThemePreference}
           />
 
           {accountEmail && (
@@ -271,62 +280,65 @@ export function SettingsPageContent() {
 
           <Card surface="subtle" className="mx-0">
             <CardBody className="p-4 sm:p-5">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted-bg text-muted">
-                <Shield className="h-4 w-4" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground">
-                  Security & data access
-                </p>
-                <p className="mt-0.5 text-sm text-muted">
-                  Read-only Schwab OAuth, what we store, and how to disconnect.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium">
-                  <Link
-                    href="/security"
-                    className="text-accent-strong hover:underline"
-                  >
-                    Security overview
-                  </Link>
-                  <Link
-                    href="/privacy"
-                    className="text-accent-strong hover:underline"
-                  >
-                    Privacy Policy
-                  </Link>
-                  <Link
-                    href="/terms"
-                    className="text-accent-strong hover:underline"
-                  >
-                    Terms of Service
-                  </Link>
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted-bg text-muted">
+                  <Shield className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    Security & data access
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted">
+                    Read-only Schwab OAuth, what we store, and how to
+                    disconnect.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium">
+                    <Link
+                      href="/security"
+                      className="text-accent-strong hover:underline"
+                    >
+                      Security overview
+                    </Link>
+                    <Link
+                      href="/privacy"
+                      className="text-accent-strong hover:underline"
+                    >
+                      Privacy Policy
+                    </Link>
+                    <Link
+                      href="/terms"
+                      className="text-accent-strong hover:underline"
+                    >
+                      Terms of Service
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
             </CardBody>
           </Card>
 
           <Card surface="subtle" className="mx-0">
             <CardBody className="p-4 sm:p-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-foreground">Sign out</p>
-                <p className="mt-0.5 text-sm text-muted">
-                  End your Tomcrest session on this device.
-                </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    Sign out
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted">
+                    End your Tomcrest session on this device.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Log out
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="shrink-0"
-                onClick={() => signOut({ callbackUrl: "/" })}
-              >
-                <LogOut className="h-4 w-4" />
-                Log out
-              </Button>
-            </div>
             </CardBody>
           </Card>
 
@@ -342,12 +354,14 @@ export function SettingsPageContent() {
                   </p>
                   <p className="mt-0.5 text-sm text-muted">
                     Permanently remove your Tomcrest account, Schwab connection,
-                    chat history, strategy settings, and portfolio data we store.
-                    This cannot be undone.
+                    chat history, strategy settings, and portfolio data we
+                    store. This cannot be undone.
                   </p>
 
                   {deleteError && (
-                    <p className="mt-3 text-sm text-destructive">{deleteError}</p>
+                    <p className="mt-3 text-sm text-destructive">
+                      {deleteError}
+                    </p>
                   )}
 
                   {!confirmDelete ? (
@@ -372,7 +386,9 @@ export function SettingsPageContent() {
                         disabled={deletingAccount}
                         onClick={() => void deleteAccount()}
                       >
-                        {deletingAccount ? "Deleting…" : "Yes, delete my account"}
+                        {deletingAccount
+                          ? "Deleting…"
+                          : "Yes, delete my account"}
                       </Button>
                       <Button
                         type="button"
@@ -395,6 +411,85 @@ export function SettingsPageContent() {
         </section>
       )}
     </PageShell>
+  );
+}
+
+const themeOptions: { value: ThemePreference; label: string; hint: string }[] =
+  [
+    {
+      value: "system",
+      label: "System",
+      hint: "Follow your device setting.",
+    },
+    {
+      value: "light",
+      label: "Light",
+      hint: "Always use the white theme.",
+    },
+    {
+      value: "dark",
+      label: "Dark",
+      hint: "Always use the black theme.",
+    },
+  ];
+
+function AppearancePreference({
+  preference,
+  onChange,
+}: {
+  preference: ThemePreference;
+  onChange: (preference: ThemePreference) => void;
+}) {
+  const activeOption =
+    themeOptions.find((option) => option.value === preference) ??
+    themeOptions[0];
+
+  return (
+    <section
+      aria-labelledby="settings-appearance-heading"
+      className="border-t border-border/60 pt-4"
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="max-w-xl">
+          <h3
+            id="settings-appearance-heading"
+            className="text-sm font-semibold text-foreground"
+          >
+            Appearance
+          </h3>
+          <p className="mt-1 text-sm text-muted">{activeOption.hint}</p>
+        </div>
+
+        <fieldset className="flex shrink-0 border-b border-border/60">
+          <legend className="sr-only">Theme preference</legend>
+          {themeOptions.map((option) => {
+            const selected = option.value === preference;
+            return (
+              <label key={option.value} className="cursor-pointer">
+                <input
+                  type="radio"
+                  name="theme-preference"
+                  value={option.value}
+                  checked={selected}
+                  onChange={() => onChange(option.value)}
+                  className="sr-only"
+                />
+                <span
+                  className={cn(
+                    "block border-b px-3 py-2 text-sm font-medium transition",
+                    selected
+                      ? "border-foreground text-foreground"
+                      : "border-transparent text-muted hover:text-foreground",
+                  )}
+                >
+                  {option.label}
+                </span>
+              </label>
+            );
+          })}
+        </fieldset>
+      </div>
+    </section>
   );
 }
 
@@ -444,7 +539,9 @@ function StatusChip({
       <div
         className={cn(
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-          active ? "bg-accent-muted text-accent-strong" : "bg-muted-bg text-muted",
+          active
+            ? "bg-accent-muted text-accent-strong"
+            : "bg-muted-bg text-muted",
         )}
       >
         <Icon className="h-3.5 w-3.5" />
@@ -461,7 +558,10 @@ function StatusChip({
 
 function SettingsEmptyState({ message }: { message: string }) {
   return (
-    <Card surface="subtle" className="mx-0 px-4 py-8 text-center text-sm text-muted">
+    <Card
+      surface="subtle"
+      className="mx-0 px-4 py-8 text-center text-sm text-muted"
+    >
       {message}
     </Card>
   );

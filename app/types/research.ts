@@ -136,6 +136,7 @@ export type TraderPlaybookStatus =
   | "Waiting"
   | "Invalid"
   | "NoSetup";
+export type TraderPlaybookSide = "Long" | "Short" | "NoTrade";
 
 export type TraderPlaybookRiskRewardLabel =
   | "favorable"
@@ -187,6 +188,7 @@ export type TraderPlaybookResponse = {
   horizon: "1-5 sessions";
   dataMode: "daily";
   bestSetup: TraderPlaybookBestSetup;
+  side?: TraderPlaybookSide;
   status: TraderPlaybookStatus;
   conditions: TraderPlaybookConditions;
   levels: TraderPlaybookLevels;

@@ -1,21 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { ChevronRight, Target } from "lucide-react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useStreetAnalysis } from "@/app/hooks/useStreetAnalysis";
-import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { symbolHubPath } from "@/lib/symbolRoutes";
 import {
   formatStreetPrice,
   formatStreetUpside,
   hasStreetAnalysis,
 } from "@/lib/streetAnalysisUtils";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
-import { StreetAnalysisSkeleton } from "./StreetAnalysisSection";
+import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { StreetAnalysisEmptyState } from "./StreetAnalysisEmptyState";
+import { StreetAnalysisSkeleton } from "./StreetAnalysisSection";
 
 const ANALYST_SIGNAL_SUBTITLE = "External analyst consensus and target context";
 
@@ -102,7 +102,7 @@ export function StreetAnalysisOverview({
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           {street.consensusLabel ? (
-            <span className="rounded-full border border-accent/30 bg-accent-muted px-2 py-0.5 text-[11px] font-semibold text-accent-strong">
+            <span className="text-sm font-semibold text-accent-strong">
               {street.consensusLabel}
             </span>
           ) : null}

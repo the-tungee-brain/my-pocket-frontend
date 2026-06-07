@@ -1,21 +1,21 @@
 "use client";
 
-import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
   ArrowRightLeft,
   CalendarDays,
   ChevronDown,
+  ExternalLink,
   FileText,
   GitCompareArrows,
   Newspaper,
   RefreshCw,
   Sparkles,
   Target,
-  ExternalLink,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { useState, type ReactNode, Fragment } from "react";
+import Link from "next/link";
+import { Fragment, type ReactNode, useState } from "react";
 import type {
   EventTimelineEntry,
   IntelligenceSignal,
@@ -24,6 +24,15 @@ import type {
   OptionChainTableRow,
   SymbolIntelligence,
 } from "@/app/types/intelligence";
+import { PatternTrendForecastCard } from "@/components/PatternTrendForecastCard";
+import { ResearchAsideCard } from "@/components/ResearchDetailBlocks";
+import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { IconButton } from "@/components/ui/IconButton";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import { formatFriendlyDate, formatOptionExpiration } from "@/lib/dateUtils";
+import { formatUsd } from "@/lib/formatCurrency";
 import {
   buildOptionCandidatePrompt,
   buildRollSuggestionPrompt,
@@ -36,15 +45,6 @@ import {
   sortSignalsBySeverity,
 } from "@/lib/intelligence";
 import { findQuickAction } from "@/lib/quickActions";
-import { formatUsd } from "@/lib/formatCurrency";
-import { formatFriendlyDate, formatOptionExpiration } from "@/lib/dateUtils";
-import { IconButton } from "@/components/ui/IconButton";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
-import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
-import { ResearchAsideCard } from "@/components/ResearchDetailBlocks";
-import { PatternTrendForecastCard } from "@/components/PatternTrendForecastCard";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -123,7 +123,10 @@ function formatStrikeSide(side: "call" | "put") {
 
 function formatOptionPrice(value?: number | null) {
   if (value == null || value === 0) return "—";
-  return formatUsd(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return formatUsd(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function formatOptionIv(value?: number | null) {
@@ -147,8 +150,7 @@ function isTimelineExternalLink(entry: {
   url?: string | null;
 }): entry is { kind: string; url: string } {
   return (
-    !!entry.url &&
-    (entry.kind === "news" || entry.kind === "press_release")
+    !!entry.url && (entry.kind === "news" || entry.kind === "press_release")
   );
 }
 
@@ -200,7 +202,9 @@ function IntelligenceSection({
         />
       </button>
       {open && (
-        <div className="border-t border-border/70 px-3 pb-3 pt-1">{children}</div>
+        <div className="border-t border-border/70 px-3 pb-3 pt-1">
+          {children}
+        </div>
       )}
     </div>
   );
@@ -224,7 +228,7 @@ function IntelligenceRecentEventsList({
         return (
           <li
             key={key}
-            className="flex gap-3 rounded-xl border border-border bg-background/60 px-3 py-2"
+            className="flex gap-3 border-b border-border/60 py-2 last:border-b-0"
           >
             <Icon
               className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong"
@@ -402,7 +406,8 @@ export function SymbolIntelligencePanel({
 
         {intelligence?.partial && !intelligence.reauthRequired && (
           <p className="rounded-lg border border-border bg-background/60 px-3 py-2 text-xs text-muted">
-            Some live Schwab data is unavailable. Research signals are still shown.
+            Some live Schwab data is unavailable. Research signals are still
+            shown.
           </p>
         )}
 
@@ -427,32 +432,34 @@ export function SymbolIntelligencePanel({
                 const ActionIcon = quickAction?.icon;
 
                 return (
-                <li
-                  key={`${signal.kind}-${signal.message}-${signal.symbol ?? ""}`}
-                  className="rounded-xl border border-border bg-background/60 px-3 py-2"
-                >
-                  <div className="flex items-start gap-2">
-                    <span
-                      className={cn(
-                        "mt-0.5 inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                        signalSeverityClass(signal.severity),
-                      )}
-                    >
-                      {signalSeverityLabel(signal.severity)}
-                    </span>
-                    <p className="flex-1 text-sm text-foreground">{signal.message}</p>
-                  </div>
-                  {actionId && onRunSignal && quickAction && ActionIcon && (
-                    <button
-                      type="button"
-                      onClick={() => onRunSignal(signal, actionId)}
-                      className="mt-2 inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
-                    >
-                      <ActionIcon className="h-3 w-3" aria-hidden />
-                      {quickAction.label}
-                    </button>
-                  )}
-                </li>
+                  <li
+                    key={`${signal.kind}-${signal.message}-${signal.symbol ?? ""}`}
+                    className="rounded-xl border border-border bg-background/60 px-3 py-2"
+                  >
+                    <div className="flex items-start gap-2">
+                      <span
+                        className={cn(
+                          "mt-0.5 inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                          signalSeverityClass(signal.severity),
+                        )}
+                      >
+                        {signalSeverityLabel(signal.severity)}
+                      </span>
+                      <p className="flex-1 text-sm text-foreground">
+                        {signal.message}
+                      </p>
+                    </div>
+                    {actionId && onRunSignal && quickAction && ActionIcon && (
+                      <button
+                        type="button"
+                        onClick={() => onRunSignal(signal, actionId)}
+                        className="mt-2 inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
+                      >
+                        <ActionIcon className="h-3 w-3" aria-hidden />
+                        {quickAction.label}
+                      </button>
+                    )}
+                  </li>
                 );
               })}
             </ul>
@@ -463,11 +470,11 @@ export function SymbolIntelligencePanel({
           (research.investmentThesis ||
             (research.keyStrengths?.length ?? 0) > 0 ||
             (research.keyRisks?.length ?? 0) > 0) && (
-          <IntelligenceSection
-            title="Cached thesis"
-            icon={Sparkles}
-            compact={compact}
-          >
+            <IntelligenceSection
+              title="Cached thesis"
+              icon={Sparkles}
+              compact={compact}
+            >
               <div className="space-y-2 rounded-xl border border-border bg-background/60 px-3 py-3">
                 {research.sentiment && (
                   <span className="inline-flex rounded-full bg-muted-bg px-2 py-0.5 text-[10px] capitalize text-muted">
@@ -481,7 +488,9 @@ export function SymbolIntelligencePanel({
                 )}
                 {(research.keyStrengths?.length ?? 0) > 0 && (
                   <div>
-                    <p className="text-[11px] font-medium text-muted">Strengths</p>
+                    <p className="text-[11px] font-medium text-muted">
+                      Strengths
+                    </p>
                     <ul className="mt-1 list-inside list-disc text-sm text-foreground">
                       {research.keyStrengths.slice(0, 3).map((item) => (
                         <li key={item}>{item}</li>
@@ -500,8 +509,8 @@ export function SymbolIntelligencePanel({
                   </div>
                 )}
               </div>
-          </IntelligenceSection>
-        )}
+            </IntelligenceSection>
+          )}
 
         {peers && (peers.peers.length > 0 || peers.summary) && (
           <IntelligenceSection
@@ -523,7 +532,9 @@ export function SymbolIntelligencePanel({
                 </thead>
                 <tbody>
                   <tr className="border-t border-border bg-accent-muted/20 font-medium">
-                    <td className="px-3 py-2 font-mono">{peers.targetSymbol}</td>
+                    <td className="px-3 py-2 font-mono">
+                      {peers.targetSymbol}
+                    </td>
                     <td className="px-3 py-2 tabular-nums">
                       {peers.targetOneYearReturn ?? "—"}
                     </td>
@@ -677,7 +688,11 @@ export function SymbolOptionsWorkspace({
 
       <CardBody className="space-y-4 py-4">
         {loading && !hasContent && (
-          <PanelLoadingSkeleton titleWidth="w-48" rows={1} rowClassName="h-32 rounded-xl" />
+          <PanelLoadingSkeleton
+            titleWidth="w-48"
+            rows={1}
+            rowClassName="h-32 rounded-xl"
+          />
         )}
 
         {error && <ErrorBanner message={error} />}
@@ -727,7 +742,9 @@ export function SymbolOptionsWorkspace({
                     <button
                       type="button"
                       onClick={() =>
-                        onAnalyzeOption(buildRollSuggestionPrompt(symbol, suggestion))
+                        onAnalyzeOption(
+                          buildRollSuggestionPrompt(symbol, suggestion),
+                        )
                       }
                       className="mt-2 inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
                     >
@@ -741,7 +758,11 @@ export function SymbolOptionsWorkspace({
         )}
 
         {optionChain && (optionChain.rows?.length ?? 0) > 0 && (
-          <IntelligenceSection title="Option chain" icon={Target} compact={compact}>
+          <IntelligenceSection
+            title="Option chain"
+            icon={Target}
+            compact={compact}
+          >
             <OptionChainPreviewTable
               preview={optionChain}
               compact={compact}
@@ -754,65 +775,65 @@ export function SymbolOptionsWorkspace({
           ((options.assignmentFlags?.length ?? 0) > 0 ||
             (options.coveredCallCandidates?.length ?? 0) > 0 ||
             (options.cspCandidates?.length ?? 0) > 0) && (
-          <IntelligenceSection
-            title="Options scorecard"
-            icon={Target}
-            defaultOpen={(options.assignmentFlags?.length ?? 0) > 0}
-            compact={compact}
-          >
-            <div>
-              {(options.assignmentFlags?.length ?? 0) > 0 && (
-                <ul className="mb-3 space-y-1">
-                  {options.assignmentFlags.map((flag) => (
-                    <li
-                      key={flag}
-                      className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
+            <IntelligenceSection
+              title="Options scorecard"
+              icon={Target}
+              defaultOpen={(options.assignmentFlags?.length ?? 0) > 0}
+              compact={compact}
+            >
+              <div>
+                {(options.assignmentFlags?.length ?? 0) > 0 && (
+                  <ul className="mb-3 space-y-1">
+                    {options.assignmentFlags.map((flag) => (
+                      <li
+                        key={flag}
+                        className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
+                      >
+                        {flag}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {(options.assignmentFlags?.length ?? 0) > 0 &&
+                  onAnalyzeOption &&
+                  symbol && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onAnalyzeOption(
+                          `Review assignment and call-away risk for my ${symbol} short options over the next two weeks. ${options.assignmentFlags?.join(" ") ?? ""}`,
+                        )
+                      }
+                      className="mb-3 inline-flex items-center gap-1 rounded-lg border border-danger/30 bg-danger/10 px-2.5 py-1 text-[11px] font-medium text-danger transition hover:bg-danger/15"
                     >
-                      {flag}
-                    </li>
-                  ))}
-                </ul>
-              )}
+                      Analyze assignment risk
+                    </button>
+                  )}
 
-              {(options.assignmentFlags?.length ?? 0) > 0 &&
-                onAnalyzeOption &&
-                symbol && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    onAnalyzeOption(
-                      `Review assignment and call-away risk for my ${symbol} short options over the next two weeks. ${options.assignmentFlags?.join(" ") ?? ""}`,
-                    )
-                  }
-                  className="mb-3 inline-flex items-center gap-1 rounded-lg border border-danger/30 bg-danger/10 px-2.5 py-1 text-[11px] font-medium text-danger transition hover:bg-danger/15"
-                >
-                  Analyze assignment risk
-                </button>
-              )}
+                {(options.coveredCallCandidates?.length ?? 0) > 0 && (
+                  <OptionsCandidateTable
+                    title="Covered call candidates"
+                    symbol={symbol}
+                    underlyingPrice={options.underlyingPrice}
+                    candidates={options.coveredCallCandidates.slice(0, 3)}
+                    onAnalyzeOption={onAnalyzeOption}
+                  />
+                )}
 
-              {(options.coveredCallCandidates?.length ?? 0) > 0 && (
-                <OptionsCandidateTable
-                  title="Covered call candidates"
-                  symbol={symbol}
-                  underlyingPrice={options.underlyingPrice}
-                  candidates={options.coveredCallCandidates.slice(0, 3)}
-                  onAnalyzeOption={onAnalyzeOption}
-                />
-              )}
-
-              {(options.cspCandidates?.length ?? 0) > 0 && (
-                <OptionsCandidateTable
-                  title="Cash-secured put candidates"
-                  symbol={symbol}
-                  underlyingPrice={options.underlyingPrice}
-                  candidates={options.cspCandidates.slice(0, 3)}
-                  onAnalyzeOption={onAnalyzeOption}
-                  className="mt-3"
-                />
-              )}
-            </div>
-          </IntelligenceSection>
-        )}
+                {(options.cspCandidates?.length ?? 0) > 0 && (
+                  <OptionsCandidateTable
+                    title="Cash-secured put candidates"
+                    symbol={symbol}
+                    underlyingPrice={options.underlyingPrice}
+                    candidates={options.cspCandidates.slice(0, 3)}
+                    onAnalyzeOption={onAnalyzeOption}
+                    className="mt-3"
+                  />
+                )}
+              </div>
+            </IntelligenceSection>
+          )}
       </CardBody>
     </Card>
   );
@@ -826,7 +847,12 @@ function OptionSideMetrics({
   className?: string;
 }) {
   return (
-    <div className={cn("grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4 lg:grid-cols-8", className)}>
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4 lg:grid-cols-8",
+        className,
+      )}
+    >
       <div>
         <p className="text-muted">Bid</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
@@ -866,7 +892,9 @@ function OptionSideMetrics({
       <div>
         <p className="text-muted">Open interest</p>
         <p className="mt-0.5 tabular-nums font-medium text-foreground">
-          {quote?.openInterest != null ? quote.openInterest.toLocaleString() : "—"}
+          {quote?.openInterest != null
+            ? quote.openInterest.toLocaleString()
+            : "—"}
         </p>
       </div>
       <div>
@@ -983,8 +1011,8 @@ function OptionChainPreviewTable({
 
       <div className="w-full max-w-none overflow-hidden rounded-xl border border-border">
         <p className="border-b border-border/70 px-3 py-2 text-[11px] text-muted">
-          Bid and ask need a live quote. When they&apos;re missing, last is usually
-          yesterday&apos;s close and mark is an estimated price.
+          Bid and ask need a live quote. When they&apos;re missing, last is
+          usually yesterday&apos;s close and mark is an estimated price.
         </p>
 
         <div className="max-h-[min(65vh,520px)] w-full overflow-y-auto md:hidden">

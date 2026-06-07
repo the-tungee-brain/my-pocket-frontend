@@ -1,29 +1,32 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ChevronDown } from "lucide-react";
-import { CompanySnapshot } from "./CompanySnapshot";
-import { StrategySymbolPlaybookStrip } from "@/components/StrategySymbolPlaybookStrip";
-import { ResearchTabBar, researchBreadcrumbLabel } from "@/components/ResearchTabBar";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { track } from "@/lib/analytics";
-import { addRecentSymbol } from "@/lib/recentSymbols";
-import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
-import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
+import { useEffect, useRef, useState } from "react";
 import { usePortfolioContext } from "@/app/contextSelectors";
 import { useStrategyContext } from "@/app/contexts/StrategyContext";
-import { symbolHubPath } from "@/lib/symbolRoutes";
+import { useResearchSearchShortcut } from "@/app/hooks/useResearchSearchShortcut";
+import { useSymbolIntelligence } from "@/app/hooks/useSymbolIntelligence";
+import { ResearchDataAsOfLabel } from "@/app/research/ResearchDataAsOfLabel";
+import { ResearchOverviewProvider } from "@/app/research/ResearchOverviewContext";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import {
+  ResearchTabBar,
+  researchBreadcrumbLabel,
+} from "@/components/ResearchTabBar";
+import { StrategySymbolPlaybookStrip } from "@/components/StrategySymbolPlaybookStrip";
+import { track } from "@/lib/analytics";
+import { appStackClass, appStackSmClass } from "@/lib/appUi";
+import { pageShellClass } from "@/lib/pageLayout";
+import { addRecentSymbol } from "@/lib/recentSymbols";
 import {
   shouldShowOptionsTab,
   symbolHasOptionPositions,
 } from "@/lib/symbolOptions";
-import { appStackClass, appStackSmClass } from "@/lib/appUi";
-import { pageShellClass } from "@/lib/pageLayout";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
-import { ResearchOverviewProvider } from "@/app/research/ResearchOverviewContext";
-import { ResearchDataAsOfLabel } from "@/app/research/ResearchDataAsOfLabel";
+import { CompanySnapshot } from "./CompanySnapshot";
 import {
   ResearchAssetTypeProvider,
   useResearchAssetTypeContext,
@@ -112,77 +115,82 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
       includeOptions={includeOptions}
     >
       <div className={cn(pageShellClass, "min-w-0 pb-2")}>
-      <div
-        ref={sentinelRef}
-        className="pointer-events-none h-px"
-        aria-hidden="true"
-      />
+        <div
+          ref={sentinelRef}
+          className="pointer-events-none h-px"
+          aria-hidden="true"
+        />
 
-      <div
-        className={cn(
-          "sticky top-0 z-20 transition-[padding] duration-200",
-          scrollCollapsed &&
-            "border-b border-[var(--app-border-subtle)] bg-background/80 backdrop-blur-sm",
-          collapsed ? "pb-2 pt-1.5" : "pb-3 pt-2",
-        )}
-      >
-        {!collapsed && (
-          <Breadcrumbs
-            className="mb-3"
-            items={[
-              ...(hasPosition
-                ? [{ label: "Portfolio", href: "/portfolio" }]
-                : []),
-              { label: "Research", href: "/research" },
-              { label: symbolUpper, href: symbolHubPath(symbolUpper, "overview") },
-              { label: researchBreadcrumbLabel(activeTab) },
-            ]}
-          />
-        )}
+        <div
+          className={cn(
+            "sticky top-0 z-20 transition-[padding] duration-200",
+            scrollCollapsed &&
+              "border-b border-[var(--app-border-subtle)] bg-background",
+            collapsed ? "pb-2 pt-1.5" : "pb-3 pt-2",
+          )}
+        >
+          {!collapsed && (
+            <Breadcrumbs
+              className="mb-3"
+              items={[
+                ...(hasPosition
+                  ? [{ label: "Portfolio", href: "/portfolio" }]
+                  : []),
+                { label: "Research", href: "/research" },
+                {
+                  label: symbolUpper,
+                  href: symbolHubPath(symbolUpper, "overview"),
+                },
+                { label: researchBreadcrumbLabel(activeTab) },
+              ]}
+            />
+          )}
 
-        <div className={cn(appStackSmClass, collapsed && "gap-2")}>
-          <CompanySnapshot symbol={symbol} compact={collapsed} />
-          {!collapsed && <StrategySymbolPlaybookStrip symbol={symbol} />}
-          <ResearchTabBar
-            symbol={symbol}
-            assetType={assetType}
-            isEtf={isEtf}
-            showOptionsTab={showOptionsTab}
-            showWheelBacktestTab={showWheelBacktestTab}
-          />
-          {scrollCollapsed ? (
-            <button
-              type="button"
-              aria-expanded={headerExpanded}
-              onClick={() => setHeaderExpanded((current) => !current)}
-              className="flex w-full items-center justify-between gap-2 rounded-lg border border-border/80 bg-secondary/50 px-3 py-2 text-left md:hidden"
-            >
-              <span className="text-xs font-medium text-foreground">
-                {headerExpanded ? "Hide symbol details" : "Show symbol details"}
-              </span>
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 shrink-0 text-muted transition-transform",
-                  headerExpanded && "rotate-180",
-                )}
-                aria-hidden
-              />
-            </button>
-          ) : null}
+          <div className={cn(appStackSmClass, collapsed && "gap-2")}>
+            <CompanySnapshot symbol={symbol} compact={collapsed} />
+            {!collapsed && <StrategySymbolPlaybookStrip symbol={symbol} />}
+            <ResearchTabBar
+              symbol={symbol}
+              assetType={assetType}
+              isEtf={isEtf}
+              showOptionsTab={showOptionsTab}
+              showWheelBacktestTab={showWheelBacktestTab}
+            />
+            {scrollCollapsed ? (
+              <button
+                type="button"
+                aria-expanded={headerExpanded}
+                onClick={() => setHeaderExpanded((current) => !current)}
+                className="flex w-full items-center justify-between gap-2 border-t border-border/60 py-2 text-left md:hidden"
+              >
+                <span className="text-xs font-medium text-foreground">
+                  {headerExpanded
+                    ? "Hide symbol details"
+                    : "Show symbol details"}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 shrink-0 text-muted transition-transform",
+                    headerExpanded && "rotate-180",
+                  )}
+                  aria-hidden
+                />
+              </button>
+            ) : null}
+          </div>
         </div>
-      </div>
 
-      <div
-        id={`research-tabpanel-${activeTab}`}
-        role="tabpanel"
-        aria-labelledby={`research-tab-${activeTab}`}
-        className={cn("mt-8", appStackClass)}
-      >
-        {activeTab !== "overview" ? (
-          <ResearchDataAsOfLabel className="-mt-4 mb-1" />
-        ) : null}
-        {children}
-      </div>
+        <div
+          id={`research-tabpanel-${activeTab}`}
+          role="tabpanel"
+          aria-labelledby={`research-tab-${activeTab}`}
+          className={cn("mt-8", appStackClass)}
+        >
+          {activeTab !== "overview" ? (
+            <ResearchDataAsOfLabel className="-mt-4 mb-1" />
+          ) : null}
+          {children}
+        </div>
       </div>
     </ResearchSymbolIntelligenceProvider>
   );
@@ -195,7 +203,9 @@ export function ResearchSymbolShell({ symbol, children }: Props) {
   const inner = (
     <ResearchAssetTypeProvider symbol={symbol} accessToken={accessToken}>
       <ResearchSymbolHeaderProvider symbol={symbol} accessToken={accessToken}>
-        <ResearchSymbolShellInner symbol={symbol}>{children}</ResearchSymbolShellInner>
+        <ResearchSymbolShellInner symbol={symbol}>
+          {children}
+        </ResearchSymbolShellInner>
       </ResearchSymbolHeaderProvider>
     </ResearchAssetTypeProvider>
   );

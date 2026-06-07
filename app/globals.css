@@ -1,44 +1,140 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0c0d0f;
-  --foreground: #e4e6eb;
-  --secondary: #14161a;
-  --border: oklch(78% 0.01 250 / 0.14);
-  --accent: #2dd4bf;
-  --accent-muted: #14b8a61f;
-  --accent-strong: #5eead4;
-  --muted: #7a7f8a;
-  --muted-bg: #1a1d24;
+  --background: #000000;
+  --foreground: #ffffff;
+  --secondary: #0a0a0a;
+  --border: rgb(255 255 255 / 0.12);
+  --accent: #ffffff;
+  --accent-muted: rgb(255 255 255 / 0.08);
+  --accent-strong: #ffffff;
+  --muted: #a1a1aa;
+  --muted-bg: #111111;
   --success: #34d399;
   --danger: #fb7185;
   --warning: #fbbf24;
   --warning-muted: #fbbf241a;
   --destructive: #e11d48;
   --destructive-foreground: #ffe4e6;
-  --surface-elevated: #181b22;
-  --surface-marketing: #12141a;
-  --marketing-glow: color-mix(in oklab, var(--accent) 18%, transparent);
+  --surface-elevated: #111111;
+  --surface-marketing: #050505;
+  --marketing-glow: color-mix(in oklab, var(--foreground) 8%, transparent);
   --scrollbar-track: transparent;
-  --scrollbar-thumb: #2e333d;
-  --scrollbar-thumb-hover: #454b58;
+  --scrollbar-thumb: #2a2a2a;
+  --scrollbar-thumb-hover: #3f3f46;
 
   /* In-app panels (uniform chrome + rhythm) */
-  --app-radius: 0.5rem;
+  --app-radius: 0.125rem;
   --app-header-h: 3.5rem;
-  --app-gap: 1.25rem;
+  --app-gap: 1.5rem;
   --app-gap-sm: 0.75rem;
-  --app-gap-lg: 1.5rem;
+  --app-gap-lg: 2rem;
   --app-padding: 1.25rem;
   --app-padding-lg: 1.5rem;
-  --app-border: oklch(78% 0.02 250 / 0.16);
-  --app-border-subtle: oklch(78% 0.01 250 / 0.08);
-  --app-panel-bg: color-mix(in oklab, var(--secondary) 92%, var(--background));
-  --app-panel-bg-subtle: color-mix(in oklab, var(--secondary) 75%, var(--background));
-  --app-header-bg: color-mix(in oklab, var(--surface-elevated) 88%, transparent);
-  --app-panel-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 4%, transparent);
-  --app-grid-line: oklch(55% 0.02 250 / 0.06);
-  --app-glow: color-mix(in oklab, var(--accent) 12%, transparent);
+  --app-border: rgb(255 255 255 / 0.12);
+  --app-border-subtle: rgb(255 255 255 / 0.08);
+  --app-panel-bg: var(--background);
+  --app-panel-bg-subtle: var(--surface-elevated);
+  --app-header-bg: var(--background);
+  --app-panel-shadow: none;
+  --app-grid-line: transparent;
+  --app-glow: transparent;
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --secondary: #fafafa;
+    --border: rgb(0 0 0 / 0.12);
+    --accent: #000000;
+    --accent-muted: rgb(0 0 0 / 0.06);
+    --accent-strong: #000000;
+    --muted: #71717a;
+    --muted-bg: #f4f4f5;
+    --success: #047857;
+    --danger: #be123c;
+    --warning: #b45309;
+    --warning-muted: #f59e0b1a;
+    --destructive: #be123c;
+    --destructive-foreground: #ffffff;
+    --surface-elevated: #f7f7f8;
+    --surface-marketing: #ffffff;
+    --marketing-glow: transparent;
+    --scrollbar-thumb: #d4d4d8;
+    --scrollbar-thumb-hover: #a1a1aa;
+    --app-border: rgb(0 0 0 / 0.12);
+    --app-border-subtle: rgb(0 0 0 / 0.08);
+    --app-panel-bg: var(--background);
+    --app-panel-bg-subtle: var(--surface-elevated);
+    --app-header-bg: var(--background);
+    --primary: var(--foreground);
+    --primary-foreground: var(--background);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #000000;
+  --foreground: #ffffff;
+  --secondary: #0a0a0a;
+  --border: rgb(255 255 255 / 0.12);
+  --accent: #ffffff;
+  --accent-muted: rgb(255 255 255 / 0.08);
+  --accent-strong: #ffffff;
+  --muted: #a1a1aa;
+  --muted-bg: #111111;
+  --success: #34d399;
+  --danger: #fb7185;
+  --warning: #fbbf24;
+  --warning-muted: #fbbf241a;
+  --destructive: #e11d48;
+  --destructive-foreground: #ffe4e6;
+  --surface-elevated: #111111;
+  --surface-marketing: #050505;
+  --marketing-glow: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --scrollbar-thumb: #2a2a2a;
+  --scrollbar-thumb-hover: #3f3f46;
+  --app-border: rgb(255 255 255 / 0.12);
+  --app-border-subtle: rgb(255 255 255 / 0.08);
+  --app-panel-bg: var(--background);
+  --app-panel-bg-subtle: var(--surface-elevated);
+  --app-header-bg: var(--background);
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #000000;
+  --secondary: #fafafa;
+  --border: rgb(0 0 0 / 0.12);
+  --accent: #000000;
+  --accent-muted: rgb(0 0 0 / 0.06);
+  --accent-strong: #000000;
+  --muted: #71717a;
+  --muted-bg: #f4f4f5;
+  --success: #047857;
+  --danger: #be123c;
+  --warning: #b45309;
+  --warning-muted: #f59e0b1a;
+  --destructive: #be123c;
+  --destructive-foreground: #ffffff;
+  --surface-elevated: #f7f7f8;
+  --surface-marketing: #ffffff;
+  --marketing-glow: transparent;
+  --scrollbar-thumb: #d4d4d8;
+  --scrollbar-thumb-hover: #a1a1aa;
+  --app-border: rgb(0 0 0 / 0.12);
+  --app-border-subtle: rgb(0 0 0 / 0.08);
+  --app-panel-bg: var(--background);
+  --app-panel-bg-subtle: var(--surface-elevated);
+  --app-header-bg: var(--background);
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
 }
 
 @theme inline {
@@ -59,14 +155,15 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-surface-elevated: var(--surface-elevated);
   --color-surface-marketing: var(--surface-marketing);
-  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Monaco,
+  --font-mono:
+    var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Monaco,
     Consolas, monospace;
   --font-sans: var(--font-inter);
   --font-display: var(--font-display), ui-serif, Georgia, serif;
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: dark light;
 }
 
 button {
@@ -178,10 +275,10 @@ body {
 }
 
 .surface-card {
-  border-radius: var(--app-radius);
-  border: 1px solid var(--app-border);
-  background: var(--app-panel-bg);
-  box-shadow: var(--app-panel-shadow);
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 /* —— In-app shell (portfolio, research, chat) —— */
@@ -189,46 +286,37 @@ body {
 .app-canvas {
   position: relative;
   background-color: var(--background);
-  background-image:
-    linear-gradient(var(--app-grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--app-grid-line) 1px, transparent 1px);
-  background-size: 24px 24px;
-  background-position: center top;
 }
 
 .app-canvas::before {
-  content: "";
+  content: none;
   pointer-events: none;
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    ellipse 80% 50% at 50% -20%,
-    var(--app-glow),
-    transparent 65%
-  );
+  background: none;
 }
 
 .app-chrome {
-  border-color: var(--app-border);
-  background: color-mix(in oklab, var(--secondary) 75%, transparent);
-  backdrop-filter: blur(12px);
+  border-color: var(--app-border-subtle);
+  background: var(--background);
+  backdrop-filter: none;
 }
 
 .app-sidebar {
-  border-color: var(--app-border);
-  background: color-mix(in oklab, var(--secondary) 95%, var(--background));
+  border-color: var(--app-border-subtle);
+  background: var(--background);
 }
 
 .app-panel {
   overflow: hidden;
-  border-radius: var(--app-radius);
-  border: 1px solid var(--app-border);
-  background: var(--app-panel-bg);
-  box-shadow: var(--app-panel-shadow);
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .app-panel--subtle {
-  background: var(--app-panel-bg-subtle);
+  background: transparent;
 }
 
 .app-panel__header {
@@ -237,17 +325,17 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.875rem var(--app-padding);
+  padding: 0 0 0.875rem;
   border-bottom: 1px solid var(--app-border-subtle);
   background: var(--app-header-bg);
 }
 
 .app-panel__body {
-  padding: var(--app-padding);
+  padding: 0;
 }
 
 .app-panel__body--lg {
-  padding: var(--app-padding-lg);
+  padding: 0;
 }
 
 .app-panel__footer {
@@ -256,7 +344,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.75rem var(--app-padding);
+  padding: 0.75rem 0 0;
   border-top: 1px solid var(--app-border-subtle);
 }
 
@@ -277,10 +365,10 @@ body {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: calc(var(--app-radius) - 2px);
-  border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--app-border));
-  background: color-mix(in oklab, var(--accent-muted) 80%, transparent);
-  color: var(--accent-strong);
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
 }
 
 .app-eyebrow {
@@ -289,23 +377,24 @@ body {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent-strong);
+  color: var(--muted);
 }
 
 .app-highlight {
-  border-radius: var(--app-radius);
-  border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--app-border));
-  border-left-width: 3px;
-  border-left-color: var(--accent);
-  background: color-mix(in oklab, var(--accent-muted) 65%, transparent);
+  border-radius: 0;
+  border: 0;
+  border-left-width: 2px;
+  border-left-color: var(--foreground);
+  background: transparent;
   padding: var(--app-padding);
 }
 
 .app-inset {
   min-height: 4.5rem;
-  border-radius: var(--app-radius);
-  border: 1px solid var(--app-border);
-  background: color-mix(in oklab, var(--secondary) 88%, var(--background));
+  border-radius: 0;
+  border: 0;
+  border-top: 1px solid var(--app-border-subtle);
+  background: transparent;
   padding: var(--app-padding);
 }
 
@@ -315,8 +404,9 @@ body {
   flex-direction: column;
   justify-content: center;
   border-radius: var(--app-radius);
-  border: 1px solid var(--app-border-subtle);
-  background: color-mix(in oklab, var(--secondary) 55%, transparent);
+  border: 0;
+  border-top: 1px solid var(--app-border-subtle);
+  background: transparent;
   padding: 0.875rem 1rem;
 }
 
@@ -335,9 +425,10 @@ body {
   align-items: flex-start;
   justify-content: center;
   gap: 0.125rem;
-  border-radius: var(--app-radius);
-  border: 1px solid var(--app-border);
-  background: color-mix(in oklab, var(--background) 90%, transparent);
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid var(--app-border-subtle);
+  background: transparent;
   padding: 0.625rem 0.875rem;
   text-align: left;
   transition:
@@ -346,7 +437,7 @@ body {
 }
 
 .app-chip:hover:not(:disabled) {
-  border-color: color-mix(in oklab, var(--accent) 40%, var(--app-border));
+  border-color: var(--app-border);
   background: var(--muted-bg);
 }
 
@@ -378,8 +469,8 @@ body {
   min-height: 2.75rem;
   align-items: flex-start;
   gap: 0.5rem;
-  border-radius: var(--app-radius);
-  border: 1px solid var(--app-border-subtle);
+  border: 0;
+  border-top: 1px solid var(--app-border-subtle);
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   line-height: 1.5;
@@ -396,16 +487,16 @@ body {
 }
 
 .app-tab-bar-surface {
-  border: 1px solid var(--app-border-subtle);
-  background: color-mix(in oklab, var(--muted-bg) 70%, transparent);
+  border-bottom: 1px solid var(--app-border-subtle);
+  background: transparent;
 }
 
 .app-tab-bar {
   display: flex;
   min-width: 0;
   gap: 0.25rem;
-  border-radius: var(--app-radius);
-  padding: 0.25rem;
+  border-radius: 0;
+  padding: 0;
 }
 
 .app-tab-link {
@@ -415,10 +506,10 @@ body {
   align-items: center;
   gap: 0.375rem;
   white-space: nowrap;
-  border-radius: calc(var(--app-radius) - 2px);
+  border-radius: 0;
   border: 1px solid transparent;
-  padding: 0.375rem 0.75rem;
-  font-family: var(--font-mono);
+  border-bottom-color: transparent;
+  padding: 0.625rem 0.75rem;
   font-size: 0.6875rem;
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -431,16 +522,15 @@ body {
 }
 
 .app-tab-link:hover {
-  border-color: var(--app-border-subtle);
-  background: color-mix(in oklab, var(--muted-bg) 80%, transparent);
+  background: transparent;
   color: var(--foreground);
 }
 
 .app-tab-link--active {
-  border-color: color-mix(in oklab, var(--accent) 40%, var(--app-border));
-  background: color-mix(in oklab, var(--accent-muted) 90%, transparent);
+  border-bottom-color: var(--foreground);
+  background: transparent;
   color: var(--foreground);
-  box-shadow: 0 0 12px color-mix(in oklab, var(--accent) 25%, transparent);
+  box-shadow: none;
 }
 
 .app-stack {
@@ -479,7 +569,9 @@ body {
   border: 2px solid var(--accent-strong);
   background: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 35%, transparent);
-  transition: transform 150ms ease, box-shadow 150ms ease;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .range-accent:hover::-webkit-slider-thumb {
@@ -510,7 +602,9 @@ body {
   border-radius: 9999px;
   background: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 35%, transparent);
-  transition: transform 150ms ease, box-shadow 150ms ease;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .range-accent:hover::-moz-range-thumb {
@@ -630,7 +724,11 @@ body {
 
 .marketing-section--band {
   border-top: 1px solid var(--border);
-  background: color-mix(in oklab, var(--surface-marketing) 85%, var(--background));
+  background: color-mix(
+    in oklab,
+    var(--surface-marketing) 85%,
+    var(--background)
+  );
 }
 
 .marketing-pill {
@@ -665,7 +763,11 @@ body {
   overflow: hidden;
   border-radius: 1.25rem;
   border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--border));
-  background: color-mix(in oklab, var(--secondary) 72%, var(--surface-marketing));
+  background: color-mix(
+    in oklab,
+    var(--secondary) 72%,
+    var(--surface-marketing)
+  );
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 8%, transparent);
 }
 

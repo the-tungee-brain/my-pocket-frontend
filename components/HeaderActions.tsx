@@ -1,8 +1,8 @@
 "use client";
 
+import { Settings } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { Settings } from "lucide-react";
 import { AlertNotificationBell } from "@/components/momentum-breakout/AlertNotificationBell";
 import { compactTextButtonClass } from "@/components/ui/Button";
 import { iconButtonClass } from "@/components/ui/IconButton";

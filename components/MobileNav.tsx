@@ -1,10 +1,10 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { NavList, MainView } from "@/components/NavList";
+import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
+import { type MainView, NavList } from "@/components/NavList";
 import { IconButton } from "@/components/ui/IconButton";
 
 import type { SymbolAlertSummary } from "@/lib/intelligence";
@@ -127,7 +127,7 @@ export function MobileNav({
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 320 }}
-            className="relative z-50 flex h-full w-72 flex-col border-r border-border bg-secondary shadow-2xl"
+            className="relative z-50 flex h-full w-72 flex-col border-r border-border bg-background shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div id="mobile-nav-title">
@@ -144,7 +144,7 @@ export function MobileNav({
             </div>
 
             <nav
-              className="flex-1 overflow-y-auto px-2 py-3 scrollbar-dark"
+              className="flex-1 overflow-y-auto px-3 py-3 scrollbar-dark"
               aria-label="Main navigation"
             >
               <NavList
@@ -155,8 +155,8 @@ export function MobileNav({
                 selectedView={selectedView}
                 setSelectedView={handleSetView}
                 symbolAlertMap={symbolAlertMap}
-                containerClassName="flex flex-col gap-2"
-                portfolioButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors"
+                containerClassName="flex flex-col gap-1"
+                portfolioButtonClassName="w-full px-2 py-2 text-left text-sm font-medium transition-colors"
               />
             </nav>
           </motion.aside>

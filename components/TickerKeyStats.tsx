@@ -1,16 +1,18 @@
 "use client";
 
-import { memo, useMemo } from "react";
 import Link from "next/link";
-import { useResearchSymbolHeader } from "@/app/research/[symbol]/ResearchSymbolHeaderContext";
+import { memo, useMemo } from "react";
 import { useResearchAssetTypeContext } from "@/app/research/[symbol]/ResearchAssetTypeContext";
+import { useResearchSymbolHeader } from "@/app/research/[symbol]/ResearchSymbolHeaderContext";
+import { ResearchMetricList } from "@/components/research/ResearchMemoPrimitives";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { buildTickerKeyStats, type TickerKeyStat } from "@/lib/tickerKeyStats";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 
 type Props = {
   symbol: string;
+  variant?: "tiles" | "definition";
   className?: string;
 };
 
@@ -19,6 +21,15 @@ const STATS_GRID_CLASS =
 
 const STAT_TILE_CLASS =
   "min-w-0 rounded-xl border border-border bg-background/60 px-2.5 py-2 sm:px-3 sm:py-2.5";
+
+const SKELETON_KEYS = [
+  "market-cap",
+  "pe",
+  "yield",
+  "range",
+  "volume",
+  "avg-volume",
+];
 
 function StatTileContent({ stat }: { stat: TickerKeyStat }) {
   return (
@@ -78,14 +89,36 @@ const TickerKeyStatsGrid = memo(function TickerKeyStatsGrid({
 function TickerKeyStatsSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn(STATS_GRID_CLASS, className)}>
-      {Array.from({ length: 6 }).map((_, index) => (
-        <Skeleton key={index} className="h-[3.25rem] rounded-xl sm:h-[3.75rem]" />
+      {SKELETON_KEYS.map((key) => (
+        <Skeleton key={key} className="h-[3.25rem] rounded-xl sm:h-[3.75rem]" />
       ))}
     </div>
   );
 }
 
-export function TickerKeyStats({ symbol, className }: Props) {
+function TickerKeyStatsDefinitionList({
+  stats,
+  className,
+}: {
+  stats: TickerKeyStat[];
+  className?: string;
+}) {
+  return (
+    <ResearchMetricList
+      items={stats.map((stat) => ({
+        label: stat.label,
+        value: stat.value,
+      }))}
+      className={className}
+    />
+  );
+}
+
+export function TickerKeyStats({
+  symbol,
+  variant = "tiles",
+  className,
+}: Props) {
   const { isEtf } = useResearchAssetTypeContext();
   const { snapshot, etfHoldings, isLoading } = useResearchSymbolHeader();
 
@@ -100,6 +133,10 @@ export function TickerKeyStats({ symbol, className }: Props) {
 
   if (!snapshot || stats.length === 0) {
     return null;
+  }
+
+  if (variant === "definition") {
+    return <TickerKeyStatsDefinitionList stats={stats} className={className} />;
   }
 
   return (

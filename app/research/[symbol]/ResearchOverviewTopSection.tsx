@@ -1,33 +1,260 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { BarChart3 } from "lucide-react";
-import { IntelligenceRecentEventsPanel } from "@/components/SymbolIntelligencePanel";
-import { PageSplit } from "@/components/PageShell";
-import {
-  pageSectionClass,
-  pageOverviewAsideClass,
-  pageOverviewMainClass,
-  pageOverviewSplitClass,
-} from "@/lib/pageLayout";
-import { ResearchPatternOverviewSections } from "@/components/research/ResearchPatternOverviewSections";
-import { PerformanceSnapshot } from "./PerformanceSnapshot";
-import { ResearchStockChart } from "./ResearchStockChart";
-import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
-import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
-import { EtfFundsOverview } from "./EtfFundsOverview";
-import { StreetAnalysisOverview } from "./StreetAnalysisOverview";
-import { useResearchSymbolIntelligence } from "./ResearchSymbolIntelligenceContext";
+import { useIntradayTradingBias } from "@/app/hooks/useIntradayTradingBias";
 import { useResearchEvents } from "@/app/hooks/useResearchEvents";
-import { ResearchSectionCard } from "@/components/ResearchSectionCard";
+import { useTraderPlaybook } from "@/app/hooks/useTraderPlaybook";
+import type {
+  ChartIntelligenceZone,
+  EventTimelineEntry,
+} from "@/app/types/intelligence";
+import type { IntradayTradingBiasResponse } from "@/app/types/research";
+import {
+  ResearchRow,
+  ResearchSection,
+  researchMemo,
+} from "@/components/research/ResearchMemoPrimitives";
+import { ResearchOverviewDecision } from "@/components/research/ResearchOverviewDecision";
+import { ResearchOverviewEvidence } from "@/components/research/ResearchOverviewEvidence";
+import { ResearchOverviewTradePlan } from "@/components/research/ResearchOverviewTradePlan";
 import { TickerKeyStats } from "@/components/TickerKeyStats";
-import { IntradayTradingBiasCard } from "@/components/research/IntradayTradingBiasCard";
-import { TraderPlaybookCard } from "@/components/research/TraderPlaybookCard";
-import { TradingBiasCard } from "@/components/research/TradingBiasCard";
+import { formatFriendlyDate } from "@/lib/dateUtils";
+import { pageSectionClass } from "@/lib/pageLayout";
+import { EtfFundsOverview } from "./EtfFundsOverview";
+import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
+import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
+import { ResearchStockChart } from "./ResearchStockChart";
+import { useResearchSymbolIntelligence } from "./ResearchSymbolIntelligenceContext";
 
 type Props = {
   symbol: string;
 };
+
+function formatMoney(value: number | null | undefined): string {
+  if (typeof value !== "number" || !Number.isFinite(value))
+    return "Unavailable";
+  return `$${value.toFixed(2)}`;
+}
+
+function zoneDisplayPrice(zone: ChartIntelligenceZone | null | undefined) {
+  if (!zone) return null;
+  if (
+    typeof zone.displayLevel === "number" &&
+    Number.isFinite(zone.displayLevel)
+  ) {
+    return zone.displayLevel;
+  }
+  if (typeof zone.midpoint === "number" && Number.isFinite(zone.midpoint)) {
+    return zone.midpoint;
+  }
+  return (zone.priceLow + zone.priceHigh) / 2;
+}
+
+function zoneNote(zone: ChartIntelligenceZone | null | undefined) {
+  if (!zone) return "No actionable level from current structure.";
+  return [
+    zone.zoneState ?? "chart context",
+    zone.distancePctFromCurrent != null
+      ? `${zone.distancePctFromCurrent.toFixed(1)}% from price`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function KeyLevelsSection({
+  support,
+  resistance,
+  breakoutLevel,
+  invalidation,
+  className,
+}: {
+  support: ChartIntelligenceZone | null | undefined;
+  resistance: ChartIntelligenceZone | null | undefined;
+  breakoutLevel: number | null | undefined;
+  invalidation: number | string | null | undefined;
+  className?: string;
+}) {
+  return (
+    <ResearchSection title="Key Levels" className={className}>
+      <div className="divide-y divide-border/60">
+        <ResearchRow
+          label="Actionable support"
+          status={formatMoney(zoneDisplayPrice(support))}
+          body={zoneNote(support)}
+        />
+        <ResearchRow
+          label="Actionable resistance"
+          status={formatMoney(zoneDisplayPrice(resistance))}
+          body={zoneNote(resistance)}
+        />
+        <ResearchRow
+          label="Breakout above"
+          status={formatMoney(breakoutLevel)}
+          body={
+            breakoutLevel == null
+              ? "No actionable breakout level above price."
+              : undefined
+          }
+        />
+        <ResearchRow
+          label="Invalidation"
+          status={
+            typeof invalidation === "number"
+              ? formatMoney(invalidation)
+              : (invalidation ?? "Unavailable")
+          }
+        />
+      </div>
+    </ResearchSection>
+  );
+}
+
+const INACTIVE_STALENESS_SECONDS = 60 * 60;
+
+function formatLabel(value: string): string {
+  return value
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function intradayIsInactive(data: IntradayTradingBiasResponse): boolean {
+  if (
+    typeof data.stalenessSeconds === "number" &&
+    data.stalenessSeconds > INACTIVE_STALENESS_SECONDS
+  ) {
+    return true;
+  }
+  const inactiveCopy = [...data.warnings, ...data.dataGaps]
+    .join(" ")
+    .toLowerCase();
+  return (
+    inactiveCopy.includes("outside market hours") ||
+    inactiveCopy.includes("market is closed") ||
+    inactiveCopy.includes("intraday read is stale")
+  );
+}
+
+function IntradayReadSection({
+  data,
+  className,
+}: {
+  data: IntradayTradingBiasResponse | null;
+  className?: string;
+}) {
+  if (!data) {
+    return (
+      <ResearchSection title="Intraday Read" className={className}>
+        <p className="text-sm text-muted">
+          Delayed intraday read is not available.
+        </p>
+      </ResearchSection>
+    );
+  }
+
+  const lastBar = data.lastUpdated ? new Date(data.lastUpdated) : null;
+  const lastBarLabel =
+    lastBar && !Number.isNaN(lastBar.getTime())
+      ? `Last bar ${lastBar.toLocaleTimeString(undefined, {
+          hour: "numeric",
+          minute: "2-digit",
+        })}`
+      : null;
+  const mutedNote = [...data.warnings, ...data.dataGaps]
+    .map((item) => item.trim())
+    .filter(Boolean)[0];
+  const inactive = intradayIsInactive(data);
+
+  return (
+    <ResearchSection title="Intraday Read" className={className}>
+      <div className="divide-y divide-border/60">
+        <ResearchRow
+          label="Session"
+          status={`${inactive ? "Previous session" : "Latest read"}: ${data.bias}`}
+          body={[
+            inactive ? "Not live" : "Delayed 5-minute data",
+            lastBarLabel,
+            data.provider,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        />
+        <ResearchRow
+          label="Market"
+          status={formatLabel(data.alignment.market)}
+          body={mutedNote ? `Note: ${mutedNote.replace(/_/g, " ")}` : undefined}
+        />
+      </div>
+    </ResearchSection>
+  );
+}
+
+function EventsWarningsSection({
+  events,
+  eventsLoading,
+  eventsError,
+  warnings,
+  className,
+}: {
+  events: EventTimelineEntry[];
+  eventsLoading?: boolean;
+  eventsError?: string | null;
+  warnings: string[];
+  className?: string;
+}) {
+  const visibleWarnings = warnings
+    .map((warning) => warning.trim())
+    .filter(Boolean)
+    .filter((warning, index, all) => all.indexOf(warning) === index)
+    .slice(0, 3);
+  const visibleEvents = Array.from(
+    new Map(
+      events.map((event) => [
+        `${event.date}-${event.title}-${event.kind ?? ""}-${event.url ?? ""}`,
+        event,
+      ]),
+    ).values(),
+  ).slice(0, 3);
+
+  if (
+    !visibleEvents.length &&
+    !eventsLoading &&
+    !eventsError &&
+    !visibleWarnings.length
+  ) {
+    return null;
+  }
+
+  return (
+    <ResearchSection title="Events / Warnings" className={className}>
+      <div className="divide-y divide-border/60">
+        {visibleEvents.map((event) => (
+          <ResearchRow
+            key={`${event.date}-${event.title}-${event.kind ?? ""}-${
+              event.url ?? ""
+            }`}
+            label={formatFriendlyDate(event.date)}
+            status={event.title}
+          />
+        ))}
+        {eventsLoading && !events.length ? (
+          <ResearchRow label="Events" status="Loading recent events" />
+        ) : null}
+        {eventsError ? (
+          <ResearchRow label="Events" status="Unavailable" body={eventsError} />
+        ) : null}
+        {visibleWarnings.map((warning) => (
+          <ResearchRow
+            key={warning}
+            label="Warning"
+            status={warning.replace(/_/g, " ")}
+            tone="muted"
+          />
+        ))}
+      </div>
+    </ResearchSection>
+  );
+}
 
 export function ResearchOverviewTopSection({ symbol }: Props) {
   const { data: session } = useSession();
@@ -38,6 +265,12 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
   const intelligence = symbolIntelligence?.intelligence ?? null;
   const loading = symbolIntelligence?.loading ?? false;
   const researchEvents = useResearchEvents(symbol, accessToken);
+  const { intradayTradingBias } = useIntradayTradingBias(symbol, accessToken, {
+    enabled: !isEtf,
+  });
+  const { traderPlaybook } = useTraderPlaybook(symbol, accessToken, {
+    enabled: !isEtf,
+  });
   const intelligenceTimeline = intelligence?.eventTimeline ?? [];
   const recentEventsTimeline = researchEvents.events.length
     ? researchEvents.events
@@ -46,91 +279,92 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
     researchEvents.isLoading && recentEventsTimeline.length === 0;
   const recentEventsError =
     recentEventsTimeline.length === 0 ? researchEvents.error : null;
+  const selectedLevels =
+    intelligence?.patternIntelligence?.chartIntelligence?.selectedLevels;
+  const dataGaps = intelligence?.dataGaps ?? [];
+  const actionableSupport = selectedLevels?.actionableSupport ?? null;
+  const actionableResistance = selectedLevels?.actionableResistance ?? null;
+  const breakoutLevel = actionableResistance?.breakoutLevel ?? null;
+  const invalidation =
+    traderPlaybook?.levels.stop ??
+    traderPlaybook?.conditions.invalidIf[0] ??
+    null;
+  const warnings = [symbolIntelligence?.error, ...dataGaps].filter(
+    (item): item is string => Boolean(item),
+  );
 
   return (
-    <div className="space-y-6">
+    <div className={researchMemo.pageGap}>
       <ResearchStockChart
         symbol={symbol}
         chartIntelligence={intelligence?.patternIntelligence?.chartIntelligence}
         autoSwitchToChartIntelligence={false}
       />
 
-      <PageSplit
-        splitClassName={pageOverviewSplitClass}
-        mainClassName={pageOverviewMainClass}
-        asideClassName={pageOverviewAsideClass}
-        main={
-          <>
-            {!isEtf ? (
-              <>
-                <TradingBiasCard
-                  symbol={symbol}
-                  accessToken={accessToken}
-                  className={pageSectionClass}
-                />
-                <TraderPlaybookCard
-                  symbol={symbol}
-                  accessToken={accessToken}
-                  className={pageSectionClass}
-                />
-              </>
-            ) : null}
-            <ResearchPatternOverviewSections
-              symbol={symbol}
-              intelligence={intelligence}
-              loading={loading}
-              mode="summary"
-              className={pageSectionClass}
-            />
-            <ResearchSectionCard
-              title="Key stats"
-              description="Core market snapshot"
-              icon={BarChart3}
-              className={pageSectionClass}
-            >
-              <TickerKeyStats symbol={symbol} />
-            </ResearchSectionCard>
-          </>
-        }
-        aside={
-          <>
-            {isEtf ? (
-              <>
-                <EtfFundsOverview
-                  symbol={symbol}
-                  className={pageSectionClass}
-                />
-                <EtfHoldingsOverviewPreview
-                  symbol={symbol}
-                  stacked
-                  className={pageSectionClass}
-                />
-              </>
-            ) : null}
-            {!isEtf ? (
-              <StreetAnalysisOverview
-                symbol={symbol}
-                className={pageSectionClass}
-              />
-            ) : null}
-            <PerformanceSnapshot symbol={symbol} className={pageSectionClass} />
-            <IntelligenceRecentEventsPanel
-              className={pageSectionClass}
-              timeline={recentEventsTimeline}
-              loading={recentEventsLoading}
-              error={recentEventsError}
-              limit={3}
-            />
-          </>
-        }
-      />
+      <ResearchSection title="Key Stats" className={pageSectionClass}>
+        <TickerKeyStats symbol={symbol} variant="definition" />
+      </ResearchSection>
+
       {!isEtf ? (
-        <IntradayTradingBiasCard
+        <ResearchOverviewDecision
           symbol={symbol}
           accessToken={accessToken}
           className={pageSectionClass}
         />
       ) : null}
+
+      {!isEtf ? (
+        <ResearchOverviewTradePlan
+          symbol={symbol}
+          accessToken={accessToken}
+          className={pageSectionClass}
+        />
+      ) : null}
+
+      {!isEtf ? (
+        <KeyLevelsSection
+          support={actionableSupport}
+          resistance={actionableResistance}
+          breakoutLevel={breakoutLevel}
+          invalidation={invalidation}
+          className={pageSectionClass}
+        />
+      ) : null}
+
+      {isEtf ? (
+        <div className="grid gap-5 xl:grid-cols-2">
+          <EtfFundsOverview symbol={symbol} className={pageSectionClass} />
+          <EtfHoldingsOverviewPreview
+            symbol={symbol}
+            stacked
+            className={pageSectionClass}
+          />
+        </div>
+      ) : null}
+
+      <ResearchOverviewEvidence
+        symbol={symbol}
+        accessToken={accessToken}
+        intelligence={intelligence}
+        intelligenceLoading={loading}
+        isEtf={isEtf}
+        className={pageSectionClass}
+      />
+
+      {!isEtf ? (
+        <IntradayReadSection
+          data={intradayTradingBias}
+          className={pageSectionClass}
+        />
+      ) : null}
+
+      <EventsWarningsSection
+        events={recentEventsTimeline.slice(0, 3)}
+        eventsLoading={recentEventsLoading}
+        eventsError={recentEventsError}
+        warnings={warnings}
+        className={pageSectionClass}
+      />
     </div>
   );
 }

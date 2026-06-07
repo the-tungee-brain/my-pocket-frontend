@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  AlertTriangle,
-  Clock,
-  Gauge,
-  LineChart,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Clock } from "lucide-react";
 import { useIntradayTradingBias } from "@/app/hooks/useIntradayTradingBias";
 import type {
   IntradayTradingBiasLevels,
@@ -14,7 +8,11 @@ import type {
   TradingBiasLabel,
 } from "@/app/types/research";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
-import { Badge } from "@/components/ui/Badge";
+import {
+  ResearchMetricList,
+  type ResearchMetricListItem,
+  researchMemo,
+} from "@/components/research/ResearchMemoPrimitives";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
@@ -23,19 +21,14 @@ type IntradayTradingBiasCardProps = {
   symbol: string;
   accessToken?: string | null;
   enabled?: boolean;
+  variant?: "card" | "plain";
   className?: string;
 };
 
 const BIAS_TONE: Record<TradingBiasLabel, string> = {
-  Bullish: "border-success/35 bg-success/10 text-success",
-  Neutral: "border-border bg-muted/30 text-foreground",
-  Bearish: "border-danger/35 bg-danger/10 text-danger",
-};
-
-const BIAS_DOT: Record<TradingBiasLabel, string> = {
-  Bullish: "bg-success",
-  Neutral: "bg-muted",
-  Bearish: "bg-danger",
+  Bullish: "text-success",
+  Neutral: "text-foreground",
+  Bearish: "text-danger",
 };
 
 const INACTIVE_STALENESS_SECONDS = 60 * 60;
@@ -93,43 +86,13 @@ function isInactiveIntradayRead(data: IntradayTradingBiasResponse): boolean {
   ) {
     return true;
   }
-  const inactiveCopy = [...data.warnings, ...data.dataGaps].join(" ").toLowerCase();
+  const inactiveCopy = [...data.warnings, ...data.dataGaps]
+    .join(" ")
+    .toLowerCase();
   return (
     inactiveCopy.includes("outside market hours") ||
     inactiveCopy.includes("market is closed") ||
     inactiveCopy.includes("intraday read is stale")
-  );
-}
-
-function ConfidenceBadge({
-  value,
-}: {
-  value: IntradayTradingBiasResponse["confidence"];
-}) {
-  const variant =
-    value === "High" ? "success" : value === "Medium" ? "accent" : "muted";
-  return <Badge variant={variant}>{value} confidence</Badge>;
-}
-
-function MetricTile({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  icon?: LucideIcon;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-background/55 px-3 py-2.5">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
-        {Icon ? <Icon className="h-3.5 w-3.5" aria-hidden="true" /> : null}
-        {label}
-      </div>
-      <p className="mt-1 text-sm font-semibold leading-snug text-foreground">
-        {value}
-      </p>
-    </div>
   );
 }
 
@@ -152,21 +115,13 @@ function LevelsGrid({ levels }: { levels: IntradayTradingBiasLevels }) {
   if (!availableRows.length) return null;
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-      {availableRows.map(([label, value]) => (
-        <div
-          key={label}
-          className="rounded-lg border border-border bg-muted/15 px-3 py-2"
-        >
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-            {label}
-          </p>
-          <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">
-            {formatMoney(value)}
-          </p>
-        </div>
-      ))}
-    </div>
+    <ResearchMetricList
+      columns={4}
+      items={availableRows.map(([label, value]) => ({
+        label,
+        value: formatMoney(value),
+      }))}
+    />
   );
 }
 
@@ -182,36 +137,20 @@ function MessageList({
   if (!items.length) return null;
 
   return (
-    <div
-      className={cn(
-        "flex gap-2 rounded-lg border px-3 py-3",
-        tone === "warning"
-          ? "border-warning/25 bg-warning-muted"
-          : "border-border bg-muted/20",
-      )}
-    >
-      <AlertTriangle
+    <div>
+      <p
         className={cn(
-          "mt-0.5 h-4 w-4 shrink-0",
+          researchMemo.rowLabel,
           tone === "warning" ? "text-warning" : "text-muted",
         )}
-        aria-hidden="true"
-      />
-      <div>
-        <p
-          className={cn(
-            "text-[10px] font-semibold uppercase tracking-wide",
-            tone === "warning" ? "text-warning" : "text-muted",
-          )}
-        >
-          {title}
-        </p>
-        <ul className="mt-1 space-y-1 text-sm leading-relaxed text-foreground">
-          {items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </div>
+      >
+        {title}
+      </p>
+      <ul className="mt-1 space-y-1 text-sm leading-relaxed text-foreground">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -219,14 +158,9 @@ function MessageList({
 function IntradayBiasSkeleton() {
   return (
     <div className="space-y-3">
-      <Skeleton className="h-24 rounded-xl" />
-      <div className="grid gap-3 md:grid-cols-4">
-        <Skeleton className="h-20 rounded-lg" />
-        <Skeleton className="h-20 rounded-lg" />
-        <Skeleton className="h-20 rounded-lg" />
-        <Skeleton className="h-20 rounded-lg" />
-      </div>
-      <Skeleton className="h-24 rounded-lg" />
+      <Skeleton className="h-7 w-64" />
+      <Skeleton className="h-4 w-full max-w-xl" />
+      <Skeleton className="h-4 w-full max-w-lg" />
     </div>
   );
 }
@@ -236,100 +170,69 @@ function IntradayBiasContent({ data }: { data: IntradayTradingBiasResponse }) {
   const hasVwap = isNumber(data.levels.vwap);
   const hasOpeningRange =
     isNumber(data.levels.openRangeHigh) && isNumber(data.levels.openRangeLow);
-  const openingRangeStatus =
-    hasOpeningRange ? "Complete" : "Pending or unavailable";
-  const headerTone = inactive
-    ? "border-border bg-muted/30 text-foreground"
-    : BIAS_TONE[data.bias];
-  const dotTone = inactive ? "bg-muted" : BIAS_DOT[data.bias];
+  const openingRangeStatus = hasOpeningRange
+    ? "Complete"
+    : "Pending or unavailable";
+  const headerTone = inactive ? "text-foreground" : BIAS_TONE[data.bias];
   const priorRead =
     data.bias === "Neutral"
       ? "Previous session ended neutral."
       : `Previous session ended ${data.bias.toLowerCase()}.`;
+  const rawSummaryItems: Array<ResearchMetricListItem | null> = [
+    hasVwap
+      ? {
+          label: "VWAP",
+          value: formatLabel(data.alignment.vwap),
+        }
+      : null,
+    hasOpeningRange
+      ? {
+          label: "Opening range",
+          value: openingRangeStatus,
+        }
+      : null,
+    {
+      label: "Market",
+      value: formatLabel(data.alignment.market),
+    },
+    {
+      label: "Freshness",
+      value: formatFreshness(data),
+    },
+  ];
+  const summaryItems = rawSummaryItems.filter(
+    (item): item is ResearchMetricListItem => item !== null,
+  );
 
   return (
     <div className="space-y-4">
-      <div className={cn("rounded-xl border px-4 py-4", headerTone)}>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
-              {inactive
-                ? priorRead
-                : "Intraday signal. Separate from 1-5 session Trading Bias."}
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span
-                className={cn("h-2.5 w-2.5 rounded-full", dotTone)}
-                aria-hidden="true"
-              />
-              <p className="text-2xl font-bold leading-tight">
-                {inactive ? "Latest Intraday Read" : data.bias}
-              </p>
-              <ConfidenceBadge value={data.confidence} />
-              <Badge variant="warning">Delayed</Badge>
-              {inactive ? <Badge variant="muted">Not current</Badge> : null}
-            </div>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed opacity-85">
-              {inactive
-                ? "Not a live signal. The latest 5-minute data is stale or outside market hours."
-                : "Uses delayed 5-minute market data. This does not replace the 1-5 session Trading Bias."}
-            </p>
-          </div>
-
-          <div className="grid min-w-[220px] gap-2 sm:grid-cols-2 lg:text-right">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide opacity-75">
-                Setup
-              </p>
-              <p className="text-sm font-semibold">
-                {formatLabel(data.setupType)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide opacity-75">
-                Action
-              </p>
-              <p className="text-sm font-semibold">
-                {formatLabel(data.action)}
-              </p>
-            </div>
-          </div>
+      <div>
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <p className={cn("text-sm font-semibold", headerTone)}>
+            {inactive
+              ? `Previous session ${data.bias.toLowerCase()}`
+              : data.bias}
+          </p>
+          <span className="text-sm text-muted">·</span>
+          <p className="text-sm font-medium text-muted">
+            {data.confidence} confidence ·{" "}
+            {inactive ? "Not live" : formatLabel(data.action)}
+          </p>
         </div>
+        <p className="mt-2 text-sm leading-relaxed text-muted">
+          {inactive
+            ? priorRead
+            : `${formatLabel(data.setupType)} setup from delayed 5-minute data.`}
+        </p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {hasVwap ? (
-          <MetricTile
-            label="VWAP state"
-            value={formatLabel(data.alignment.vwap)}
-            icon={Gauge}
-          />
-        ) : null}
-        {hasOpeningRange ? (
-          <MetricTile
-            label="Opening range"
-            value={openingRangeStatus}
-            icon={LineChart}
-          />
-        ) : null}
-        <MetricTile
-          label="Market"
-          value={formatLabel(data.alignment.market)}
-        />
-        <MetricTile
-          label="Freshness"
-          value={formatFreshness(data)}
-          icon={Clock}
-        />
-      </div>
+      <ResearchMetricList columns={4} items={summaryItems} />
 
       <LevelsGrid levels={data.levels} />
 
       {data.reasons.length ? (
-        <div className="rounded-lg border border-border bg-background/55 px-3 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-            Why it reads this way
-          </p>
+        <div>
+          <p className={researchMemo.rowLabel}>Why it reads this way</p>
           <ul className="mt-2 space-y-1.5">
             {data.reasons.slice(0, 4).map((reason) => (
               <li
@@ -357,6 +260,7 @@ export function IntradayTradingBiasCard({
   symbol,
   accessToken,
   enabled = true,
+  variant = "card",
   className,
 }: IntradayTradingBiasCardProps) {
   const { intradayTradingBias, isLoading, error } = useIntradayTradingBias(
@@ -369,6 +273,22 @@ export function IntradayTradingBiasCard({
   const inactive = intradayTradingBias
     ? isInactiveIntradayRead(intradayTradingBias)
     : false;
+  const content =
+    error && !intradayTradingBias ? (
+      <ErrorBanner message={error} />
+    ) : isLoading && !intradayTradingBias ? (
+      <IntradayBiasSkeleton />
+    ) : !intradayTradingBias ? (
+      <p className="text-sm text-muted">
+        Delayed intraday bias is not available.
+      </p>
+    ) : (
+      <IntradayBiasContent data={intradayTradingBias} />
+    );
+
+  if (variant === "plain") {
+    return <div className={className}>{content}</div>;
+  }
 
   return (
     <ResearchSectionCard
@@ -381,17 +301,7 @@ export function IntradayTradingBiasCard({
       icon={Clock}
       className={className}
     >
-      {error && !intradayTradingBias ? (
-        <ErrorBanner message={error} />
-      ) : isLoading && !intradayTradingBias ? (
-        <IntradayBiasSkeleton />
-      ) : !intradayTradingBias ? (
-        <p className="text-sm text-muted">
-          Delayed intraday bias is not available.
-        </p>
-      ) : (
-        <IntradayBiasContent data={intradayTradingBias} />
-      )}
+      {content}
     </ResearchSectionCard>
   );
 }

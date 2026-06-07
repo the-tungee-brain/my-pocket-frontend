@@ -34,6 +34,19 @@ export function formatSnapshotPercent(
   return `${value.toFixed(digits)}%`;
 }
 
+function normalizeYieldPct(value: number | null | undefined): number | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  if (value > 0 && value < 1) return value * 100;
+  return value;
+}
+
+function formatDividendYieldPct(value: number | null | undefined): string {
+  const normalized = normalizeYieldPct(value);
+  if (normalized == null) return "—";
+  if (normalized < 0 || normalized > 25) return "Check source";
+  return formatSnapshotPercent(normalized);
+}
+
 export function formatPeRatio(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return "—";
   return value.toFixed(1);
@@ -84,10 +97,7 @@ export function buildTickerKeyStats(
       },
       {
         label: "Dividend yield",
-        value: displayPercentValue(
-          snapshot.dividendYieldPct,
-          options.etfHoldings?.dividend_yield,
-        ),
+        value: formatDividendYieldPct(snapshot.dividendYieldPct),
         hrefTab: "dividends",
       },
       { label: "52-week range", value: range52w },
@@ -112,7 +122,7 @@ export function buildTickerKeyStats(
     },
     {
       label: "Dividend yield",
-      value: formatSnapshotPercent(snapshot.dividendYieldPct),
+      value: formatDividendYieldPct(snapshot.dividendYieldPct),
       hrefTab: "dividends",
     },
     { label: "52-week range", value: range52w },

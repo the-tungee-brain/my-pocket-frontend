@@ -1,7 +1,7 @@
 "use client";
 
-import { NavList, MainView } from "@/components/NavList";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
+import { type MainView, NavList } from "@/components/NavList";
 
 import { appSidebarClass } from "@/lib/appUi";
 import type { SymbolAlertSummary } from "@/lib/intelligence";
@@ -29,11 +29,11 @@ export function DesktopNav({
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-screen w-64 flex-col border-r p-3 font-mono text-sm text-foreground md:flex",
+        "sticky top-0 hidden h-screen w-64 flex-col border-r px-3 py-4 text-sm text-foreground md:flex",
         appSidebarClass,
       )}
     >
-      <div className="app-panel mb-3 px-3 py-3">
+      <div className="mb-5 px-2">
         <TomcrestLogo size="md" showSubtitle />
       </div>
 
@@ -45,8 +45,8 @@ export function DesktopNav({
         selectedView={selectedView}
         setSelectedView={setSelectedView}
         symbolAlertMap={symbolAlertMap}
-        containerClassName="flex-1 flex flex-col gap-2 overflow-y-auto px-1 scrollbar-dark"
-        portfolioButtonClassName="w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors"
+        containerClassName="flex-1 flex flex-col gap-1 overflow-y-auto scrollbar-dark"
+        portfolioButtonClassName="w-full px-2 py-2 text-left text-sm font-medium transition-colors"
       />
     </aside>
   );

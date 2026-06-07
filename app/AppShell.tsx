@@ -1,36 +1,72 @@
 "use client";
 
-import { ChevronUp, Menu, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronUp, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ChatSessionHistory } from "@/components/ChatSessionHistory";
+import { useCallback, useEffect, useState } from "react";
+import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
 import { ChatBox } from "@/components/ChatBox";
+import { ChatSessionHistory } from "@/components/ChatSessionHistory";
 import { ConversationPane } from "@/components/ConversationPane";
-import { DesktopNav } from "@/components/DesktopNav";
-import { MobileNav } from "@/components/MobileNav";
 import { HeaderActions } from "@/components/HeaderActions";
 import { HeaderSymbolSearch } from "@/components/HeaderSymbolSearch";
-import { IconButton } from "@/components/ui/IconButton";
-import { useToast } from "./contexts/ToastContext";
-import { useAppChatContext, usePortfolioContext } from "./contextSelectors";
-import { researchTabLabel } from "@/components/ResearchTabBar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { researchTabLabel } from "@/components/ResearchTabBar";
 import { appCanvasClass, appChromeClass } from "@/lib/appUi";
-import { cn } from "@/lib/utils";
 import { resolveActiveChatKey } from "@/lib/chatKeys";
 import type { QuickActionMode } from "@/lib/quickActions";
 import { OPEN_CHAT_EVENT } from "@/lib/scrollToChat";
 import { parseResearchRoute } from "@/lib/symbolRoutes";
-import { buildSymbolAlertMap, mergeDisplayAlerts } from "@/lib/intelligence";
+import { cn } from "@/lib/utils";
+import { useAppChatContext, usePortfolioContext } from "./contextSelectors";
+import { useToast } from "./contexts/ToastContext";
 
 const MIN_ROWS = 1;
 const MAX_ROWS = 24;
 
+const topNavItems = [
+  {
+    href: "/portfolio",
+    label: "Portfolio",
+    isActive: (pathname: string) => pathname.startsWith("/portfolio"),
+    view: "portfolio" as const,
+  },
+  {
+    href: "/watchlist",
+    label: "Watchlist",
+    isActive: (pathname: string) => pathname === "/watchlist",
+    view: "research" as const,
+  },
+  {
+    href: "/research",
+    label: "Research",
+    isActive: (pathname: string) =>
+      pathname.startsWith("/research") && pathname !== "/watchlist",
+    view: "research" as const,
+  },
+  {
+    href: "/top-movers",
+    label: "Top Movers",
+    isActive: (pathname: string) => pathname.startsWith("/top-movers"),
+    view: "research" as const,
+  },
+  {
+    href: "/emerging-leaders",
+    label: "Emerging Leaders",
+    isActive: (pathname: string) => pathname.startsWith("/emerging-leaders"),
+    view: "research" as const,
+  },
+  {
+    href: "/settings",
+    label: "Settings",
+    isActive: (pathname: string) => pathname.startsWith("/settings"),
+    view: "research" as const,
+  },
+];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const {
-    loading,
-    symbols,
     selectedSymbol,
     setSelectedSymbol,
     selectedView,
@@ -38,8 +74,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     positionsForSelectedSymbol,
     allPositions,
     positionMap,
-    proactiveAlerts,
-    portfolioBrief,
     sessionAccessToken,
   } = usePortfolioContext();
 
@@ -57,15 +91,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     startNewChatSession,
   } = useAppChatContext();
 
-  const symbolAlertMap = useMemo(
-    () =>
-      buildSymbolAlertMap(
-        mergeDisplayAlerts(proactiveAlerts, portfolioBrief),
-        portfolioBrief,
-      ),
-    [proactiveAlerts, portfolioBrief],
-  );
-
   const { showToast } = useToast();
 
   const pathname = usePathname();
@@ -80,7 +105,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const researchSymbol = researchMatch?.[1]?.toUpperCase();
   const { symbol: routeSymbol } = parseResearchRoute(pathname);
 
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [inputRows, setInputRows] = useState(MIN_ROWS);
   const [mobileChatExpanded, setMobileChatExpanded] = useState(false);
 
@@ -271,28 +295,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ? researchSymbol
           : selectedSymbol;
 
-  const headerLabel =
-    selectedView === "portfolio"
-      ? "Portfolio"
-      : selectedView === "research" && isMomentumBreakoutAlertsRoute
-        ? "MB trade plans"
-        : selectedView === "research" && researchSymbol
-          ? researchSymbol
-          : selectedView === "research"
-            ? "Research"
-            : (selectedSymbol ?? "Position");
-
-  const headerSubtitle =
-    selectedView === "portfolio"
-      ? `${symbols.length} tracked ${symbols.length === 1 ? "symbol" : "symbols"}`
-      : selectedView === "research" && isMomentumBreakoutAlertsRoute
-        ? "Active alerts & history"
-        : selectedView === "research" && researchSymbol
-          ? `Stock research · ${researchTabLabel(pathname.split("/")[3])}`
-          : selectedView === "research"
-            ? "Search ticker or company name"
-            : "Position details and assistant context";
-
   const showConversation =
     selectedView === "portfolio" ||
     (selectedView === "research" && !!routeSymbol);
@@ -368,74 +370,90 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </a>
 
       <main className="flex min-h-screen min-w-0 text-foreground">
-        <DesktopNav
-          loading={loading}
-          symbols={symbols}
-          selectedSymbol={selectedSymbol}
-          setSelectedSymbol={setSelectedSymbol}
-          selectedView={selectedView}
-          setSelectedView={setSelectedView}
-          symbolAlertMap={symbolAlertMap}
-        />
-
-        <MobileNav
-          mobileNavOpen={mobileNavOpen}
-          setMobileNavOpen={setMobileNavOpen}
-          loading={loading}
-          symbols={symbols}
-          selectedSymbol={selectedSymbol}
-          setSelectedSymbol={setSelectedSymbol}
-          selectedView={selectedView}
-          setSelectedView={setSelectedView}
-          symbolAlertMap={symbolAlertMap}
-        />
-
         <section className="flex min-h-screen min-w-0 flex-1 flex-col">
           <div className={cn("sticky top-0 z-30 border-b", appChromeClass)}>
-            {/* Mobile: title + actions, then full-width search */}
-            <div className="flex flex-col gap-2.5 px-4 py-2.5 md:hidden">
-              <div className="flex items-center gap-3">
-                <IconButton
-                  onClick={() => setMobileNavOpen(true)}
-                  size="sm"
-                  aria-label="Open navigation"
+            <div className="flex flex-col gap-4 px-5 py-4 md:px-8 xl:px-10">
+              <div className="flex min-w-0 items-center gap-5">
+                <Link
+                  href="/portfolio"
+                  onClick={() => {
+                    setSelectedView("portfolio");
+                    setSelectedSymbol(null);
+                  }}
                   className="shrink-0"
+                  aria-label="Tomcrest portfolio"
                 >
-                  <Menu className="h-4 w-4" aria-hidden="true" />
-                </IconButton>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-mono text-xs font-semibold uppercase tracking-wide text-foreground">
-                    {headerLabel}
-                  </div>
-                  <div className="truncate font-mono text-[10px] uppercase tracking-wider text-muted">
-                    {headerSubtitle}
-                  </div>
-                </div>
+                  <TomcrestLogo size="sm" />
+                </Link>
+
+                <nav
+                  aria-label="Primary"
+                  className="hidden min-w-0 flex-1 items-center gap-6 overflow-x-auto text-sm font-medium md:flex"
+                >
+                  {topNavItems.map((item) => {
+                    const active = item.isActive(pathname);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        onClick={() => {
+                          setSelectedView(item.view);
+                          setSelectedSymbol(null);
+                        }}
+                        className={cn(
+                          "whitespace-nowrap border-b py-1.5 transition-colors",
+                          active
+                            ? "border-foreground text-foreground"
+                            : "border-transparent text-muted hover:text-foreground",
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                <HeaderSymbolSearch
+                  accessToken={sessionAccessToken}
+                  className="hidden w-full max-w-sm md:block"
+                />
                 <HeaderActions />
               </div>
-              <HeaderSymbolSearch
-                accessToken={sessionAccessToken}
-                className="w-full"
-              />
-            </div>
 
-            {/* Desktop: equal side columns so search sits in the header center */}
-            <div className="hidden min-h-14 grid-cols-[1fr_minmax(14rem,24rem)_1fr] items-center gap-x-4 px-4 md:grid">
-              <div className="min-w-0 justify-self-start">
-                <div className="truncate font-mono text-xs font-semibold uppercase tracking-wide text-foreground">
-                  {headerLabel}
-                </div>
-                <div className="truncate font-mono text-[10px] uppercase tracking-wider text-muted">
-                  {headerSubtitle}
-                </div>
+              <div className="flex flex-col gap-3 md:hidden">
+                <HeaderSymbolSearch
+                  accessToken={sessionAccessToken}
+                  className="w-full"
+                />
+                <nav
+                  aria-label="Primary"
+                  className="-mx-1 flex min-w-0 gap-4 overflow-x-auto px-1 text-sm font-medium"
+                >
+                  {topNavItems.map((item) => {
+                    const active = item.isActive(pathname);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        onClick={() => {
+                          setSelectedView(item.view);
+                          setSelectedSymbol(null);
+                        }}
+                        className={cn(
+                          "shrink-0 border-b py-1.5 transition-colors",
+                          active
+                            ? "border-foreground text-foreground"
+                            : "border-transparent text-muted",
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
               </div>
-
-              <HeaderSymbolSearch
-                accessToken={sessionAccessToken}
-                className="w-full max-w-md justify-self-center"
-              />
-
-              <HeaderActions className="justify-self-end" />
             </div>
           </div>
 
@@ -448,7 +466,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div
               id="main-content"
               className={cn(
-                "relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pt-4 pb-4 sm:px-8",
+                "relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pt-8 pb-8 md:px-10 xl:px-14",
                 "max-md:pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
               )}
             >
@@ -503,11 +521,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       exit={{ opacity: 0, y: 8 }}
                       transition={{ duration: 0.15 }}
                       onClick={() => setMobileChatExpanded(true)}
-                      className="flex w-full items-center justify-between gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-md"
+                      className="flex w-full items-center justify-between gap-3 border-t border-border bg-background px-4 py-3"
                     >
                       <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
                         <Sparkles
-                          className="h-4 w-4 shrink-0 text-accent-strong"
+                          className="h-4 w-4 shrink-0 text-foreground"
                           aria-hidden="true"
                         />
                         <span className="truncate">{mobileChatLabel}</span>

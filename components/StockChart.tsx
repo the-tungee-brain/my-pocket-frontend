@@ -132,7 +132,9 @@ function formatChartDateRange(start: string, end: string) {
   const endLabel = endDate.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
-    ...(startDate.getFullYear() !== endDate.getFullYear() ? { year: "numeric" } : {}),
+    ...(startDate.getFullYear() !== endDate.getFullYear()
+      ? { year: "numeric" }
+      : {}),
   });
 
   return `${startLabel} – ${endLabel}`;
@@ -159,11 +161,14 @@ function computeChartFooterStats(data: StockData[], interval: string) {
 
 function crosshairTimeToUnix(time: unknown): number | null {
   if (typeof time === "number") return time;
-  if (typeof time === "string") return Math.floor(new Date(time).getTime() / 1000);
+  if (typeof time === "string")
+    return Math.floor(new Date(time).getTime() / 1000);
 
   if (time && typeof time === "object" && "year" in time) {
     const businessDay = time as { year: number; month: number; day: number };
-    return Date.UTC(businessDay.year, businessDay.month - 1, businessDay.day) / 1000;
+    return (
+      Date.UTC(businessDay.year, businessDay.month - 1, businessDay.day) / 1000
+    );
   }
 
   return null;
@@ -275,12 +280,17 @@ function ChartOverlayLegend({ items }: { items: ChartOverlayLegendItem[] }) {
       </p>
       <ul className="mt-1.5 space-y-1">
         {items.map((item) => (
-          <li key={item.id} className="flex items-center gap-2 text-[10px] leading-tight">
+          <li
+            key={item.id}
+            className="flex items-center gap-2 text-[10px] leading-tight"
+          >
             <ChartOverlayLegendSwatch item={item} />
             <span className="min-w-0">
               <span className="font-medium text-foreground">{item.label}</span>
               {item.subtitle ? (
-                <span className="ml-1 tabular-nums text-muted">{item.subtitle}</span>
+                <span className="ml-1 tabular-nums text-muted">
+                  {item.subtitle}
+                </span>
               ) : null}
             </span>
           </li>
@@ -339,7 +349,9 @@ export function StockChart({
     [data, selectedInterval],
   );
   const activeChartIntelligence =
-    enableChartIntelligence && chartMode === "candle" ? chartIntelligence : null;
+    enableChartIntelligence && chartMode === "candle"
+      ? chartIntelligence
+      : null;
   const overlayLegendItems = useMemo(
     () => buildChartIntelligenceLegendItems(activeChartIntelligence),
     [activeChartIntelligence],
@@ -358,7 +370,8 @@ export function StockChart({
     };
 
     document.addEventListener("fullscreenchange", syncFullscreen);
-    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+    return () =>
+      document.removeEventListener("fullscreenchange", syncFullscreen);
   }, []);
 
   useEffect(() => {
@@ -610,9 +623,8 @@ export function StockChart({
       ref={sectionRef}
       aria-label={`${symbol} price chart`}
       className={cn(
-        "w-full overflow-hidden rounded-2xl border border-border bg-secondary/60 shadow-sm",
-        isFullscreen &&
-          "flex h-dvh max-h-dvh flex-col rounded-none border-0 bg-background shadow-none",
+        "w-full overflow-hidden",
+        isFullscreen && "flex h-dvh max-h-dvh flex-col",
         className,
       )}
     >
@@ -853,10 +865,10 @@ export function StockChart({
                 <span aria-hidden="true"> · </span>
                 <span>{footerStats.intervalLabel}</span>
                 <span className="hidden tabular-nums sm:inline">
-                  <span aria-hidden="true"> · </span>
-                  H {formatChartPrice(footerStats.periodHigh)}
-                  <span aria-hidden="true"> · </span>
-                  L {formatChartPrice(footerStats.periodLow)}
+                  <span aria-hidden="true"> · </span>H{" "}
+                  {formatChartPrice(footerStats.periodHigh)}
+                  <span aria-hidden="true"> · </span>L{" "}
+                  {formatChartPrice(footerStats.periodLow)}
                 </span>
               </p>
             ) : chartState === "loading" ? (
