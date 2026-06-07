@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { Clock, Loader2, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { ChatSessionSummary } from "@/app/types/chat";
 import type { ChatMessage } from "@/components/ConversationPane";
+import { compactTextButtonClass } from "@/components/ui/Button";
 import { listSessionsForChatKey, loadChatSessionById } from "@/lib/chatHistory";
 import { formatRelativeUpdatedAt } from "@/lib/timeUtils";
-import { compactTextButtonClass } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -62,12 +62,15 @@ export function ChatSessionHistory({
     if (!open || !accessToken) return;
 
     let cancelled = false;
+    const token = accessToken;
+    const revision = historyRevision;
+    void revision;
 
     async function load() {
       setLoading(true);
       setSessions([]);
       try {
-        const rows = await listSessionsForChatKey(accessToken!, activeChatKey);
+        const rows = await listSessionsForChatKey(token, activeChatKey);
         if (!cancelled) setSessions(rows);
       } catch {
         if (!cancelled) setSessions([]);
@@ -120,7 +123,7 @@ export function ChatSessionHistory({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-1 w-72 overflow-hidden rounded-xl border border-border bg-background shadow-lg">
+        <div className="absolute right-0 top-full z-30 mt-1 w-72 overflow-hidden border border-border bg-background shadow-lg">
           <div className="flex items-start justify-between gap-2 border-b border-border px-3 py-2">
             <div>
               <p className="text-xs font-semibold text-foreground">
@@ -136,7 +139,7 @@ export function ChatSessionHistory({
               <button
                 type="button"
                 onClick={handleStartNew}
-                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-accent/30 bg-accent-muted/40 px-2 py-1 text-[10px] font-medium text-accent-strong transition hover:border-accent/50 hover:bg-accent-muted"
+                className="inline-flex shrink-0 items-center gap-1 border border-accent/30 bg-accent-muted/40 px-2 py-1 text-[10px] font-medium text-accent-strong transition hover:border-accent/50 hover:bg-accent-muted"
               >
                 <Plus className="h-3 w-3" aria-hidden />
                 New chat

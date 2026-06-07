@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
 import { Search, SearchX } from "lucide-react";
+import { type KeyboardEvent, useState } from "react";
 import { useSymbolSearch } from "@/app/hooks/useSymbolSearch";
 import { cn } from "@/lib/utils";
 
@@ -75,12 +75,12 @@ export function SymbolSearchField({
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground"
+          className="w-full border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground"
         />
       </div>
 
       {showPanel && (
-        <div className="overflow-hidden rounded-lg border border-border bg-background text-sm shadow-sm">
+        <div className="overflow-hidden border border-border bg-background text-sm shadow-sm">
           {isLoading && (
             <p className="px-3 py-2 text-xs text-muted">Searching symbols…</p>
           )}

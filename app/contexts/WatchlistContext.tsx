@@ -1,27 +1,32 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
-import { useSession } from "next-auth/react";
-import {
-  fetchWatchlistWorkspace,
-  isWatchlistConflictError,
-  syncWatchlistWorkspace,
-} from "@/lib/watchlistApi";
+import type {
+  WatchlistFolder,
+  WatchlistSaveSheetState,
+  WatchlistWorkspaceResponse,
+} from "@/app/types/watchlist";
 import {
   addToWatchlist,
   getWatchlist,
   removeFromWatchlist,
   WATCHLIST_UPDATED_EVENT,
 } from "@/lib/watchlist";
+import {
+  fetchWatchlistWorkspace,
+  isWatchlistConflictError,
+  syncWatchlistWorkspace,
+} from "@/lib/watchlistApi";
 import {
   allTickersFromFolders,
   buildSyncRequest,
@@ -36,11 +41,6 @@ import {
   sortedFolders,
   workspaceVersionFromResponse,
 } from "@/lib/watchlistWorkspace";
-import type {
-  WatchlistFolder,
-  WatchlistSaveSheetState,
-  WatchlistWorkspaceResponse,
-} from "@/app/types/watchlist";
 
 const SYNC_DEBOUNCE_MS = 700;
 const QUOTE_REFRESH_MS = 45_000;
@@ -308,7 +308,9 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
       if (!syncBlockedByConflictRef.current) setError(null);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not refresh watchlist quotes.",
+        err instanceof Error
+          ? err.message
+          : "Could not refresh watchlist quotes.",
       );
     }
   }, [accessToken]);
@@ -496,14 +498,15 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
 
   const setFolderCollapsed = useCallback(
     (folderId: string, collapsed: boolean) => {
-      if (!accessToken) return;
-      updateFolders((prev) =>
+      setFolders((prev) =>
         prev.map((folder) =>
-          folder.id === folderId ? { ...folder, isCollapsed: collapsed } : folder,
+          folder.id === folderId
+            ? { ...folder, isCollapsed: collapsed }
+            : folder,
         ),
       );
     },
-    [accessToken, updateFolders],
+    [],
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: This load should reset only when auth identity/status changes.
@@ -592,14 +595,18 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <WatchlistContext.Provider value={value}>{children}</WatchlistContext.Provider>
+    <WatchlistContext.Provider value={value}>
+      {children}
+    </WatchlistContext.Provider>
   );
 }
 
 export function useWatchlistContext(): WatchlistContextValue {
   const ctx = useContext(WatchlistContext);
   if (!ctx) {
-    throw new Error("useWatchlistContext must be used within WatchlistProvider");
+    throw new Error(
+      "useWatchlistContext must be used within WatchlistProvider",
+    );
   }
   return ctx;
 }

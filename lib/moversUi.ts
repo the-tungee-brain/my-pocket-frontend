@@ -11,7 +11,7 @@ export const moversMetaTitleClass =
 export const moversMetaBodyClass = "text-sm leading-relaxed text-muted";
 
 export const moversMetaInsetClass =
-  "space-y-1.5 rounded-lg border border-border bg-muted-bg/30 px-3 py-3";
+  "space-y-1.5 border border-border bg-muted-bg/30 px-3 py-3";
 
 export const moversDetailPanelClass =
   "app-panel flex flex-col gap-4 p-4 lg:p-5";
@@ -25,10 +25,10 @@ export const moversSectionHeadingClass =
   "text-[10px] font-semibold uppercase tracking-[0.14em] text-muted";
 
 export const moversCalloutClass =
-  "rounded-lg border border-border bg-muted-bg/30 px-3 py-2 text-sm leading-snug text-foreground";
+  "border border-border bg-muted-bg/30 px-3 py-2 text-sm leading-snug text-foreground";
 
 export const moversRankedListLabelClass =
-  "border-b border-border px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted";
+  "py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted";
 
 export const moversRankedRowButtonClass =
   "flex w-full gap-3 px-4 py-3.5 text-left transition-colors";

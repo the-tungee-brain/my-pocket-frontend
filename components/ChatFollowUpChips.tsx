@@ -27,7 +27,7 @@ export function ChatFollowUpChips({
           type="button"
           disabled={disabled}
           onClick={() => onSelect(suggestion.prompt)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent-muted/40 px-3 py-1.5 text-[11px] font-medium text-accent-strong transition hover:border-accent/50 hover:bg-accent-muted disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 border border-accent/30 bg-accent-muted/40 px-3 py-1.5 text-[11px] font-medium text-accent-strong transition hover:border-accent/50 hover:bg-accent-muted disabled:cursor-not-allowed disabled:opacity-60"
         >
           {suggestion.label}
           <ArrowRight className="h-3 w-3" aria-hidden="true" />

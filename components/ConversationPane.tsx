@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { Bot, Check, Copy, Trash2, User } from "lucide-react";
-import { ConversationalMarkdown } from "@/components/ui/ConversationalMarkdown";
+import { useEffect, useRef, useState } from "react";
 import { ChatFollowUpChips } from "@/components/ChatFollowUpChips";
+import { compactTextButtonClass } from "@/components/ui/Button";
+import { ConversationalMarkdown } from "@/components/ui/ConversationalMarkdown";
 import { ThinkingSpinner } from "@/components/ui/ThinkingSpinner";
 import {
   getVisibleAssistantContent,
   parseChatFollowUps,
   shouldShowFollowUpSuggestions,
 } from "@/lib/chatFollowUpSuggestions";
-import { compactTextButtonClass } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { cn } from "@/lib/utils";
 import { pageShellClass } from "@/lib/pageLayout";
+import { cn } from "@/lib/utils";
 
 export type ChatMessage = {
   id: string;
@@ -48,7 +47,7 @@ function CopyMessageButton({ content }: { content: string }) {
       type="button"
       onClick={() => void handleCopy()}
       aria-label={copied ? "Copied" : "Copy message"}
-      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-muted transition hover:bg-muted-bg hover:text-foreground"
+      className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-muted transition hover:bg-muted-bg hover:text-foreground"
     >
       {copied ? (
         <>
@@ -85,7 +84,10 @@ export function ConversationPane({
 
     if (userMessageCount > prevUserMessageCountRef.current) {
       setLiveAnnouncement("Your message was sent.");
-      lastUserRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      lastUserRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     } else if (loading && !prevLoadingRef.current) {
       setLiveAnnouncement("Assistant is responding.");
     } else if (!loading && prevLoadingRef.current) {
@@ -111,22 +113,28 @@ export function ConversationPane({
             {historyControl}
           </div>
         )}
-        <EmptyState
-          icon={Bot}
-          title={`Ask anything about ${label === "portfolio" ? "your portfolio" : label}`}
-          description="Use quick prompts below or type your own question"
-        />
+        <div className="border border-dashed border-border bg-muted-bg/30 px-6 py-10 text-center">
+          <div
+            className="mx-auto mb-3 flex h-10 w-10 items-center justify-center border border-border text-muted"
+            aria-hidden="true"
+          >
+            <Bot className="h-4 w-4" />
+          </div>
+          <h2 className="text-sm font-semibold text-foreground">
+            Ask anything about{" "}
+            {label === "portfolio" ? "your portfolio" : label}
+          </h2>
+          <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-muted">
+            Use quick prompts below or type your own question
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className={cn("mx-auto mt-4 py-3", pageShellClass)}>
-      <div
-        className="sr-only"
-        aria-live="polite"
-        aria-atomic="true"
-      >
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
         {liveAnnouncement}
       </div>
 
@@ -163,7 +171,8 @@ export function ConversationPane({
             m.role === "user" &&
             messages.findLastIndex((mm) => mm.role === "user") === idx;
           const showFollowUps =
-            isAssistant && shouldShowFollowUpSuggestions(messages, idx, loading);
+            isAssistant &&
+            shouldShowFollowUpSuggestions(messages, idx, loading);
           const followUpSuggestions = showFollowUps
             ? parseChatFollowUps(m.content)
             : [];
@@ -179,15 +188,14 @@ export function ConversationPane({
               )}
             >
               {isAssistant && (
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
                   <Bot className="h-3.5 w-3.5" aria-hidden="true" />
                 </div>
               )}
 
               <div
-                aria-label={isAssistant ? "Assistant message" : "Your message"}
                 className={cn(
-                  "min-w-0 rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                  "min-w-0 px-4 py-3 text-sm leading-relaxed",
                   isAssistant
                     ? "max-w-[min(100%,42rem)] border border-border bg-surface-elevated text-foreground"
                     : "max-w-[85%] bg-secondary text-foreground",
@@ -220,7 +228,7 @@ export function ConversationPane({
               </div>
 
               {!isAssistant && (
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted-bg text-muted">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-muted-bg text-muted">
                   <User className="h-3.5 w-3.5" aria-hidden="true" />
                 </div>
               )}
@@ -229,8 +237,13 @@ export function ConversationPane({
         })}
 
         {loading && messages[messages.length - 1]?.role !== "assistant" && (
-          <div className="flex gap-3" aria-busy="true" aria-label="Assistant is responding">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+          <div
+            className="flex gap-3"
+            role="status"
+            aria-busy="true"
+            aria-label="Assistant is responding"
+          >
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
               <Bot className="h-3.5 w-3.5" aria-hidden="true" />
             </div>
             <ThinkingSpinner />

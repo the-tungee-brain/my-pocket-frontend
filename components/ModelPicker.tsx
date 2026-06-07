@@ -1,23 +1,23 @@
 "use client";
 
+import { Lock } from "lucide-react";
 import {
+  type RefObject,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
-  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
-import { Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import type { AccountPlan } from "@/app/types/account";
 import { Badge } from "@/components/ui/Badge";
+import { registerModelMenuRoot } from "@/lib/chatModelMenu";
 import {
+  type ChatModelOption,
   getChatModelOptions,
   requiresProModel,
-  type ChatModelOption,
 } from "@/lib/chatModels";
-import type { AccountPlan } from "@/app/types/account";
-import { registerModelMenuRoot } from "@/lib/chatModelMenu";
+import { cn } from "@/lib/utils";
 
 type MenuPosition = {
   top: number;
@@ -77,8 +77,7 @@ function computeMenuPosition(anchor: HTMLElement): MenuPosition {
       );
 
   const spaceAbove = rect.top - viewportPadding - gap;
-  const spaceBelow =
-    window.innerHeight - rect.bottom - viewportPadding - gap;
+  const spaceBelow = window.innerHeight - rect.bottom - viewportPadding - gap;
   const openAbove = spaceAbove >= spaceBelow;
 
   if (openAbove) {
@@ -136,7 +135,7 @@ export function ModelPicker({
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [open, anchorRef, isPaid]);
+  }, [open, anchorRef]);
 
   useEffect(() => {
     const list = listRef.current;
@@ -147,13 +146,13 @@ export function ModelPicker({
     return () => {
       list.removeEventListener("wheel", preventScrollChaining);
     };
-  }, [open, position]);
+  }, [open]);
 
   useEffect(() => {
     const panel = panelRef.current;
     if (!open || !panel) return;
     return registerModelMenuRoot(panel);
-  }, [open, position]);
+  }, [open]);
 
   if (!open || !mounted || !position) return null;
 
@@ -173,7 +172,7 @@ export function ModelPicker({
         width: position.width,
         maxHeight: position.maxHeight,
       }}
-      className="fixed z-[60] flex min-w-0 flex-col overscroll-contain rounded-2xl border border-border bg-secondary p-1 text-xs shadow-2xl backdrop-blur"
+      className="fixed z-[60] flex min-w-0 flex-col overscroll-contain border border-border bg-secondary p-1 text-xs shadow-2xl backdrop-blur"
     >
       <div className="shrink-0 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-muted">
         AI model
@@ -210,7 +209,7 @@ export function ModelPicker({
                     onChange(option.id);
                   }}
                   className={cn(
-                    "flex w-full flex-col rounded-md px-3 py-2 text-left transition-all duration-200 ease-out",
+                    "flex w-full flex-col px-3 py-2 text-left transition-all duration-200 ease-out",
                     locked
                       ? "cursor-not-allowed opacity-55"
                       : "hover:bg-muted-bg",
@@ -229,7 +228,7 @@ export function ModelPicker({
                         </Badge>
                       )}
                       {isActive && !locked && (
-                        <span className="rounded-full bg-accent-muted px-2 py-0.5 text-[10px] font-semibold text-accent-strong">
+                        <span className="bg-accent-muted px-2 py-0.5 text-[10px] font-semibold text-accent-strong">
                           Active
                         </span>
                       )}

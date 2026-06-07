@@ -1,9 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 import { appIconBoxClass } from "@/lib/appUi";
+import { cn } from "@/lib/utils";
 
 type EmptyStateProps = {
   icon: LucideIcon;
@@ -25,7 +25,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "rounded-lg px-6 py-10 text-center",
+        "px-6 py-10 text-center",
         variant === "dashed"
           ? "border border-dashed border-border bg-muted-bg/30"
           : "border border-border bg-secondary/60",
@@ -33,10 +33,7 @@ export function EmptyState({
       )}
     >
       <div
-        className={cn(
-          appIconBoxClass,
-          "mx-auto mb-3 h-10 w-10 rounded-lg text-muted",
-        )}
+        className={cn(appIconBoxClass, "mx-auto mb-3 h-10 w-10 text-muted")}
         aria-hidden="true"
       >
         <Icon className="h-4 w-4" />

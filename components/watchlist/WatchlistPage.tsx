@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { Star } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { FolderPlus, RefreshCw, Star } from "lucide-react";
+import { useState } from "react";
 import { useWatchlistContext } from "@/app/contexts/WatchlistContext";
-import { WatchlistFolderSection } from "@/components/watchlist/WatchlistFolderSection";
-import { SymbolSearchField } from "@/components/SymbolSearchField";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Button } from "@/components/ui/Button";
 import { PageShell } from "@/components/PageShell";
+import { SymbolSearchField } from "@/components/SymbolSearchField";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { SkeletonList } from "@/components/ui/Skeleton";
+import { WatchlistFolderSection } from "@/components/watchlist/WatchlistFolderSection";
 import { appStackClass } from "@/lib/appUi";
 import {
   moversMetaBodyClass,
@@ -34,15 +33,11 @@ export function WatchlistPage() {
     isSyncing,
     error,
     isAuthenticated,
-    load,
-    refreshQuotes,
     requestAddSymbol,
     dismissError,
-    addFolder,
   } = useWatchlistContext();
 
   const [symbolQuery, setSymbolQuery] = useState("");
-  const [newFolderName, setNewFolderName] = useState("");
 
   const signedOut = status === "unauthenticated";
   const folderCount = sortedFolderList.length;
@@ -54,13 +49,6 @@ export function WatchlistPage() {
         ? "Saving"
         : "Synced"
       : "Offline";
-
-  const handleAddFolder = () => {
-    const name = newFolderName.trim();
-    if (!name) return;
-    addFolder(name);
-    setNewFolderName("");
-  };
 
   return (
     <PageShell className={cn(appStackClass, "pt-4 pb-8 sm:pt-6")}>
@@ -92,7 +80,7 @@ export function WatchlistPage() {
 
       {isAuthenticated && accessToken && (
         <section
-          className={moversMetaCardClass}
+          className={cn(moversMetaCardClass, "px-0")}
           aria-label="Watchlist controls"
         >
           <p className={moversMetaEyebrowClass}>Watchlist workspace</p>
@@ -128,7 +116,7 @@ export function WatchlistPage() {
             </div>
           </dl>
 
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,0.55fr)]">
+          <div className="grid gap-3">
             <div className="space-y-2">
               <p className={moversMetaEyebrowClass}>Add symbol</p>
               <SymbolSearchField
@@ -143,62 +131,13 @@ export function WatchlistPage() {
                 limit={8}
               />
             </div>
-            <div className="space-y-2">
-              <p className={moversMetaEyebrowClass}>New folder</p>
-              <div className="flex gap-2">
-                <input
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  placeholder="Folder name"
-                  aria-label="New folder name"
-                  className="min-h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleAddFolder();
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddFolder}
-                  disabled={!newFolderName.trim()}
-                  aria-label="Add folder"
-                >
-                  <FolderPlus className="h-4 w-4" aria-hidden />
-                  <span className="hidden sm:inline">Add</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              isLoading={isLoading}
-              onClick={() => void load({ includeQuotes: true })}
-            >
-              <RefreshCw className="h-4 w-4" aria-hidden />
-              Reload
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => void refreshQuotes()}
-              disabled={symbols.length === 0}
-            >
-              Refresh quotes
-            </Button>
-            {isSyncing && <span className="text-xs text-muted">Saving…</span>}
           </div>
         </section>
       )}
 
       {isLoading && sortedFolderList.length === 0 && (
         <div className="app-panel p-4">
-          <SkeletonList rows={4} rowClassName="h-14 rounded-lg" />
+          <SkeletonList rows={4} rowClassName="h-14" />
         </div>
       )}
 
@@ -227,7 +166,7 @@ export function WatchlistPage() {
       )}
 
       {!isAuthenticated && symbols.length > 0 && (
-        <section className="rounded-xl border border-border bg-background/40">
+        <section className="border border-border bg-background/40">
           <h2 className="border-b border-border px-4 py-3 text-sm font-semibold text-foreground">
             Saved locally
           </h2>
@@ -250,7 +189,7 @@ export function WatchlistPage() {
         <section className="app-stack">
           <div className="app-panel overflow-hidden">
             <p className={moversRankedListLabelClass}>Watchlist folders</p>
-            <div className="space-y-4 p-3 sm:p-4">
+            <div className="space-y-4 py-3 sm:py-4">
               {sortedFolderList.map((folder) => (
                 <WatchlistFolderSection key={folder.id} folder={folder} />
               ))}

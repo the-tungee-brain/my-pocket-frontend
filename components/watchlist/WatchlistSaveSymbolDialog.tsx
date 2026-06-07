@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { FolderPlus, Star, X } from "lucide-react";
+import { useState } from "react";
 import { useWatchlistContext } from "@/app/contexts/WatchlistContext";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -38,7 +38,7 @@ export function WatchlistSaveSymbolDialog() {
       aria-modal="true"
       aria-labelledby="watchlist-save-title"
     >
-      <div className="w-full max-w-md rounded-2xl border border-border bg-background shadow-xl">
+      <div className="w-full max-w-md border border-border bg-background shadow-xl">
         <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
           <div className="min-w-0">
             <h2
@@ -55,7 +55,7 @@ export function WatchlistSaveSymbolDialog() {
           <button
             type="button"
             onClick={closeSaveSheet}
-            className="rounded-lg p-1.5 text-muted transition hover:bg-muted-bg hover:text-foreground"
+            className="p-1.5 text-muted transition hover:bg-muted-bg hover:text-foreground"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -79,7 +79,7 @@ export function WatchlistSaveSymbolDialog() {
                         toggleSymbolInFolder(symbol, folder.id, displayName)
                       }
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition",
+                        "flex w-full items-center gap-3 border px-3 py-2.5 text-left transition",
                         selected
                           ? "border-accent/50 bg-accent-muted/30"
                           : "border-border hover:border-accent/30 hover:bg-muted-bg/40",
@@ -87,7 +87,7 @@ export function WatchlistSaveSymbolDialog() {
                     >
                       <span
                         className={cn(
-                          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br",
+                          "flex h-9 w-9 shrink-0 items-center justify-center bg-gradient-to-br",
                           watchlistSwatchClass(folder.swatchID),
                         )}
                       >
@@ -122,15 +122,19 @@ export function WatchlistSaveSymbolDialog() {
         </div>
 
         <div className="space-y-2 border-t border-border px-4 py-3">
-          <label className="text-xs font-semibold uppercase tracking-wide text-muted">
+          <label
+            htmlFor="watchlist-new-folder-name"
+            className="text-xs font-semibold uppercase tracking-wide text-muted"
+          >
             New folder
           </label>
           <div className="flex gap-2">
             <input
+              id="watchlist-new-folder-name"
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               placeholder="Folder name"
-              className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              className="min-w-0 flex-1 border border-border bg-background px-3 py-2 text-sm"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleNewFolder();
               }}
@@ -145,7 +149,13 @@ export function WatchlistSaveSymbolDialog() {
               <FolderPlus className="h-4 w-4" aria-hidden />
             </Button>
           </div>
-          <Button type="button" variant="default" size="sm" className="w-full" onClick={closeSaveSheet}>
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            className="w-full"
+            onClick={closeSaveSheet}
+          >
             Done
           </Button>
         </div>

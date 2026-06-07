@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronUp, Sparkles } from "lucide-react";
+import { ChevronUp, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -107,6 +107,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const [inputRows, setInputRows] = useState(MIN_ROWS);
   const [mobileChatExpanded, setMobileChatExpanded] = useState(false);
+  const [portfolioAssistantOpen, setPortfolioAssistantOpen] = useState(false);
 
   const activeChatKey = resolveActiveChatKey({
     selectedView,
@@ -127,13 +128,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setMobileChatExpanded(false);
   }, [activeChatKey]);
 
+  const isPortfolioPage = pathname === "/portfolio";
+
   useEffect(() => {
     const openChat = () => {
+      if (isPortfolioPage) {
+        setPortfolioAssistantOpen(true);
+        return;
+      }
       setMobileChatExpanded(true);
     };
     window.addEventListener(OPEN_CHAT_EVENT, openChat);
     return () => window.removeEventListener(OPEN_CHAT_EVENT, openChat);
-  }, []);
+  }, [isPortfolioPage]);
+
+  useEffect(() => {
+    if (!isPortfolioPage) {
+      setPortfolioAssistantOpen(false);
+    }
+  }, [isPortfolioPage]);
+
+  useEffect(() => {
+    if (!portfolioAssistantOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setPortfolioAssistantOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [portfolioAssistantOpen]);
 
   const researchPositions =
     researchSymbol && positionMap[researchSymbol]
@@ -349,6 +375,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     contextLabel: chatContextLabel,
   };
 
+  const showEmbeddedConversation = showConversation && !isPortfolioPage;
+  const showEmbeddedChatBox = showChat && !isPortfolioPage;
+  const showPortfolioFloatingAssistant = showChat && isPortfolioPage;
+
   const mobileChatLabel =
     selectedView === "portfolio"
       ? "Ask about your portfolio"
@@ -472,7 +502,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               {children}
 
-              {showConversation && labelSymbol && (
+              {showEmbeddedConversation && labelSymbol && (
                 <div id="assistant-chat">
                   <ConversationPane
                     symbol={labelSymbol}
@@ -509,7 +539,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
-            {showChat && (
+            {showEmbeddedChatBox && (
               <div className="safe-area-bottom sticky bottom-14 z-20 shrink-0 md:hidden md:bottom-0">
                 <AnimatePresence mode="wait" initial={false}>
                   {!mobileChatExpanded ? (
@@ -553,7 +583,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            {showChat && (
+            {showEmbeddedChatBox && (
               <div className="sticky bottom-0 z-20 hidden shrink-0 md:block">
                 <ChatBox {...chatBoxProps} />
               </div>
@@ -561,6 +591,92 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </section>
       </main>
+      {showPortfolioFloatingAssistant && (
+        <>
+          <button
+            type="button"
+            aria-label="Open portfolio AI assistant"
+            onClick={() => setPortfolioAssistantOpen(true)}
+            className={cn(
+              "fixed right-5 z-40 border border-border bg-foreground px-4 py-2 text-sm font-medium text-background shadow-lg shadow-black/20 transition hover:opacity-90",
+              "bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 md:right-6",
+              portfolioAssistantOpen && "hidden",
+            )}
+          >
+            Ask AI
+          </button>
+
+          {portfolioAssistantOpen && labelSymbol && (
+            <div
+              className="fixed inset-0 z-50 bg-background/35 backdrop-blur-sm"
+              aria-hidden="true"
+              onClick={() => setPortfolioAssistantOpen(false)}
+            />
+          )}
+
+          {portfolioAssistantOpen && labelSymbol && (
+            <section
+              id="assistant-chat"
+              aria-label="Portfolio AI assistant"
+              className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] top-20 z-50 flex flex-col border border-border bg-background shadow-2xl shadow-black/30 md:inset-auto md:bottom-6 md:right-6 md:top-24 md:h-[min(44rem,calc(100vh-8rem))] md:w-[30rem]"
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                    Portfolio assistant
+                  </p>
+                  <p className="text-sm text-muted">
+                    Ask about risk, concentration, taxes, and what changed.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close portfolio AI assistant"
+                  onClick={() => setPortfolioAssistantOpen(false)}
+                  className="inline-flex h-9 w-9 items-center justify-center border border-border text-muted transition hover:text-foreground"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto px-4">
+                <ConversationPane
+                  symbol={labelSymbol}
+                  messages={currentChat?.messages ?? []}
+                  loading={!!currentChat?.loading}
+                  onClear={handleClearChat}
+                  onFollowUpPrompt={(prompt) =>
+                    void handleFollowUpPrompt(prompt)
+                  }
+                  historyControl={
+                    activeChatKey !== "__NONE__" ? (
+                      <ChatSessionHistory
+                        activeChatKey={activeChatKey}
+                        accessToken={sessionAccessToken}
+                        currentSessionId={currentChat?.sessionId}
+                        historyRevision={currentChat?.historyRevision ?? 0}
+                        showNewChat={
+                          (currentChat?.messages.length ?? 0) > 0 &&
+                          !currentChat?.loading
+                        }
+                        onStartNewSession={handleStartNewChat}
+                        onRestoreSession={(sessionId, messages) =>
+                          restoreChatSession(activeChatKey, sessionId, messages)
+                        }
+                      />
+                    ) : null
+                  }
+                />
+              </div>
+
+              <ChatBox
+                {...chatBoxProps}
+                onCollapse={() => setPortfolioAssistantOpen(false)}
+              />
+            </section>
+          )}
+        </>
+      )}
       <MobileBottomNav />
     </>
   );
