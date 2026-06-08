@@ -463,7 +463,7 @@ function SuggestedActionChips({
             disabled={disabled}
             title={item.reason}
             onClick={() => onRun(actionId)}
-            className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-left text-[11px] font-medium text-foreground transition hover:border-accent/40 hover:bg-muted-bg disabled:opacity-60"
+            className="inline-flex max-w-full items-center gap-1.5 border border-border bg-background px-3 py-1.5 text-left text-[11px] font-medium text-foreground transition hover:border-accent/40 hover:bg-muted-bg disabled:opacity-60"
           >
             <Icon className="h-3 w-3 shrink-0 text-accent-strong" aria-hidden />
             <span className="truncate">{item.label}</span>
@@ -495,7 +495,7 @@ function ActivityFilters({
 
   const symbolPillClass = (active: boolean) =>
     cn(
-      "inline-flex items-center justify-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
+      "inline-flex items-center justify-center gap-1 border px-2.5 py-1 text-[11px] font-medium transition",
       active
         ? "border-accent/40 bg-accent-muted text-accent-strong"
         : "border-border bg-background text-muted hover:border-accent/30 hover:text-foreground",
@@ -894,10 +894,7 @@ export function RecentActivitySection({
       {loading && !displayOrders.length ? (
         <div className="space-y-2 py-4">
           {[1, 2, 3].map((row) => (
-            <div
-              key={row}
-              className="h-10 animate-pulse rounded-lg bg-muted-bg"
-            />
+            <div key={row} className="h-10 animate-pulse bg-muted-bg" />
           ))}
         </div>
       ) : displayOrders.length === 0 ? (

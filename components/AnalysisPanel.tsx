@@ -115,7 +115,7 @@ function ReanalyzeButton({
       type="button"
       disabled={loading}
       onClick={onClick}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-muted transition hover:bg-muted-bg hover:text-foreground disabled:opacity-60"
+      className="inline-flex shrink-0 items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted transition hover:bg-muted-bg hover:text-foreground disabled:opacity-60"
     >
       <RefreshCw
         className={cn("h-3.5 w-3.5", loading && "animate-spin")}
@@ -186,12 +186,14 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   const [alertsOnly, setAlertsOnly] = useState(false);
   const portfolioRescrollRef = useRef(false);
   const portfolioWaitForAnalyzeRef = useRef(false);
-  const portfolioNavigation =
-    isPortfolio ? (props.portfolioNavigation ?? null) : null;
+  const portfolioNavigation = isPortfolio
+    ? (props.portfolioNavigation ?? null)
+    : null;
 
   const showProgressiveDisclosure =
     isPortfolio && showPortfolioAnalysis && progressiveDisclosure;
-  const isDisclosureCollapsed = showProgressiveDisclosure && !disclosureExpanded;
+  const isDisclosureCollapsed =
+    showProgressiveDisclosure && !disclosureExpanded;
 
   const symbolAlertMap = isPortfolio ? (props.symbolAlertMap ?? {}) : {};
   const positionMap = isPortfolio ? props.positionMap : null;
@@ -220,20 +222,18 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
     analyzedAt,
     hasCachedInsights,
     refetch,
-  } = useInsights(
-    {
-      label,
-      positions,
-      account,
-      accessToken: sessionAccessToken || null,
-      enabled:
-        requested &&
-        (!isPortfolio || showPortfolioAnalysis) &&
-        !isDisclosureCollapsed,
-      structuredAnalyze: true,
-      userDisplayMessage,
-    },
-  );
+  } = useInsights({
+    label,
+    positions,
+    account,
+    accessToken: sessionAccessToken || null,
+    enabled:
+      requested &&
+      (!isPortfolio || showPortfolioAnalysis) &&
+      !isDisclosureCollapsed,
+    structuredAnalyze: true,
+    userDisplayMessage,
+  });
 
   const showComparePaths =
     !isPortfolio && hasComparePaths(precomputed) && !hideComparePaths;
@@ -268,7 +268,12 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
         setRequested(true);
       }
     }
-  }, [hasCachedInsights, requested, showProgressiveDisclosure, disclosureExpanded]);
+  }, [
+    hasCachedInsights,
+    requested,
+    showProgressiveDisclosure,
+    disclosureExpanded,
+  ]);
 
   useEffect(() => {
     if (autoStart) {
@@ -357,7 +362,11 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
   }, [isPortfolio, showPortfolioAnalysis, portfolioNavigation?.token]);
 
   useEffect(() => {
-    if (!isPortfolio || !showPortfolioAnalysis || !portfolioRescrollRef.current) {
+    if (
+      !isPortfolio ||
+      !showPortfolioAnalysis ||
+      !portfolioRescrollRef.current
+    ) {
       return;
     }
 
@@ -530,7 +539,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
         <CardBody spacious>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
                 <Lightbulb className="h-4 w-4" aria-hidden />
               </div>
               <div className="min-w-0">
@@ -547,7 +556,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
             <button
               type="button"
               onClick={handleExpandDisclosure}
-              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-accent/35 bg-accent-muted/40 px-3.5 py-2 text-xs font-semibold text-accent-strong transition hover:border-accent/50 hover:bg-accent-muted/60"
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 border border-accent/35 bg-accent-muted/40 px-3.5 py-2 text-xs font-semibold text-accent-strong transition hover:border-accent/50 hover:bg-accent-muted/60"
             >
               <Sparkles className="h-3.5 w-3.5" aria-hidden />
               {hasCachedInsights ? "View analysis" : "Run analysis"}
@@ -577,7 +586,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
                 : `${positions.length} ${positions.length === 1 ? "leg" : "legs"} · holdings & AI review`
             }
             icon={
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
                 <Lightbulb className="h-4 w-4" aria-hidden />
               </div>
             }
@@ -623,7 +632,7 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
                 type="button"
                 onClick={() => setAlertsOnly((on) => !on)}
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
+                  "inline-flex items-center gap-1 border px-2.5 py-1 text-[11px] font-medium transition",
                   alertsOnly
                     ? "border-accent/40 bg-accent-muted text-accent-strong"
                     : "border-border bg-background text-muted hover:text-foreground",
@@ -633,14 +642,14 @@ export function AnalysisPanel(props: AnalysisPanelProps) {
                 Alerts ({alertSymbolCount})
               </button>
             )}
-            <div className="flex flex-wrap gap-1 rounded-lg bg-muted-bg/50 p-0.5">
+            <div className="flex flex-wrap gap-1 bg-muted-bg/50 p-0.5">
               {SORT_OPTIONS.map((option) => (
                 <button
                   key={option.id}
                   type="button"
                   onClick={() => setSortKey(option.id)}
                   className={cn(
-                    "rounded-md px-2 py-1 text-[11px] font-medium transition",
+                    "px-2 py-1 text-[11px] font-medium transition",
                     sortKey === option.id
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted hover:text-foreground",

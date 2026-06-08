@@ -11,15 +11,9 @@ type Props = {
   className?: string;
 };
 
-function StatCell({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function StatCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-surface/40 px-3 py-2">
+    <div className="border border-border/60 bg-surface/40 px-3 py-2">
       <p className="text-[10px] uppercase tracking-wide text-muted">{label}</p>
       <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
         {value}
@@ -33,7 +27,13 @@ function BucketTable({
   rows,
 }: {
   title: string;
-  rows: { key: string; tradeCount: number; winRate: number | null; expectancy: number | null; profitFactor: number | null }[];
+  rows: {
+    key: string;
+    tradeCount: number;
+    winRate: number | null;
+    expectancy: number | null;
+    profitFactor: number | null;
+  }[];
 }) {
   if (rows.length === 0) {
     return (
@@ -55,11 +55,21 @@ function BucketTable({
         <tbody>
           {rows.map((row) => (
             <tr key={row.key} className="border-b border-border/40">
-              <td className="py-2 pr-3 font-medium text-foreground">{row.key}</td>
-              <td className="py-2 pr-3 tabular-nums text-muted">{row.tradeCount}</td>
-              <td className="py-2 pr-3 tabular-nums">{formatPct(row.winRate)}</td>
-              <td className="py-2 pr-3 tabular-nums">{formatPct(row.expectancy)}</td>
-              <td className="py-2 tabular-nums">{formatRatio(row.profitFactor)}</td>
+              <td className="py-2 pr-3 font-medium text-foreground">
+                {row.key}
+              </td>
+              <td className="py-2 pr-3 tabular-nums text-muted">
+                {row.tradeCount}
+              </td>
+              <td className="py-2 pr-3 tabular-nums">
+                {formatPct(row.winRate)}
+              </td>
+              <td className="py-2 pr-3 tabular-nums">
+                {formatPct(row.expectancy)}
+              </td>
+              <td className="py-2 tabular-nums">
+                {formatRatio(row.profitFactor)}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -85,7 +95,7 @@ export function MomentumBreakoutPaperPerformanceTab({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+      <div className="border border-primary/20 bg-primary/5 px-3 py-2">
         <p className="text-xs font-semibold text-foreground">
           {meta?.label ?? "Practice tracking (optional)"}
         </p>
@@ -94,20 +104,22 @@ export function MomentumBreakoutPaperPerformanceTab({
             "Simulated outcomes from monitored trade-plan levels only. Not brokerage execution."}
         </p>
         <p className="mt-2 text-[10px] text-muted">
-          Hypothetical practice results only — not the same as your live watchlist.
+          Hypothetical practice results only — not the same as your live
+          watchlist.
         </p>
       </div>
 
-      {error && (
-        <ErrorBanner message={error} onRetry={() => void reload()} />
-      )}
+      {error && <ErrorBanner message={error} onRetry={() => void reload()} />}
 
       {loading && !summary && !error && <SkeletonList rows={4} />}
 
       {summary && (
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <StatCell label="Total alerts" value={String(summary.totalAlerts)} />
+            <StatCell
+              label="Total alerts"
+              value={String(summary.totalAlerts)}
+            />
             <StatCell
               label="Triggered"
               value={String(summary.triggeredAlerts)}
@@ -152,12 +164,14 @@ export function MomentumBreakoutPaperPerformanceTab({
                 {recentTrades.map((trade) => (
                   <li
                     key={trade.alertId}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/50 px-3 py-2 text-xs"
+                    className="flex flex-wrap items-center justify-between gap-2 border border-border/50 px-3 py-2 text-xs"
                   >
                     <span className="font-semibold text-foreground">
                       {trade.symbol}
                     </span>
-                    <span className="text-muted">{trade.status.replace(/_/g, " ")}</span>
+                    <span className="text-muted">
+                      {trade.status.replace(/_/g, " ")}
+                    </span>
                     <span
                       className={cn(
                         "tabular-nums font-medium",

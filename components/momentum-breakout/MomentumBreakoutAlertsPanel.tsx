@@ -231,7 +231,7 @@ export function MomentumBreakoutAlertsPanel({
             <MomentumBreakoutLaunchReadinessPanel accessToken={accessToken} />
 
             {disclaimer && (
-              <p className="rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs leading-relaxed text-muted">
+              <p className="border border-border/60 bg-background/40 px-3 py-2 text-xs leading-relaxed text-muted">
                 {disclaimer}
               </p>
             )}
@@ -277,7 +277,7 @@ export function MomentumBreakoutAlertsPanel({
             </div>
 
             {refreshWarnings.length > 0 && (
-              <div className="rounded-lg border border-warning/25 bg-warning-muted/40 px-3 py-2 text-xs text-foreground">
+              <div className="border border-warning/25 bg-warning-muted/40 px-3 py-2 text-xs text-foreground">
                 <p className="font-semibold">Refresh notes</p>
                 <ul className="mt-1 space-y-1 text-muted">
                   {refreshWarnings.map((warning) => (

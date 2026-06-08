@@ -18,7 +18,7 @@ type Props = {
 };
 
 const buttonClass =
-  "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition";
+  "inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium transition";
 
 export function PlaybookActionButtons({
   action,

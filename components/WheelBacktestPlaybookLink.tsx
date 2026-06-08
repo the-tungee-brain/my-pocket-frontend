@@ -22,7 +22,9 @@ export function WheelBacktestPlaybookLink({ symbols, className }: Props) {
   const { data: session } = useSession();
   const { plan } = useAccountPlan(session?.accessToken);
   const allowed = hasProFeature(plan, "wheelBacktest");
-  const choices = [...new Set(symbols.map((s) => s.trim().toUpperCase()).filter(Boolean))];
+  const choices = [
+    ...new Set(symbols.map((s) => s.trim().toUpperCase()).filter(Boolean)),
+  ];
 
   if (choices.length === 0) {
     return null;
@@ -49,7 +51,7 @@ export function WheelBacktestPlaybookLink({ symbols, className }: Props) {
             <Link
               key={ticker}
               href={wheelBacktestPath(ticker, { years: 5, run: true })}
-              className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg bg-accent-muted/50 px-3 text-xs font-medium text-accent-strong transition hover:bg-accent-muted/70"
+              className="inline-flex h-8 w-full items-center justify-center gap-1 bg-accent-muted/50 px-3 text-xs font-medium text-accent-strong transition hover:bg-accent-muted/70"
             >
               {choices.length === 1 ? "Open backtest" : `Backtest ${ticker}`}
               <ChevronRight className="h-3.5 w-3.5" aria-hidden />
@@ -58,7 +60,7 @@ export function WheelBacktestPlaybookLink({ symbols, className }: Props) {
             <Link
               key={ticker}
               href="/settings?tab=account"
-              className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg bg-muted-bg px-3 text-xs font-medium text-muted transition hover:text-foreground"
+              className="inline-flex h-8 w-full items-center justify-center gap-1 bg-muted-bg px-3 text-xs font-medium text-muted transition hover:text-foreground"
             >
               <Lock className="h-3 w-3" aria-hidden />
               {choices.length === 1 ? "Backtest (Pro)" : `${ticker} · Pro`}

@@ -184,7 +184,7 @@ function LandingHeader({
           signingIn={signingIn}
           size="sm"
           variant="outline"
-          className="rounded-full px-5"
+          className="px-5"
         />
       </div>
     </header>
@@ -226,9 +226,9 @@ function HeroSection({
           </MarketingDisplayTitle>
 
           <MarketingLead className="mt-6 max-w-lg">
-            Connect Schwab once. Tomcrest reads your live holdings, balances, and
-            options alongside market data, macro context, and news — then chat,
-            research, and plan with a clear next step.
+            Connect Schwab once. Tomcrest reads your live holdings, balances,
+            and options alongside market data, macro context, and news — then
+            chat, research, and plan with a clear next step.
           </MarketingLead>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-start">
@@ -297,10 +297,7 @@ function LandingNavLink({
   children: ReactNode;
 }) {
   return (
-    <a
-      href={href}
-      className="marketing-nav-link"
-    >
+    <a href={href} className="marketing-nav-link">
       {children}
     </a>
   );
@@ -349,22 +346,26 @@ const ALSO_INCLUDED = [
   {
     icon: BellRing,
     title: "Morning brief & alerts",
-    description: "Pre-market summary, assignment/DTE risk, earnings, and wash-sale reminders.",
+    description:
+      "Pre-market summary, assignment/DTE risk, earnings, and wash-sale reminders.",
   },
   {
     icon: Route,
     title: "Options-aware decisions",
-    description: "Hold vs roll vs close on short legs, premium math, and wheel playbook Ask AI.",
+    description:
+      "Hold vs roll vs close on short legs, premium math, and wheel playbook Ask AI.",
   },
   {
     icon: Target,
     title: "Strategy screener",
-    description: "Preset screens aligned to wheel, dividend, and ETF core playbooks.",
+    description:
+      "Preset screens aligned to wheel, dividend, and ETF core playbooks.",
   },
   {
     icon: PieChart,
     title: "Allocation & deploy plans",
-    description: "Trim and deploy suggestions ranked by diversification impact.",
+    description:
+      "Trim and deploy suggestions ranked by diversification impact.",
   },
   {
     icon: Scale,
@@ -379,12 +380,14 @@ const ALSO_INCLUDED = [
   {
     icon: LineChart,
     title: "SEC + market data",
-    description: "Filed financials, ratios, and live quotes alongside AI context.",
+    description:
+      "Filed financials, ratios, and live quotes alongside AI context.",
   },
   {
     icon: RefreshCw,
     title: "Guided strategy journeys",
-    description: "Onboarding flows for wheel, CSP, covered call, dividend, and ETF core.",
+    description:
+      "Onboarding flows for wheel, CSP, covered call, dividend, and ETF core.",
   },
 ] as const;
 
@@ -444,11 +447,14 @@ function TopFeatureCard({
       <div className="flex items-start justify-between gap-3">
         <div
           className={cn(
-            "flex items-center justify-center rounded-xl bg-accent-muted text-accent-strong",
+            "flex items-center justify-center bg-accent-muted text-accent-strong",
             featured ? "h-12 w-12" : "h-10 w-10",
           )}
         >
-          <Icon className={featured ? "h-6 w-6" : "h-5 w-5"} aria-hidden="true" />
+          <Icon
+            className={featured ? "h-6 w-6" : "h-5 w-5"}
+            aria-hidden="true"
+          />
         </div>
         <span className="marketing-tag">{tag}</span>
       </div>
@@ -474,7 +480,7 @@ function TopFeatureCard({
             key={bullet}
             className="flex items-start gap-2 text-xs leading-relaxed text-muted sm:text-sm"
           >
-            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
+            <span className="mt-2 h-1 w-1 shrink-0 bg-accent-strong" />
             {bullet}
           </li>
         ))}
@@ -556,12 +562,12 @@ function HowItWorksSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.35, delay: index * 0.08 }}
-                className="flex-1 rounded-2xl border border-border bg-secondary/60 p-6"
+                className="flex-1 border border-border bg-secondary/60 p-6"
               >
                 <p className="text-xs font-semibold uppercase tracking-wider text-accent-strong">
                   Step {item.step}
                 </p>
-                <div className="mt-4 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-muted text-accent-strong">
+                <div className="mt-4 flex h-10 w-10 items-center justify-center bg-accent-muted text-accent-strong">
                   <item.icon className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <h3 className="mt-4 text-base font-semibold">{item.title}</h3>
@@ -636,7 +642,7 @@ function ProductShowcase() {
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.35, delay: index * 0.06 }}
               className={cn(
-                "grid items-center gap-6 rounded-2xl border border-border bg-background/40 p-6 lg:grid-cols-[1fr_1.2fr] lg:p-8",
+                "grid items-center gap-6 border border-border bg-background/40 p-6 lg:grid-cols-[1fr_1.2fr] lg:p-8",
                 index % 2 === 1 && "lg:[&>*:first-child]:order-2",
               )}
             >
@@ -703,9 +709,9 @@ function StrategySection() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="flex items-center gap-4 rounded-xl border border-border bg-secondary/60 px-4 py-3.5 transition-colors hover:bg-secondary"
+                className="flex items-center gap-4 border border-border bg-secondary/60 px-4 py-3.5 transition-colors hover:bg-secondary"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
                   <Target className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
@@ -748,8 +754,8 @@ function FinalCTASection({
                 Start with the portfolio you already have
               </MarketingDisplayTitle>
               <MarketingLead className="mx-auto mt-3 max-w-lg text-sm sm:text-base">
-                Sign in with Google, connect Schwab read-only, and get your first
-                morning brief and AI analysis in minutes.
+                Sign in with Google, connect Schwab read-only, and get your
+                first morning brief and AI analysis in minutes.
               </MarketingLead>
 
               <div className="mt-8 flex flex-col items-center gap-3">
@@ -822,7 +828,7 @@ function SignInWithGoogleButton({
       size={size}
       variant={variant}
       className={cn(
-        size === "lg" && "min-w-55 rounded-full px-8",
+        size === "lg" && "min-w-55 px-8",
         variant === "default" && "shadow-lg shadow-black/25",
         className,
       )}
@@ -876,7 +882,7 @@ function FeatureCard({
 }) {
   return (
     <Card as="div" surface="marketing" interactive className="h-full p-5">
-      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+      <div className="mb-3 flex h-9 w-9 items-center justify-center bg-accent-muted text-accent-strong">
         <Icon className="h-4 w-4" aria-hidden="true" />
       </div>
       <h3 className="text-sm font-semibold">{title}</h3>
@@ -894,7 +900,7 @@ function ShowcasePanel({
 }) {
   if (variant === 0) {
     return (
-      <div className="rounded-xl border border-border bg-secondary/80 p-4">
+      <div className="border border-border bg-secondary/80 p-4">
         <div className="mb-3 flex items-center gap-2">
           <Icon className="h-4 w-4 text-accent-strong" aria-hidden="true" />
           <span className="text-xs font-semibold">Morning brief</span>
@@ -911,13 +917,15 @@ function ShowcasePanel({
 
   if (variant === 1) {
     return (
-      <div className="rounded-xl border border-border bg-secondary/80 p-4">
+      <div className="border border-border bg-secondary/80 p-4">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Icon className="h-4 w-4 text-accent-strong" aria-hidden="true" />
-            <span className="text-xs font-semibold">AAPL · Mar 21 $225 put</span>
+            <span className="text-xs font-semibold">
+              AAPL · Mar 21 $225 put
+            </span>
           </div>
-          <span className="rounded-full bg-accent-muted px-2 py-0.5 text-[9px] font-medium text-accent-strong">
+          <span className="bg-accent-muted px-2 py-0.5 text-[9px] font-medium text-accent-strong">
             12 DTE
           </span>
         </div>
@@ -942,24 +950,25 @@ function ShowcasePanel({
 
   if (variant === 2) {
     return (
-      <div className="rounded-xl border border-border bg-secondary/80 p-4">
+      <div className="border border-border bg-secondary/80 p-4">
         <div className="mb-3 flex items-center gap-2">
           <Icon className="h-4 w-4 text-accent-strong" aria-hidden="true" />
           <span className="text-xs font-semibold">Wheel playbook · SBUX</span>
         </div>
-        <div className="rounded-lg border border-border bg-background/50 px-3 py-2.5">
+        <div className="border border-border bg-background/50 px-3 py-2.5">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-accent-strong">
             Verdict
           </p>
           <p className="mt-1 text-[11px] leading-relaxed text-foreground">
-            Cautious — comfortable on business, but premium is thin vs assignment risk.
+            Cautious — comfortable on business, but premium is thin vs
+            assignment risk.
           </p>
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {["Review risks", "Suggest put zone", "Check FCF"].map((chip) => (
             <span
               key={chip}
-              className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[10px] text-muted"
+              className="border border-border bg-background/60 px-2 py-0.5 text-[10px] text-muted"
             >
               {chip}
             </span>
@@ -967,7 +976,7 @@ function ShowcasePanel({
         </div>
         <button
           type="button"
-          className="mt-3 w-full rounded-lg bg-accent-muted px-3 py-2 text-[10px] font-semibold text-accent-strong"
+          className="mt-3 w-full bg-accent-muted px-3 py-2 text-[10px] font-semibold text-accent-strong"
           tabIndex={-1}
         >
           Ask AI · Research before selling a put
@@ -991,7 +1000,7 @@ function ComparePathRow({
   return (
     <div
       className={cn(
-        "rounded-lg border px-3 py-2",
+        "border px-3 py-2",
         active
           ? "border-accent/40 bg-accent-muted/30"
           : "border-border bg-background/50",
@@ -1015,7 +1024,7 @@ function BriefLine({
   return (
     <div
       className={cn(
-        "flex h-full w-full min-h-0 items-center gap-2 rounded-lg border px-3 py-2",
+        "flex h-full w-full min-h-0 items-center gap-2 border px-3 py-2",
         accent
           ? "border-accent/25 bg-accent-muted/25"
           : "border-transparent bg-background/50",
@@ -1057,14 +1066,10 @@ function AppPreview() {
   }, [briefLines.length]);
 
   return (
-    <Card
-      as="div"
-      surface="subtle"
-      className="shadow-2xl shadow-black/25"
-    >
+    <Card as="div" surface="subtle" className="shadow-2xl shadow-black/25">
       <div className="flex min-h-106">
         <div className="hidden w-44 shrink-0 border-r border-border bg-secondary p-3 sm:block">
-          <div className="mb-3 rounded-xl border border-border bg-background/60 px-2.5 py-2">
+          <div className="mb-3 border border-border bg-background/60 px-2.5 py-2">
             <TomcrestLogo size="sm" showSubtitle />
           </div>
 
@@ -1098,13 +1103,15 @@ function AppPreview() {
         <div className="min-w-0 flex-1">
           <div className="border-b border-border bg-surface-elevated/50 px-4 py-3">
             <p className="text-xs font-semibold">Portfolio · Today</p>
-            <p className="text-[10px] text-muted">Morning brief · 3 attention items</p>
+            <p className="text-[10px] text-muted">
+              Morning brief · 3 attention items
+            </p>
           </div>
 
           <div className="space-y-3 p-4">
-            <div className="overflow-hidden rounded-xl border border-border bg-secondary/80">
+            <div className="overflow-hidden border border-border bg-secondary/80">
               <div className="flex items-center gap-2 border-b border-border bg-surface-elevated/50 px-3 py-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent-muted text-accent-strong">
+                <div className="flex h-6 w-6 items-center justify-center bg-accent-muted text-accent-strong">
                   <BellRing className="h-3 w-3" aria-hidden="true" />
                 </div>
                 <div>
@@ -1178,7 +1185,7 @@ function PreviewNavItem({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-lg px-2 py-1.5",
+        "flex items-center gap-2 px-2 py-1.5",
         active ? "bg-muted-bg" : "",
       )}
     >
@@ -1197,13 +1204,11 @@ function PreviewNavItem({
           <p className="truncate text-[9px] text-muted">{sublabel}</p>
         )}
       </div>
-      {active && (
-        <span className="ml-auto h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
-      )}
+      {active && <span className="ml-auto h-1 w-1 shrink-0 bg-accent-strong" />}
       {pulse && (
         <span className="relative ml-auto flex h-2 w-2 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-strong/60" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-strong" />
+          <span className="absolute inline-flex h-full w-full animate-ping bg-accent-strong/60" />
+          <span className="relative inline-flex h-2 w-2 bg-accent-strong" />
         </span>
       )}
     </div>
@@ -1224,7 +1229,7 @@ function PortfolioRow({
   return (
     <div
       className={cn(
-        "rounded-xl border px-3 py-2.5",
+        "border px-3 py-2.5",
         highlight
           ? "border-accent/25 bg-accent-muted/15"
           : "border-border bg-background/40",
@@ -1237,7 +1242,7 @@ function PortfolioRow({
             {summary}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-muted-bg px-2 py-0.5 text-[10px] font-medium text-muted">
+        <span className="shrink-0 bg-muted-bg px-2 py-0.5 text-[10px] font-medium text-muted">
           {tag}
         </span>
       </div>

@@ -20,7 +20,7 @@ const STATS_GRID_CLASS =
   "grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-6";
 
 const STAT_TILE_CLASS =
-  "min-w-0 rounded-xl border border-border bg-background/60 px-2.5 py-2 sm:px-3 sm:py-2.5";
+  "min-w-0 border border-border bg-background/60 px-2.5 py-2 sm:px-3 sm:py-2.5";
 
 const SKELETON_KEYS = [
   "market-cap",
@@ -90,7 +90,7 @@ function TickerKeyStatsSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn(STATS_GRID_CLASS, className)}>
       {SKELETON_KEYS.map((key) => (
-        <Skeleton key={key} className="h-[3.25rem] rounded-xl sm:h-[3.75rem]" />
+        <Skeleton key={key} className="h-[3.25rem] sm:h-[3.75rem]" />
       ))}
     </div>
   );

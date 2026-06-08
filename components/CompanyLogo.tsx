@@ -15,14 +15,20 @@ type CompanyLogoProps = {
   isEtf?: boolean;
 };
 
-const etfContainerClasses: Record<NonNullable<CompanyLogoProps["size"]>, string> = {
-  sm: "h-7 w-7 rounded-md p-1",
-  md: "h-10 w-10 rounded-lg p-1.5",
+const etfContainerClasses: Record<
+  NonNullable<CompanyLogoProps["size"]>,
+  string
+> = {
+  sm: "h-7 w-7 p-1",
+  md: "h-10 w-10 p-1.5",
 };
 
-const stockTileClasses: Record<NonNullable<CompanyLogoProps["size"]>, string> = {
-  sm: "h-7 w-7 rounded-md p-1",
-  md: "h-10 w-10 rounded-lg p-1.5",
+const stockTileClasses: Record<
+  NonNullable<CompanyLogoProps["size"]>,
+  string
+> = {
+  sm: "h-7 w-7 p-1",
+  md: "h-10 w-10 p-1.5",
 };
 
 const iconSizeClasses: Record<NonNullable<CompanyLogoProps["size"]>, string> = {
@@ -97,7 +103,9 @@ export function CompanyLogo({
   }
 
   if (imageFailed) {
-    return <StockLogoFallback symbol={symbol} size={size} className={className} />;
+    return (
+      <StockLogoFallback symbol={symbol} size={size} className={className} />
+    );
   }
 
   return (

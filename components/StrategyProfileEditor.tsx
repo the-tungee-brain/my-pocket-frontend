@@ -109,11 +109,15 @@ export function StrategyProfileEditor({
 
   useEffect(() => {
     if (values.primaryStrategy) {
-      setScreenerFilters(defaultScreenerFiltersForStrategy(values.primaryStrategy));
+      setScreenerFilters(
+        defaultScreenerFiltersForStrategy(values.primaryStrategy),
+      );
     }
   }, [values.primaryStrategy]);
 
-  const showSymbolScreener = supportsStrategyStockScreener(values.primaryStrategy);
+  const showSymbolScreener = supportsStrategyStockScreener(
+    values.primaryStrategy,
+  );
 
   const prepareScreenerProfile = useCallback(async () => {
     if (!values.primaryStrategy) return;
@@ -150,7 +154,9 @@ export function StrategyProfileEditor({
   const addSymbol = (symbol: string) => {
     const upper = symbol.toUpperCase();
     if (!upper || values.symbols.includes(upper)) return;
-    patch({ symbols: [...values.symbols, upper].slice(0, MAX_STRATEGY_SYMBOLS) });
+    patch({
+      symbols: [...values.symbols, upper].slice(0, MAX_STRATEGY_SYMBOLS),
+    });
     setSymbolInput("");
   };
 
@@ -177,7 +183,7 @@ export function StrategyProfileEditor({
   };
 
   const sectionClass = cn(
-    "space-y-4 rounded-xl border p-4",
+    "space-y-4 border p-4",
     isSettings
       ? "border-border/80 bg-secondary/30"
       : "border-border bg-background/40",
@@ -197,8 +203,8 @@ export function StrategyProfileEditor({
         loading={screenerLoading}
         initialLoading={screenerInitialLoading}
         isFetching={screenerIsFetching}
-                  error={screenerError}
-                  hasRun={screenerHasRun}
+        error={screenerError}
+        hasRun={screenerHasRun}
         page={screenerPage}
         pageSize={screenerPageSize}
         totalPages={screenerResult?.totalPages ?? 1}
@@ -223,8 +229,8 @@ export function StrategyProfileEditor({
         loading={screenerLoading}
         initialLoading={screenerInitialLoading}
         isFetching={screenerIsFetching}
-                  error={screenerError}
-                  hasRun={screenerHasRun}
+        error={screenerError}
+        hasRun={screenerHasRun}
         page={screenerPage}
         pageSize={screenerPageSize}
         totalPages={screenerResult?.totalPages ?? 1}
@@ -250,7 +256,9 @@ export function StrategyProfileEditor({
           </div>
         )}
         {isSettings && (
-          <h3 className="text-sm font-semibold text-foreground">Strategy type</h3>
+          <h3 className="text-sm font-semibold text-foreground">
+            Strategy type
+          </h3>
         )}
         <div className="grid gap-3 sm:grid-cols-2">
           {catalog.map((item) => {
@@ -270,7 +278,7 @@ export function StrategyProfileEditor({
                   })
                 }
                 className={cn(
-                  "rounded-xl border p-4 text-left transition",
+                  "border p-4 text-left transition",
                   selected
                     ? "border-accent/50 bg-accent-muted/50"
                     : "border-border bg-background/40 hover:border-accent/30",
@@ -282,7 +290,9 @@ export function StrategyProfileEditor({
                     {item.title}
                   </p>
                 </div>
-                <p className="mt-1 text-xs text-accent-strong">{item.subtitle}</p>
+                <p className="mt-1 text-xs text-accent-strong">
+                  {item.subtitle}
+                </p>
               </button>
             );
           })}
@@ -292,25 +302,27 @@ export function StrategyProfileEditor({
       {values.primaryStrategy && (
         <>
           <section className={sectionClass}>
-            <h3 className="text-sm font-semibold text-foreground">Preferences</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              Preferences
+            </h3>
             <FieldGroup label="Risk tolerance">
-              {(["conservative", "moderate", "aggressive"] as RiskTolerance[]).map(
-                (option) => (
-                  <ChoiceChip
-                    key={option}
-                    label={option}
-                    selected={values.riskTolerance === option}
-                    onClick={() =>
-                      patch({
-                        riskTolerance: option,
-                        ...(isWheelLikeStrategy(values.primaryStrategy)
-                          ? deltaBandForRisk(option)
-                          : {}),
-                      })
-                    }
-                  />
-                ),
-              )}
+              {(
+                ["conservative", "moderate", "aggressive"] as RiskTolerance[]
+              ).map((option) => (
+                <ChoiceChip
+                  key={option}
+                  label={option}
+                  selected={values.riskTolerance === option}
+                  onClick={() =>
+                    patch({
+                      riskTolerance: option,
+                      ...(isWheelLikeStrategy(values.primaryStrategy)
+                        ? deltaBandForRisk(option)
+                        : {}),
+                    })
+                  }
+                />
+              ))}
             </FieldGroup>
             {isWheelLikeStrategy(values.primaryStrategy) && (
               <p className="text-xs text-muted-foreground">
@@ -333,7 +345,12 @@ export function StrategyProfileEditor({
             {isWheelLikeStrategy(values.primaryStrategy) && (
               <FieldGroup label="Options experience">
                 {(
-                  ["none", "beginner", "intermediate", "advanced"] as OptionsExperience[]
+                  [
+                    "none",
+                    "beginner",
+                    "intermediate",
+                    "advanced",
+                  ] as OptionsExperience[]
                 ).map((option) => (
                   <ChoiceChip
                     key={option}
@@ -349,12 +366,14 @@ export function StrategyProfileEditor({
           <section className={sectionClass}>
             <div>
               <h3 className="text-sm font-semibold text-foreground">
-                {isSettings ? "Watchlist & allocation" : `${selectedCatalogItem?.title ?? "Plan"} details`}
+                {isSettings
+                  ? "Watchlist & allocation"
+                  : `${selectedCatalogItem?.title ?? "Plan"} details`}
               </h3>
               {isSettings && (
                 <p className="mt-1 text-xs text-muted">
-                  Update symbols and strategy-specific parameters. Use the screener
-                  below to browse ideas.
+                  Update symbols and strategy-specific parameters. Use the
+                  screener below to browse ideas.
                 </p>
               )}
             </div>
@@ -412,7 +431,7 @@ export function StrategyProfileEditor({
       )}
 
       {showStrategyChangeWarning && strategyChanged && (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+        <p className="border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
           Switching strategies will start a fresh journey checklist. Your Schwab
           connection and portfolio data stay the same.
         </p>
@@ -424,7 +443,7 @@ export function StrategyProfileEditor({
       )}
 
       {isSettings && isDirty && (
-        <div className="sticky bottom-16 z-30 rounded-xl border border-border bg-background/95 p-3 shadow-lg backdrop-blur-md md:bottom-4">
+        <div className="sticky bottom-16 z-30 border border-border bg-background/95 p-3 shadow-lg backdrop-blur-md md:bottom-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted">You have unsaved changes</p>
             <div className="flex items-center justify-end gap-2">
@@ -482,7 +501,7 @@ function CollapsibleSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-border/70 bg-background/30">
+    <div className="border border-border/70 bg-background/30">
       <button
         type="button"
         onClick={onToggle}
@@ -522,7 +541,7 @@ function EtfConfig({
           <input
             value={values.etfPrimary}
             onChange={(event) => onChange({ etfPrimary: event.target.value })}
-            className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+            className="mt-1 w-full border border-border bg-background px-3 py-2 text-sm text-foreground"
           />
         </label>
         <label className="block text-xs text-muted">
@@ -530,7 +549,7 @@ function EtfConfig({
           <input
             value={values.etfBond}
             onChange={(event) => onChange({ etfBond: event.target.value })}
-            className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+            className="mt-1 w-full border border-border bg-background px-3 py-2 text-sm text-foreground"
           />
         </label>
       </div>
@@ -557,7 +576,7 @@ function EtfConfig({
           onChange={(event) =>
             onChange({ rebalanceThresholdPct: Number(event.target.value) })
           }
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+          className="mt-1 w-full border border-border bg-background px-3 py-2 text-sm text-foreground"
         />
       </label>
     </>
@@ -600,7 +619,7 @@ function SymbolConfig({
             key={symbol}
             type="button"
             onClick={() => onRemoveSymbol(symbol)}
-            className="rounded-full border border-accent/30 bg-accent-muted/40 px-3 py-1 text-xs font-medium text-accent-strong"
+            className="border border-accent/30 bg-accent-muted/40 px-3 py-1 text-xs font-medium text-accent-strong"
           >
             {symbol} ×
           </button>
@@ -658,7 +677,9 @@ function DividendAdvancedConfig({
     <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
       <NumberField
         label="Target yield (%)"
-        value={values.targetYieldPct ?? DEFAULT_STRATEGY_FORM.targetYieldPct ?? 0}
+        value={
+          values.targetYieldPct ?? DEFAULT_STRATEGY_FORM.targetYieldPct ?? 0
+        }
         step={0.1}
         onChange={(value) => onChange({ targetYieldPct: value || null })}
       />
@@ -691,7 +712,7 @@ function NumberField({
         step={step}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+        className="mt-1 w-full border border-border bg-background px-3 py-2 text-sm text-foreground"
       />
     </label>
   );
@@ -728,7 +749,7 @@ function ChoiceChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition",
+        "border px-3 py-1.5 text-xs font-medium capitalize transition",
         selected
           ? "border-accent/40 bg-accent-muted/50 text-accent-strong"
           : "border-border bg-background/40 text-muted hover:text-foreground",

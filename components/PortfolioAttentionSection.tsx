@@ -437,7 +437,7 @@ export function PortfolioAttentionSection({
                         <button
                           type="button"
                           onClick={() => onRunTax(item)}
-                          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
+                          className="inline-flex shrink-0 items-center gap-1.5 border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-accent-strong transition hover:border-accent/40 hover:bg-muted-bg"
                         >
                           <Icon className="h-3.5 w-3.5" aria-hidden />
                           Review
@@ -496,7 +496,7 @@ export function PortfolioAttentionSection({
                           )}
                           {item.source === "historical" &&
                             item.daysActive != null && (
-                              <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
+                              <span className="bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
                                 {item.daysActive}d
                               </span>
                             )}

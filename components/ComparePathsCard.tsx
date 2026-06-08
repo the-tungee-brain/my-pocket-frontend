@@ -57,7 +57,9 @@ function findMatchingRollSuggestion(
   );
   if (byStrike) return byStrike;
 
-  const bySide = rollSuggestions.filter((suggestion) => suggestion.side === side);
+  const bySide = rollSuggestions.filter(
+    (suggestion) => suggestion.side === side,
+  );
   if (bySide.length === 1) return bySide[0];
   if (rollSuggestions.length === 1) return rollSuggestions[0];
   return undefined;
@@ -116,10 +118,12 @@ function resolveRollCashPicture(
     closeCost != null &&
     suggestion?.estimatedCredit != null
   ) {
-    rollNet = Math.round(suggestion.estimatedCredit * CONTRACT_MULTIPLIER * 100) / 100;
+    rollNet =
+      Math.round(suggestion.estimatedCredit * CONTRACT_MULTIPLIER * 100) / 100;
     openCollect = Math.round((closeCost + rollNet) * 100) / 100;
   } else if (rollNet == null && suggestion?.estimatedCredit != null) {
-    rollNet = Math.round(suggestion.estimatedCredit * CONTRACT_MULTIPLIER * 100) / 100;
+    rollNet =
+      Math.round(suggestion.estimatedCredit * CONTRACT_MULTIPLIER * 100) / 100;
   }
 
   let netCashAfterRoll = null;
@@ -143,7 +147,7 @@ function resolveRollCashPicture(
 
 function MetricChip({ label, value }: { label: string; value: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-border/80 bg-background/80 px-1.5 py-0.5 text-[10px] text-muted">
+    <span className="inline-flex items-center gap-1 border border-border/80 bg-background/80 px-1.5 py-0.5 text-[10px] text-muted">
       <span className="font-medium text-foreground/80">{label}</span>
       <span>{value}</span>
     </span>
@@ -214,7 +218,7 @@ function RollNetCashSummary({ picture }: { picture: RollCashPicture }) {
   if (!hasCashPictureContent(picture)) return null;
 
   return (
-    <div className="space-y-2 rounded-lg border border-border/80 bg-background/40 px-2.5 py-2.5">
+    <div className="space-y-2 border border-border/80 bg-background/40 px-2.5 py-2.5">
       <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
         Your cash picture
       </p>
@@ -296,7 +300,7 @@ function PathShell({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col rounded-xl border px-3.5 py-3.5",
+        "flex min-w-0 flex-col border px-3.5 py-3.5",
         accent,
         recommended && "ring-2 ring-accent/50 shadow-sm",
       )}
@@ -305,7 +309,7 @@ function PathShell({
         <Icon className="h-4 w-4 shrink-0 text-accent-strong" aria-hidden />
         <p className="text-sm font-semibold text-foreground">{title}</p>
         {recommended && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-accent/40 bg-accent-muted/30 px-2 py-0.5 text-[10px] font-medium text-accent-strong">
+          <span className="inline-flex items-center gap-1 border border-accent/40 bg-accent-muted/30 px-2 py-0.5 text-[10px] font-medium text-accent-strong">
             <Sparkles className="h-3 w-3" aria-hidden />
             Recommended
           </span>
@@ -348,7 +352,7 @@ function PriceVsStrikeSummary({
   }
 
   return (
-    <div className="rounded-lg border border-border/80 bg-background/40 px-2.5 py-2">
+    <div className="border border-border/80 bg-background/40 px-2.5 py-2">
       <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
         Today vs strike
       </p>
@@ -356,7 +360,10 @@ function PriceVsStrikeSummary({
         <div>
           <p className="text-[10px] text-muted">{symbol} now</p>
           <p className="text-sm font-semibold text-foreground">
-            {formatUsd(price, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatUsd(price, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </p>
         </div>
         <div>
@@ -364,11 +371,16 @@ function PriceVsStrikeSummary({
             {isPut ? "Put strike" : "Call strike"}
           </p>
           <p className="text-sm font-semibold text-foreground">
-            {formatUsd(strike, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatUsd(strike, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </p>
         </div>
       </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-muted">{contextLine}</p>
+      <p className="mt-2 text-[11px] leading-relaxed text-muted">
+        {contextLine}
+      </p>
     </div>
   );
 }
@@ -392,7 +404,7 @@ function ScenarioTile({
         : "border-border/80 bg-background/40";
 
   return (
-    <div className={cn("rounded-lg border px-2.5 py-2", toneClass)}>
+    <div className={cn("border px-2.5 py-2", toneClass)}>
       <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
         {title}
       </p>
@@ -400,7 +412,9 @@ function ScenarioTile({
         {headline}
       </p>
       {detail && (
-        <p className="mt-0.5 text-[11px] leading-relaxed text-muted">{detail}</p>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
+          {detail}
+        </p>
       )}
     </div>
   );
@@ -416,7 +430,8 @@ function HoldPathView({
   recommended: boolean;
 }) {
   const { hold, currentLeg, drivers } = outcome;
-  const side = currentLeg.side ?? (currentLeg.putCall === "CALL" ? "call" : "put");
+  const side =
+    currentLeg.side ?? (currentLeg.putCall === "CALL" ? "call" : "put");
   const putOrCall = side === "put" ? "put" : "call";
   const strike = currentLeg.strike;
   const price = hold.underlyingPrice;
@@ -479,7 +494,11 @@ function HoldPathView({
             <ScenarioTile
               tone="positive"
               title="Stays above strike"
-              headline={premiumLabel ? `Keep ${premiumLabel} premium` : "Keep premium collected"}
+              headline={
+                premiumLabel
+                  ? `Keep ${premiumLabel} premium`
+                  : "Keep premium collected"
+              }
               detail={`No shares bought — option expires.`}
             />
             <ScenarioTile
@@ -498,7 +517,11 @@ function HoldPathView({
             <ScenarioTile
               tone="positive"
               title="Stays below strike"
-              headline={premiumLabel ? `Keep ${premiumLabel} premium` : "Keep premium collected"}
+              headline={
+                premiumLabel
+                  ? `Keep ${premiumLabel} premium`
+                  : "Keep premium collected"
+              }
               detail="Call expires; you keep shares and premium."
             />
             <ScenarioTile
@@ -535,7 +558,7 @@ function ClosePathView({
       </p>
       <div className="grid gap-2">
         {close.costPerContract != null && (
-          <div className="rounded-lg border border-border/80 bg-background/40 px-2.5 py-2">
+          <div className="border border-border/80 bg-background/40 px-2.5 py-2">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
               Cost to close
             </p>
@@ -547,7 +570,10 @@ function ClosePathView({
             </p>
             {close.costPerShare != null && (
               <p className="text-[11px] text-muted">
-                {formatUsd(close.costPerShare, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatUsd(close.costPerShare, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
                 /share at ask
               </p>
             )}
@@ -556,7 +582,7 @@ function ClosePathView({
         {close.openPnl != null && (
           <div
             className={cn(
-              "rounded-lg border px-2.5 py-2",
+              "border px-2.5 py-2",
               close.openPnl > 0
                 ? "border-emerald-500/30 bg-emerald-500/5"
                 : close.openPnl < 0
@@ -601,12 +627,14 @@ function RollSuggestionView({
   currentLeg: HeldOptionOutcomes["currentLeg"];
   recommended: boolean;
 }) {
-  const closeCost = currentLeg.cashPerContract ?? cashPicture?.closeCostPerContract ?? null;
+  const closeCost =
+    currentLeg.cashPerContract ?? cashPicture?.closeCostPerContract ?? null;
   const openCollect =
     cashPicture?.openCollectPerContract ??
     (closeCost != null && suggestion.estimatedCredit != null
-      ? Math.round((closeCost + suggestion.estimatedCredit * CONTRACT_MULTIPLIER) * 100) /
-        100
+      ? Math.round(
+          (closeCost + suggestion.estimatedCredit * CONTRACT_MULTIPLIER) * 100,
+        ) / 100
       : null);
 
   return (
@@ -622,7 +650,7 @@ function RollSuggestionView({
         dollars in and out.
       </p>
       <div className="space-y-2 text-xs">
-        <div className="rounded-lg border border-border/70 bg-background/50 px-2.5 py-2">
+        <div className="border border-border/70 bg-background/50 px-2.5 py-2">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
             Step 1 · Buy to close
           </p>
@@ -643,12 +671,14 @@ function RollSuggestionView({
         <div className="flex justify-center text-muted" aria-hidden>
           <ArrowDown className="h-4 w-4" />
         </div>
-        <div className="rounded-lg border border-border/70 bg-background/50 px-2.5 py-2">
+        <div className="border border-border/70 bg-background/50 px-2.5 py-2">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
             Step 2 · Sell to open
           </p>
           <p className="mt-1 font-medium text-foreground">
-            {formatUsd(suggestion.suggestedStrike, { maximumFractionDigits: 2 })}{" "}
+            {formatUsd(suggestion.suggestedStrike, {
+              maximumFractionDigits: 2,
+            })}{" "}
             {suggestion.side}
           </p>
           {openCollect != null && (
@@ -661,7 +691,9 @@ function RollSuggestionView({
             </p>
           )}
           {suggestion.suggestedDelta != null && (
-            <p className="text-muted">Delta {suggestion.suggestedDelta.toFixed(2)}</p>
+            <p className="text-muted">
+              Delta {suggestion.suggestedDelta.toFixed(2)}
+            </p>
           )}
         </div>
         {cashPicture && hasCashPictureContent(cashPicture) && (
@@ -696,7 +728,7 @@ function RollPathView({
         dollars in and out.
       </p>
       <div className="space-y-2 text-xs">
-        <div className="rounded-lg border border-border/70 bg-background/50 px-2.5 py-2">
+        <div className="border border-border/70 bg-background/50 px-2.5 py-2">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
             Step 1 · Buy to close
           </p>
@@ -719,7 +751,7 @@ function RollPathView({
           <ArrowDown className="h-4 w-4" />
         </div>
 
-        <div className="rounded-lg border border-border/70 bg-background/50 px-2.5 py-2">
+        <div className="border border-border/70 bg-background/50 px-2.5 py-2">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
             Step 2 · Sell to open
           </p>
@@ -842,8 +874,9 @@ export function ComparePathsIntro() {
         Compare paths
       </p>
       <p className="mt-1 text-xs leading-relaxed text-muted">
-        Three ways to handle this short option — estimated dollars from your live quotes.
-        Compare outcomes, then see the recommended action in the summary above.
+        Three ways to handle this short option — estimated dollars from your
+        live quotes. Compare outcomes, then see the recommended action in the
+        summary above.
       </p>
     </div>
   );
@@ -878,16 +911,16 @@ export function ComparePathsCard({
               : "grid-cols-1",
         )}
       >
-      {orderedPaths.map((path) => (
-        <PathCard
-          key={path.path}
-          path={path}
-          outcome={outcome}
-          symbol={symbolUpper}
-          recommendedPath={recommendedPath}
-          rollSuggestions={rollSuggestions}
-        />
-      ))}
+        {orderedPaths.map((path) => (
+          <PathCard
+            key={path.path}
+            path={path}
+            outcome={outcome}
+            symbol={symbolUpper}
+            recommendedPath={recommendedPath}
+            rollSuggestions={rollSuggestions}
+          />
+        ))}
       </CardBody>
     </Card>
   );

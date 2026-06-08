@@ -44,7 +44,7 @@ export function ScoreBreakdown({ segments, loading, className }: Props) {
             </span>
           </div>
           <div
-            className="h-2 overflow-hidden rounded-full bg-muted-bg"
+            className="h-2 overflow-hidden bg-muted-bg"
             role="meter"
             aria-valuenow={Math.round(segment.value * 100)}
             aria-valuemin={0}
@@ -52,7 +52,7 @@ export function ScoreBreakdown({ segments, loading, className }: Props) {
             aria-label={segment.label}
           >
             <div
-              className="h-full rounded-full bg-accent/80"
+              className="h-full bg-accent/80"
               style={{ width: `${Math.round(segment.value * 100)}%` }}
             />
           </div>

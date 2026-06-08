@@ -1,10 +1,7 @@
 "use client";
 
 import { AlertTriangle, Landmark, Wallet } from "lucide-react";
-import type {
-  CashSecuredPutSummary,
-  SchwabAccounts,
-} from "@/app/types/schwab";
+import type { CashSecuredPutSummary, SchwabAccounts } from "@/app/types/schwab";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { KpiStat } from "@/components/ui/KpiStat";
 import { formatUsd } from "@/lib/formatCurrency";
@@ -29,7 +26,10 @@ export function AccountHealthStrip({
   const maintenanceCall = balances.maintenanceCall ?? 0;
   const regTCall = balances.regTCall ?? 0;
   const isInCall =
-    projected.isInCall || initial.isInCall || maintenanceCall > 0 || regTCall > 0;
+    projected.isInCall ||
+    initial.isInCall ||
+    maintenanceCall > 0 ||
+    regTCall > 0;
 
   const cspReserved = cashSecuredPutSummary?.totalReservedCash ?? 0;
   const cashAfterCsp =
@@ -38,23 +38,19 @@ export function AccountHealthStrip({
     null;
 
   return (
-    <Card
-      surface="subtle"
-      className={className}
-      aria-label="Account health"
-    >
+    <Card surface="subtle" className={className} aria-label="Account health">
       <CardHeader tone={isInCall ? "danger" : "default"}>
         <CardTitle
           title="Account health"
           description="Buying power, cash, and margin status from Schwab"
           icon={
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
               <Landmark className="h-4 w-4" aria-hidden />
             </div>
           }
           badge={
             isInCall ? (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-danger/40 bg-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger">
+              <span className="inline-flex shrink-0 items-center gap-1 border border-danger/40 bg-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger">
                 <AlertTriangle className="h-3 w-3" aria-hidden />
                 In call
               </span>
@@ -76,11 +72,16 @@ export function AccountHealthStrip({
       )}
 
       <CardBody className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        <KpiStat label="Buying power" value={formatUsd(balances.buyingPower ?? 0)} />
+        <KpiStat
+          label="Buying power"
+          value={formatUsd(balances.buyingPower ?? 0)}
+        />
         <KpiStat label="Cash" value={formatUsd(balances.cashBalance ?? 0)} />
         <KpiStat
           label="Available funds"
-          value={formatUsd(balances.availableFunds ?? balances.cashBalance ?? 0)}
+          value={formatUsd(
+            balances.availableFunds ?? balances.cashBalance ?? 0,
+          )}
         />
         <KpiStat
           label="Equity"

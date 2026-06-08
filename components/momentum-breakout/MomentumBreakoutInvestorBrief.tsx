@@ -67,7 +67,7 @@ function HeroStatTile({
 
 function TrackRecordMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 flex-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
+    <div className="min-w-0 flex-1 border border-border/60 bg-background/40 px-3 py-2.5">
       <dt className="text-xs font-medium text-muted">{label}</dt>
       <dd className="mt-1 text-base font-semibold tabular-nums text-foreground">
         {value}
@@ -118,10 +118,7 @@ export function MomentumBreakoutInvestorBrief({
   return (
     <div className={cn("space-y-6", className)}>
       <div
-        className={cn(
-          "rounded-lg px-4 py-5 sm:px-5 sm:py-6",
-          mbHeroShellClass(heroTone),
-        )}
+        className={cn("px-4 py-5 sm:px-5 sm:py-6", mbHeroShellClass(heroTone))}
       >
         <p className={mbSectionLabelClass}>Today&apos;s verdict</p>
         <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">

@@ -284,7 +284,7 @@ export function NavList({
         <div className="flex items-center justify-between">
           <span className={navSectionTitleClass}>Positions</span>
           {symbols.length > 0 && (
-            <span className="rounded-full bg-muted-bg px-2 py-px text-[10px] text-muted">
+            <span className="bg-muted-bg px-2 py-px text-[10px] text-muted">
               {symbols.length}
             </span>
           )}
@@ -384,7 +384,7 @@ export function NavList({
             Watchlist
           </Link>
           {watchlist.length > 0 && (
-            <span className="rounded-full bg-muted-bg px-2 py-px text-[10px] text-muted">
+            <span className="bg-muted-bg px-2 py-px text-[10px] text-muted">
               {watchlist.length}
             </span>
           )}
@@ -400,7 +400,7 @@ export function NavList({
       </div>
 
       {watchlist.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-background/50 px-3 py-3 text-[11px] text-muted">
+        <div className="border border-dashed border-border bg-background/50 px-3 py-3 text-[11px] text-muted">
           <p>Save symbols from Research to track them here.</p>
           {!isResearch && (
             <Link

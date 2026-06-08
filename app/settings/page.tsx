@@ -10,7 +10,7 @@ export default function SettingsPage() {
       fallback={
         <div className={cn(pageShellClass, "space-y-4 py-8")}>
           <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-48 w-full" />
         </div>
       }
     >

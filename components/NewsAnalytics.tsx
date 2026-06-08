@@ -161,7 +161,7 @@ function ActionabilityLabel() {
       <span className="group relative inline-flex">
         <button
           type="button"
-          className="inline-flex shrink-0 rounded-full text-muted transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="inline-flex shrink-0 text-muted transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           aria-label="What is actionability?"
           title={ACTIONABILITY_HELP}
         >
@@ -169,7 +169,7 @@ function ActionabilityLabel() {
         </button>
         <span
           role="tooltip"
-          className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-56 -translate-x-1/2 rounded-lg border border-border bg-background px-2.5 py-2 text-left text-[11px] font-normal normal-case leading-relaxed tracking-normal text-foreground opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+          className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-56 -translate-x-1/2 border border-border bg-background px-2.5 py-2 text-left text-[11px] font-normal normal-case leading-relaxed tracking-normal text-foreground opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
         >
           {ACTIONABILITY_HELP}
         </span>
@@ -213,10 +213,10 @@ export function NewsContextAside({ data }: { data: StockNewsView }) {
             {actionabilityScore == null ? "N/A" : `${actionabilityScore}/5`}
           </span>
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-muted-bg">
+        <div className="h-1.5 overflow-hidden bg-muted-bg">
           <div
             className={cn(
-              "h-full rounded-full bg-current transition-all",
+              "h-full bg-current transition-all",
               actionabilityTone(actionabilityScore),
             )}
             style={{ width: `${actionabilityPercent}%` }}

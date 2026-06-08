@@ -238,7 +238,7 @@ export function MomentumBreakoutStockCheck({
 
       {error && (
         <p
-          className="rounded-lg border border-danger/25 bg-danger/5 px-3 py-2 text-sm text-danger"
+          className="border border-danger/25 bg-danger/5 px-3 py-2 text-sm text-danger"
           role="alert"
         >
           {error}
@@ -248,7 +248,7 @@ export function MomentumBreakoutStockCheck({
       {result && (
         <div
           className={cn(
-            "rounded-xl border border-border/70 border-l-4 px-4 py-4",
+            "border border-border/70 border-l-4 px-4 py-4",
             resultAccentClass(result.status),
           )}
         >
@@ -367,7 +367,7 @@ export function MomentumBreakoutStockCheck({
             {customPlan.entryExplanation}
           </p>
           <dl className="grid gap-2 text-sm sm:grid-cols-2">
-            <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+            <div className="border border-border/60 bg-background/50 px-3 py-2">
               <dt className="text-xs text-muted">Current price</dt>
               <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.currentPrice)}
@@ -376,7 +376,7 @@ export function MomentumBreakoutStockCheck({
                 As of {customPlan.latestBarDate}
               </dd>
             </div>
-            <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+            <div className="border border-border/60 bg-background/50 px-3 py-2">
               <dt className="text-xs text-muted">Entry trigger</dt>
               <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.entryPrice)}
@@ -387,13 +387,13 @@ export function MomentumBreakoutStockCheck({
                 </dd>
               )}
             </div>
-            <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+            <div className="border border-border/60 bg-background/50 px-3 py-2">
               <dt className="text-xs text-muted">Stop</dt>
               <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.stopPrice)}
               </dd>
             </div>
-            <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+            <div className="border border-border/60 bg-background/50 px-3 py-2">
               <dt className="text-xs text-muted">Target</dt>
               <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.targetPrice)} (
@@ -402,7 +402,7 @@ export function MomentumBreakoutStockCheck({
             </div>
           </dl>
           {!customPlan.planActiveAtCurrentPrice && (
-            <p className="rounded-lg border border-warning/25 bg-warning-muted/30 px-3 py-2 text-sm text-foreground/90">
+            <p className="border border-warning/25 bg-warning-muted/30 px-3 py-2 text-sm text-foreground/90">
               Inactive until the entry trigger is reached. Educational only.
             </p>
           )}

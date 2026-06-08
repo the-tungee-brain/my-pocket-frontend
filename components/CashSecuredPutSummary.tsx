@@ -16,7 +16,10 @@ type Props = {
 
 function formatStrike(strike: number | null) {
   if (strike == null) return "—";
-  return formatUsd(strike, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return formatUsd(strike, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 export function CashSecuredPutSummary({
@@ -32,9 +35,13 @@ export function CashSecuredPutSummary({
     summary.availableCashAfterReserves ??
     (cashBalance != null ? Math.max(cashBalance - reserved, 0) : null);
   const cashTotal =
-    cashBalance != null && cashBalance > 0 ? cashBalance : reserved + (available ?? 0);
+    cashBalance != null && cashBalance > 0
+      ? cashBalance
+      : reserved + (available ?? 0);
   const reservedPct =
-    cashTotal > 0 ? Math.min(100, Math.round((reserved / cashTotal) * 100)) : 100;
+    cashTotal > 0
+      ? Math.min(100, Math.round((reserved / cashTotal) * 100))
+      : 100;
 
   return (
     <Card
@@ -51,7 +58,7 @@ export function CashSecuredPutSummary({
               : "When you sell cash-secured puts, this cash is earmarked to buy 100 shares per contract at the strike if assigned."
           }
           icon={
-            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent-strong">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center bg-accent/15 text-accent-strong">
               <LockKeyhole className="h-4 w-4" aria-hidden />
             </div>
           }
@@ -67,7 +74,7 @@ export function CashSecuredPutSummary({
             label="Reserved"
             value={formatUsd(reserved)}
             tone="positive"
-            className="rounded-xl border border-accent/25 bg-secondary/70 px-3.5 py-2.5"
+            className="border border-accent/25 bg-secondary/70 px-3.5 py-2.5"
           />
           {available != null && (
             <KpiStat
@@ -85,7 +92,7 @@ export function CashSecuredPutSummary({
               <span className="tabular-nums">{reservedPct}% reserved</span>
             </div>
             <div
-              className="h-2 overflow-hidden rounded-full bg-muted-bg"
+              className="h-2 overflow-hidden bg-muted-bg"
               role="progressbar"
               aria-valuenow={reservedPct}
               aria-valuemin={0}
@@ -93,7 +100,7 @@ export function CashSecuredPutSummary({
               aria-label={`${reservedPct}% of cash reserved for puts`}
             >
               <div
-                className="h-full rounded-full bg-accent transition-[width] duration-300"
+                className="h-full bg-accent transition-[width] duration-300"
                 style={{ width: `${reservedPct}%` }}
               />
             </div>
@@ -106,7 +113,9 @@ export function CashSecuredPutSummary({
               {summary.positions.map((item) => {
                 const label = item.underlyingSymbol ?? item.symbol;
                 const contractLabel =
-                  item.contracts === 1 ? "1 contract" : `${item.contracts} contracts`;
+                  item.contracts === 1
+                    ? "1 contract"
+                    : `${item.contracts} contracts`;
 
                 return (
                   <li
@@ -117,9 +126,13 @@ export function CashSecuredPutSummary({
                       <p className="truncate text-sm font-medium">
                         <span className="font-mono">{label}</span>
                         <span className="text-muted"> · </span>
-                        <span className="text-muted">{formatStrike(item.strike)} put</span>
+                        <span className="text-muted">
+                          {formatStrike(item.strike)} put
+                        </span>
                       </p>
-                      <p className="mt-0.5 text-xs text-muted">{contractLabel}</p>
+                      <p className="mt-0.5 text-xs text-muted">
+                        {contractLabel}
+                      </p>
                     </div>
                     <p className="shrink-0 text-sm font-semibold tabular-nums text-accent-strong">
                       {formatUsd(item.reservedCash)}

@@ -37,7 +37,7 @@ export function SchwabConnectionBanner({
   return (
     <div
       className={cn(
-        "mb-3 flex flex-col gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        "mb-3 flex flex-col gap-3 border border-amber-500/30 bg-amber-500/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
       role="status"

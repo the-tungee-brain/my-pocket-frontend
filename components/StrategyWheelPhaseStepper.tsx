@@ -13,7 +13,11 @@ type Props = {
   className?: string;
 };
 
-export function StrategyWheelPhaseStepper({ strategy, phase, className }: Props) {
+export function StrategyWheelPhaseStepper({
+  strategy,
+  phase,
+  className,
+}: Props) {
   const steps = wheelPhaseStepsForStrategy(strategy);
   if (steps.length === 0) return null;
 
@@ -38,7 +42,7 @@ export function StrategyWheelPhaseStepper({ strategy, phase, className }: Props)
             )}
             <span
               className={cn(
-                "rounded-full px-1.5 py-0.5 text-[9px] font-medium",
+                "px-1.5 py-0.5 text-[9px] font-medium",
                 isActive
                   ? "bg-accent-muted/60 text-accent-strong"
                   : isPast

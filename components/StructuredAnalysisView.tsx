@@ -41,7 +41,7 @@ export function StructuredAnalysisView({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="rounded-xl border border-border bg-background/60 px-4 py-3">
+      <div className="border border-border bg-background/60 px-4 py-3">
         <p className="text-[11px] font-medium text-muted">Overview</p>
         <p className="mt-2 text-sm leading-relaxed text-foreground">
           {analysis.summary}
@@ -49,7 +49,7 @@ export function StructuredAnalysisView({
       </div>
 
       {analysis.recommendedAction && !hideRecommendedAction && (
-        <div className="rounded-xl border border-accent/30 bg-accent-muted/20 px-4 py-3">
+        <div className="border border-accent/30 bg-accent-muted/20 px-4 py-3">
           <div className="flex items-start gap-2">
             <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" />
             <div className="min-w-0">
@@ -83,7 +83,7 @@ export function StructuredAnalysisView({
             return (
               <div
                 key={`${section.id ?? section.title}-${index}`}
-                className="overflow-hidden rounded-xl border border-border bg-background/50"
+                className="overflow-hidden border border-border bg-background/50"
               >
                 <button
                   type="button"
@@ -123,7 +123,7 @@ export function StructuredAnalysisView({
                         {section.bullets.map((bullet) => (
                           <li key={bullet} className="flex gap-2">
                             <span
-                              className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-strong"
+                              className="mt-2 h-1 w-1 shrink-0 bg-accent-strong"
                               aria-hidden
                             />
                             <span>{bullet}</span>
@@ -139,9 +139,7 @@ export function StructuredAnalysisView({
         </div>
       )}
 
-      {loading && (
-        <p className="text-[11px] text-muted">Still writing…</p>
-      )}
+      {loading && <p className="text-[11px] text-muted">Still writing…</p>}
     </div>
   );
 }

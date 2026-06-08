@@ -82,7 +82,7 @@ function LegGuidanceBlock({
       : null;
 
   return (
-    <article className="rounded-lg border border-border bg-background/60 px-4 py-3 text-sm text-foreground">
+    <article className="border border-border bg-background/60 px-4 py-3 text-sm text-foreground">
       <p className="font-semibold">{positionKindHeading(item.positionKind)}</p>
       <p className="text-muted-foreground">{positionContractLine(item)}</p>
 
@@ -121,18 +121,12 @@ function LegGuidanceBlock({
   );
 }
 
-function SymbolThesisLine({
-  guidance,
-}: {
-  guidance: SymbolPositionGuidance;
-}) {
+function SymbolThesisLine({ guidance }: { guidance: SymbolPositionGuidance }) {
   if (!guidance.thesis) return null;
 
   const positions = guidance.positions ?? [];
   const hasRegimeInPositions = positions.some((item) =>
-    rankedScoringContributors(item).some(
-      (c) => driverCategory(c) === "regime",
-    ),
+    rankedScoringContributors(item).some((c) => driverCategory(c) === "regime"),
   );
   const hasTradeQualityInPositions = positions.some((item) =>
     rankedScoringContributors(item).some((c) =>
@@ -159,12 +153,14 @@ export function PositionGuidancePanel({
   isLoadingProp,
   errorProp,
 }: Props) {
-  const fetchInternally = guidanceProp === undefined && isLoadingProp === undefined;
+  const fetchInternally =
+    guidanceProp === undefined && isLoadingProp === undefined;
   const internal = usePositionGuidance(symbol, {
     accessToken,
     enabled: enabled && fetchInternally,
   });
-  const guidance = guidanceProp !== undefined ? guidanceProp : internal.guidance;
+  const guidance =
+    guidanceProp !== undefined ? guidanceProp : internal.guidance;
   const isLoading =
     isLoadingProp !== undefined ? isLoadingProp : internal.isLoading;
   const error = errorProp !== undefined ? errorProp : internal.error;
@@ -178,10 +174,7 @@ export function PositionGuidancePanel({
     for (const item of guidance.positions) {
       map.set(
         item.positionKey,
-        buildPositionPlainEnglish(
-          item,
-          drivers.get(item.positionKey) ?? [],
-        ),
+        buildPositionPlainEnglish(item, drivers.get(item.positionKey) ?? []),
       );
     }
     return map;
@@ -221,10 +214,12 @@ export function PositionGuidancePanel({
             <LegGuidanceBlock
               key={item.positionKey}
               item={item}
-              copy={positionCopy.get(item.positionKey) ?? {
-                mainReason: null,
-                supportingPoints: [],
-              }}
+              copy={
+                positionCopy.get(item.positionKey) ?? {
+                  mainReason: null,
+                  supportingPoints: [],
+                }
+              }
             />
           ))
         ) : (
@@ -262,14 +257,16 @@ export function PortfolioExitAttentionRows({
           <Link
             key={row.positionKey}
             href={symbolPositionPath(row.symbol)}
-            className="rounded-lg border border-border bg-background/60 px-3 py-2 transition-colors hover:border-accent-highlight/50"
+            className="border border-border bg-background/60 px-3 py-2 transition-colors hover:border-accent-highlight/50"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-semibold text-accent-strong">
                 {row.symbol}
               </span>
               <div className="text-right">
-                <p className={cn("text-xs font-bold", verdictTone(row.verdict))}>
+                <p
+                  className={cn("text-xs font-bold", verdictTone(row.verdict))}
+                >
                   {VERDICT_LABEL[row.verdict]}
                 </p>
                 {row.verdict !== "HOLD" ? (

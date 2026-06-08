@@ -1,6 +1,6 @@
 /** Shared layout tokens for Top Movers and Emerging Leaders. */
 
-export const moversMetaCardClass = "app-panel space-y-3 px-4 py-4";
+export const moversMetaCardClass = "app-panel space-y-3 py-4";
 
 export const moversMetaEyebrowClass =
   "text-[10px] font-semibold uppercase tracking-[0.14em] text-muted";

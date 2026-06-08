@@ -25,10 +25,7 @@ export function MomentumBreakoutStructuredEmpty({
     <div className={cn(appPanelSubtleClass, "px-4 py-4", className)}>
       <div className="flex items-start gap-3">
         <div
-          className={cn(
-            appIconBoxClass,
-            "h-9 w-9 shrink-0 rounded-lg text-muted",
-          )}
+          className={cn(appIconBoxClass, "h-9 w-9 shrink-0 text-muted")}
           aria-hidden
         >
           <Icon className="h-4 w-4" />
@@ -39,13 +36,13 @@ export function MomentumBreakoutStructuredEmpty({
         </div>
       </div>
       <dl className="mt-4 grid gap-2 text-sm leading-relaxed sm:grid-cols-2">
-        <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
+        <div className="border border-border/60 bg-background/40 px-3 py-2.5">
           <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
             Monitoring
           </dt>
           <dd className="mt-1 text-foreground/80">{doing}</dd>
         </div>
-        <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
+        <div className="border border-border/60 bg-background/40 px-3 py-2.5">
           <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
             Next
           </dt>

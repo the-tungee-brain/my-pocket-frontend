@@ -33,7 +33,7 @@ export function StrategySymbolBadge({ symbol, className }: Props) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border border-accent/30 bg-accent-muted/40 px-2 py-0.5 text-[10px] font-medium text-accent-strong",
+        "inline-flex items-center border border-accent/30 bg-accent-muted/40 px-2 py-0.5 text-[10px] font-medium text-accent-strong",
         className,
       )}
     >

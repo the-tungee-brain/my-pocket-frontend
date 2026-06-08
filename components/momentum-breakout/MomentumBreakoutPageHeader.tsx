@@ -16,7 +16,7 @@ export function MomentumBreakoutPageHeader({ className }: Props) {
         <div
           className={cn(
             appIconBoxClass,
-            "h-11 w-11 shrink-0 rounded-xl text-accent-strong",
+            "h-11 w-11 shrink-0 text-accent-strong",
           )}
           aria-hidden
         >
@@ -28,8 +28,9 @@ export function MomentumBreakoutPageHeader({ className }: Props) {
             Momentum Breakout
           </h1>
           <p className="max-w-2xl text-sm leading-relaxed text-muted">
-            Daily scan, manual symbol checks, and price alerts for breakout-style
-            setups. We track plans for learning — we do not place trades for you.
+            Daily scan, manual symbol checks, and price alerts for
+            breakout-style setups. We track plans for learning — we do not place
+            trades for you.
           </p>
         </div>
       </div>

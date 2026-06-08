@@ -41,7 +41,7 @@ export function mbStatusPillClass(
   kind: "approved" | "caution" | "rejected" | "neutral",
 ): string {
   const base =
-    "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
+    "inline-flex shrink-0 items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
   switch (kind) {
     case "approved":
       return cn(base, "bg-success/15 text-success");
@@ -55,10 +55,10 @@ export function mbStatusPillClass(
 }
 
 export const mbStatTileClass =
-  "rounded-xl border border-border/70 bg-background/50 px-3 py-2.5";
+  "border border-border/70 bg-background/50 px-3 py-2.5";
 
 export const mbMetricTileClass =
-  "min-w-0 rounded-lg border border-border/60 bg-background/55 px-3 py-2.5";
+  "min-w-0 border border-border/60 bg-background/55 px-3 py-2.5";
 
 export const mbMetricLabelClass =
   "text-[10px] font-semibold uppercase tracking-wide text-muted";
@@ -67,10 +67,10 @@ export const mbMetricValueClass =
   "mt-1 font-mono text-sm font-semibold tabular-nums text-foreground sm:text-base";
 
 export const mbOpportunityCardClass =
-  "rounded-lg border border-border/70 bg-background/40 p-3.5 transition-colors hover:border-border";
+  "border border-border/70 bg-background/40 p-3.5 transition-colors hover:border-border";
 
 export const mbOpportunityCardApprovedClass =
-  "rounded-lg border border-success/20 bg-success/[0.04] p-3.5 transition-colors hover:border-success/35";
+  "border border-success/20 bg-success/[0.04] p-3.5 transition-colors hover:border-success/35";
 
 export const mbInsetListClass =
   "app-inset divide-y divide-border/60 overflow-hidden p-0";
@@ -79,4 +79,4 @@ export const mbInsetRowClass =
   "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm transition hover:bg-muted-bg/50";
 
 export const mbChipClass =
-  "inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 font-mono text-xs font-semibold text-foreground transition hover:border-accent/40 hover:bg-accent-muted/30";
+  "inline-flex items-center gap-1.5 border border-border/80 bg-background/80 px-3 py-1.5 font-mono text-xs font-semibold text-foreground transition hover:border-accent/40 hover:bg-accent-muted/30";

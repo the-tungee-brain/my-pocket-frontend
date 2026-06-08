@@ -31,18 +31,18 @@ export default function SecurityPage() {
         How Tomcrest handles your data
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
-        {SCHWAB_READ_ONLY_LINE} This page explains what we access, what we
-        never do, and how to disconnect.
+        {SCHWAB_READ_ONLY_LINE} This page explains what we access, what we never
+        do, and how to disconnect.
       </p>
 
       <div className="mt-10 space-y-6">
         {sections.map(({ icon: Icon, title, body }) => (
           <section
             key={title}
-            className="rounded-2xl border border-border bg-secondary/40 p-5 sm:p-6"
+            className="border border-border bg-secondary/40 p-5 sm:p-6"
           >
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-muted text-accent-strong">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
                 <Icon className="h-4 w-4" aria-hidden="true" />
               </div>
               <div>
@@ -58,7 +58,7 @@ export default function SecurityPage() {
         ))}
       </div>
 
-      <section className="mt-10 rounded-2xl border border-border bg-background/60 p-5 sm:p-6">
+      <section className="mt-10 border border-border bg-background/60 p-5 sm:p-6">
         <h2 className="text-sm font-semibold text-foreground">
           Sign-in & AI features
         </h2>
@@ -72,23 +72,32 @@ export default function SecurityPage() {
             They are for informational purposes only — not financial advice.
           </li>
           <li>
-            Market and company data come from third-party providers; accuracy
-            is not guaranteed.
+            Market and company data come from third-party providers; accuracy is
+            not guaranteed.
           </li>
         </ul>
       </section>
 
       <p className="mt-8 text-sm text-muted">
         Formal policies:{" "}
-        <Link href="/privacy" className="font-medium text-accent-strong hover:underline">
+        <Link
+          href="/privacy"
+          className="font-medium text-accent-strong hover:underline"
+        >
           Privacy Policy
         </Link>
         ,{" "}
-        <Link href="/terms" className="font-medium text-accent-strong hover:underline">
+        <Link
+          href="/terms"
+          className="font-medium text-accent-strong hover:underline"
+        >
           Terms of Service
         </Link>
         . Questions?{" "}
-        <Link href="/contact" className="font-medium text-accent-strong hover:underline">
+        <Link
+          href="/contact"
+          className="font-medium text-accent-strong hover:underline"
+        >
           Contact us
         </Link>
         .

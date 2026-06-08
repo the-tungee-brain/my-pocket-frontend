@@ -35,7 +35,7 @@ function MetricChip({
   accent?: "positive" | "neutral";
 }) {
   return (
-    <div className="flex h-full min-h-[4.75rem] flex-col rounded-xl border border-border/80 bg-background/50 px-3 py-2.5">
+    <div className="flex h-full min-h-[4.75rem] flex-col border border-border/80 bg-background/50 px-3 py-2.5">
       <p className="min-h-8 text-[10px] font-medium uppercase leading-snug tracking-wide text-muted">
         {label}
       </p>
@@ -60,7 +60,7 @@ function HoldingRow({ holding }: { holding: HoldingAllocationReview }) {
   const showSpending = cspReserved > 0;
 
   return (
-    <div className="rounded-lg border border-border/70 bg-background/40 px-2.5 py-2">
+    <div className="border border-border/70 bg-background/40 px-2.5 py-2">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-medium text-foreground">{holding.symbol}</p>
@@ -103,7 +103,7 @@ function HoldingRow({ holding }: { holding: HoldingAllocationReview }) {
         </div>
         <span
           className={cn(
-            "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium",
+            "shrink-0 border px-2 py-0.5 text-[10px] font-medium",
             statusTone(holding.status),
           )}
         >
@@ -175,7 +175,7 @@ export function PortfolioAllocationCard({
         />
       </div>
 
-      <div className="rounded-xl border border-border/80 bg-background/30 px-3 py-3">
+      <div className="border border-border/80 bg-background/30 px-3 py-3">
         <div className="mb-2 flex items-center gap-2">
           <PiggyBank className="h-4 w-4 text-accent-strong" aria-hidden />
           <p className="text-sm font-semibold text-foreground">Cash map</p>
@@ -190,7 +190,7 @@ export function PortfolioAllocationCard({
               <div key={step.step}>
                 <div
                   className={cn(
-                    "flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-xs",
+                    "flex items-center justify-between gap-3 px-2 py-1.5 text-xs",
                     isHighlight && "border border-accent/20 bg-accent-muted/10",
                   )}
                 >
@@ -244,7 +244,7 @@ export function PortfolioAllocationCard({
       {(trimPlan.length > 0 || deployPlan.length > 0) && (
         <div className="space-y-3">
           {trimPlan.length > 0 && (
-            <div className="w-full rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-3">
+            <div className="w-full border border-red-500/20 bg-red-500/5 px-3 py-3">
               <div className="mb-2 flex items-center gap-2">
                 <Scissors
                   className="h-4 w-4 text-red-600 dark:text-red-400"
@@ -258,7 +258,7 @@ export function PortfolioAllocationCard({
                 {trimPlan.map((item) => (
                   <li
                     key={item.symbol}
-                    className="min-w-0 rounded-lg border border-border/60 bg-background/50 px-2.5 py-2"
+                    className="min-w-0 border border-border/60 bg-background/50 px-2.5 py-2"
                   >
                     <p className="font-medium text-foreground">{item.symbol}</p>
                     <p className="text-muted">
@@ -279,7 +279,7 @@ export function PortfolioAllocationCard({
           )}
 
           {deployPlan.length > 0 && (
-            <div className="w-full rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-3">
+            <div className="w-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-3">
               <div className="mb-2 flex items-center gap-2">
                 <TrendingUp
                   className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
@@ -293,7 +293,7 @@ export function PortfolioAllocationCard({
                 {deployPlan.map((item) => (
                   <li
                     key={item.symbol}
-                    className="min-w-0 rounded-lg border border-border/60 bg-background/50 px-2.5 py-2"
+                    className="min-w-0 border border-border/60 bg-background/50 px-2.5 py-2"
                   >
                     <p className="font-medium text-foreground">{item.symbol}</p>
                     <p className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">

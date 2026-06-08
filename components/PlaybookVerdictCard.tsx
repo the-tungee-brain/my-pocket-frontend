@@ -1,6 +1,9 @@
 "use client";
 
-import type { PlaybookFactor, PlaybookVerdictContent } from "@/lib/playbookVerdict";
+import type {
+  PlaybookFactor,
+  PlaybookVerdictContent,
+} from "@/lib/playbookVerdict";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import {
@@ -56,7 +59,7 @@ function FactorRow({ factor }: { factor: PlaybookFactor }) {
   const Icon = FACTOR_ICONS[factor.category];
 
   return (
-    <div className={cn("rounded-lg border px-3 py-2.5", FACTOR_STYLES)}>
+    <div className={cn("border px-3 py-2.5", FACTOR_STYLES)}>
       <div className="mb-1 flex items-center gap-1.5">
         <Icon className="h-3.5 w-3.5 text-muted" aria-hidden />
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
@@ -75,14 +78,22 @@ export function PlaybookVerdictCard({ verdict, className }: Props) {
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className={cn("rounded-xl border border-border px-3.5 py-3", tone.bg)}>
+      <div className={cn("border border-border px-3.5 py-3", tone.bg)}>
         <div className="flex items-start gap-2.5">
-          <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", tone.label)} aria-hidden />
+          <Icon
+            className={cn("mt-0.5 h-4 w-4 shrink-0", tone.label)}
+            aria-hidden
+          />
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
               Verdict
             </p>
-            <p className={cn("mt-1 text-[15px] font-medium leading-snug", tone.label)}>
+            <p
+              className={cn(
+                "mt-1 text-[15px] font-medium leading-snug",
+                tone.label,
+              )}
+            >
               {verdict.verdict}
             </p>
           </div>
@@ -96,12 +107,15 @@ export function PlaybookVerdictCard({ verdict, className }: Props) {
           </p>
           <div className="grid gap-2">
             {groupedFactors.map((factor) => (
-              <FactorRow key={`${factor.category}-${factor.text}`} factor={factor} />
+              <FactorRow
+                key={`${factor.category}-${factor.text}`}
+                factor={factor}
+              />
             ))}
           </div>
         </div>
       ) : verdict.drivers.length > 0 ? (
-        <div className="rounded-xl border border-border bg-muted-bg/30 px-3.5 py-3">
+        <div className="border border-border bg-muted-bg/30 px-3.5 py-3">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
             What drives this
           </p>
@@ -112,7 +126,7 @@ export function PlaybookVerdictCard({ verdict, className }: Props) {
                 className="flex gap-2 text-[14px] leading-snug text-foreground"
               >
                 <span
-                  className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-strong"
+                  className="mt-2 h-1.5 w-1.5 shrink-0 bg-accent-strong"
                   aria-hidden
                 />
                 <span>{driver}</span>
@@ -123,7 +137,7 @@ export function PlaybookVerdictCard({ verdict, className }: Props) {
       ) : null}
 
       {verdict.changeMind && (
-        <div className="rounded-xl border border-dashed border-border/80 px-3.5 py-2.5">
+        <div className="border border-dashed border-border/80 px-3.5 py-2.5">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
             What would change my mind
           </p>
@@ -134,7 +148,7 @@ export function PlaybookVerdictCard({ verdict, className }: Props) {
       )}
 
       {verdict.putZone && (
-        <div className="rounded-xl border border-border bg-muted-bg/30 px-3.5 py-2.5">
+        <div className="border border-border bg-muted-bg/30 px-3.5 py-2.5">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
             Put zone
           </p>
@@ -145,7 +159,10 @@ export function PlaybookVerdictCard({ verdict, className }: Props) {
       )}
 
       {verdict.remainder && (
-        <MarkdownRenderer content={verdict.remainder} variant="conversational" />
+        <MarkdownRenderer
+          content={verdict.remainder}
+          variant="conversational"
+        />
       )}
     </div>
   );

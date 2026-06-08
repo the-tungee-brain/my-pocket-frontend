@@ -25,19 +25,11 @@ export function AlertNotificationBell({ className }: Props) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const {
-    notifications,
-    unreadCount,
-    loading,
-    error,
-    reload,
-    markRead,
-  } = useMomentumBreakoutNotifications(accessToken, {
-    enabled:
-      !!accessToken
-      && flags.alertsEnabled
-      && flags.alertNotificationsEnabled,
-  });
+  const { notifications, unreadCount, loading, error, reload, markRead } =
+    useMomentumBreakoutNotifications(accessToken, {
+      enabled:
+        !!accessToken && flags.alertsEnabled && flags.alertNotificationsEnabled,
+    });
 
   useEffect(() => {
     if (!open) return;
@@ -54,9 +46,9 @@ export function AlertNotificationBell({ className }: Props) {
   }, [open]);
 
   if (
-    !accessToken
-    || !flags.alertsEnabled
-    || !flags.alertNotificationsEnabled
+    !accessToken ||
+    !flags.alertsEnabled ||
+    !flags.alertNotificationsEnabled
   ) {
     return null;
   }
@@ -76,7 +68,7 @@ export function AlertNotificationBell({ className }: Props) {
       >
         <Bell className="h-4 w-4" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[9px] font-bold text-background">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center bg-danger px-1 text-[9px] font-bold text-background">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -84,7 +76,7 @@ export function AlertNotificationBell({ className }: Props) {
 
       {open && (
         <div
-          className="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-background shadow-lg"
+          className="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden border border-border bg-background shadow-lg"
           role="dialog"
           aria-label="Momentum Breakout notifications"
         >
@@ -135,7 +127,7 @@ export function AlertNotificationBell({ className }: Props) {
                     <div className="flex items-start justify-between gap-2">
                       <span
                         className={cn(
-                          "shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase",
+                          "shrink-0 border px-1.5 py-0.5 text-[9px] font-semibold uppercase",
                           notificationSeverityClass(row.severity),
                         )}
                       >

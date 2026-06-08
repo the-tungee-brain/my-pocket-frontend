@@ -82,7 +82,9 @@ export function AccountPlanCard({
       <CardBody className="space-y-4 p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-foreground">Tomcrest plan</p>
+            <p className="text-sm font-semibold text-foreground">
+              Tomcrest plan
+            </p>
             <p className="mt-0.5 text-sm text-muted">
               {isPaid
                 ? "You have access to every AI model and Pro research synthesis in Tomcrest."
@@ -112,12 +114,12 @@ export function AccountPlanCard({
         </div>
 
         {!isPaid && (
-          <div className="rounded-xl border border-border bg-background/50 px-3 py-3 text-sm text-muted">
+          <div className="border border-border bg-background/50 px-3 py-3 text-sm text-muted">
             <p className="font-medium text-foreground">Want Advanced models?</p>
             <p className="mt-1 text-xs leading-relaxed">
-              Pro unlocks our flagship model for research synthesis, Advanced chat
-              models, and deep Research AI. Request access from Settings while
-              billing is in beta.
+              Pro unlocks our flagship model for research synthesis, Advanced
+              chat models, and deep Research AI. Request access from Settings
+              while billing is in beta.
             </p>
             <a
               href="mailto:support@tomcrest.com?subject=Tomcrest%20Pro%20access"
@@ -156,7 +158,7 @@ function PlanFeatureList({
   return (
     <div
       className={cn(
-        "rounded-xl border px-3 py-3",
+        "border px-3 py-3",
         active
           ? "border-accent/30 bg-accent-muted/20"
           : "border-border bg-background/40",
@@ -174,7 +176,7 @@ function PlanFeatureList({
             key={feature}
             className="flex items-start gap-2 text-xs leading-relaxed text-muted"
           >
-            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
+            <span className="mt-1.5 h-1 w-1 shrink-0 bg-accent-strong" />
             {feature}
           </li>
         ))}
@@ -207,7 +209,7 @@ export function LandingPricingSection() {
         </div>
 
         <div className="mt-12 grid gap-4 lg:grid-cols-2">
-          <Card as="article" surface="marketing" className="h-full rounded-2xl p-6">
+          <Card as="article" surface="marketing" className="h-full p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold">Free</h3>
@@ -224,7 +226,7 @@ export function LandingPricingSection() {
                   key={feature}
                   className="flex items-start gap-2 text-sm text-muted"
                 >
-                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
+                  <span className="mt-2 h-1 w-1 shrink-0 bg-accent-strong" />
                   {feature}
                 </li>
               ))}
@@ -237,7 +239,7 @@ export function LandingPricingSection() {
           <Card
             as="article"
             surface="accentSoft"
-            className="relative h-full overflow-visible rounded-2xl p-6"
+            className="relative h-full overflow-visible p-6"
           >
             <Badge variant="accent" className="absolute -top-2.5 right-4">
               Early access
@@ -246,8 +248,8 @@ export function LandingPricingSection() {
               <div className="min-w-0">
                 <h3 className="text-lg font-semibold">Pro</h3>
                 <p className="mt-1 text-sm text-muted">
-                  Flagship AI for research synthesis and portfolio analysis, plus
-                  snowball, backtest, and Advanced chat models.
+                  Flagship AI for research synthesis and portfolio analysis,
+                  plus snowball, backtest, and Advanced chat models.
                 </p>
               </div>
               <p className="shrink-0 whitespace-nowrap text-sm font-medium text-muted">
@@ -260,7 +262,7 @@ export function LandingPricingSection() {
                   key={feature}
                   className="flex items-start gap-2 text-sm text-muted"
                 >
-                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-strong" />
+                  <span className="mt-2 h-1 w-1 shrink-0 bg-accent-strong" />
                   {feature}
                 </li>
               ))}

@@ -62,7 +62,9 @@ function DecisionSummaryBlock({ summary }: { summary: DecisionSummary }) {
       <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
         Decision summary
       </p>
-      <p className="text-sm font-semibold text-foreground">{summary.headline}</p>
+      <p className="text-sm font-semibold text-foreground">
+        {summary.headline}
+      </p>
       <div className="space-y-0.5">
         <p className="text-xs font-medium text-muted">Reason</p>
         {summary.reasons.map((line, i) => (
@@ -85,7 +87,7 @@ export function RegimeCompactCard({
   return (
     <section
       className={cn(
-        "rounded-lg border border-border bg-muted-bg/20 px-3 py-2.5",
+        "border border-border bg-muted-bg/20 px-3 py-2.5",
         className,
       )}
     >
@@ -105,15 +107,15 @@ export function MoverResearchSections({ insight, loading, className }: Props) {
   if (loading || !insight) {
     return (
       <div className={cn("space-y-3", className)} aria-busy={loading}>
-        <div className="h-24 animate-pulse rounded-lg bg-muted-bg" />
-        <div className="h-16 animate-pulse rounded-lg bg-muted-bg" />
+        <div className="h-24 animate-pulse bg-muted-bg" />
+        <div className="h-16 animate-pulse bg-muted-bg" />
       </div>
     );
   }
 
   return (
     <div className={cn("space-y-4", className)}>
-      <section className="space-y-2 rounded-lg border border-border bg-muted-bg/25 px-3 py-3 sm:px-4 sm:py-4">
+      <section className="space-y-2 border border-border bg-muted-bg/25 px-3 py-3 sm:px-4 sm:py-4">
         <SectionLabel>Investment thesis</SectionLabel>
         <p className="text-sm leading-relaxed text-foreground">
           {insight.thesis}

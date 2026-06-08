@@ -68,13 +68,15 @@ export function PortfolioOnboarding({ className }: { className?: string }) {
       {
         id: "assistant",
         label: "Ask the assistant",
-        description: "Use quick prompts or type a question in the chat bar below.",
+        description:
+          "Use quick prompts or type a question in the chat bar below.",
         done: hasPortfolioChat,
       },
       {
         id: "research",
         label: "Research a symbol",
-        description: "Open any ticker in Research to view its company snapshot.",
+        description:
+          "Open any ticker in Research to view its company snapshot.",
         done: recentSymbols.length > 0,
       },
       {
@@ -136,7 +138,7 @@ export function PortfolioOnboarding({ className }: { className?: string }) {
 
   return (
     <section className={cn("mx-auto mb-4 w-full", className)}>
-      <div className="rounded-2xl border border-accent/30 bg-accent-muted/40 p-4 shadow-sm">
+      <div className="border border-accent/30 bg-accent-muted/40 p-4 shadow-sm">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-accent-strong">
@@ -166,7 +168,7 @@ export function PortfolioOnboarding({ className }: { className?: string }) {
               <li
                 key={step.id}
                 className={cn(
-                  "flex gap-3 rounded-xl border px-3 py-2.5",
+                  "flex gap-3 border px-3 py-2.5",
                   step.done
                     ? "border-accent/30 bg-background/60"
                     : "border-border bg-background/40",
@@ -174,7 +176,7 @@ export function PortfolioOnboarding({ className }: { className?: string }) {
               >
                 <div
                   className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+                    "flex h-7 w-7 shrink-0 items-center justify-center text-[11px] font-semibold",
                     step.done
                       ? "bg-accent-muted text-accent-strong"
                       : "bg-muted-bg text-muted",
@@ -196,7 +198,9 @@ export function PortfolioOnboarding({ className }: { className?: string }) {
                       {step.label}
                     </p>
                   </div>
-                  <p className="mt-0.5 text-xs text-muted">{step.description}</p>
+                  <p className="mt-0.5 text-xs text-muted">
+                    {step.description}
+                  </p>
                   {step.id === "connect" && !step.done && (
                     <>
                       <p className="mt-1.5 text-[11px] text-muted">
@@ -209,8 +213,8 @@ export function PortfolioOnboarding({ className }: { className?: string }) {
                         Open Settings to connect
                       </Link>
                       <p className="mt-1.5 text-[11px] text-muted">
-                        On mobile, open the menu — Connect is at the bottom of the
-                        sidebar.
+                        On mobile, open the menu — Connect is at the bottom of
+                        the sidebar.
                       </p>
                     </>
                   )}

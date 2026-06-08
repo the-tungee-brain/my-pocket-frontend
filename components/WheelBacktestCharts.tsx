@@ -369,107 +369,119 @@ export function WheelBacktestCharts({
         </div>
       </CardHeader>
       <CardBody spacious className="space-y-5">
-      <div>
-
-        <CrosshairNoteBar note={displayNote} />
-
-        <div
-          ref={containerRef}
-          className="h-[440px] min-h-[440px] max-h-[440px] w-full shrink-0 overflow-hidden rounded-lg border border-border"
-          style={{ height: CHART_HEIGHT, minHeight: CHART_HEIGHT, maxHeight: CHART_HEIGHT }}
-        />
-        {bundle.rangeLabel && (
-          <p className="mt-1 text-[10px] text-muted">{bundle.rangeLabel}</p>
-        )}
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted">
-          <LegendSwatch color="var(--color-accent-strong)" label="Wheel equity" solid />
-          <LegendSwatch color="var(--color-muted)" label="Buy & hold" dashed />
-          <LegendSwatch color="#ef4444" label="Drawdown %" solid />
-          <LegendSwatch color="var(--color-foreground)" label="Stock" solid />
-          <LegendSwatch color="#f59e0b" label="Put strike" dashed />
-          <LegendSwatch color="#a855f7" label="Call strike" dashed />
-          <span className="text-muted">
-            · P / A / C / $ on equity = put sold, assigned, called, deposit
-          </span>
-        </div>
-      </div>
-
-      {bundle.phaseStrip.length > 1 && (
         <div>
-          <p className={cn(appSectionLabelClass, "mb-3")}>Strategy phase</p>
-          <div className="flex h-3 w-full overflow-hidden rounded-lg border border-border">
-            {bundle.phaseStrip.map((segment, index) => (
-              <div
-                key={`${segment.date}-${index}`}
-                className="min-w-px flex-1"
-                style={{ backgroundColor: phaseColor(segment.phase) }}
-                title={`${segment.date}: ${phaseLabel(segment.phase)}`}
-              />
-            ))}
-          </div>
+          <CrosshairNoteBar note={displayNote} />
+
+          <div
+            ref={containerRef}
+            className="h-[440px] min-h-[440px] max-h-[440px] w-full shrink-0 overflow-hidden border border-border"
+            style={{
+              height: CHART_HEIGHT,
+              minHeight: CHART_HEIGHT,
+              maxHeight: CHART_HEIGHT,
+            }}
+          />
+          {bundle.rangeLabel && (
+            <p className="mt-1 text-[10px] text-muted">{bundle.rangeLabel}</p>
+          )}
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted">
-            {(["cash", "short_put", "long_stock", "short_call"] as const).map(
-              (phase) => (
-                <span key={phase} className="flex items-center gap-1">
-                  <span
-                    className="inline-block h-2 w-2 rounded-sm"
-                    style={{ backgroundColor: phaseColor(phase) }}
-                  />
-                  {phaseLabel(phase)}
-                </span>
-              ),
-            )}
+            <LegendSwatch
+              color="var(--color-accent-strong)"
+              label="Wheel equity"
+              solid
+            />
+            <LegendSwatch
+              color="var(--color-muted)"
+              label="Buy & hold"
+              dashed
+            />
+            <LegendSwatch color="#ef4444" label="Drawdown %" solid />
+            <LegendSwatch color="var(--color-foreground)" label="Stock" solid />
+            <LegendSwatch color="#f59e0b" label="Put strike" dashed />
+            <LegendSwatch color="#a855f7" label="Call strike" dashed />
+            <span className="text-muted">
+              · P / A / C / $ on equity = put sold, assigned, called, deposit
+            </span>
           </div>
         </div>
-      )}
 
-      {annualSummary.length > 0 && (
-        <div>
-          <p className={cn(appSectionLabelClass, "mb-3")}>Return by year</p>
-          <div className="flex items-end gap-2 rounded-xl bg-muted-bg/60 px-3 py-3">
-            {annualSummary.map((row) => {
-              const heightPct = Math.min(
-                100,
-                (Math.abs(row.returnPct) / annualMax) * 100,
-              );
-              const positive = row.returnPct >= 0;
-              return (
+        {bundle.phaseStrip.length > 1 && (
+          <div>
+            <p className={cn(appSectionLabelClass, "mb-3")}>Strategy phase</p>
+            <div className="flex h-3 w-full overflow-hidden border border-border">
+              {bundle.phaseStrip.map((segment, index) => (
                 <div
-                  key={row.year}
-                  className="flex min-w-0 flex-1 flex-col items-center gap-1"
-                >
-                  <span
-                    className={cn(
-                      "text-[10px] font-medium tabular-nums",
-                      positive ? "text-success" : "text-danger",
-                    )}
-                  >
-                    {positive ? "+" : ""}
-                    {row.returnPct.toFixed(1)}%
-                  </span>
-                  <div className="flex h-20 w-full items-end justify-center">
-                    <div
-                      className={cn(
-                        "w-full max-w-[2.5rem] rounded-t-sm",
-                        positive ? "bg-emerald-500/70" : "bg-red-500/70",
-                      )}
-                      style={{ height: `${Math.max(heightPct, 6)}%` }}
-                      title={`${row.year}: ${row.returnPct.toFixed(2)}%`}
+                  key={`${segment.date}-${index}`}
+                  className="min-w-px flex-1"
+                  style={{ backgroundColor: phaseColor(segment.phase) }}
+                  title={`${segment.date}: ${phaseLabel(segment.phase)}`}
+                />
+              ))}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted">
+              {(["cash", "short_put", "long_stock", "short_call"] as const).map(
+                (phase) => (
+                  <span key={phase} className="flex items-center gap-1">
+                    <span
+                      className="inline-block h-2 w-2 rounded-sm"
+                      style={{ backgroundColor: phaseColor(phase) }}
                     />
-                  </div>
-                  <span className="text-[10px] text-muted">{row.year}</span>
-                </div>
-              );
-            })}
+                    {phaseLabel(phase)}
+                  </span>
+                ),
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <p className="text-xs leading-relaxed text-muted">
-        Same {formatUsd(startingCashUsd, 0)} starting wallet as buy &amp; hold.
-        Move the crosshair — the note above tracks stock and strike lines. Zoom
-        narrows the window; PDF export remains tables for print-friendly layout.
-      </p>
+        {annualSummary.length > 0 && (
+          <div>
+            <p className={cn(appSectionLabelClass, "mb-3")}>Return by year</p>
+            <div className="flex items-end gap-2 bg-muted-bg/60 px-3 py-3">
+              {annualSummary.map((row) => {
+                const heightPct = Math.min(
+                  100,
+                  (Math.abs(row.returnPct) / annualMax) * 100,
+                );
+                const positive = row.returnPct >= 0;
+                return (
+                  <div
+                    key={row.year}
+                    className="flex min-w-0 flex-1 flex-col items-center gap-1"
+                  >
+                    <span
+                      className={cn(
+                        "text-[10px] font-medium tabular-nums",
+                        positive ? "text-success" : "text-danger",
+                      )}
+                    >
+                      {positive ? "+" : ""}
+                      {row.returnPct.toFixed(1)}%
+                    </span>
+                    <div className="flex h-20 w-full items-end justify-center">
+                      <div
+                        className={cn(
+                          "w-full max-w-[2.5rem] rounded-t-sm",
+                          positive ? "bg-emerald-500/70" : "bg-red-500/70",
+                        )}
+                        style={{ height: `${Math.max(heightPct, 6)}%` }}
+                        title={`${row.year}: ${row.returnPct.toFixed(2)}%`}
+                      />
+                    </div>
+                    <span className="text-[10px] text-muted">{row.year}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs leading-relaxed text-muted">
+          Same {formatUsd(startingCashUsd, 0)} starting wallet as buy &amp;
+          hold. Move the crosshair — the note above tracks stock and strike
+          lines. Zoom narrows the window; PDF export remains tables for
+          print-friendly layout.
+        </p>
       </CardBody>
     </Card>
   );
@@ -479,7 +491,7 @@ function CrosshairNoteBar({ note }: { note: CrosshairNote | null }) {
   if (!note) {
     return (
       <div
-        className="mb-2 flex items-center rounded-xl bg-muted-bg/60 px-3 py-2 text-xs text-muted"
+        className="mb-2 flex items-center bg-muted-bg/60 px-3 py-2 text-xs text-muted"
         style={{ minHeight: HOVER_PANEL_HEIGHT }}
       >
         Move the crosshair on the chart to see stock and strike prices.
@@ -491,7 +503,7 @@ function CrosshairNoteBar({ note }: { note: CrosshairNote | null }) {
 
   return (
     <div
-      className="mb-2 rounded-lg border border-border/60 bg-secondary/30 px-2.5 py-2"
+      className="mb-2 border border-border/60 bg-secondary/30 px-2.5 py-2"
       style={{ minHeight: HOVER_PANEL_HEIGHT }}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-[10px]">
@@ -512,8 +524,7 @@ function CrosshairNoteBar({ note }: { note: CrosshairNote | null }) {
             {formatUsd(detail.buyAndHoldUsd)} · DD{" "}
             <span
               className={cn(
-                detail.drawdownPct < 0 &&
-                  "text-red-600 dark:text-red-400",
+                detail.drawdownPct < 0 && "text-red-600 dark:text-red-400",
               )}
             >
               {detail.drawdownPct.toFixed(1)}%
@@ -560,7 +571,7 @@ function PriceNoteChip({
   dashed?: boolean;
 }) {
   return (
-    <div className="min-w-[6.5rem] flex-1 rounded-md border border-border/50 bg-background/50 px-2 py-1">
+    <div className="min-w-[6.5rem] flex-1 border border-border/50 bg-background/50 px-2 py-1">
       <p className="flex items-center gap-1 text-[10px] text-muted">
         <span
           className={cn(
@@ -568,9 +579,7 @@ function PriceNoteChip({
             dashed && "border border-dashed bg-transparent",
           )}
           style={
-            dashed
-              ? { borderColor: swatchColor }
-              : { background: swatchColor }
+            dashed ? { borderColor: swatchColor } : { background: swatchColor }
           }
         />
         {label}
@@ -600,11 +609,7 @@ function LegendSwatch({
           "inline-block h-0.5 w-4 rounded-full",
           dashed && "border border-dashed bg-transparent",
         )}
-        style={
-          dashed
-            ? { borderColor: color }
-            : { background: color }
-        }
+        style={dashed ? { borderColor: color } : { background: color }}
       />
       {label}
     </span>

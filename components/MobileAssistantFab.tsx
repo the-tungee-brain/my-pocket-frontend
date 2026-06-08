@@ -24,7 +24,7 @@ export function MobileAssistantFab({
         scrollToChat();
       }}
       className={cn(
-        "fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-1/2 z-40 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full border border-accent/40 bg-accent-strong text-background shadow-lg shadow-black/25 transition hover:scale-105 hover:opacity-95 active:scale-95 md:hidden",
+        "fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-1/2 z-40 flex h-12 w-12 -translate-x-1/2 items-center justify-center border border-accent/40 bg-accent-strong text-background shadow-lg shadow-black/25 transition hover:scale-105 hover:opacity-95 active:scale-95 md:hidden",
         className,
       )}
     >

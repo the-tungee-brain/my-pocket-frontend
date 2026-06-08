@@ -20,7 +20,7 @@ export function ConvictionBadge({ tier, label, className }: Props) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide",
+        "inline-flex px-2.5 py-0.5 text-[11px] font-bold tracking-wide",
         TONE[tier],
         className,
       )}

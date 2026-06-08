@@ -21,7 +21,7 @@ export function AssetTypeBadge({ assetType, className }: Props) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+        "inline-flex shrink-0 border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
         assetType === "ETF"
           ? "border-accent/30 bg-accent-muted text-accent-strong"
           : "border-border bg-background text-muted",

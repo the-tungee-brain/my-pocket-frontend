@@ -32,7 +32,7 @@ function AlertChip({
       disabled={!onRun}
       title={alert.reason}
       onClick={() => onRun?.(alert)}
-      className="inline-flex max-w-full flex-col items-start gap-0.5 rounded-xl border border-border bg-background px-3 py-2 text-left transition hover:border-accent/40 hover:bg-muted-bg disabled:opacity-60"
+      className="inline-flex max-w-full flex-col items-start gap-0.5 border border-border bg-background px-3 py-2 text-left transition hover:border-accent/40 hover:bg-muted-bg disabled:opacity-60"
     >
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
         <Icon className="h-3.5 w-3.5 shrink-0 text-accent-strong" aria-hidden />
@@ -52,9 +52,7 @@ export function SymbolAlertStrip({
 }: Props) {
   const symbolUpper = symbol.toUpperCase();
   const symbolAlerts = dedupeAlerts(
-    alerts.filter(
-      (alert) => alert.symbol?.toUpperCase() === symbolUpper,
-    ),
+    alerts.filter((alert) => alert.symbol?.toUpperCase() === symbolUpper),
   ).slice(0, 4);
 
   if (!symbolAlerts.length) return null;

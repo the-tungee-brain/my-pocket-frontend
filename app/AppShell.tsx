@@ -4,13 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronUp, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { memo, useCallback, useEffect, useState, type ReactNode } from "react";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
 import { ChatBox } from "@/components/ChatBox";
 import { ChatSessionHistory } from "@/components/ChatSessionHistory";
@@ -126,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-secondary focus:px-3 focus:py-2 focus:text-sm focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:focus:bg-secondary focus:px-3 focus:py-2 focus:text-sm focus:shadow-lg"
       >
         Skip to content
       </a>
@@ -580,10 +574,7 @@ function AssistantChatController({
   return (
     <>
       <div
-        className={cn(
-          appCanvasClass,
-          "flex min-h-0 min-w-0 flex-1 flex-col",
-        )}
+        className={cn(appCanvasClass, "flex min-h-0 min-w-0 flex-1 flex-col")}
       >
         <div
           id="main-content"

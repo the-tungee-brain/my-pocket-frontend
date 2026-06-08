@@ -35,18 +35,18 @@ export function ProFeatureGate({
   return (
     <div
       className={cn(
-        "rounded-xl border border-dashed border-border bg-muted-bg/40 px-4 py-5",
+        "border border-dashed border-border bg-muted-bg/40 px-4 py-5",
         className,
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-muted/50 text-accent-strong">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-accent-muted/50 text-accent-strong">
           <Lock className="h-4 w-4" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
             {title ?? meta.title}
-            <span className="rounded-full bg-accent-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-strong">
+            <span className="bg-accent-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-strong">
               Pro
             </span>
           </p>

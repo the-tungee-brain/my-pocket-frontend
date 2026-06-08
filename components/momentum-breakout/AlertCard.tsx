@@ -82,7 +82,7 @@ export function AlertCard({
       <CardBody className="space-y-4">
         <div
           className={cn(
-            "rounded-lg border px-4 py-3.5",
+            "border px-4 py-3.5",
             alertVerdictPanelClass(verdict.kind),
           )}
         >
@@ -137,7 +137,7 @@ export function AlertCard({
         </dl>
 
         {alert.nextActionMessage ? (
-          <p className="rounded-lg border border-border/60 bg-muted-bg/35 px-3 py-2.5 text-sm leading-relaxed text-foreground/85">
+          <p className="border border-border/60 bg-muted-bg/35 px-3 py-2.5 text-sm leading-relaxed text-foreground/85">
             <span className="font-semibold text-foreground">Next </span>
             {alert.nextActionMessage}
           </p>

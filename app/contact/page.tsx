@@ -25,7 +25,7 @@ export default function ContactPage() {
         works? Email us and we&apos;ll get back to you as soon as we can.
       </p>
 
-      <section className="mt-10 rounded-2xl border border-border bg-secondary/40 p-5 sm:p-6">
+      <section className="mt-10 border border-border bg-secondary/40 p-5 sm:p-6">
         <h2 className="text-sm font-semibold text-foreground">Email</h2>
         <p className="mt-3 text-sm leading-relaxed text-muted">
           <SupportEmailLink subject="Tomcrest support" />
@@ -36,23 +36,32 @@ export default function ContactPage() {
         </p>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-border bg-background/60 p-5 sm:p-6">
+      <section className="mt-6 border border-border bg-background/60 p-5 sm:p-6">
         <h2 className="text-sm font-semibold text-foreground">
           Before you write
         </h2>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted">
           <li>
-            <Link href="/security" className="font-medium text-accent-strong hover:underline">
+            <Link
+              href="/security"
+              className="font-medium text-accent-strong hover:underline"
+            >
               Security overview
             </Link>{" "}
             — how Schwab OAuth works, what we read, and how to disconnect.
           </li>
           <li>
-            <Link href="/privacy" className="font-medium text-accent-strong hover:underline">
+            <Link
+              href="/privacy"
+              className="font-medium text-accent-strong hover:underline"
+            >
               Privacy Policy
             </Link>{" "}
             and{" "}
-            <Link href="/terms" className="font-medium text-accent-strong hover:underline">
+            <Link
+              href="/terms"
+              className="font-medium text-accent-strong hover:underline"
+            >
               Terms of Service
             </Link>
             .
@@ -67,7 +76,10 @@ export default function ContactPage() {
 
       <p className="mt-8 text-sm text-muted">
         Ready to try the app?{" "}
-        <Link href="/" className="font-medium text-accent-strong hover:underline">
+        <Link
+          href="/"
+          className="font-medium text-accent-strong hover:underline"
+        >
           Sign in on the home page
         </Link>
         .

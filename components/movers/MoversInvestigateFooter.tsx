@@ -19,7 +19,7 @@ export function MoversInvestigateFooter({ symbol }: Props) {
       <div className="flex flex-wrap gap-2">
         <Link
           href={symbolHubPath(sym, "overview")}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-foreground px-3 text-xs font-semibold text-background hover:opacity-90"
+          className="inline-flex h-9 items-center gap-1.5 bg-foreground px-3 text-xs font-semibold text-background hover:opacity-90"
         >
           <LineChart className="h-3.5 w-3.5" aria-hidden />
           Research
@@ -27,7 +27,7 @@ export function MoversInvestigateFooter({ symbol }: Props) {
         <WatchlistButton symbol={sym} size="sm" />
         <Link
           href={symbolHubPath(sym, "overview")}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-semibold text-foreground hover:bg-muted-bg"
+          className="inline-flex h-9 items-center gap-1.5 border border-border px-3 text-xs font-semibold text-foreground hover:bg-muted-bg"
         >
           <BarChart3 className="h-3.5 w-3.5" aria-hidden />
           Chart

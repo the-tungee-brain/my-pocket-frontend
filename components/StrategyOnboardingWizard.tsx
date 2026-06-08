@@ -30,7 +30,10 @@ import {
   supportsStrategyStockScreener,
 } from "@/lib/strategyScreener";
 import { MAX_STRATEGY_SYMBOLS } from "@/lib/strategyPlaybook";
-import { deltaBandDescription, deltaBandForRisk } from "@/lib/strategyProfileForm";
+import {
+  deltaBandDescription,
+  deltaBandForRisk,
+} from "@/lib/strategyProfileForm";
 import { cn } from "@/lib/utils";
 
 type WizardStep =
@@ -251,7 +254,7 @@ export function StrategyOnboardingWizard({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
-      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-secondary shadow-2xl">
+      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden border border-border bg-secondary shadow-2xl">
         <div className="border-b border-border px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -267,7 +270,11 @@ export function StrategyOnboardingWizard({
               </h2>
             </div>
             {onClose && (
-              <button type="button" onClick={onClose} className={compactTextButtonClass}>
+              <button
+                type="button"
+                onClick={onClose}
+                className={compactTextButtonClass}
+              >
                 Skip for now
               </button>
             )}
@@ -309,7 +316,7 @@ export function StrategyOnboardingWizard({
                     type="button"
                     onClick={() => setSelectedStrategy(item.id)}
                     className={cn(
-                      "rounded-xl border p-4 text-left transition",
+                      "border p-4 text-left transition",
                       selected
                         ? "border-accent/50 bg-accent-muted/50"
                         : "border-border bg-background/40 hover:border-accent/30",
@@ -420,8 +427,12 @@ export function StrategyOnboardingWizard({
                     totalCount={screenerResult?.totalCount ?? 0}
                     onPageChange={setScreenerPage}
                     onPageSizeChange={setScreenerPageSize}
-                    onRun={() => void runScreen({ force: true, syncProfile: true })}
-                    onAddSymbol={(symbol) => setEtfPrimary(symbol.toUpperCase())}
+                    onRun={() =>
+                      void runScreen({ force: true, syncProfile: true })
+                    }
+                    onAddSymbol={(symbol) =>
+                      setEtfPrimary(symbol.toUpperCase())
+                    }
                     selectedSymbols={[etfPrimary, etfBond].filter(Boolean)}
                   />
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -430,7 +441,7 @@ export function StrategyOnboardingWizard({
                       <input
                         value={etfPrimary}
                         onChange={(event) => setEtfPrimary(event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                        className="mt-1 w-full border border-border bg-background px-3 py-2 text-sm text-foreground"
                       />
                     </label>
                     <label className="block text-xs text-muted">
@@ -438,7 +449,7 @@ export function StrategyOnboardingWizard({
                       <input
                         value={etfBond}
                         onChange={(event) => setEtfBond(event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                        className="mt-1 w-full border border-border bg-background px-3 py-2 text-sm text-foreground"
                       />
                     </label>
                   </div>
@@ -487,7 +498,9 @@ export function StrategyOnboardingWizard({
                     totalCount={screenerResult?.totalCount ?? 0}
                     onPageChange={setScreenerPage}
                     onPageSizeChange={setScreenerPageSize}
-                    onRun={() => void runScreen({ force: true, syncProfile: true })}
+                    onRun={() =>
+                      void runScreen({ force: true, syncProfile: true })
+                    }
                     onAddSymbol={addSymbol}
                     selectedSymbols={symbols}
                   />
@@ -503,7 +516,7 @@ export function StrategyOnboardingWizard({
                         key={symbol}
                         type="button"
                         onClick={() => removeSymbol(symbol)}
-                        className="rounded-full border border-accent/30 bg-accent-muted/40 px-3 py-1 text-xs font-medium text-accent-strong"
+                        className="border border-accent/30 bg-accent-muted/40 px-3 py-1 text-xs font-medium text-accent-strong"
                       >
                         {symbol} ×
                       </button>
@@ -528,7 +541,7 @@ export function StrategyOnboardingWizard({
                 <ReviewRow label="Symbols" value={symbols.join(", ") || "—"} />
               )}
               {selectedStrategy !== "etf-core" && (
-                <div className="rounded-xl bg-accent-muted/15 p-3">
+                <div className="bg-accent-muted/15 p-3">
                   {symbols.length === 0 && (
                     <>
                       {screenerLoading && (
@@ -576,7 +589,8 @@ export function StrategyOnboardingWizard({
                       {!screenerLoading && !topScreenMatch && (
                         <>
                           <p className="text-xs text-muted">
-                            Pick at least one symbol before starting your journey.
+                            Pick at least one symbol before starting your
+                            journey.
                           </p>
                           <Button
                             size="sm"
@@ -610,8 +624,10 @@ export function StrategyOnboardingWizard({
                       totalPages={screenerResult?.totalPages ?? 1}
                       totalCount={screenerResult?.totalCount ?? 0}
                       onPageChange={setScreenerPage}
-                    onPageSizeChange={setScreenerPageSize}
-                      onRun={() => void runScreen({ force: true, syncProfile: true })}
+                      onPageSizeChange={setScreenerPageSize}
+                      onRun={() =>
+                        void runScreen({ force: true, syncProfile: true })
+                      }
                       onAddSymbol={addSymbol}
                       selectedSymbols={symbols}
                       compact
@@ -690,7 +706,7 @@ function ChoiceChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition",
+        "border px-3 py-1.5 text-xs font-medium capitalize transition",
         selected
           ? "border-accent/40 bg-accent-muted/50 text-accent-strong"
           : "border-border bg-background/40 text-muted hover:text-foreground",
@@ -703,7 +719,7 @@ function ChoiceChip({
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 px-3 py-2">
+    <div className="flex items-center justify-between gap-3 border border-border bg-background/40 px-3 py-2">
       <span className="text-muted">{label}</span>
       <span className="font-medium capitalize text-foreground">{value}</span>
     </div>

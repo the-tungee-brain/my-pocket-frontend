@@ -118,7 +118,9 @@ export function StrategyPlaybookPanel({
           title="Strategy playbook"
           description={
             <>
-              <span className="font-medium text-foreground">{strategyTitle}</span>
+              <span className="font-medium text-foreground">
+                {strategyTitle}
+              </span>
               <span className="mt-0.5 block text-xs text-muted">
                 {strategySubtitle}
               </span>
@@ -131,11 +133,11 @@ export function StrategyPlaybookPanel({
           }
         />
         <Link
-            href="/settings?tab=strategy"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition hover:border-accent/40 hover:bg-muted-bg"
-          >
-            <Settings2 className="h-3.5 w-3.5" aria-hidden />
-            Edit
+          href="/settings?tab=strategy"
+          className="inline-flex items-center gap-1.5 border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition hover:border-accent/40 hover:bg-muted-bg"
+        >
+          <Settings2 className="h-3.5 w-3.5" aria-hidden />
+          Edit
         </Link>
       </CardHeader>
 
@@ -178,7 +180,7 @@ export function StrategyPlaybookPanel({
             </div>
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-border/80 bg-muted-bg/30 px-3 py-4 text-center">
+          <div className="border border-dashed border-border/80 bg-muted-bg/30 px-3 py-4 text-center">
             <p className="text-sm font-medium text-foreground">
               No symbols on your playbook yet
             </p>
@@ -188,7 +190,7 @@ export function StrategyPlaybookPanel({
             </p>
             <Link
               href="/settings?tab=strategy"
-              className="mt-3 inline-flex rounded-full bg-accent-muted/50 px-3 py-1 text-[11px] font-medium text-accent-strong transition hover:bg-accent-muted/70"
+              className="mt-3 inline-flex bg-accent-muted/50 px-3 py-1 text-[11px] font-medium text-accent-strong transition hover:bg-accent-muted/70"
             >
               Add symbols
             </Link>
@@ -247,7 +249,7 @@ function PlaybookSymbolCard({
         </div>
         <span
           className={cn(
-            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+            "shrink-0 px-2 py-0.5 text-[10px] font-medium",
             holdBadge === "Held"
               ? "bg-accent-muted/40 text-accent-strong"
               : holdBadge === "Partial"
@@ -276,7 +278,7 @@ function PlaybookSymbolCard({
       {status.nextAction && (
         <div className="mt-2.5 space-y-2 border-t border-border pt-2.5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-full bg-muted-bg px-2 py-0.5 text-[10px] font-medium text-muted">
+            <span className="bg-muted-bg px-2 py-0.5 text-[10px] font-medium text-muted">
               {actionTypeLabel(status.nextAction.type)}
             </span>
           </div>

@@ -23,7 +23,7 @@ const RISK_STYLES: Record<string, string> = {
 
 function riskBadgeClass(level: string) {
   return cn(
-    "inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+    "inline-flex shrink-0 border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
     RISK_STYLES[level] ?? RISK_STYLES.watch,
   );
 }
@@ -63,13 +63,15 @@ export function AssignmentRiskSummary({
               : `Short options expiring within ${summary.withinDays} days. Run Assignment risk in chat for ITM analysis and recommended actions.`
           }
           icon={
-            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent-strong">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center bg-accent/15 text-accent-strong">
               <Timer className="h-4 w-4" aria-hidden />
             </div>
           }
           badge={
             urgentCount > 0 ? (
-              <span className={riskBadgeClass("high")}>{urgentCount} urgent</span>
+              <span className={riskBadgeClass("high")}>
+                {urgentCount} urgent
+              </span>
             ) : undefined
           }
         />
@@ -102,9 +104,7 @@ export function AssignmentRiskSummary({
                 <p className="mt-0.5 text-xs text-muted">
                   {formatStrategy(entry.strategy)} ·{" "}
                   {formatOptionExpiration(entry.expiration)}
-                  {entry.moneyness !== "unknown" && (
-                    <> · {entry.moneyness}</>
-                  )}
+                  {entry.moneyness !== "unknown" && <> · {entry.moneyness}</>}
                 </p>
                 {entry.assignmentCashRequired != null && (
                   <p className="mt-1 text-xs text-muted">

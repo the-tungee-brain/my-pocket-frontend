@@ -57,7 +57,7 @@ function SectionShell({
             "Day-over-day changes in holdings, weights, and portfolio value"
           }
           icon={
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-strong">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center bg-accent-muted text-accent-strong">
               <GitCompareArrows className="h-4 w-4" aria-hidden />
             </div>
           }
@@ -71,7 +71,7 @@ function SectionShell({
 function ChangesEmptyState() {
   return (
     <div className="px-4 py-4">
-      <div className="rounded-xl border border-dashed border-border bg-background/40 px-4 py-8 text-center">
+      <div className="border border-dashed border-border bg-background/40 px-4 py-8 text-center">
         <GitCompareArrows
           className="mx-auto mb-2.5 h-5 w-5 text-muted"
           aria-hidden
@@ -109,7 +109,7 @@ export function PortfolioChangesBody({
   return (
     <div className="space-y-3">
       {changes?.liquidationValueChangePct != null && (
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2.5">
+        <div className="flex items-center gap-2 border border-border bg-background/60 px-3 py-2.5">
           {changes.liquidationValueChangePct >= 0 ? (
             <ArrowUpRight className="h-4 w-4 text-emerald-600" aria-hidden />
           ) : (
@@ -134,7 +134,7 @@ export function PortfolioChangesBody({
             {changes!.newSymbols.map((symbol) => (
               <span
                 key={symbol}
-                className="rounded-full border border-border bg-background px-3 py-1 font-mono text-[11px]"
+                className="border border-border bg-background px-3 py-1 font-mono text-[11px]"
               >
                 {symbol}
               </span>
@@ -153,7 +153,7 @@ export function PortfolioChangesBody({
             {changes!.removedSymbols.map((symbol) => (
               <span
                 key={symbol}
-                className="rounded-full border border-border bg-background px-3 py-1 font-mono text-[11px]"
+                className="border border-border bg-background px-3 py-1 font-mono text-[11px]"
               >
                 {symbol}
               </span>
@@ -171,7 +171,7 @@ export function PortfolioChangesBody({
             {changes!.weightChanges.slice(0, 4).map((item) => (
               <li
                 key={item.symbol}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background/60 px-3 py-2"
+                className="flex items-center justify-between gap-3 border border-border bg-background/60 px-3 py-2"
               >
                 <span className="font-mono text-sm font-medium">
                   {item.symbol}

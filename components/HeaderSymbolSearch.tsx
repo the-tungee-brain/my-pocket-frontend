@@ -189,7 +189,7 @@ export function HeaderSymbolSearch({
           {isLoading && (
             <SkeletonList
               rows={3}
-              rowClassName="h-9 rounded-md mx-1"
+              rowClassName="h-9 mx-1"
               className="p-2"
               label="Searching symbols"
             />

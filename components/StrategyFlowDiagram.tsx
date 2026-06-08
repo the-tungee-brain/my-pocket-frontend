@@ -1,12 +1,10 @@
 "use client";
 
-import {
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-} from "lucide-react";
-import type { StrategyFlowDefinition, StrategyFlowNode } from "@/lib/strategyFlows";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
+import type {
+  StrategyFlowDefinition,
+  StrategyFlowNode,
+} from "@/lib/strategyFlows";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -104,11 +102,15 @@ export function StrategyFlowDiagram({
                 {!fixedWideLayout && (
                   <div className="flex flex-col items-stretch gap-2 sm:hidden">
                     <FlowNodeCard
-                      {...(row.direction === "ltr" ? row.nodes[0] : row.nodes[1])}
+                      {...(row.direction === "ltr"
+                        ? row.nodes[0]
+                        : row.nodes[1])}
                     />
                     <FlowArrowVertical direction="down" align="center" />
                     <FlowNodeCard
-                      {...(row.direction === "ltr" ? row.nodes[1] : row.nodes[0])}
+                      {...(row.direction === "ltr"
+                        ? row.nodes[1]
+                        : row.nodes[0])}
                     />
                   </div>
                 )}
@@ -162,9 +164,9 @@ function getDownArrowAlign(
 
 function FlowNodeCard({ node, index }: PlacedNode) {
   return (
-    <div className="h-full rounded-xl border border-border bg-muted-bg/30 px-3 py-2.5">
+    <div className="h-full border border-border bg-muted-bg/30 px-3 py-2.5">
       <div className="flex items-start gap-2">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-muted/50 text-[10px] font-semibold text-accent-strong">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-accent-muted/50 text-[10px] font-semibold text-accent-strong">
           {index + 1}
         </span>
         <div className="min-w-0">
@@ -180,11 +182,7 @@ function FlowNodeCard({ node, index }: PlacedNode) {
   );
 }
 
-function FlowArrowHorizontal({
-  direction,
-}: {
-  direction: "left" | "right";
-}) {
+function FlowArrowHorizontal({ direction }: { direction: "left" | "right" }) {
   const Icon = direction === "right" ? ArrowRight : ArrowLeft;
 
   return (

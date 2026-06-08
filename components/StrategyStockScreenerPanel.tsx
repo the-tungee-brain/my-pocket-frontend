@@ -119,7 +119,8 @@ export function StrategyStockScreenerPanel({
     const query = search.trim().toLowerCase();
     if (!query) return quotes;
     return quotes.filter((quote) => {
-      const haystack = `${quote.symbol} ${quote.companyName ?? ""}`.toLowerCase();
+      const haystack =
+        `${quote.symbol} ${quote.companyName ?? ""}`.toLowerCase();
       return haystack.includes(query);
     });
   }, [quotes, search]);
@@ -152,14 +153,7 @@ export function StrategyStockScreenerPanel({
     }
 
     return rows;
-  }, [
-    visibleQuotes,
-    pageSize,
-    page,
-    totalCount,
-    search,
-    tableBusy,
-  ]);
+  }, [visibleQuotes, pageSize, page, totalCount, search, tableBusy]);
 
   function resetFilters() {
     onFiltersChange(defaultScreenerFiltersForStrategy(strategy));
@@ -210,9 +204,9 @@ export function StrategyStockScreenerPanel({
             <p className="mt-1 text-xs leading-relaxed text-muted">
               {discoveryMode
                 ? "Your playbook symbols are pinned below. Browse ideas to add or replace names."
-                : summary ??
+                : (summary ??
                   preset?.description ??
-                  "Browse strategy-filtered ideas and add symbols you want to own."}
+                  "Browse strategy-filtered ideas and add symbols you want to own.")}
             </p>
           )}
         </div>
@@ -231,7 +225,12 @@ export function StrategyStockScreenerPanel({
               )}
             </Button>
           )}
-          <Button size="xs" variant="outline" onClick={onRun} disabled={loading}>
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={onRun}
+            disabled={loading}
+          >
             <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
             Refresh
           </Button>
@@ -243,7 +242,7 @@ export function StrategyStockScreenerPanel({
           {chips.map((chip) => (
             <span
               key={chip}
-              className="rounded-full bg-muted-bg/80 px-2.5 py-0.5 text-[10px] font-medium text-muted"
+              className="bg-muted-bg/80 px-2.5 py-0.5 text-[10px] font-medium text-muted"
             >
               {chip}
             </span>
@@ -252,7 +251,7 @@ export function StrategyStockScreenerPanel({
       )}
 
       {showFilters && strategy !== "etf-core" && (
-        <div className="space-y-3 rounded-lg bg-muted-bg/25 p-3">
+        <div className="space-y-3 bg-muted-bg/25 p-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
               Adjust filters
@@ -278,7 +277,10 @@ export function StrategyStockScreenerPanel({
                   label={presetOption.label}
                   selected={filters.minMarketCap === presetOption.value}
                   onClick={() =>
-                    onFiltersChange({ ...filters, minMarketCap: presetOption.value })
+                    onFiltersChange({
+                      ...filters,
+                      minMarketCap: presetOption.value,
+                    })
                   }
                 />
               ))}
@@ -328,7 +330,10 @@ export function StrategyStockScreenerPanel({
             hint="Recommended sectors are pre-selected. Select any combination, or reset to defaults."
           >
             <div className="flex flex-wrap gap-2">
-              <FilterActionChip label="Recommended" onClick={selectRecommendedSectors} />
+              <FilterActionChip
+                label="Recommended"
+                onClick={selectRecommendedSectors}
+              />
               <FilterActionChip label="All" onClick={selectAllSectors} />
               <FilterActionChip label="None" onClick={clearSectors} />
             </div>
@@ -353,15 +358,17 @@ export function StrategyStockScreenerPanel({
 
       {error && !loading && (
         <p className="text-xs text-muted">
-          Screener is unavailable right now. You can still search and add symbols
-          manually.
+          Screener is unavailable right now. You can still search and add
+          symbols manually.
         </p>
       )}
 
       {(pinnedQuotes.length > 0 || (discoveryMode && hasRun)) && (
-        <div className="space-y-2 rounded-xl border border-accent/20 bg-accent-muted/10 p-3">
+        <div className="space-y-2 border border-accent/20 bg-accent-muted/10 p-3">
           <div>
-            <h5 className="text-xs font-semibold text-foreground">Your playbook</h5>
+            <h5 className="text-xs font-semibold text-foreground">
+              Your playbook
+            </h5>
             <p className="text-[11px] text-muted">
               {atSymbolCap
                 ? `Playbook full (${selectedSymbols.length}/${MAX_STRATEGY_SYMBOLS}). Remove one to add another.`
@@ -370,7 +377,10 @@ export function StrategyStockScreenerPanel({
           </div>
           {pinnedQuotes.length > 0 ? (
             <QuoteTable
-              rows={pinnedQuotes.map((quote) => ({ kind: "quote" as const, quote }))}
+              rows={pinnedQuotes.map((quote) => ({
+                kind: "quote" as const,
+                quote,
+              }))}
               selected={selected}
               onAddSymbol={onAddSymbol}
               compact={compact}
@@ -382,7 +392,7 @@ export function StrategyStockScreenerPanel({
               {selectedSymbols.map((symbol) => (
                 <span
                   key={symbol}
-                  className="rounded-full border border-accent/30 bg-background px-3 py-1 text-xs font-medium text-accent-strong"
+                  className="border border-accent/30 bg-background px-3 py-1 text-xs font-medium text-accent-strong"
                 >
                   {symbol}
                 </span>
@@ -405,7 +415,7 @@ export function StrategyStockScreenerPanel({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search this page…"
-              className="w-full rounded-lg border border-border/80 bg-background py-2 pl-9 pr-3 text-xs text-foreground"
+              className="w-full border border-border/80 bg-background py-2 pl-9 pr-3 text-xs text-foreground"
             />
           </div>
 
@@ -448,7 +458,9 @@ export function StrategyStockScreenerPanel({
                 <h5 className="text-xs font-semibold text-foreground">
                   {section.preset.label}
                 </h5>
-                <p className="text-[11px] text-muted">{section.preset.description}</p>
+                <p className="text-[11px] text-muted">
+                  {section.preset.description}
+                </p>
               </div>
               <QuoteTable
                 rows={section.quotes.map((quote) => ({
@@ -507,9 +519,7 @@ function QuoteTable({
         {rows.map((row, index) => (
           <QuoteTableRow
             key={
-              row.kind === "quote"
-                ? row.quote.symbol
-                : `${row.kind}-${index}`
+              row.kind === "quote" ? row.quote.symbol : `${row.kind}-${index}`
             }
             row={row}
             selected={selected}
@@ -591,7 +601,9 @@ function QuoteTableRow({
       <td className="py-2 pr-3 text-xs text-muted">
         {quote.dividendYield != null ? formatPercent(quote.dividendYield) : "—"}
       </td>
-      <td className="py-2 pr-3 text-xs text-muted">{formatPrice(quote.price)}</td>
+      <td className="py-2 pr-3 text-xs text-muted">
+        {formatPrice(quote.price)}
+      </td>
       <td className="py-2 text-right">
         {added ? (
           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-strong">
@@ -656,7 +668,7 @@ function Pagination({
                   disabled={disabled}
                   onClick={() => onPageSizeChange(option)}
                   className={cn(
-                    "min-w-7 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                    "min-w-7 px-2 py-1 text-[11px] font-medium transition-colors",
                     option === pageSize
                       ? "bg-accent-muted/50 text-accent-strong"
                       : "text-muted hover:bg-muted-bg/60 hover:text-foreground",
@@ -691,7 +703,7 @@ function Pagination({
               disabled={disabled}
               onClick={() => onPageChange(pageNumber)}
               className={cn(
-                "min-w-7 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                "min-w-7 px-2 py-1 text-[11px] font-medium transition-colors",
                 pageNumber === page
                   ? "bg-accent-muted/50 text-accent-strong"
                   : "text-muted hover:bg-muted-bg/60 hover:text-foreground",
@@ -766,7 +778,11 @@ function FieldGroup({
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
           {label}
         </p>
-        {hint && <p className="mt-0.5 text-[10px] leading-relaxed text-muted">{hint}</p>}
+        {hint && (
+          <p className="mt-0.5 text-[10px] leading-relaxed text-muted">
+            {hint}
+          </p>
+        )}
       </div>
       {children}
     </div>
@@ -784,7 +800,7 @@ function FilterActionChip({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-full border border-dashed border-border/80 px-2.5 py-1 text-[10px] font-medium text-muted transition-colors hover:border-accent/30 hover:text-foreground"
+      className="border border-dashed border-border/80 px-2.5 py-1 text-[10px] font-medium text-muted transition-colors hover:border-accent/30 hover:text-foreground"
     >
       {label}
     </button>
@@ -808,7 +824,7 @@ function ChoiceChip({
       onClick={onClick}
       title={recommended ? "Recommended for this strategy" : undefined}
       className={cn(
-        "rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors",
+        "border px-2.5 py-1 text-[10px] font-medium transition-colors",
         selected
           ? "border-accent/40 bg-accent-muted/40 text-accent-strong"
           : recommended

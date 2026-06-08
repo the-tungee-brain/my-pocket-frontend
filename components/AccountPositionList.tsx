@@ -49,7 +49,7 @@ function PositionTypeChip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium",
         highlighted
           ? "bg-accent/15 text-accent-strong"
           : "bg-muted-bg text-muted",
@@ -76,8 +76,13 @@ function ReservedCashNote({ position }: { position: Position }) {
       {strike != null && (
         <>
           {" "}
-          · {formatUsd(strike, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
-          strike × {contracts} {contracts === 1 ? "contract" : "contracts"} × 100 shares
+          ·{" "}
+          {formatUsd(strike, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}{" "}
+          strike × {contracts} {contracts === 1 ? "contract" : "contracts"} ×
+          100 shares
         </>
       )}
     </p>
@@ -175,9 +180,14 @@ export function AccountPositionList({
                 <div key={positionKey(p)} className="px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground">{name}</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {name}
+                      </p>
                       <div className="mt-1">
-                        <PositionTypeChip position={p} siblingPositions={positions} />
+                        <PositionTypeChip
+                          position={p}
+                          siblingPositions={positions}
+                        />
                       </div>
                       <ReservedCashNote position={p} />
                     </div>
@@ -260,106 +270,109 @@ export function AccountPositionList({
           </div>
 
           <div className="hidden overflow-x-auto scrollbar-dark md:block">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="sticky top-0 z-10 border-b border-border bg-surface-elevated/95 text-[11px] font-medium uppercase tracking-wide text-muted backdrop-blur-sm">
-              <tr>
-                <th className="px-4 py-2.5 text-left">Name</th>
-                <th className="px-4 py-2.5 text-right">Qty</th>
-                <th className="px-4 py-2.5 text-right">Cost</th>
-                <th className="px-4 py-2.5 text-right">Value</th>
-                <th className="px-4 py-2.5 text-right">Open P/L</th>
-                <th className="px-4 py-2.5 text-right">Reserved</th>
-                <th className="px-4 py-2.5 text-right">Today P/L</th>
-              </tr>
-            </thead>
-            <tbody>
-              {positions.map((p) => {
-                const qty = p.longQuantity - p.shortQuantity;
-                const isPositive = p.currentDayProfitLoss >= 0;
-                const reserved = cspReservedCash(p);
-                const cost = positionCostBasis(p);
-                const openPL = positionOpenProfitLoss(p);
-                const openPLPct = positionOpenProfitLossPct(p);
+            <table className="w-full min-w-[720px] text-sm">
+              <thead className="sticky top-0 z-10 border-b border-border bg-surface-elevated/95 text-[11px] font-medium uppercase tracking-wide text-muted backdrop-blur-sm">
+                <tr>
+                  <th className="px-4 py-2.5 text-left">Name</th>
+                  <th className="px-4 py-2.5 text-right">Qty</th>
+                  <th className="px-4 py-2.5 text-right">Cost</th>
+                  <th className="px-4 py-2.5 text-right">Value</th>
+                  <th className="px-4 py-2.5 text-right">Open P/L</th>
+                  <th className="px-4 py-2.5 text-right">Reserved</th>
+                  <th className="px-4 py-2.5 text-right">Today P/L</th>
+                </tr>
+              </thead>
+              <tbody>
+                {positions.map((p) => {
+                  const qty = p.longQuantity - p.shortQuantity;
+                  const isPositive = p.currentDayProfitLoss >= 0;
+                  const reserved = cspReservedCash(p);
+                  const cost = positionCostBasis(p);
+                  const openPL = positionOpenProfitLoss(p);
+                  const openPLPct = positionOpenProfitLossPct(p);
 
-                return (
-                  <tr
-                    key={positionKey(p)}
-                    className="border-t border-border transition-colors hover:bg-muted-bg/40"
-                  >
-                    <td className="px-4 py-3 text-left">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-muted">{positionLabel(p)}</span>
-                        <PositionTypeChip position={p} siblingPositions={positions} />
-                        {reserved != null && (
-                          <span className="text-[11px] text-muted">
-                            {formatUsd(reserved)} at{" "}
-                            {formatUsd(positionStrikePrice(p) ?? 0, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}{" "}
-                            strike
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {qty.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {cost != null ? formatUsd(cost) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      ${p.marketValue.toLocaleString()}
-                    </td>
-                    <td
-                      className={cn(
-                        "px-4 py-3 text-right tabular-nums",
-                        openPL == null
-                          ? "text-muted"
-                          : openPL >= 0
-                            ? "text-success"
-                            : "text-danger",
-                      )}
+                  return (
+                    <tr
+                      key={positionKey(p)}
+                      className="border-t border-border transition-colors hover:bg-muted-bg/40"
                     >
-                      {openPL != null ? (
-                        <>
-                          {formatSignedUsd(openPL)}
-                          {openPLPct != null && (
-                            <span className="block text-[11px] opacity-80">
-                              ({openPLPct >= 0 ? "+" : ""}
-                              {openPLPct.toFixed(2)}%)
+                      <td className="px-4 py-3 text-left">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-muted">{positionLabel(p)}</span>
+                          <PositionTypeChip
+                            position={p}
+                            siblingPositions={positions}
+                          />
+                          {reserved != null && (
+                            <span className="text-[11px] text-muted">
+                              {formatUsd(reserved)} at{" "}
+                              {formatUsd(positionStrikePrice(p) ?? 0, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}{" "}
+                              strike
                             </span>
                           )}
-                        </>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {reserved != null ? (
-                        <span className="font-medium text-accent-strong">
-                          {formatUsd(reserved)}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {qty.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-muted">
+                        {cost != null ? formatUsd(cost) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        ${p.marketValue.toLocaleString()}
+                      </td>
+                      <td
+                        className={cn(
+                          "px-4 py-3 text-right tabular-nums",
+                          openPL == null
+                            ? "text-muted"
+                            : openPL >= 0
+                              ? "text-success"
+                              : "text-danger",
+                        )}
+                      >
+                        {openPL != null ? (
+                          <>
+                            {formatSignedUsd(openPL)}
+                            {openPLPct != null && (
+                              <span className="block text-[11px] opacity-80">
+                                ({openPLPct >= 0 ? "+" : ""}
+                                {openPLPct.toFixed(2)}%)
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {reserved != null ? (
+                          <span className="font-medium text-accent-strong">
+                            {formatUsd(reserved)}
+                          </span>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+                      <td
+                        className={cn(
+                          "px-4 py-3 text-right tabular-nums",
+                          isPositive ? "text-success" : "text-danger",
+                        )}
+                      >
+                        {formatSignedUsd(p.currentDayProfitLoss)}{" "}
+                        <span className="text-[11px] opacity-80">
+                          ({p.currentDayProfitLossPercentage.toFixed(2)}%)
                         </span>
-                      ) : (
-                        <span className="text-muted">—</span>
-                      )}
-                    </td>
-                    <td
-                      className={cn(
-                        "px-4 py-3 text-right tabular-nums",
-                        isPositive ? "text-success" : "text-danger",
-                      )}
-                    >
-                      {formatSignedUsd(p.currentDayProfitLoss)}{" "}
-                      <span className="text-[11px] opacity-80">
-                        ({p.currentDayProfitLossPercentage.toFixed(2)}%)
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </Card>
       </div>

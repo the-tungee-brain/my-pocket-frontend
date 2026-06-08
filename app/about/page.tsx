@@ -24,7 +24,7 @@ export default function AboutPage() {
       </p>
 
       <section className="mt-10 space-y-6">
-        <div className="rounded-2xl border border-border bg-secondary/40 p-5 sm:p-6">
+        <div className="border border-border bg-secondary/40 p-5 sm:p-6">
           <h2 className="text-sm font-semibold text-foreground">What we do</h2>
           <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted">
             <li>Morning brief and portfolio-aware alerts</li>
@@ -34,8 +34,10 @@ export default function AboutPage() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-border bg-background/60 p-5 sm:p-6">
-          <h2 className="text-sm font-semibold text-foreground">What we don&apos;t do</h2>
+        <div className="border border-border bg-background/60 p-5 sm:p-6">
+          <h2 className="text-sm font-semibold text-foreground">
+            What we don&apos;t do
+          </h2>
           <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted">
             <li>Place trades or move money — read-only access only</li>
             <li>Provide personalized financial, tax, or legal advice</li>
@@ -45,23 +47,38 @@ export default function AboutPage() {
       </section>
 
       <p className="mt-8 text-sm text-muted">
-        <Link href="/contact" className="font-medium text-accent-strong hover:underline">
+        <Link
+          href="/contact"
+          className="font-medium text-accent-strong hover:underline"
+        >
           Contact us
         </Link>{" "}
         with questions, or read our{" "}
-        <Link href="/privacy" className="font-medium text-accent-strong hover:underline">
+        <Link
+          href="/privacy"
+          className="font-medium text-accent-strong hover:underline"
+        >
           Privacy Policy
         </Link>
         ,{" "}
-        <Link href="/terms" className="font-medium text-accent-strong hover:underline">
+        <Link
+          href="/terms"
+          className="font-medium text-accent-strong hover:underline"
+        >
           Terms of Service
         </Link>
         , and{" "}
-        <Link href="/security" className="font-medium text-accent-strong hover:underline">
+        <Link
+          href="/security"
+          className="font-medium text-accent-strong hover:underline"
+        >
           security overview
         </Link>
         .{" "}
-        <Link href="/" className="font-medium text-accent-strong hover:underline">
+        <Link
+          href="/"
+          className="font-medium text-accent-strong hover:underline"
+        >
           Sign in
         </Link>{" "}
         to open the app.

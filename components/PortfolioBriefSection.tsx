@@ -34,7 +34,12 @@ import {
   hasPortfolioChangeDetails,
   PortfolioChangesBody,
 } from "@/components/PortfolioChangesSection";
-import { appChipClass, appIconBoxClass, appKpiClass, appSectionLabelClass } from "@/lib/appUi";
+import {
+  appChipClass,
+  appIconBoxClass,
+  appKpiClass,
+  appSectionLabelClass,
+} from "@/lib/appUi";
 import { cn } from "@/lib/utils";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 
@@ -81,7 +86,9 @@ function AlertChip({
           <span className="font-mono text-accent-strong">{alert.symbol}</span>
         )}
       </span>
-      <span className="line-clamp-2 text-[11px] text-muted">{alert.reason}</span>
+      <span className="line-clamp-2 text-[11px] text-muted">
+        {alert.reason}
+      </span>
     </button>
   );
 }
@@ -208,259 +215,286 @@ export function PortfolioBriefSection({
       )}
 
       <CardBody spacious className="space-y-5">
-          {(changesLoading || hasChanges || changes?.summary) && (
-            <div>
-              <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
-                <GitCompareArrows className="h-3.5 w-3.5" aria-hidden />
-                Since yesterday
-              </div>
-              {changesLoading ? (
-                <Skeleton className="h-16 rounded-xl" />
-              ) : (
-                <PortfolioChangesBody changes={changes} />
-              )}
+        {(changesLoading || hasChanges || changes?.summary) && (
+          <div>
+            <div
+              className={cn(appSectionLabelClass, "flex items-center gap-1.5")}
+            >
+              <GitCompareArrows className="h-3.5 w-3.5" aria-hidden />
+              Since yesterday
             </div>
-          )}
+            {changesLoading ? (
+              <Skeleton className="h-16 rounded-xl" />
+            ) : (
+              <PortfolioChangesBody changes={changes} />
+            )}
+          </div>
+        )}
 
-          {loading && !hasContent ? (
-            <SkeletonList rows={3} rowClassName="h-12 rounded-lg" />
-          ) : (
-            <>
-              {digest?.macroRegime && (
-                <div className={appKpiClass}>
-                  <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-                    <TrendingUp className="h-3.5 w-3.5" aria-hidden />
-                    Macro
-                  </div>
-                  <p className="text-sm leading-relaxed text-foreground">
-                    {digest.macroRegime}
-                  </p>
+        {loading && !hasContent ? (
+          <SkeletonList rows={3} rowClassName="h-12 rounded-lg" />
+        ) : (
+          <>
+            {digest?.macroRegime && (
+              <div className={appKpiClass}>
+                <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+                  <TrendingUp className="h-3.5 w-3.5" aria-hidden />
+                  Macro
                 </div>
-              )}
+                <p className="text-sm leading-relaxed text-foreground">
+                  {digest.macroRegime}
+                </p>
+              </div>
+            )}
 
-              {!!digest?.macroNews?.length && (
-                <div>
-                  <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
-                    <Newspaper className="h-3.5 w-3.5" aria-hidden />
-                    Market headlines
-                  </div>
-                  <ul className="space-y-2">
-                    {digest.macroNews.slice(0, 5).map((item, index) => (
-                      <li
-                        key={`${item.headline}-${index}`}
-                        className={appKpiClass}
-                      >
-                        {item.source && (
-                          <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                            <span className="font-mono font-semibold text-accent-strong">
-                              {item.source}
-                            </span>
-                          </div>
-                        )}
-                        {item.url ? (
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={cn(
-                              "block text-sm font-medium leading-relaxed text-foreground underline-offset-2 hover:text-accent-strong hover:underline",
-                              item.source && "mt-1",
-                            )}
-                          >
-                            {item.headline}
-                          </a>
-                        ) : (
-                          <p
-                            className={cn(
-                              "text-sm leading-relaxed text-foreground",
-                              item.source && "mt-1",
-                            )}
-                          >
-                            {item.headline}
-                          </p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
+            {!!digest?.macroNews?.length && (
+              <div>
+                <div
+                  className={cn(
+                    appSectionLabelClass,
+                    "flex items-center gap-1.5",
+                  )}
+                >
+                  <Newspaper className="h-3.5 w-3.5" aria-hidden />
+                  Market headlines
                 </div>
-              )}
-
-              {!!digest?.sectorWeights?.length && (
-                <div>
-                  <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
-                    <PieChart className="h-3.5 w-3.5" aria-hidden />
-                    Sector allocation
-                  </div>
-                  <div className="space-y-2">
-                    {digest.sectorWeights.slice(0, 5).map((sector) => (
-                      <div key={sector.sector}>
-                        <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-                          <span className="font-medium text-foreground">
-                            {formatSectorLabel(sector.sector)}
-                          </span>
-                          <span className="tabular-nums text-muted">
-                            {sector.weightPct.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-muted-bg">
-                          <div
-                            className="h-full rounded-full bg-accent-strong/80"
-                            style={{
-                              width: `${Math.min(sector.weightPct, 100)}%`,
-                            }}
-                          />
-                        </div>
-                        <p className="mt-1 text-[10px] text-muted">
-                          {sector.symbols.slice(0, 4).join(", ")}
-                          {sector.symbols.length > 4 ? "…" : ""}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {!!digest?.earningsThisWeek?.length && (
-                <div>
-                  <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
-                    <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-                    Earnings this week
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {digest.earningsThisWeek.map((symbol) => (
-                      <Link
-                        key={symbol}
-                        href={symbolHubPath(symbol, "position")}
-                        className="rounded-full border border-border bg-background px-3 py-1 font-mono text-[11px] font-medium text-foreground transition hover:border-accent/40 hover:text-accent-strong"
-                      >
-                        {symbol}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {!!digest?.topNews?.length && (
-                <div>
-                  <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
-                    <Newspaper className="h-3.5 w-3.5" aria-hidden />
-                    Top holdings news
-                  </div>
-                  <ul className="space-y-2">
-                    {digest.topNews.slice(0, 4).map((item) => (
-                      <li
-                        key={`${item.symbol}-${item.headline}`}
-                        className={appKpiClass}
-                      >
+                <ul className="space-y-2">
+                  {digest.macroNews.slice(0, 5).map((item, index) => (
+                    <li
+                      key={`${item.headline}-${index}`}
+                      className={appKpiClass}
+                    >
+                      {item.source && (
                         <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                          <Link
-                            href={symbolHubPath(item.symbol, "position")}
-                            className="font-mono font-semibold text-accent-strong hover:underline"
-                          >
-                            {item.symbol}
-                          </Link>
-                          {item.weightPct != null && (
-                            <span className="text-muted">
-                              {item.weightPct.toFixed(1)}% of portfolio
-                            </span>
-                          )}
-                          {item.sentiment && (
-                            <span className="rounded-full bg-muted-bg px-2 py-0.5 text-[10px] capitalize text-muted">
-                              {item.sentiment.replace(/_/g, " ")}
-                            </span>
-                          )}
+                          <span className="font-mono font-semibold text-accent-strong">
+                            {item.source}
+                          </span>
                         </div>
-                        {item.url ? (
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1 block text-sm font-medium leading-relaxed text-foreground underline-offset-2 hover:text-accent-strong hover:underline"
-                          >
-                            {item.headline}
-                          </a>
-                        ) : (
-                          <p className="mt-1 text-sm leading-relaxed text-foreground">
-                            {item.headline}
-                          </p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {!!signals.length && (
-                <div>
-                  <div className={cn(appSectionLabelClass, "flex items-center gap-1.5")}>
-                    <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                    {signals.some((signal) => signal.kind === "holding")
-                      ? "Top holdings"
-                      : "Signals"}
-                  </div>
-                  <ul className="space-y-2">
-                    {signals.slice(0, 5).map((signal, index) => (
-                      <li
-                        key={`${signal.kind}-${signal.symbol ?? "portfolio"}-${index}`}
-                        className={cn(appKpiClass, "flex items-start gap-2")}
-                      >
-                        <span
+                      )}
+                      {item.url ? (
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className={cn(
-                            "mt-0.5 inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                            signalSeverityClass(signal.severity),
+                            "block text-sm font-medium leading-relaxed text-foreground underline-offset-2 hover:text-accent-strong hover:underline",
+                            item.source && "mt-1",
                           )}
                         >
-                          {signalSeverityLabel(signal.severity)}
-                        </span>
-                        <p className="min-w-0 text-sm leading-relaxed text-foreground">
-                          {signal.message}
+                          {item.headline}
+                        </a>
+                      ) : (
+                        <p
+                          className={cn(
+                            "text-sm leading-relaxed text-foreground",
+                            item.source && "mt-1",
+                          )}
+                        >
+                          {item.headline}
                         </p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-              {!loading && !error && !hasContent && !hasChanges && (
-                <p className="text-sm text-muted">
-                  No urgent signals right now. Ask the assistant for a deeper
-                  analysis.
+            {!!digest?.sectorWeights?.length && (
+              <div>
+                <div
+                  className={cn(
+                    appSectionLabelClass,
+                    "flex items-center gap-1.5",
+                  )}
+                >
+                  <PieChart className="h-3.5 w-3.5" aria-hidden />
+                  Sector allocation
+                </div>
+                <div className="space-y-2">
+                  {digest.sectorWeights.slice(0, 5).map((sector) => (
+                    <div key={sector.sector}>
+                      <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+                        <span className="font-medium text-foreground">
+                          {formatSectorLabel(sector.sector)}
+                        </span>
+                        <span className="tabular-nums text-muted">
+                          {sector.weightPct.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden bg-muted-bg">
+                        <div
+                          className="h-full bg-accent-strong/80"
+                          style={{
+                            width: `${Math.min(sector.weightPct, 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="mt-1 text-[10px] text-muted">
+                        {sector.symbols.slice(0, 4).join(", ")}
+                        {sector.symbols.length > 4 ? "…" : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!!digest?.earningsThisWeek?.length && (
+              <div>
+                <div
+                  className={cn(
+                    appSectionLabelClass,
+                    "flex items-center gap-1.5",
+                  )}
+                >
+                  <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                  Earnings this week
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {digest.earningsThisWeek.map((symbol) => (
+                    <Link
+                      key={symbol}
+                      href={symbolHubPath(symbol, "position")}
+                      className="border border-border bg-background px-3 py-1 font-mono text-[11px] font-medium text-foreground transition hover:border-accent/40 hover:text-accent-strong"
+                    >
+                      {symbol}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!!digest?.topNews?.length && (
+              <div>
+                <div
+                  className={cn(
+                    appSectionLabelClass,
+                    "flex items-center gap-1.5",
+                  )}
+                >
+                  <Newspaper className="h-3.5 w-3.5" aria-hidden />
+                  Top holdings news
+                </div>
+                <ul className="space-y-2">
+                  {digest.topNews.slice(0, 4).map((item) => (
+                    <li
+                      key={`${item.symbol}-${item.headline}`}
+                      className={appKpiClass}
+                    >
+                      <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                        <Link
+                          href={symbolHubPath(item.symbol, "position")}
+                          className="font-mono font-semibold text-accent-strong hover:underline"
+                        >
+                          {item.symbol}
+                        </Link>
+                        {item.weightPct != null && (
+                          <span className="text-muted">
+                            {item.weightPct.toFixed(1)}% of portfolio
+                          </span>
+                        )}
+                        {item.sentiment && (
+                          <span className="bg-muted-bg px-2 py-0.5 text-[10px] capitalize text-muted">
+                            {item.sentiment.replace(/_/g, " ")}
+                          </span>
+                        )}
+                      </div>
+                      {item.url ? (
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 block text-sm font-medium leading-relaxed text-foreground underline-offset-2 hover:text-accent-strong hover:underline"
+                        >
+                          {item.headline}
+                        </a>
+                      ) : (
+                        <p className="mt-1 text-sm leading-relaxed text-foreground">
+                          {item.headline}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {!!signals.length && (
+              <div>
+                <div
+                  className={cn(
+                    appSectionLabelClass,
+                    "flex items-center gap-1.5",
+                  )}
+                >
+                  <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+                  {signals.some((signal) => signal.kind === "holding")
+                    ? "Top holdings"
+                    : "Signals"}
+                </div>
+                <ul className="space-y-2">
+                  {signals.slice(0, 5).map((signal, index) => (
+                    <li
+                      key={`${signal.kind}-${signal.symbol ?? "portfolio"}-${index}`}
+                      className={cn(appKpiClass, "flex items-start gap-2")}
+                    >
+                      <span
+                        className={cn(
+                          "mt-0.5 inline-flex shrink-0 border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                          signalSeverityClass(signal.severity),
+                        )}
+                      >
+                        {signalSeverityLabel(signal.severity)}
+                      </span>
+                      <p className="min-w-0 text-sm leading-relaxed text-foreground">
+                        {signal.message}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {!loading && !error && !hasContent && !hasChanges && (
+              <p className="text-sm text-muted">
+                No urgent signals right now. Ask the assistant for a deeper
+                analysis.
+              </p>
+            )}
+
+            {!!alerts.length && onRunAlert && !hideSuggestedActions && (
+              <div>
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+                  Suggested actions
                 </p>
-              )}
-
-              {!!alerts.length && onRunAlert && !hideSuggestedActions && (
-                <div>
-                  <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-                    Suggested actions
-                  </p>
-                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-                    {alerts.map((alert) => (
-                      <AlertChip
-                        key={`${alert.action}-${alert.symbol ?? "portfolio"}-${alert.priority}`}
-                        alert={alert}
-                        onRun={onRunAlert}
-                        disabled={loading}
-                      />
-                    ))}
-                  </div>
+                <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                  {alerts.map((alert) => (
+                    <AlertChip
+                      key={`${alert.action}-${alert.symbol ?? "portfolio"}-${alert.priority}`}
+                      alert={alert}
+                      onRun={onRunAlert}
+                      disabled={loading}
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              {onGoDeeper && (
-                <div className="border-t border-border/70 pt-3">
-                  <button
-                    type="button"
-                    disabled={analyzeLoading}
-                    onClick={onGoDeeper}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-strong transition hover:underline disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                    Go deeper with diversification analysis
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+            {onGoDeeper && (
+              <div className="border-t border-border/70 pt-3">
+                <button
+                  type="button"
+                  disabled={analyzeLoading}
+                  onClick={onGoDeeper}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-strong transition hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden />
+                  Go deeper with diversification analysis
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </CardBody>
     </Card>
   );

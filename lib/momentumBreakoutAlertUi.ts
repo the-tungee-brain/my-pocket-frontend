@@ -78,7 +78,7 @@ export function riskGateTone(action: string): RiskGateTone {
 
 export function riskGatePanelClass(tone: RiskGateTone): string {
   return cn(
-    "rounded-lg border px-3 py-2 text-xs leading-relaxed",
+    "border px-3 py-2 text-xs leading-relaxed",
     tone === "normal" && "border-border/60 bg-muted-bg/30 text-muted",
     tone === "warning" &&
       "border-amber-500/35 bg-amber-500/10 text-amber-900 dark:text-amber-100",

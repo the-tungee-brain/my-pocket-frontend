@@ -56,7 +56,7 @@ export function PortfolioSectionTabBar({
             {badge > 0 && (
               <span
                 className={cn(
-                  "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
+                  "inline-flex min-w-5 items-center justify-center px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
                   active
                     ? "bg-accent/20 text-accent-strong"
                     : "bg-muted-bg text-muted",

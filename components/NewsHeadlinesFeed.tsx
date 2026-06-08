@@ -602,7 +602,7 @@ export function SentimentMixBar({ items }: { items: EnrichedNewsItem[] }) {
       className="flex flex-col gap-2"
       aria-label="Sentiment mix in recent headlines"
     >
-      <div className="flex h-1.5 overflow-hidden rounded-full bg-muted-bg">
+      <div className="flex h-1.5 overflow-hidden bg-muted-bg">
         {segments.map(
           (seg) =>
             seg.count > 0 && (

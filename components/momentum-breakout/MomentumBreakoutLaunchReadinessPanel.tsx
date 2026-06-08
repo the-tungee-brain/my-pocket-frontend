@@ -34,7 +34,9 @@ export function MomentumBreakoutLaunchReadinessPanel({
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load diagnostics");
+          setError(
+            err instanceof Error ? err.message : "Failed to load diagnostics",
+          );
         }
       })
       .finally(() => {
@@ -50,13 +52,16 @@ export function MomentumBreakoutLaunchReadinessPanel({
   return (
     <div
       className={cn(
-        "rounded-lg border border-dashed border-border/70 bg-surface/30 px-3 py-3 text-xs",
+        "border border-dashed border-border/70 bg-surface/30 px-3 py-3 text-xs",
         className,
       )}
     >
-      <p className="font-semibold text-foreground">Launch readiness (internal)</p>
+      <p className="font-semibold text-foreground">
+        Launch readiness (internal)
+      </p>
       <p className="mt-1 text-[10px] text-muted">
-        Operational diagnostics only — not investment advice or performance claims.
+        Operational diagnostics only — not investment advice or performance
+        claims.
       </p>
 
       {loading && <p className="mt-2 text-muted">Checking…</p>}
@@ -83,7 +88,8 @@ export function MomentumBreakoutLaunchReadinessPanel({
             <dd className="text-foreground">{data.paperTradeStoreType}</dd>
             <dt>Scheduler</dt>
             <dd className="text-foreground">
-              {data.schedulerEnabled ? "on" : "off"} ({data.refreshIntervalSec}s)
+              {data.schedulerEnabled ? "on" : "off"} ({data.refreshIntervalSec}
+              s)
             </dd>
             <dt>Quote provider</dt>
             <dd className="text-foreground">

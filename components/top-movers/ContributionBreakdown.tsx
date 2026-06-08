@@ -60,7 +60,7 @@ export function ContributionBreakdown({ segments, loading, className }: Props) {
               </span>
               <span
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                  "px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                   TIER_CLASS[segment.tier],
                 )}
               >
@@ -69,7 +69,7 @@ export function ContributionBreakdown({ segments, loading, className }: Props) {
             </div>
             <div
               className={cn(
-                "relative h-2.5 overflow-hidden rounded-full bg-muted-bg",
+                "relative h-2.5 overflow-hidden bg-muted-bg",
                 !hasFill && "ring-1 ring-inset ring-border/80",
               )}
               role="meter"
@@ -81,7 +81,7 @@ export function ContributionBreakdown({ segments, loading, className }: Props) {
               {hasFill ? (
                 <div
                   className={cn(
-                    "h-full rounded-full transition-[width]",
+                    "h-full transition-[width]",
                     BAR_CLASS[segment.tier],
                   )}
                   style={{ width: `${fillWidth}%` }}

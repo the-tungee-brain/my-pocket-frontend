@@ -89,9 +89,13 @@ export function StockDetailPanel({
       <header className="space-y-3 border-b border-border pb-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 space-y-2">
-            <h2 className="font-mono text-xl font-semibold tracking-tight">{sym}</h2>
+            <h2 className="font-mono text-xl font-semibold tracking-tight">
+              {sym}
+            </h2>
             <p className="text-sm text-muted">
-              <span className="font-semibold text-foreground">{ctx.rankLabel}</span>
+              <span className="font-semibold text-foreground">
+                {ctx.rankLabel}
+              </span>
               {" · "}
               {ctx.subtitle}
             </p>
@@ -114,7 +118,8 @@ export function StockDetailPanel({
               ) : null}
               {trend ? (
                 <span className="text-xs text-muted">
-                  Price <span className="font-medium text-foreground">{trend}</span>
+                  Price{" "}
+                  <span className="font-medium text-foreground">{trend}</span>
                 </span>
               ) : detailQuery.isLoading ? (
                 <span className="text-xs text-muted">Loading…</span>
@@ -140,15 +145,16 @@ export function StockDetailPanel({
             <KpiStat
               label="Expected excess 5d"
               value={formatExcessReturn(item.expected_excess_return)}
-              tone={
-                item.expected_excess_return >= 0 ? "positive" : "default"
-              }
+              tone={item.expected_excess_return >= 0 ? "positive" : "default"}
             />
           ) : null}
         </div>
       ) : null}
 
-      <MoverResearchSections insight={insight} loading={detailQuery.isLoading} />
+      <MoverResearchSections
+        insight={insight}
+        loading={detailQuery.isLoading}
+      />
 
       <section className="space-y-2">
         <h3 className={moversSectionHeadingClass}>Why it ranks</h3>
@@ -161,7 +167,7 @@ export function StockDetailPanel({
       {insight ? (
         <RegimeCompactCard regime={insight.regimeCompact} />
       ) : detailQuery.isLoading ? (
-        <div className="h-14 animate-pulse rounded-lg bg-muted-bg" aria-busy />
+        <div className="h-14 animate-pulse bg-muted-bg" aria-busy />
       ) : null}
 
       <MoversInvestigateFooter symbol={sym} />

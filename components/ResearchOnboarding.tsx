@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Check,
-  MessageSquare,
-  Search,
-  Star,
-  X,
-} from "lucide-react";
+import { Check, MessageSquare, Search, Star, X } from "lucide-react";
 import { useAppChatContext } from "@/app/contextSelectors";
 import { useWatchlist } from "@/app/hooks/useWatchlist";
 import { useRecentSymbols } from "@/app/hooks/useRecentSymbols";
@@ -61,7 +55,8 @@ export function ResearchOnboarding() {
       {
         id: "assistant",
         label: "Ask the assistant",
-        description: "On a symbol page, use quick prompts or type a question below.",
+        description:
+          "On a symbol page, use quick prompts or type a question below.",
         done: hasResearchChat,
       },
     ],
@@ -82,7 +77,7 @@ export function ResearchOnboarding() {
 
   return (
     <section className="mb-4">
-      <div className="rounded-2xl border border-accent/30 bg-accent-muted/40 p-4 shadow-sm">
+      <div className="border border-accent/30 bg-accent-muted/40 p-4 shadow-sm">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-accent-strong">
@@ -117,7 +112,7 @@ export function ResearchOnboarding() {
               <li
                 key={step.id}
                 className={cn(
-                  "flex gap-3 rounded-xl border px-3 py-2.5",
+                  "flex gap-3 border px-3 py-2.5",
                   step.done
                     ? "border-accent/30 bg-background/60"
                     : "border-border bg-background/40",
@@ -125,7 +120,7 @@ export function ResearchOnboarding() {
               >
                 <div
                   className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+                    "flex h-7 w-7 shrink-0 items-center justify-center text-[11px] font-semibold",
                     step.done
                       ? "bg-accent-muted text-accent-strong"
                       : "bg-muted-bg text-muted",
@@ -147,7 +142,9 @@ export function ResearchOnboarding() {
                       {step.label}
                     </p>
                   </div>
-                  <p className="mt-0.5 text-xs text-muted">{step.description}</p>
+                  <p className="mt-0.5 text-xs text-muted">
+                    {step.description}
+                  </p>
                 </div>
               </li>
             );

@@ -30,10 +30,7 @@ type Props = {
   className?: string;
 };
 
-const STRATEGY_ICONS: Record<
-  InvestmentStrategy,
-  typeof RefreshCw
-> = {
+const STRATEGY_ICONS: Record<InvestmentStrategy, typeof RefreshCw> = {
   wheel: RefreshCw,
   "csp-income": CircleDollarSign,
   "covered-call": TrendingUp,
@@ -72,7 +69,7 @@ export function StrategyJourneyPanel({
 
   return (
     <section className={cn("mx-auto mb-4 w-full", className)}>
-      <div className="overflow-hidden rounded-2xl border border-accent/30 bg-accent-muted/20 shadow-sm">
+      <div className="overflow-hidden border border-accent/30 bg-accent-muted/20 shadow-sm">
         <div className="flex items-start justify-between gap-3 px-4 py-3">
           <button
             type="button"
@@ -81,7 +78,7 @@ export function StrategyJourneyPanel({
             className="min-w-0 flex-1 text-left transition hover:opacity-90"
           >
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-accent-muted/70 text-accent-strong">
+              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center border border-accent/25 bg-accent-muted/70 text-accent-strong">
                 <StrategyIcon className="h-4 w-4" aria-hidden />
               </div>
               <div className="min-w-0">
@@ -106,7 +103,7 @@ export function StrategyJourneyPanel({
           <div className="flex shrink-0 flex-col items-end gap-2 pt-0.5">
             <Link
               href="/settings"
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-foreground transition hover:border-accent/40 hover:text-accent-strong"
+              className="inline-flex items-center gap-1.5 border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-foreground transition hover:border-accent/40 hover:text-accent-strong"
             >
               <Settings2 className="h-3.5 w-3.5" aria-hidden />
               Edit strategy
@@ -129,7 +126,7 @@ export function StrategyJourneyPanel({
 
         {expanded && (
           <div className="space-y-4 border-t border-accent/20 px-4 pb-4 pt-4">
-            <div className="rounded-xl border border-border/80 bg-background/50 px-3 py-3">
+            <div className="border border-border/80 bg-background/50 px-3 py-3">
               <p className="text-sm leading-relaxed text-muted">
                 {strategyDescription}
               </p>
@@ -138,7 +135,7 @@ export function StrategyJourneyPanel({
                   {catalogItem.bestFor.slice(0, 3).map((item) => (
                     <span
                       key={item}
-                      className="rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-muted"
+                      className="border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-muted"
                     >
                       {item}
                     </span>

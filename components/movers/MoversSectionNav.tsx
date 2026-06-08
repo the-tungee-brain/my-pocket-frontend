@@ -30,10 +30,7 @@ export function MoversSectionNav() {
   const pathname = usePathname();
 
   return (
-    <nav
-      className="flex flex-wrap gap-2"
-      aria-label="Movers sections"
-    >
+    <nav className="flex flex-wrap gap-2" aria-label="Movers sections">
       {LINKS.map(({ href, label, sub, icon: Icon }) => {
         const active = pathname.startsWith(href);
         return (
@@ -42,7 +39,7 @@ export function MoversSectionNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "inline-flex min-w-[9.5rem] flex-col rounded-lg border px-3 py-2 transition-colors",
+              "inline-flex min-w-[9.5rem] flex-col border px-3 py-2 transition-colors",
               active
                 ? "border-accent/40 bg-accent-muted/50 text-foreground"
                 : "border-border bg-background/60 text-muted hover:border-border hover:bg-muted-bg/50 hover:text-foreground",
