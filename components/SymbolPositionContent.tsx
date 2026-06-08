@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
 import { useResearchSymbolIntelligence } from "@/app/research/[symbol]/ResearchSymbolIntelligenceContext";
@@ -8,19 +8,10 @@ import { SymbolLegsTable } from "@/components/analysis/analysisPanelHoldings";
 import { PositionGuidancePanel } from "@/components/PositionGuidancePanel";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { usePositionGuidance } from "@/app/hooks/usePositionGuidance";
-import { TaxWashSaleStrip } from "@/components/TaxWashSaleStrip";
 import { OptionsTabPrompt } from "@/components/OptionsTabPrompt";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
-import { SymbolAlertStrip } from "@/components/SymbolAlertStrip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import {
-  alertToQuickActionId,
-  collectTaxAlertItems,
-  mergeDisplayAlerts,
-} from "@/lib/intelligence";
-import type { TaxAlertItem } from "@/lib/intelligence";
-import type { ProactiveAlert } from "@/app/types/intelligence";
 import { symbolChatKey } from "@/lib/chatKeys";
 import { shouldShowOptionsTab } from "@/lib/symbolOptions";
 import { BriefcaseBusiness } from "lucide-react";
@@ -33,8 +24,7 @@ type Props = {
 };
 
 export function SymbolPositionContent({ symbol }: Props) {
-  const { error, positionMap, proactiveAlerts, portfolioBrief, recentActivity } =
-    usePortfolioContext();
+  const { error, positionMap } = usePortfolioContext();
   const { sendQuickAction } = useAppChatContext();
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
@@ -54,21 +44,6 @@ export function SymbolPositionContent({ symbol }: Props) {
     intelligence,
   );
 
-  const taxItems = useMemo(
-    () =>
-      collectTaxAlertItems(
-        mergeDisplayAlerts(proactiveAlerts, portfolioBrief),
-        recentActivity?.suggestedActions ?? [],
-        symbolUpper,
-      ),
-    [proactiveAlerts, portfolioBrief, recentActivity?.suggestedActions, symbolUpper],
-  );
-
-  const symbolAlerts = useMemo(
-    () => mergeDisplayAlerts(proactiveAlerts, portfolioBrief),
-    [proactiveAlerts, portfolioBrief],
-  );
-
   const handleSuggestedAction = useCallback(
     (actionId: string) => {
       void sendQuickAction({
@@ -77,32 +52,6 @@ export function SymbolPositionContent({ symbol }: Props) {
         selectedSymbol: symbolUpper,
         positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
         actionId,
-      });
-    },
-    [chatKey, symbolUpper, sendQuickAction, positionsForSelectedSymbol],
-  );
-
-  const handleRunAlert = useCallback(
-    (alert: ProactiveAlert) => {
-      void sendQuickAction({
-        activeChatKey: chatKey,
-        selectedView: "research",
-        selectedSymbol: symbolUpper,
-        positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
-        actionId: alertToQuickActionId(alert),
-      });
-    },
-    [chatKey, symbolUpper, sendQuickAction, positionsForSelectedSymbol],
-  );
-
-  const handleTaxAlert = useCallback(
-    (item: TaxAlertItem) => {
-      void sendQuickAction({
-        activeChatKey: chatKey,
-        selectedView: "research",
-        selectedSymbol: symbolUpper,
-        positionsForSelectedSymbol: positionsForSelectedSymbol ?? [],
-        actionId: item.actionId,
       });
     },
     [chatKey, symbolUpper, sendQuickAction, positionsForSelectedSymbol],
@@ -120,32 +69,10 @@ export function SymbolPositionContent({ symbol }: Props) {
   }
 
   const panelClass = cn(pageSectionClass, "w-full max-w-none");
-  const showAside = taxItems.length > 0 || symbolAlerts.length > 0;
 
   return (
     <div className={cn(appStackClass, "w-full max-w-none")}>
       {error && <ErrorBanner message={error} />}
-
-      {showAside ? (
-        <>
-          {taxItems.length > 0 && (
-            <TaxWashSaleStrip
-              className={panelClass}
-              items={taxItems}
-              onRun={handleTaxAlert}
-            />
-          )}
-
-          {symbolAlerts.length > 0 && (
-            <SymbolAlertStrip
-              className={panelClass}
-              symbol={symbolUpper}
-              alerts={symbolAlerts}
-              onRunAlert={handleRunAlert}
-            />
-          )}
-        </>
-      ) : null}
 
       {showOptionsPrompt && (
         <OptionsTabPrompt symbol={symbolUpper} className={panelClass} />

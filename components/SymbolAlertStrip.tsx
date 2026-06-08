@@ -12,6 +12,7 @@ type Props = {
   alerts: ProactiveAlert[];
   onRunAlert?: (alert: ProactiveAlert) => void;
   className?: string;
+  showHeader?: boolean;
 };
 
 function AlertChip({
@@ -47,6 +48,7 @@ export function SymbolAlertStrip({
   alerts,
   onRunAlert,
   className,
+  showHeader = true,
 }: Props) {
   const symbolUpper = symbol.toUpperCase();
   const symbolAlerts = dedupeAlerts(
@@ -63,12 +65,14 @@ export function SymbolAlertStrip({
       className={cn("mx-0 bg-secondary/40", className)}
       aria-label={`${symbolUpper} suggested actions`}
     >
-      <CardHeader className="border-border/80">
-        <CardTitle
-          title={`Suggested for ${symbolUpper}`}
-          description="Proactive alerts based on your holdings and expiring options"
-        />
-      </CardHeader>
+      {showHeader && (
+        <CardHeader className="border-border/80">
+          <CardTitle
+            title={`Suggested for ${symbolUpper}`}
+            description="Proactive alerts based on your holdings and expiring options"
+          />
+        </CardHeader>
+      )}
       <CardBody className="grid gap-2 py-3 sm:grid-cols-2">
         {symbolAlerts.map((alert) => (
           <AlertChip
