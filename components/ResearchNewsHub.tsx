@@ -11,10 +11,7 @@ import {
 } from "@/app/hooks/useCompanyNews";
 import { usePressReleases } from "@/app/hooks/usePressReleases";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
-import NewsAnalytics, {
-  AnalyzeNewsPrompt,
-  NewsAsideSections,
-} from "@/components/NewsAnalytics";
+import NewsAnalytics, { AnalyzeNewsPrompt } from "@/components/NewsAnalytics";
 import {
   LoadingSurface,
   NewsOverviewLoading,
@@ -26,7 +23,6 @@ import {
   NewsHeadlinesSkeleton,
   pressReleaseToDisplay,
 } from "@/components/NewsHeadlinesFeed";
-import { PageSplit } from "@/components/PageShell";
 import { ResearchSectionCard } from "@/components/ResearchSectionCard";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { appStackClass, appTabBarClass, appTabLinkClass } from "@/lib/appUi";
@@ -644,32 +640,17 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
         {coverageError ? (
           <ErrorBanner message={coverageError} onRetry={refreshCoverage} />
         ) : null}
-        <PageSplit
-          main={
-            <NewsAnalytics
-              analytics={analytics}
-              isLoading={coverageLoading}
-              isRefreshing={coverageRefreshing}
-              isAnalyzing={coverageAnalyzing}
-              lastUpdated={coverageUpdated}
-              lastAnalyzedAt={coverageAnalyzedAt}
-              onRefresh={refreshCoverage}
-              onAnalyzeNews={newsAiAllowed ? () => analyzeNews() : undefined}
-              headlinesOnly
-              showAiEnrichment={newsAiAllowed}
-            />
-          }
-          aside={
-            <NewsAsideSections
-              data={analytics}
-              loading={coverageLoading && !analytics}
-              refreshing={coverageRefreshing}
-              isAnalyzing={coverageAnalyzing}
-              hasAiAnalysis={hasAiAnalysis}
-              newsAiAllowed={newsAiAllowed}
-              planResolved={planResolved}
-            />
-          }
+        <NewsAnalytics
+          analytics={analytics}
+          isLoading={coverageLoading}
+          isRefreshing={coverageRefreshing}
+          isAnalyzing={coverageAnalyzing}
+          lastUpdated={coverageUpdated}
+          lastAnalyzedAt={coverageAnalyzedAt}
+          onRefresh={refreshCoverage}
+          onAnalyzeNews={newsAiAllowed ? () => analyzeNews() : undefined}
+          headlinesOnly
+          showAiEnrichment={newsAiAllowed}
         />
       </div>
     );

@@ -60,7 +60,7 @@ function overallSentimentPillClass(s: OverallSentiment) {
   switch (s) {
     case "strongly_bullish":
     case "bullish":
-      return "border-accent/30 bg-accent-muted text-accent-strong";
+      return "border-success/30 bg-success/10 text-success";
     case "bearish":
     case "strongly_bearish":
       return "border-danger/30 bg-danger/10 text-danger";
@@ -387,14 +387,14 @@ export default function NewsAnalytics({
     showAiEnrichment && hasAiAnalysis && data ? (
       <span
         className={cn(
-          "inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-medium leading-none",
+          "inline-flex shrink-0 items-center border px-2.5 py-0.5 text-xs font-medium leading-none",
           overallSentimentPillClass(data.overall_sentiment),
         )}
       >
         {overallSentimentLabel(data.overall_sentiment)}
       </span>
     ) : showAiEnrichment && isAnalyzing ? (
-      <Skeleton className="h-5 w-20 rounded-full" />
+      <Skeleton className="h-5 w-20" />
     ) : null;
 
   const analyzeAction =

@@ -104,7 +104,7 @@ export function portfolioNewsItemToDisplay(
 function sentimentColor(sentiment: Sentiment) {
   switch (sentiment) {
     case "bullish":
-      return "bg-accent-muted text-accent-strong ring-1 ring-accent/30";
+      return "bg-success/10 text-success ring-1 ring-success/30";
     case "bearish":
       return "bg-danger/10 text-danger ring-1 ring-danger/30";
     default:
@@ -217,7 +217,7 @@ export function NewsHeadlineCard({
         {showFeedKind && kind ? (
           <span
             className={cn(
-              "inline-flex w-fit max-w-full items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+              "inline-flex w-fit max-w-full items-center border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
               feedKindBadgeClass(kind),
             )}
           >
@@ -251,7 +251,7 @@ export function NewsHeadlineCard({
           {showSentiment ? (
             <span
               className={cn(
-                "inline-flex max-w-full shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+                "inline-flex max-w-full shrink-0 items-center px-2 py-0.5 text-[11px] font-medium",
                 sentimentColor(sentiment),
               )}
             >
@@ -319,15 +319,18 @@ function FilterChip({
   count: number;
   onClick: () => void;
 }) {
+  const isPositive = label === "Positive tone";
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition",
+        "inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition",
         active
-          ? "border-accent/40 bg-accent-muted text-accent-strong"
+          ? isPositive
+            ? "border-success/30 bg-success/10 text-success"
+            : "border-accent/40 bg-accent-muted text-accent-strong"
           : "border-border bg-background text-muted hover:border-accent/30 hover:text-foreground",
       )}
     >
@@ -335,7 +338,11 @@ function FilterChip({
       <span
         className={cn(
           "tabular-nums",
-          active ? "text-accent-strong" : "text-muted",
+          active
+            ? isPositive
+              ? "text-success"
+              : "text-accent-strong"
+            : "text-muted",
         )}
       >
         {count}
