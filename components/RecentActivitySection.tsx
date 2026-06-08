@@ -44,6 +44,7 @@ type Props = {
   onRefresh?: () => void | Promise<void>;
   compact?: boolean;
   hideSuggestedActions?: boolean;
+  variant?: "default" | "position";
   className?: string;
 };
 
@@ -159,9 +160,11 @@ function OrderRow({
 function OrderRows({
   orders,
   compact,
+  variant = "default",
 }: {
   orders: RecentOrderEntry[];
   compact?: boolean;
+  variant?: "default" | "position";
 }) {
   if (!orders.length) {
     return (
@@ -248,7 +251,12 @@ function OrderRows({
         </table>
       </div>
 
-      <div className="divide-y divide-border/60 md:hidden">
+      <div
+        className={cn(
+          "divide-y divide-border/60 md:hidden",
+          variant === "position" && "space-y-3 divide-y-0",
+        )}
+      >
         {displayGroups.map((group) => {
           if (group.kind === "roll") {
             return (
@@ -261,6 +269,7 @@ function OrderRows({
                     key={`${group.groupId}-${order.orderId ?? index}`}
                     order={order}
                     showRollBadge={false}
+                    variant={variant}
                   />
                 ))}
               </div>
@@ -271,6 +280,7 @@ function OrderRows({
             <OrderMobileCard
               key={`${group.order.orderId ?? group.order.fillTime}-mobile`}
               order={group.order}
+              variant={variant}
             />
           );
         })}
@@ -282,16 +292,23 @@ function OrderRows({
 function OrderMobileCard({
   order,
   showRollBadge = true,
+  variant = "default",
 }: {
   order: RecentOrderEntry;
   showRollBadge?: boolean;
+  variant?: "default" | "position";
 }) {
   const contractLabel = formatOrderContractLabel(order);
   const strategyBadge = showRollBadge ? formatOrderStrategyBadge(order) : null;
   const extraLegs = (order.legs ?? []).slice(1);
 
   return (
-    <div className="py-3">
+    <div
+      className={cn(
+        "py-3",
+        variant === "position" && "rounded-[var(--app-radius)]",
+      )}
+    >
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-sm font-medium">{order.symbol}</span>
         <span className="text-xs text-muted">
@@ -524,6 +541,7 @@ export function RecentActivitySection({
   onRefresh,
   compact = false,
   hideSuggestedActions = false,
+  variant = "default",
   className,
 }: Props) {
   const [orders, setOrders] = useState<RecentOrderEntry[]>(
@@ -548,7 +566,9 @@ export function RecentActivitySection({
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
 
-  const usesPagination = Boolean(symbol || showFullHistory) && !compact;
+  const isPositionVariant = variant === "position";
+  const usesPagination =
+    Boolean(symbol || showFullHistory) && !compact && !isPositionVariant;
   const totalPages = Math.max(1, Math.ceil(totalOrders / ACTIVITY_PAGE_SIZE));
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset pagination when the selected activity scope changes.
@@ -611,9 +631,14 @@ export function RecentActivitySection({
     }
   }, [symbol, showFullHistory, summary, load]);
 
-  const displayOrders = compact ? orders.slice(0, 5) : orders;
+  const displayOrders =
+    compact || isPositionVariant ? orders.slice(0, 5) : orders;
 
-  const title = symbol ? `${symbol} recent trades` : "Recent trade activity";
+  const title = isPositionVariant
+    ? "Recent trades"
+    : symbol
+      ? `${symbol} recent trades`
+      : "Recent trade activity";
 
   const subtitle = (() => {
     if (usesPagination) {
@@ -650,6 +675,75 @@ export function RecentActivitySection({
     !displayOrders.length
   ) {
     return null;
+  }
+
+  if (isPositionVariant) {
+    return (
+      <section
+        className={cn("w-full max-w-none overflow-hidden", className)}
+        aria-label={title}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border/50 py-4">
+          <div className="min-w-0">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+              {title}
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              {displayOrders.length
+                ? `${displayOrders.length} fill${displayOrders.length === 1 ? "" : "s"} · last ${daysBack} days`
+                : `Last ${daysBack} days`}
+            </p>
+            {lastUpdated != null && symbol && (
+              <FreshnessLabel
+                updatedAt={lastUpdated}
+                pending={loading}
+                className="mt-0.5"
+              />
+            )}
+          </div>
+
+          <Button
+            size="xs"
+            variant="outline"
+            disabled={loading}
+            onClick={() => void load(true)}
+            aria-label="Refresh trade activity"
+          >
+            <RefreshCw
+              className={cn("h-3.5 w-3.5", loading && "animate-spin")}
+              aria-hidden
+            />
+            Refresh
+          </Button>
+        </div>
+
+        <div className="py-4">
+          {error ? (
+            <ErrorBanner message={error} onRetry={() => void load(true)} />
+          ) : loading && !displayOrders.length ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((row) => (
+                <div
+                  key={row}
+                  className="h-12 animate-pulse rounded-[var(--app-radius)] bg-muted-bg"
+                />
+              ))}
+            </div>
+          ) : displayOrders.length === 0 ? (
+            <div className="py-6 text-center">
+              <p className="text-sm font-medium text-foreground">
+                No recent fills
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                No filled orders in the last {daysBack} days.
+              </p>
+            </div>
+          ) : (
+            <OrderRows orders={displayOrders} compact variant="position" />
+          )}
+        </div>
+      </section>
+    );
   }
 
   return (
