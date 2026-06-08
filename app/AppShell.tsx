@@ -4,7 +4,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronUp, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { TomcrestLogo } from "@/components/brand/TomcrestLogo";
 import { ChatBox } from "@/components/ChatBox";
 import { ChatSessionHistory } from "@/components/ChatSessionHistory";
@@ -12,6 +18,7 @@ import { ConversationPane } from "@/components/ConversationPane";
 import { HeaderActions } from "@/components/HeaderActions";
 import { HeaderSymbolSearch } from "@/components/HeaderSymbolSearch";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import type { MainView } from "@/components/NavList";
 import { researchTabLabel } from "@/components/ResearchTabBar";
 import { appCanvasClass, appChromeClass } from "@/lib/appUi";
 import { resolveActiveChatKey } from "@/lib/chatKeys";
@@ -59,6 +66,47 @@ const topNavItems = [
   },
 ];
 
+type AssistantChatControllerProps = {
+  children: ReactNode;
+  selectedSymbol: string | null;
+  selectedView: MainView;
+  positionsForSelectedSymbol: ReturnType<
+    typeof usePortfolioContext
+  >["positionsForSelectedSymbol"];
+  allPositions: ReturnType<typeof usePortfolioContext>["allPositions"];
+  positionMap: ReturnType<typeof usePortfolioContext>["positionMap"];
+  sessionAccessToken: string;
+  pathname: string;
+};
+
+const StablePageContent = memo(function StablePageContent({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  useDevRenderTrace("StablePageContent", "page");
+  return <>{children}</>;
+});
+
+function chatIsolationDebugEnabled(): boolean {
+  return (
+    process.env.NODE_ENV === "development" &&
+    typeof window !== "undefined" &&
+    window.localStorage.getItem("tomcrest:debug-chat-isolation") === "1"
+  );
+}
+
+function useDevRenderTrace(component: string, source: "chat" | "page") {
+  useEffect(() => {
+    if (!chatIsolationDebugEnabled()) return;
+    console.debug("[chat-isolation:render]", {
+      component,
+      source,
+      at: new Date().toISOString(),
+    });
+  });
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const {
     selectedSymbol,
@@ -70,6 +118,136 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     positionMap,
     sessionAccessToken,
   } = usePortfolioContext();
+
+  const pathname = usePathname();
+  useDevRenderTrace("AppShell", "page");
+
+  return (
+    <>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-secondary focus:px-3 focus:py-2 focus:text-sm focus:shadow-lg"
+      >
+        Skip to content
+      </a>
+
+      <main className="flex min-h-screen min-w-0 text-foreground">
+        <section className="flex min-h-screen min-w-0 flex-1 flex-col">
+          <div className={cn("sticky top-0 z-30 border-b", appChromeClass)}>
+            <div className="flex flex-col gap-4 px-5 py-4 md:px-8 xl:px-10">
+              <div className="flex min-w-0 items-center gap-5">
+                <Link
+                  href="/portfolio"
+                  onClick={() => {
+                    setSelectedView("portfolio");
+                    setSelectedSymbol(null);
+                  }}
+                  className="shrink-0"
+                  aria-label="Tomcrest portfolio"
+                >
+                  <TomcrestLogo size="sm" />
+                </Link>
+
+                <nav
+                  aria-label="Primary"
+                  className="hidden min-w-0 flex-1 items-center gap-6 overflow-x-auto text-sm font-medium md:flex"
+                >
+                  {topNavItems.map((item) => {
+                    const active = item.isActive(pathname);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        onClick={() => {
+                          setSelectedView(item.view);
+                          setSelectedSymbol(null);
+                        }}
+                        className={cn(
+                          "whitespace-nowrap border-b py-1.5 transition-colors",
+                          active
+                            ? "border-foreground text-foreground"
+                            : "border-transparent text-muted hover:text-foreground",
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                <HeaderSymbolSearch
+                  accessToken={sessionAccessToken}
+                  className="hidden w-full max-w-sm md:block"
+                />
+                <HeaderActions />
+              </div>
+
+              <div className="flex flex-col gap-3 md:hidden">
+                <HeaderSymbolSearch
+                  accessToken={sessionAccessToken}
+                  className="w-full"
+                />
+                <nav
+                  aria-label="Primary"
+                  className="-mx-1 flex min-w-0 gap-4 overflow-x-auto px-1 text-sm font-medium"
+                >
+                  {topNavItems.map((item) => {
+                    const active = item.isActive(pathname);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        onClick={() => {
+                          setSelectedView(item.view);
+                          setSelectedSymbol(null);
+                        }}
+                        className={cn(
+                          "shrink-0 border-b py-1.5 transition-colors",
+                          active
+                            ? "border-foreground text-foreground"
+                            : "border-transparent text-muted",
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+            </div>
+          </div>
+
+          <AssistantChatController
+            selectedSymbol={selectedSymbol}
+            selectedView={selectedView}
+            positionsForSelectedSymbol={positionsForSelectedSymbol}
+            allPositions={allPositions}
+            positionMap={positionMap}
+            sessionAccessToken={sessionAccessToken}
+            pathname={pathname}
+          >
+            {children}
+          </AssistantChatController>
+        </section>
+      </main>
+      <MobileBottomNav />
+    </>
+  );
+}
+
+function AssistantChatController({
+  children,
+  selectedSymbol,
+  selectedView,
+  positionsForSelectedSymbol,
+  allPositions,
+  positionMap,
+  sessionAccessToken,
+  pathname,
+}: AssistantChatControllerProps) {
+  useDevRenderTrace("AssistantChatController", "chat");
 
   const {
     chatBySymbol,
@@ -84,10 +262,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     restoreChatSession,
     startNewChatSession,
   } = useAppChatContext();
-
   const { showToast } = useToast();
-
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const isMomentumBreakoutAlertsRoute = pathname.startsWith(
@@ -114,8 +289,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const currentChat =
     activeChatKey === "__NONE__" ? undefined : chatBySymbol[activeChatKey];
 
-  // Mobile chat stays collapsed until the user expands it or OPEN_CHAT_EVENT fires
-  // (e.g. Ask AI, playbook, scrollToChat).
   useEffect(() => {
     if (activeChatKey === "__NONE__") {
       setMobileChatExpanded(false);
@@ -406,205 +579,103 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-secondary focus:px-3 focus:py-2 focus:text-sm focus:shadow-lg"
+      <div
+        className={cn(
+          appCanvasClass,
+          "flex min-h-0 min-w-0 flex-1 flex-col",
+        )}
       >
-        Skip to content
-      </a>
+        <div
+          id="main-content"
+          className={cn(
+            "relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pt-8 pb-8 md:px-10 xl:px-14",
+            "max-md:pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
+          )}
+        >
+          <StablePageContent>{children}</StablePageContent>
 
-      <main className="flex min-h-screen min-w-0 text-foreground">
-        <section className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <div className={cn("sticky top-0 z-30 border-b", appChromeClass)}>
-            <div className="flex flex-col gap-4 px-5 py-4 md:px-8 xl:px-10">
-              <div className="flex min-w-0 items-center gap-5">
-                <Link
-                  href="/portfolio"
-                  onClick={() => {
-                    setSelectedView("portfolio");
-                    setSelectedSymbol(null);
-                  }}
-                  className="shrink-0"
-                  aria-label="Tomcrest portfolio"
-                >
-                  <TomcrestLogo size="sm" />
-                </Link>
-
-                <nav
-                  aria-label="Primary"
-                  className="hidden min-w-0 flex-1 items-center gap-6 overflow-x-auto text-sm font-medium md:flex"
-                >
-                  {topNavItems.map((item) => {
-                    const active = item.isActive(pathname);
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        aria-current={active ? "page" : undefined}
-                        onClick={() => {
-                          setSelectedView(item.view);
-                          setSelectedSymbol(null);
-                        }}
-                        className={cn(
-                          "whitespace-nowrap border-b py-1.5 transition-colors",
-                          active
-                            ? "border-foreground text-foreground"
-                            : "border-transparent text-muted hover:text-foreground",
-                        )}
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </nav>
-
-                <HeaderSymbolSearch
-                  accessToken={sessionAccessToken}
-                  className="hidden w-full max-w-sm md:block"
-                />
-                <HeaderActions />
-              </div>
-
-              <div className="flex flex-col gap-3 md:hidden">
-                <HeaderSymbolSearch
-                  accessToken={sessionAccessToken}
-                  className="w-full"
-                />
-                <nav
-                  aria-label="Primary"
-                  className="-mx-1 flex min-w-0 gap-4 overflow-x-auto px-1 text-sm font-medium"
-                >
-                  {topNavItems.map((item) => {
-                    const active = item.isActive(pathname);
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        aria-current={active ? "page" : undefined}
-                        onClick={() => {
-                          setSelectedView(item.view);
-                          setSelectedSymbol(null);
-                        }}
-                        className={cn(
-                          "shrink-0 border-b py-1.5 transition-colors",
-                          active
-                            ? "border-foreground text-foreground"
-                            : "border-transparent text-muted",
-                        )}
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </div>
+          {showEmbeddedConversation && labelSymbol && (
+            <div id="assistant-chat">
+              <ConversationPane
+                symbol={labelSymbol}
+                messages={currentChat?.messages ?? []}
+                loading={!!currentChat?.loading}
+                onClear={handleClearChat}
+                onFollowUpPrompt={(prompt) => void handleFollowUpPrompt(prompt)}
+                historyControl={
+                  activeChatKey !== "__NONE__" ? (
+                    <ChatSessionHistory
+                      activeChatKey={activeChatKey}
+                      accessToken={sessionAccessToken}
+                      currentSessionId={currentChat?.sessionId}
+                      historyRevision={currentChat?.historyRevision ?? 0}
+                      showNewChat={
+                        (currentChat?.messages.length ?? 0) > 0 &&
+                        !currentChat?.loading
+                      }
+                      onStartNewSession={handleStartNewChat}
+                      onRestoreSession={(sessionId, messages) =>
+                        restoreChatSession(activeChatKey, sessionId, messages)
+                      }
+                    />
+                  ) : null
+                }
+              />
             </div>
-          </div>
+          )}
+        </div>
 
-          <div
-            className={cn(
-              appCanvasClass,
-              "flex min-h-0 min-w-0 flex-1 flex-col",
-            )}
-          >
-            <div
-              id="main-content"
-              className={cn(
-                "relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pt-8 pb-8 md:px-10 xl:px-14",
-                "max-md:pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
-              )}
-            >
-              {children}
-
-              {showEmbeddedConversation && labelSymbol && (
-                <div id="assistant-chat">
-                  <ConversationPane
-                    symbol={labelSymbol}
-                    messages={currentChat?.messages ?? []}
-                    loading={!!currentChat?.loading}
-                    onClear={handleClearChat}
-                    onFollowUpPrompt={(prompt) =>
-                      void handleFollowUpPrompt(prompt)
-                    }
-                    historyControl={
-                      activeChatKey !== "__NONE__" ? (
-                        <ChatSessionHistory
-                          activeChatKey={activeChatKey}
-                          accessToken={sessionAccessToken}
-                          currentSessionId={currentChat?.sessionId}
-                          historyRevision={currentChat?.historyRevision ?? 0}
-                          showNewChat={
-                            (currentChat?.messages.length ?? 0) > 0 &&
-                            !currentChat?.loading
-                          }
-                          onStartNewSession={handleStartNewChat}
-                          onRestoreSession={(sessionId, messages) =>
-                            restoreChatSession(
-                              activeChatKey,
-                              sessionId,
-                              messages,
-                            )
-                          }
-                        />
-                      ) : null
-                    }
+        {showEmbeddedChatBox && (
+          <div className="safe-area-bottom sticky bottom-14 z-20 shrink-0 md:hidden md:bottom-0">
+            <AnimatePresence mode="wait" initial={false}>
+              {!mobileChatExpanded ? (
+                <motion.button
+                  key="collapsed"
+                  type="button"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => setMobileChatExpanded(true)}
+                  className="flex w-full items-center justify-between gap-3 border-t border-border bg-background px-4 py-3"
+                >
+                  <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
+                    <Sparkles
+                      className="h-4 w-4 shrink-0 text-foreground"
+                      aria-hidden="true"
+                    />
+                    <span className="truncate">{mobileChatLabel}</span>
+                  </span>
+                  <ChevronUp
+                    className="h-4 w-4 shrink-0 text-muted"
+                    aria-hidden="true"
                   />
-                </div>
+                </motion.button>
+              ) : (
+                <motion.div
+                  key="expanded"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 12 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  <ChatBox
+                    {...chatBoxProps}
+                    onCollapse={() => setMobileChatExpanded(false)}
+                  />
+                </motion.div>
               )}
-            </div>
-
-            {showEmbeddedChatBox && (
-              <div className="safe-area-bottom sticky bottom-14 z-20 shrink-0 md:hidden md:bottom-0">
-                <AnimatePresence mode="wait" initial={false}>
-                  {!mobileChatExpanded ? (
-                    <motion.button
-                      key="collapsed"
-                      type="button"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      transition={{ duration: 0.15 }}
-                      onClick={() => setMobileChatExpanded(true)}
-                      className="flex w-full items-center justify-between gap-3 border-t border-border bg-background px-4 py-3"
-                    >
-                      <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
-                        <Sparkles
-                          className="h-4 w-4 shrink-0 text-foreground"
-                          aria-hidden="true"
-                        />
-                        <span className="truncate">{mobileChatLabel}</span>
-                      </span>
-                      <ChevronUp
-                        className="h-4 w-4 shrink-0 text-muted"
-                        aria-hidden="true"
-                      />
-                    </motion.button>
-                  ) : (
-                    <motion.div
-                      key="expanded"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 12 }}
-                      transition={{ duration: 0.18 }}
-                    >
-                      <ChatBox
-                        {...chatBoxProps}
-                        onCollapse={() => setMobileChatExpanded(false)}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-
-            {showEmbeddedChatBox && (
-              <div className="sticky bottom-0 z-20 hidden shrink-0 md:block">
-                <ChatBox {...chatBoxProps} />
-              </div>
-            )}
+            </AnimatePresence>
           </div>
-        </section>
-      </main>
+        )}
+
+        {showEmbeddedChatBox && (
+          <div className="sticky bottom-0 z-20 hidden shrink-0 md:block">
+            <ChatBox {...chatBoxProps} />
+          </div>
+        )}
+      </div>
+
       {showFloatingAssistant && (
         <>
           <button
@@ -632,7 +703,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <section
               id="assistant-chat"
               aria-label={floatingAssistantAriaLabel}
-              className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] top-20 z-50 flex flex-col border border-border bg-background shadow-2xl shadow-black/30 md:inset-auto md:bottom-6 md:right-6 md:top-24 md:h-[min(44rem,calc(100vh-8rem))] md:w-[30rem]"
+              className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] top-20 z-50 flex flex-col border border-border bg-background shadow-2xl shadow-black/30 md:inset-auto md:bottom-6 md:right-6 md:top-24 md:h-[min(44rem,calc(100vh-8rem))] md:w-[34rem]"
             >
               <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
                 <div>
@@ -691,7 +762,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </>
       )}
-      <MobileBottomNav />
     </>
   );
 }

@@ -34,17 +34,25 @@ export function formatSnapshotPercent(
   return `${value.toFixed(digits)}%`;
 }
 
-function normalizeYieldPct(value: number | null | undefined): number | null {
-  if (value == null || !Number.isFinite(value)) return null;
-  if (value > 0 && value < 1) return value * 100;
-  return value;
-}
-
-function formatDividendYieldPct(value: number | null | undefined): string {
-  const normalized = normalizeYieldPct(value);
-  if (normalized == null) return "—";
-  if (normalized < 0 || normalized > 25) return "Check source";
-  return formatSnapshotPercent(normalized);
+function formatDividendYieldPct(
+  value: number | null | undefined,
+  rawValue?: number | null,
+): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  if (value < 0) return "—";
+  if (value > 25) {
+    if (
+      rawValue != null &&
+      Number.isFinite(rawValue) &&
+      rawValue > 0 &&
+      rawValue <= 25
+    ) {
+      return formatSnapshotPercent(rawValue);
+    }
+    if (value <= 100) return formatSnapshotPercent(value / 100);
+    return "—";
+  }
+  return formatSnapshotPercent(value);
 }
 
 export function formatPeRatio(value: number | null | undefined): string {
@@ -97,7 +105,10 @@ export function buildTickerKeyStats(
       },
       {
         label: "Dividend yield",
-        value: formatDividendYieldPct(snapshot.dividendYieldPct),
+        value: formatDividendYieldPct(
+          snapshot.dividendYieldPct,
+          snapshot.rawDividendYield,
+        ),
         hrefTab: "dividends",
       },
       { label: "52-week range", value: range52w },
@@ -122,7 +133,10 @@ export function buildTickerKeyStats(
     },
     {
       label: "Dividend yield",
-      value: formatDividendYieldPct(snapshot.dividendYieldPct),
+      value: formatDividendYieldPct(
+        snapshot.dividendYieldPct,
+        snapshot.rawDividendYield,
+      ),
       hrefTab: "dividends",
     },
     { label: "52-week range", value: range52w },

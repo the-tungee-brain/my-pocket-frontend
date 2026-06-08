@@ -13,13 +13,15 @@ export type ResearchSnapshot = {
   logo?: string;
   weburl?: string;
   dividendYieldPct?: number | null;
+  rawDividendYield?: number | null;
+  rawDividendYieldSource?: string | null;
   peRatio?: number | null;
   volume?: number | null;
   avgVolume?: number | null;
   expenseRatioPct?: number | null;
 };
 
-const STORAGE_KEY = "powerpocket-research-snapshots-v7";
+const STORAGE_KEY = "powerpocket-research-snapshots-v9";
 const LEGACY_SESSION_KEY = "powerpocket-research-snapshots";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -57,7 +59,28 @@ function readNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function normalizeDividendYieldPct(
+  value: number | null,
+  rawValue: number | null,
+): number | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  if (value >= 0 && value <= 25) return value;
+  if (rawValue != null && Number.isFinite(rawValue) && rawValue > 0) {
+    return rawValue <= 25 ? rawValue : rawValue / 100;
+  }
+  if (value > 25 && value <= 100) return value / 100;
+  return value;
+}
+
 function normalizeSnapshot(data: Record<string, unknown>): ResearchSnapshot {
+  const rawDividendYield = readNumber(
+    data.rawDividendYield ?? data.raw_dividend_yield,
+  );
+  const dividendYieldPct = normalizeDividendYieldPct(
+    readNumber(data.dividendYieldPct ?? data.dividend_yield_pct),
+    rawDividendYield,
+  );
+
   return {
     symbol: String(data.symbol ?? ""),
     name: String(data.name ?? ""),
@@ -74,9 +97,14 @@ function normalizeSnapshot(data: Record<string, unknown>): ResearchSnapshot {
           : null,
     logo: typeof data.logo === "string" ? data.logo : undefined,
     weburl: typeof data.weburl === "string" ? data.weburl : undefined,
-    dividendYieldPct: readNumber(
-      data.dividendYieldPct ?? data.dividend_yield_pct,
-    ),
+    dividendYieldPct,
+    rawDividendYield,
+    rawDividendYieldSource:
+      typeof data.rawDividendYieldSource === "string"
+        ? data.rawDividendYieldSource
+        : typeof data.raw_dividend_yield_source === "string"
+          ? data.raw_dividend_yield_source
+          : null,
     peRatio: readNumber(data.peRatio ?? data.pe_ratio),
     volume: readNumber(data.volume),
     avgVolume: readNumber(data.avgVolume ?? data.avg_volume),
