@@ -67,7 +67,7 @@ function HeroStatTile({
 
 function TrackRecordMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 flex-1 border border-border/60 bg-background/40 px-3 py-2.5">
+    <div className="min-w-0 flex-1 bg-muted-bg/35 px-3 py-3">
       <dt className="text-xs font-medium text-muted">{label}</dt>
       <dd className="mt-1 text-base font-semibold tabular-nums text-foreground">
         {value}
@@ -116,19 +116,19 @@ export function MomentumBreakoutInvestorBrief({
         : "neutral";
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn("space-y-8", className)}>
       <div
-        className={cn("px-4 py-5 sm:px-5 sm:py-6", mbHeroShellClass(heroTone))}
+        className={cn("px-4 py-6 sm:px-6 sm:py-7", mbHeroShellClass(heroTone))}
       >
-        <p className={mbSectionLabelClass}>Today&apos;s verdict</p>
-        <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+        <p className={mbSectionLabelClass}>Overview</p>
+        <h2 className="mt-3 max-w-3xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
           {hero.title}
         </h2>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
+        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted sm:text-base">
           {hero.body}
         </p>
 
-        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <HeroStatTile
             value={hero.stocksScanned}
             label={
@@ -172,7 +172,7 @@ export function MomentumBreakoutInvestorBrief({
 
       {trackDisplay && (
         <section aria-label="Strategy track record">
-          <h3 className={mbSectionLabelClass}>Strategy track record</h3>
+          <h3 className={mbSectionLabelClass}>Supporting details</h3>
           <dl className="mt-3 flex flex-col gap-2 sm:flex-row">
             <TrackRecordMetric label="Win rate" value={trackDisplay.winRate} />
             <TrackRecordMetric
@@ -192,8 +192,8 @@ export function MomentumBreakoutInvestorBrief({
 
       {!loading && !error && tradable.length > 0 && (
         <section aria-label="Tradable opportunities">
-          <h3 className={mbSectionLabelClass}>Tradable opportunities</h3>
-          <ul className="mt-3 space-y-2">
+          <h3 className={mbSectionLabelClass}>Scan results</h3>
+          <ul className="mt-3">
             {tradable.slice(0, 8).map((c) => {
               const alreadyTracked = trackedSymbols?.has(
                 c.symbol.toUpperCase(),
@@ -234,14 +234,14 @@ export function MomentumBreakoutInvestorBrief({
 
       {!loading && !error && (
         <section aria-label="Rejected opportunities">
-          <h3 className={mbSectionLabelClass}>Rejected opportunities</h3>
+          <h3 className={mbSectionLabelClass}>Validation</h3>
           {blocked.length === 0 ? (
             <p className="mt-3 text-sm text-muted">
               No rejected opportunities in the latest scan window.
             </p>
           ) : (
             <>
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-3">
                 {visibleRejected.map((c) => {
                   const reasons = explainRejectedOpportunity(c);
                   const primary = reasons[0];

@@ -156,7 +156,7 @@ export function AlertNotificationBell({ className }: Props) {
 
           <div className="border-t border-border/60 px-3 py-2">
             <Link
-              href="/research/momentum-breakout-alerts"
+              href="/momentum-breakout"
               className="text-[11px] font-semibold text-accent-strong hover:underline"
               onClick={() => setOpen(false)}
             >

@@ -16,7 +16,6 @@ import {
   mbMetricLabelClass,
   mbMetricTileClass,
   mbMetricValueClass,
-  mbOpportunityCardClass,
   mbSectionLabelClass,
   mbStatusPillClass,
 } from "@/lib/momentumBreakoutUi";
@@ -48,9 +47,9 @@ function resultAccentClass(
 ): string {
   switch (status) {
     case "TRADABLE_BREAKOUT":
-      return "border-l-success/60 bg-success/[0.04]";
+      return "border-l-success bg-success/[0.035]";
     case "REJECTED_BREAKOUT":
-      return "border-l-warning/60 bg-warning-muted/25";
+      return "border-l-warning bg-warning-muted/20";
     case "NO_BREAKOUT_SETUP":
       return "border-l-border bg-muted-bg/20";
     default:
@@ -205,7 +204,7 @@ export function MomentumBreakoutStockCheck({
     result != null && trackedSymbols?.has(result.symbol.toUpperCase());
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-5", className)}>
       <SymbolSearchField
         accessToken={accessToken}
         value={symbolInput}
@@ -214,6 +213,7 @@ export function MomentumBreakoutStockCheck({
         placeholder="Symbol or company name"
         limit={8}
         clearOnSelect={false}
+        className="mt-3"
       />
 
       {watchlistSuggestions.length > 0 && (
@@ -248,7 +248,7 @@ export function MomentumBreakoutStockCheck({
       {result && (
         <div
           className={cn(
-            "border border-border/70 border-l-4 px-4 py-4",
+            "border-l-2 px-4 py-5",
             resultAccentClass(result.status),
           )}
         >
@@ -268,7 +268,7 @@ export function MomentumBreakoutStockCheck({
           </p>
 
           {result.entryPrice != null && result.stopPrice != null && (
-            <dl className="mt-4 grid grid-cols-3 gap-2">
+            <dl className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
               <ResultMetric
                 label="Entry"
                 value={formatUsdLevel(result.entryPrice)}
@@ -359,7 +359,7 @@ export function MomentumBreakoutStockCheck({
       )}
 
       {customPlan && (
-        <div className={cn(mbOpportunityCardClass, "space-y-3")}>
+        <div className="space-y-3 border-t border-border/60 pt-5">
           <p className={mbSectionLabelClass}>
             {customPlan.setupName} · not momentum breakout
           </p>
@@ -367,7 +367,7 @@ export function MomentumBreakoutStockCheck({
             {customPlan.entryExplanation}
           </p>
           <dl className="grid gap-2 text-sm sm:grid-cols-2">
-            <div className="border border-border/60 bg-background/50 px-3 py-2">
+            <div className="bg-muted-bg/35 px-3 py-3">
               <dt className="text-xs text-muted">Current price</dt>
               <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.currentPrice)}
@@ -376,7 +376,7 @@ export function MomentumBreakoutStockCheck({
                 As of {customPlan.latestBarDate}
               </dd>
             </div>
-            <div className="border border-border/60 bg-background/50 px-3 py-2">
+            <div className="bg-muted-bg/35 px-3 py-3">
               <dt className="text-xs text-muted">Entry trigger</dt>
               <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.entryPrice)}
@@ -387,13 +387,13 @@ export function MomentumBreakoutStockCheck({
                 </dd>
               )}
             </div>
-            <div className="border border-border/60 bg-background/50 px-3 py-2">
+            <div className="bg-muted-bg/35 px-3 py-3">
               <dt className="text-xs text-muted">Stop</dt>
               <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.stopPrice)}
               </dd>
             </div>
-            <div className="border border-border/60 bg-background/50 px-3 py-2">
+            <div className="bg-muted-bg/35 px-3 py-3">
               <dt className="text-xs text-muted">Target</dt>
               <dd className="mt-0.5 font-semibold tabular-nums">
                 {formatUsdLevel(customPlan.targetPrice)} (
@@ -402,7 +402,7 @@ export function MomentumBreakoutStockCheck({
             </div>
           </dl>
           {!customPlan.planActiveAtCurrentPrice && (
-            <p className="border border-warning/25 bg-warning-muted/30 px-3 py-2 text-sm text-foreground/90">
+            <p className="bg-warning-muted/25 px-3 py-2 text-sm text-foreground/90">
               Inactive until the entry trigger is reached. Educational only.
             </p>
           )}

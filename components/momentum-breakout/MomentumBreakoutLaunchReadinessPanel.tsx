@@ -52,7 +52,7 @@ export function MomentumBreakoutLaunchReadinessPanel({
   return (
     <div
       className={cn(
-        "border border-dashed border-border/70 bg-surface/30 px-3 py-3 text-xs",
+        "bg-muted-bg/25 px-3 py-3 text-xs",
         className,
       )}
     >

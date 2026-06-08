@@ -58,6 +58,12 @@ const topNavItems = [
     isActive: (pathname: string) => pathname.startsWith("/emerging-leaders"),
     view: "research" as const,
   },
+  {
+    href: "/momentum-breakout",
+    label: "Momentum Breakout",
+    isActive: (pathname: string) => pathname.startsWith("/momentum-breakout"),
+    view: "research" as const,
+  },
 ];
 
 type AssistantChatControllerProps = {
@@ -260,7 +266,7 @@ function AssistantChatController({
   const searchParams = useSearchParams();
 
   const isMomentumBreakoutAlertsRoute = pathname.startsWith(
-    "/research/momentum-breakout-alerts",
+    "/momentum-breakout",
   );
   const researchMatch = isMomentumBreakoutAlertsRoute
     ? null
@@ -566,7 +572,7 @@ function AssistantChatController({
       : isPositionTab
         ? `Analyze ${researchSymbol} position`
         : effectiveView === "research" && isMomentumBreakoutAlertsRoute
-          ? "Ask about MB trade plans"
+          ? "Ask about Momentum Breakout"
           : effectiveView === "research"
             ? `Ask about ${researchSymbol ?? "this symbol"}`
             : `Ask about ${selectedSymbol ?? "this position"}`;
@@ -694,7 +700,7 @@ function AssistantChatController({
             <section
               id="assistant-chat"
               aria-label={floatingAssistantAriaLabel}
-              className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] top-20 z-50 flex flex-col border border-border bg-background shadow-2xl shadow-black/30 md:inset-auto md:bottom-6 md:right-6 md:top-24 md:h-[min(44rem,calc(100vh-8rem))] md:w-[34rem]"
+              className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] top-20 z-50 flex flex-col border border-border bg-background shadow-2xl shadow-black/30 md:inset-auto md:bottom-6 md:right-6 md:top-24 md:h-[min(44rem,calc(100vh-8rem))] md:w-136"
             >
               <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
                 <div>

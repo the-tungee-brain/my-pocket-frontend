@@ -143,7 +143,7 @@ const NEWS_HEADLINE_TITLE_SLOT = "h-10";
 const NEWS_HEADLINE_SUMMARY_SLOT = "h-12";
 
 const NEWS_HEADLINE_CLAMP =
-  "line-clamp-2 w-full min-w-0 max-w-full overflow-hidden break-words text-sm [overflow-wrap:anywhere]";
+  "line-clamp-2 w-full min-w-0 max-w-full overflow-hidden wrap-break-word text-sm [overflow-wrap:anywhere]";
 
 /** Responds to parent width (split panes, cards), not only viewport. */
 export const NEWS_HEADLINES_PANEL_CONTAINER_CLASS =
@@ -213,7 +213,7 @@ export function NewsHeadlineCard({
 
   const cardInner = (
     <>
-      <div className="flex min-h-0 w-full max-w-full flex-1 flex-col gap-1.5 overflow-hidden">
+      <div className="flex min-h-0 w-full max-w-full flex-1 flex-col gap-1.5 overflow-visible">
         {showFeedKind && kind ? (
           <span
             className={cn(
@@ -285,7 +285,7 @@ export function NewsHeadlineCard({
         </div>
 
         {(item.topics?.length ?? 0) > 0 ? (
-          <p className="line-clamp-1 max-w-full overflow-hidden break-words text-[11px] text-muted">
+          <p className="line-clamp-1 max-w-full overflow-hidden wrap-break-word text-[11px] text-muted">
             {item.topics?.map((t) => t.replace(/_/g, " ")).join(" · ")}
           </p>
         ) : null}

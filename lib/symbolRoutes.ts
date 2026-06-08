@@ -16,7 +16,10 @@ export function parseResearchRoute(pathname: string): {
   symbol: string | null;
   tab: string | null;
 } {
-  if (pathname.startsWith("/research/momentum-breakout-alerts")) {
+  if (
+    pathname.startsWith("/momentum-breakout") ||
+    pathname.startsWith("/research/momentum-breakout-alerts")
+  ) {
     return { symbol: null, tab: null };
   }
 

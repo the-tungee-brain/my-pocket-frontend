@@ -13,7 +13,7 @@ type Props = {
 
 function StatCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border border-border/60 bg-surface/40 px-3 py-2">
+    <div className="bg-muted-bg/35 px-3 py-3">
       <p className="text-[10px] uppercase tracking-wide text-muted">{label}</p>
       <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
         {value}
@@ -95,7 +95,7 @@ export function MomentumBreakoutPaperPerformanceTab({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="border border-primary/20 bg-primary/5 px-3 py-2">
+      <div className="bg-muted-bg/30 px-3 py-3">
         <p className="text-xs font-semibold text-foreground">
           {meta?.label ?? "Practice tracking (optional)"}
         </p>
@@ -164,7 +164,7 @@ export function MomentumBreakoutPaperPerformanceTab({
                 {recentTrades.map((trade) => (
                   <li
                     key={trade.alertId}
-                    className="flex flex-wrap items-center justify-between gap-2 border border-border/50 px-3 py-2 text-xs"
+                    className="flex flex-wrap items-center justify-between gap-2 border-t border-border/50 py-2 text-xs first:border-t-0"
                   >
                     <span className="font-semibold text-foreground">
                       {trade.symbol}

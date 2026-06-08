@@ -571,7 +571,10 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
     [officialItems],
   );
   const materialOfficialDisplay = useMemo(
-    () => officialDisplay.filter((item) => officialReleaseLooksMaterial(item, symbol)),
+    () =>
+      officialDisplay.filter((item) =>
+        officialReleaseLooksMaterial(item, symbol),
+      ),
     [officialDisplay, symbol],
   );
 
@@ -737,7 +740,7 @@ export function ResearchNewsHub({ symbol, accessToken, className }: Props) {
                   isAnalyzing={coverageAnalyzing}
                   lastAnalyzedAt={coverageAnalyzedAt}
                   onAnalyze={() => analyzeNews()}
-                  className="mt-6"
+                  className="mt-6 border-t-0"
                 />
               ) : null}
             </LoadingSurface>

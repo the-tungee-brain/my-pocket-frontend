@@ -190,13 +190,13 @@ export type AlertVerdictKind = "Approved" | "Caution" | "Rejected" | "Completed"
 export function alertVerdictPanelClass(kind: AlertVerdictKind): string {
   switch (kind) {
     case "Approved":
-      return "border-success/30 bg-success/5";
+      return "border-l-success bg-success/[0.035]";
     case "Caution":
-      return "border-amber-500/30 bg-amber-500/10";
+      return "border-l-warning bg-warning-muted/20";
     case "Rejected":
-      return "border-danger/30 bg-danger/5";
+      return "border-l-danger bg-danger/[0.035]";
     case "Completed":
-      return "border-border/60 bg-muted-bg/30";
+      return "border-l-border bg-muted-bg/25";
   }
 }
 

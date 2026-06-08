@@ -14,6 +14,8 @@ type Props = {
   limit?: number;
   clearOnSelect?: boolean;
   className?: string;
+  inputClassName?: string;
+  panelClassName?: string;
 };
 
 export function SymbolSearchField({
@@ -25,6 +27,8 @@ export function SymbolSearchField({
   limit = 8,
   clearOnSelect = true,
   className,
+  inputClassName,
+  panelClassName,
 }: Props) {
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
 
@@ -75,12 +79,20 @@ export function SymbolSearchField({
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground"
+          className={cn(
+            "w-full border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground",
+            inputClassName,
+          )}
         />
       </div>
 
       {showPanel && (
-        <div className="overflow-hidden border border-border bg-background text-sm shadow-sm">
+        <div
+          className={cn(
+            "overflow-hidden border border-border bg-background text-sm shadow-sm",
+            panelClassName,
+          )}
+        >
           {isLoading && (
             <p className="px-3 py-2 text-xs text-muted">Searching symbols…</p>
           )}

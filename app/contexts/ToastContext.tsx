@@ -46,7 +46,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <div
-        className="pointer-events-none fixed top-4 right-4 z-[60] flex w-full max-w-sm flex-col gap-2 px-4 sm:px-0"
+        className="pointer-events-none fixed top-4 right-4 z-60 flex w-full max-w-sm flex-col gap-2 px-4 sm:px-0"
         aria-live="polite"
         aria-relevant="additions"
       >

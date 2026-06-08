@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleDollarSign, Inbox, LockKeyhole } from "lucide-react";
-import { Position } from "@/app/types/schwab";
+import type { Position } from "@/app/types/schwab";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Card } from "@/components/ui/Card";
 import { cspReservedCash, positionStrikePrice } from "@/lib/cspReservedCash";
@@ -270,7 +270,7 @@ export function AccountPositionList({
           </div>
 
           <div className="hidden overflow-x-auto scrollbar-dark md:block">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="w-full min-w-180 text-sm">
               <thead className="sticky top-0 z-10 border-b border-border bg-surface-elevated/95 text-[11px] font-medium uppercase tracking-wide text-muted backdrop-blur-sm">
                 <tr>
                   <th className="px-4 py-2.5 text-left">Name</th>

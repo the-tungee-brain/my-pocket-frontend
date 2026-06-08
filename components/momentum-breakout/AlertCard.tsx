@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { MomentumBreakoutAlertDto } from "@/app/types/momentumBreakoutAlerts";
-import { Card, CardBody } from "@/components/ui/Card";
 import {
   alertVerdictPanelClass,
   alertVerdictTitleClass,
@@ -75,14 +74,17 @@ export function AlertCard({
       : null;
 
   return (
-    <Card
+    <article
       id={mbAlertElementId(alert.symbol)}
-      className={cn("scroll-mt-24 overflow-hidden rounded-lg", className)}
+      className={cn(
+        "scroll-mt-24 border-t border-border/60 py-5 first:border-t-0 first:pt-0 last:pb-0",
+        className,
+      )}
     >
-      <CardBody className="space-y-4">
+      <div className="space-y-4">
         <div
           className={cn(
-            "border px-4 py-3.5",
+            "border-l-2 px-4 py-3.5",
             alertVerdictPanelClass(verdict.kind),
           )}
         >
@@ -137,7 +139,7 @@ export function AlertCard({
         </dl>
 
         {alert.nextActionMessage ? (
-          <p className="border border-border/60 bg-muted-bg/35 px-3 py-2.5 text-sm leading-relaxed text-foreground/85">
+          <p className="bg-muted-bg/35 px-3 py-2.5 text-sm leading-relaxed text-foreground/85">
             <span className="font-semibold text-foreground">Next </span>
             {alert.nextActionMessage}
           </p>
@@ -190,7 +192,7 @@ export function AlertCard({
             </dl>
           )}
         </div>
-      </CardBody>
-    </Card>
+      </div>
+    </article>
   );
 }

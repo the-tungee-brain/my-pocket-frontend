@@ -25,7 +25,8 @@ export function SignedInRedirect({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const allowDevMomentumBreakoutFixture =
     process.env.NODE_ENV === "development" &&
-    pathname === "/research/momentum-breakout-alerts" &&
+    (pathname === "/momentum-breakout" ||
+      pathname === "/research/momentum-breakout-alerts") &&
     Boolean(searchParams.get("mbFixture"));
 
   useEffect(() => {

@@ -22,7 +22,6 @@ import { TickerKeyStats } from "@/components/TickerKeyStats";
 import { formatFriendlyDate } from "@/lib/dateUtils";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { EtfFundsOverview } from "./EtfFundsOverview";
-import { EtfHoldingsOverviewPreview } from "./EtfHoldingsPageContent";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
 import { ResearchStockChart } from "./ResearchStockChart";
 import { useResearchSymbolIntelligence } from "./ResearchSymbolIntelligenceContext";
@@ -365,9 +364,11 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
         autoSwitchToChartIntelligence={false}
       />
 
-      <ResearchSection title="Key Stats" className={pageSectionClass}>
-        <TickerKeyStats symbol={symbol} variant="definition" />
-      </ResearchSection>
+      {!isEtf ? (
+        <ResearchSection title="Key Stats" className={pageSectionClass}>
+          <TickerKeyStats symbol={symbol} variant="definition" />
+        </ResearchSection>
+      ) : null}
 
       {!isEtf ? (
         <ResearchOverviewDecision
@@ -396,14 +397,7 @@ export function ResearchOverviewTopSection({ symbol }: Props) {
       ) : null}
 
       {isEtf ? (
-        <div className="grid gap-5 xl:grid-cols-2">
-          <EtfFundsOverview symbol={symbol} className={pageSectionClass} />
-          <EtfHoldingsOverviewPreview
-            symbol={symbol}
-            stacked
-            className={pageSectionClass}
-          />
-        </div>
+        <EtfFundsOverview symbol={symbol} className={pageSectionClass} />
       ) : null}
 
       <ResearchOverviewEvidence

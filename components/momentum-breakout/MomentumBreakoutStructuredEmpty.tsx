@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { appIconBoxClass, appPanelSubtleClass } from "@/lib/appUi";
+import { appIconBoxClass } from "@/lib/appUi";
 
 type Props = {
   icon: LucideIcon;
@@ -22,7 +22,7 @@ export function MomentumBreakoutStructuredEmpty({
   className,
 }: Props) {
   return (
-    <div className={cn(appPanelSubtleClass, "px-4 py-4", className)}>
+    <div className={cn("py-2", className)}>
       <div className="flex items-start gap-3">
         <div
           className={cn(appIconBoxClass, "h-9 w-9 shrink-0 text-muted")}
@@ -36,13 +36,13 @@ export function MomentumBreakoutStructuredEmpty({
         </div>
       </div>
       <dl className="mt-4 grid gap-2 text-sm leading-relaxed sm:grid-cols-2">
-        <div className="border border-border/60 bg-background/40 px-3 py-2.5">
+        <div className="bg-muted-bg/30 px-3 py-3">
           <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
             Monitoring
           </dt>
           <dd className="mt-1 text-foreground/80">{doing}</dd>
         </div>
-        <div className="border border-border/60 bg-background/40 px-3 py-2.5">
+        <div className="bg-muted-bg/30 px-3 py-3">
           <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
             Next
           </dt>

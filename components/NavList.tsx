@@ -78,7 +78,7 @@ export function NavList({
 
   const isPortfolio = pathname === "/portfolio";
   const isMomentumBreakoutAlerts = pathname.startsWith(
-    "/research/momentum-breakout-alerts",
+    "/momentum-breakout",
   );
   const isResearch =
     pathname === "/research" ||
@@ -254,7 +254,7 @@ export function NavList({
           onClick={() => {
             setSelectedView("research");
             setSelectedSymbol(null);
-            router.replace("/research/momentum-breakout-alerts");
+            router.replace("/momentum-breakout");
           }}
           className={cn(
             "group mb-1 flex w-full items-center gap-2 px-2 py-2 text-left text-xs font-medium transition-colors",
@@ -270,7 +270,7 @@ export function NavList({
             <Bell className="h-3.5 w-3.5" aria-hidden="true" />
           </span>
           <div className="flex min-w-0 flex-1 flex-col">
-            <span>MB trade plans</span>
+            <span>Momentum Breakout</span>
             <span className="truncate text-[10px] text-muted">
               Active alerts & history
             </span>

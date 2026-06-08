@@ -24,7 +24,8 @@ const items = [
     icon: TrendingUp,
     isActive: (pathname: string) =>
       pathname.startsWith("/top-movers") ||
-      pathname.startsWith("/emerging-leaders"),
+      pathname.startsWith("/emerging-leaders") ||
+      pathname.startsWith("/momentum-breakout"),
   },
   {
     href: "/settings",

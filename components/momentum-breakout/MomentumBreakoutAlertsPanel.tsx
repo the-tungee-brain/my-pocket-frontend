@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Bell, Clock, ListChecks, Loader2, RefreshCw } from "lucide-react";
+import { Bell, Clock, Loader2, RefreshCw } from "lucide-react";
 import { useMomentumBreakoutAlerts } from "@/app/hooks/useMomentumBreakoutAlerts";
 import { useMomentumBreakoutScan } from "@/app/hooks/useMomentumBreakoutScan";
 import { MomentumBreakoutInvestorBrief } from "@/components/momentum-breakout/MomentumBreakoutInvestorBrief";
@@ -29,12 +29,7 @@ import {
   mbScanColumnClass,
   mbWatchlistStickyClass,
 } from "@/lib/momentumBreakoutUi";
-import {
-  appIconBoxClass,
-  appStackClass,
-  appTabBarClass,
-  appTabLinkClass,
-} from "@/lib/appUi";
+import { appStackClass, appTabBarClass, appTabLinkClass } from "@/lib/appUi";
 import { pageSectionClass } from "@/lib/pageLayout";
 import { cn } from "@/lib/utils";
 import type { MomentumBreakoutDevFixture } from "@/lib/momentumBreakoutDevFixtures";
@@ -128,26 +123,7 @@ export function MomentumBreakoutAlertsPanel({
 
       <div className={mbPageGridClass}>
         <div className={mbScanColumnClass}>
-          <section className={mbPanelClass} aria-label="Today's market scan">
-            <div className={mbPanelHeaderClass}>
-              <div className="flex min-w-0 items-center gap-2">
-                <div
-                  className={cn(
-                    appIconBoxClass,
-                    "h-8 w-8 shrink-0 text-accent-strong",
-                  )}
-                  aria-hidden
-                >
-                  <ListChecks className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className={mbEyebrowClass}>Scan</p>
-                  <h2 className="text-sm font-semibold text-foreground">
-                    Today&apos;s market scan
-                  </h2>
-                </div>
-              </div>
-            </div>
+          <section className={mbPanelClass} aria-label="Momentum Breakout overview">
             <div className={mbPanelBodyLgClass}>
               <MomentumBreakoutInvestorBrief
                 scan={scanSummary}
@@ -159,21 +135,13 @@ export function MomentumBreakoutAlertsPanel({
             </div>
           </section>
 
-          <section className={mbPanelClass} aria-label="Check any stock">
+          <section className={mbPanelClass} aria-label="Trade setup check">
             <div className={mbPanelHeaderClass}>
-              <div className="flex min-w-0 items-center gap-2">
-                <div
-                  className={cn(appIconBoxClass, "h-8 w-8 shrink-0 text-muted")}
-                  aria-hidden
-                >
-                  <Bell className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className={mbEyebrowClass}>Check</p>
-                  <h2 className="text-sm font-semibold text-foreground">
-                    Check any stock
-                  </h2>
-                </div>
+              <div className="min-w-0">
+                <p className={mbEyebrowClass}>Trade setup</p>
+                <h2 className="text-sm font-semibold text-foreground">
+                  Check any stock
+                </h2>
               </div>
             </div>
             <div className={mbPanelBodyClass}>
@@ -200,9 +168,12 @@ export function MomentumBreakoutAlertsPanel({
           )}
           aria-label="Your alert watchlist"
         >
-          <div className={cn(mbPanelHeaderClass, "flex-wrap gap-3")}>
+          <div
+            className={cn(mbPanelHeaderClass, "flex-wrap gap-3")}
+            style={{ borderBottom: 0 }}
+          >
             <div className="min-w-0 flex-1">
-              <p className={mbEyebrowClass}>Monitor</p>
+              <p className={mbEyebrowClass}>Risk / validation</p>
               <h2 className="text-sm font-semibold text-foreground">
                 Trade plans
               </h2>
@@ -231,7 +202,7 @@ export function MomentumBreakoutAlertsPanel({
             <MomentumBreakoutLaunchReadinessPanel accessToken={accessToken} />
 
             {disclaimer && (
-              <p className="border border-border/60 bg-background/40 px-3 py-2 text-xs leading-relaxed text-muted">
+              <p className="border-t border-border/60 pt-3 text-xs leading-relaxed text-muted">
                 {disclaimer}
               </p>
             )}
@@ -277,7 +248,7 @@ export function MomentumBreakoutAlertsPanel({
             </div>
 
             {refreshWarnings.length > 0 && (
-              <div className="border border-warning/25 bg-warning-muted/40 px-3 py-2 text-xs text-foreground">
+              <div className="bg-warning-muted/30 px-3 py-2 text-xs text-foreground">
                 <p className="font-semibold">Refresh notes</p>
                 <ul className="mt-1 space-y-1 text-muted">
                   {refreshWarnings.map((warning) => (
@@ -299,7 +270,7 @@ export function MomentumBreakoutAlertsPanel({
               loading &&
               displayed.length === 0 &&
               !error && (
-                <SkeletonList rows={3} rowClassName="h-24 rounded-xl" />
+                <SkeletonList rows={3} rowClassName="h-24" />
               )}
 
             {tab !== "performance" &&
