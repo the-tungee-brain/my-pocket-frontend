@@ -56,7 +56,7 @@ const activityFilterLabelClass =
 
 function StrategyBadge({ label }: { label: string }) {
   return (
-    <span className="mt-0.5 inline-flex max-w-full rounded-full bg-accent-muted px-2 py-0.5 text-[10px] font-medium text-accent-strong">
+    <span className="mt-0.5 inline-flex max-w-full bg-accent-muted px-2 py-0.5 text-[10px] font-medium text-accent-strong">
       {label}
     </span>
   );
@@ -269,7 +269,6 @@ function OrderRows({
                     key={`${group.groupId}-${order.orderId ?? index}`}
                     order={order}
                     showRollBadge={false}
-                    variant={variant}
                   />
                 ))}
               </div>
@@ -280,7 +279,6 @@ function OrderRows({
             <OrderMobileCard
               key={`${group.order.orderId ?? group.order.fillTime}-mobile`}
               order={group.order}
-              variant={variant}
             />
           );
         })}
@@ -292,23 +290,16 @@ function OrderRows({
 function OrderMobileCard({
   order,
   showRollBadge = true,
-  variant = "default",
 }: {
   order: RecentOrderEntry;
   showRollBadge?: boolean;
-  variant?: "default" | "position";
 }) {
   const contractLabel = formatOrderContractLabel(order);
   const strategyBadge = showRollBadge ? formatOrderStrategyBadge(order) : null;
   const extraLegs = (order.legs ?? []).slice(1);
 
   return (
-    <div
-      className={cn(
-        "py-3",
-        variant === "position" && "rounded-[var(--app-radius)]",
-      )}
-    >
+    <div className="py-3">
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-sm font-medium">{order.symbol}</span>
         <span className="text-xs text-muted">
@@ -346,6 +337,99 @@ function OrderMobileCard({
           </span>
         </div>
       ))}
+    </div>
+  );
+}
+
+function PositionActivityTimeline({ orders }: { orders: RecentOrderEntry[] }) {
+  if (!orders.length) {
+    return (
+      <p className="py-3 text-sm text-muted">
+        No filled orders in the last 7 days.
+      </p>
+    );
+  }
+
+  const displayGroups = groupOrdersForDisplay(orders);
+
+  return (
+    <ol className="space-y-3">
+      {displayGroups.map((group) => {
+        if (group.kind === "roll") {
+          return (
+            <li key={group.groupId} className="space-y-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+                {group.label}
+              </p>
+              {group.orders.map((order, index) => (
+                <PositionActivityItem
+                  key={`${group.groupId}-${order.orderId ?? index}`}
+                  order={order}
+                  showRollBadge={false}
+                />
+              ))}
+            </li>
+          );
+        }
+
+        return (
+          <li
+            key={`${group.order.orderId ?? group.order.fillTime}-${group.order.side}`}
+          >
+            <PositionActivityItem order={group.order} />
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function PositionActivityItem({
+  order,
+  showRollBadge = true,
+}: {
+  order: RecentOrderEntry;
+  showRollBadge?: boolean;
+}) {
+  const contractLabel = formatOrderContractLabel(order);
+  const strategyBadge = showRollBadge ? formatOrderStrategyBadge(order) : null;
+  const extraLegs = (order.legs ?? []).slice(1);
+
+  return (
+    <div className="grid gap-3 border-l border-border/40 pl-4 sm:grid-cols-[minmax(7rem,0.34fr)_minmax(0,1fr)]">
+      <div className="text-xs text-muted">
+        {formatOrderFillTime(order.fillTime)}
+      </div>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <p className="text-sm font-semibold text-foreground">
+            {formatOrderSide(order.side)}
+          </p>
+          <p className="font-mono text-xs text-muted">{order.symbol}</p>
+          {strategyBadge ? <StrategyBadge label={strategyBadge} /> : null}
+        </div>
+        {contractLabel ? (
+          <p className="mt-1 truncate text-xs text-muted">{contractLabel}</p>
+        ) : null}
+        <p className="mt-2 text-sm tabular-nums text-muted">
+          {formatOrderQuantity(order)} @ {formatOrderFillPrice(order)}
+          {order.totalCash != null ? (
+            <span className="text-muted"> · {formatOrderTotalCash(order)}</span>
+          ) : null}
+        </p>
+        {extraLegs.map((leg, index) => (
+          <p
+            key={`${order.orderId ?? order.fillTime}-timeline-leg-${leg.legId ?? index}`}
+            className="mt-1 border-l border-border/60 pl-3 text-xs text-muted"
+          >
+            {formatOrderSide(leg.instruction)} ·{" "}
+            {formatLegContractLabel(leg) ?? "Leg"} ·{" "}
+            <span className="tabular-nums">
+              {formatLegQuantity(leg)} @ {formatLegFillPrice(leg)}
+            </span>
+          </p>
+        ))}
+      </div>
     </div>
   );
 }
@@ -633,9 +717,11 @@ export function RecentActivitySection({
 
   const displayOrders =
     compact || isPositionVariant ? orders.slice(0, 5) : orders;
+  const positionActivityCount =
+    totalOrders || recentOrderCount || orders.length;
 
   const title = isPositionVariant
-    ? "Recent trades"
+    ? "Activity"
     : symbol
       ? `${symbol} recent trades`
       : "Recent trade activity";
@@ -683,14 +769,16 @@ export function RecentActivitySection({
         className={cn("w-full max-w-none overflow-hidden", className)}
         aria-label={title}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-border/50 py-4">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted">
               {title}
             </h2>
-            <p className="mt-1 text-sm text-muted">
-              {displayOrders.length
-                ? `${displayOrders.length} fill${displayOrders.length === 1 ? "" : "s"} · last ${daysBack} days`
+            <p className="mt-1 text-xs text-muted">
+              {positionActivityCount > 0
+                ? displayOrders.length < positionActivityCount
+                  ? `Latest ${displayOrders.length} of ${positionActivityCount} fills · last ${daysBack} days`
+                  : `${positionActivityCount} fill${positionActivityCount === 1 ? "" : "s"} · last ${daysBack} days`
                 : `Last ${daysBack} days`}
             </p>
             {lastUpdated != null && symbol && (
@@ -704,10 +792,11 @@ export function RecentActivitySection({
 
           <Button
             size="xs"
-            variant="outline"
+            variant="ghost"
             disabled={loading}
             onClick={() => void load(true)}
             aria-label="Refresh trade activity"
+            className="text-muted"
           >
             <RefreshCw
               className={cn("h-3.5 w-3.5", loading && "animate-spin")}
@@ -717,16 +806,13 @@ export function RecentActivitySection({
           </Button>
         </div>
 
-        <div className="py-4">
+        <div className="pt-4">
           {error ? (
             <ErrorBanner message={error} onRetry={() => void load(true)} />
           ) : loading && !displayOrders.length ? (
             <div className="space-y-2">
               {[1, 2, 3].map((row) => (
-                <div
-                  key={row}
-                  className="h-12 animate-pulse rounded-[var(--app-radius)] bg-muted-bg"
-                />
+                <div key={row} className="h-12 animate-pulse bg-muted-bg" />
               ))}
             </div>
           ) : displayOrders.length === 0 ? (
@@ -739,7 +825,7 @@ export function RecentActivitySection({
               </p>
             </div>
           ) : (
-            <OrderRows orders={displayOrders} compact variant="position" />
+            <PositionActivityTimeline orders={displayOrders} />
           )}
         </div>
       </section>

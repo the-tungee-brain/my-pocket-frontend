@@ -26,6 +26,9 @@ export type NewsHeadlineDisplayItem = {
   sentiment?: Sentiment;
   confidence?: number;
   topics?: string[];
+  directRelevance?: EnrichedNewsItem["direct_relevance"];
+  thesisImpact?: EnrichedNewsItem["thesis_impact"];
+  thesisHorizon?: EnrichedNewsItem["thesis_horizon"];
   symbol?: string;
   symbolHref?: string;
   portfolioWeightPct?: number | null;
@@ -45,6 +48,9 @@ export function enrichedNewsItemToDisplay(
     sentiment: item.sentiment,
     confidence: item.confidence,
     topics: item.topics,
+    directRelevance: item.direct_relevance,
+    thesisImpact: item.thesis_impact,
+    thesisHorizon: item.thesis_horizon,
     feedKind: "coverage",
   };
 }

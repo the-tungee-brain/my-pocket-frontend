@@ -15,7 +15,6 @@ import {
   ResearchTabBar,
   researchBreadcrumbLabel,
 } from "@/components/ResearchTabBar";
-import { StrategySymbolPlaybookStrip } from "@/components/StrategySymbolPlaybookStrip";
 import { track } from "@/lib/analytics";
 import { appStackClass, appStackSmClass } from "@/lib/appUi";
 import { pageShellClass } from "@/lib/pageLayout";
@@ -148,7 +147,6 @@ function ResearchSymbolShellInner({ symbol, children }: Props) {
 
           <div className={cn(appStackSmClass, collapsed && "gap-2")}>
             <CompanySnapshot symbol={symbol} compact={collapsed} />
-            {!collapsed && <StrategySymbolPlaybookStrip symbol={symbol} />}
             <ResearchTabBar
               symbol={symbol}
               assetType={assetType}

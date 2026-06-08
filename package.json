@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "biome lint",
     "test:chat-isolation": "node --test tests/chatOverlayIsolation.test.mjs",
+    "test:news-briefing": "node --test tests/newsBriefingRules.test.mjs",
     "format": "biome format --write"
   },
   "dependencies": {

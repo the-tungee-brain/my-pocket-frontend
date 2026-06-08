@@ -21,6 +21,13 @@ export type EnrichedNewsItem = {
   confidence: number;
   summary: string;
   topics: string[];
+  direct_relevance?:
+    | "direct_company_news"
+    | "important_industry_read_through"
+    | "weak_mention"
+    | "irrelevant";
+  thesis_impact?: "high" | "medium" | "low";
+  thesis_horizon?: "near_term" | "medium_term" | "long_term";
   url?: string | null;
   image?: string | null;
 };
@@ -74,7 +81,11 @@ type InFlightNewsEntry = {
 
 const inFlightNews = new Map<string, InFlightNewsEntry>();
 
-function cacheNews(key: string, data: StockNewsView, analyzedAt: number | null): number {
+function cacheNews(
+  key: string,
+  data: StockNewsView,
+  analyzedAt: number | null,
+): number {
   const fetchedAt = Date.now();
   newsCache.set(key, { data, fetchedAt, analyzedAt });
   persistSessionCache(key, data, fetchedAt, analyzedAt);
@@ -259,7 +270,7 @@ export function useCompanyNews(
 
       return () => {
         cancelled = true;
-        entry!.listeners.delete(listener);
+        entry?.listeners.delete(listener);
       };
     }
 
@@ -296,12 +307,12 @@ export function useCompanyNews(
         const analyzedAt = data.aiEnrichment ? Date.now() : null;
         cacheNews(key, data, analyzedAt);
 
-        for (const l of entry!.listeners) {
+        for (const l of entry?.listeners ?? []) {
           l(data);
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "Error fetching news";
-        for (const l of entry!.listeners) {
+        for (const l of entry?.listeners ?? []) {
           l(undefined, msg);
         }
       } finally {
@@ -311,12 +322,13 @@ export function useCompanyNews(
 
     return () => {
       cancelled = true;
-      entry!.listeners.delete(listener);
+      entry?.listeners.delete(listener);
     };
   }, [key, accessToken, enabled]);
 
   const refresh = useCallback(() => {
-    if (!key || !accessToken || isLoading || isRefreshing || isAnalyzing) return;
+    if (!key || !accessToken || isLoading || isRefreshing || isAnalyzing)
+      return;
 
     newsCache.delete(key);
     inFlightNews.delete(key);
