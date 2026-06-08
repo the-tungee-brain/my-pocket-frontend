@@ -307,7 +307,7 @@ function PositionSummaryCard({
 
   return (
     <section className={cn(appPanelSubtleClass, "overflow-hidden")}>
-      <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(17rem,0.55fr)]">
+      <div className="grid gap-6 py-5 sm:py-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(17rem,0.55fr)]">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <p className="font-mono text-sm font-semibold text-foreground">
