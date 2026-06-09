@@ -15,6 +15,10 @@ import type { PortfolioNewsResponse } from "@/app/types/portfolioNews";
 import type { PressReleasesResponse } from "@/app/types/pressReleases";
 import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
 import type {
+  TradeReplayResponse,
+  TradeReplayWorkflow,
+} from "@/app/types/tradeReplay";
+import type {
   IntradayTradingBiasResponse,
   TraderPlaybookResponse,
   TradingBiasResponse,
@@ -309,6 +313,53 @@ export async function fetchTraderPlaybook(
   }
 
   return res.json() as Promise<TraderPlaybookResponse>;
+}
+
+export async function fetchTradeReplay(
+  accessToken: string,
+  options: {
+    symbol: string;
+    workflow: TradeReplayWorkflow;
+    date: string;
+  },
+): Promise<TradeReplayResponse> {
+  const res = await apiFetch(
+    `/research/trade-replay${buildQuery({
+      symbol: options.symbol.toUpperCase(),
+      workflow: options.workflow,
+      date: options.date,
+    })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load trade replay (${res.status})`);
+  }
+
+  return res.json() as Promise<TradeReplayResponse>;
+}
+
+export async function refreshTradeReplay(
+  accessToken: string,
+  options: {
+    symbol: string;
+    workflow: TradeReplayWorkflow;
+    date: string;
+  },
+): Promise<void> {
+  const res = await apiFetch("/research/trade-replay/refresh", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify({
+      symbol: options.symbol.toUpperCase(),
+      workflow: options.workflow,
+      date: options.date,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to refresh trade replay (${res.status})`);
+  }
 }
 
 export async function fetchRecentOrders(

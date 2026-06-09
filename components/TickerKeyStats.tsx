@@ -90,7 +90,7 @@ function TickerKeyStatsSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn(STATS_GRID_CLASS, className)}>
       {SKELETON_KEYS.map((key) => (
-        <Skeleton key={key} className="h-[3.25rem] sm:h-[3.75rem]" />
+        <Skeleton key={key} className="h-13 sm:h-15" />
       ))}
     </div>
   );

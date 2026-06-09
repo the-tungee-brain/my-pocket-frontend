@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { Target } from "lucide-react";
 import { useAppChatContext, usePortfolioContext } from "@/app/contextSelectors";
+import { useResearchSymbolHeader } from "@/app/research/[symbol]/ResearchSymbolHeaderContext";
 import { useResearchSymbolIntelligence } from "@/app/research/[symbol]/ResearchSymbolIntelligenceContext";
 import { CashSecuredPutSummary } from "@/components/CashSecuredPutSummary";
 import { AssignmentRiskSummary } from "@/components/AssignmentRiskSummary";
@@ -31,6 +32,7 @@ export function SymbolOptionsContent({ symbol }: Props) {
   const chatKey = symbolChatKey(symbolUpper) ?? symbolUpper;
 
   const symbolIntelligence = useResearchSymbolIntelligence();
+  const { snapshot } = useResearchSymbolHeader();
   const intelligence = symbolIntelligence?.intelligence ?? null;
   const intelligenceLoading = symbolIntelligence?.loading ?? false;
   const intelligenceError = symbolIntelligence?.error ?? null;
@@ -89,6 +91,7 @@ export function SymbolOptionsContent({ symbol }: Props) {
       error={intelligenceError}
       onRefresh={refetchIntelligence}
       onAnalyzeOption={handleAnalyzeOption}
+      authoritativeUnderlyingPrice={snapshot?.price}
       className={pageSectionClass}
     />
   ) : null;

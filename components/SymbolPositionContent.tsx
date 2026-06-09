@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { BriefcaseBusiness } from "lucide-react";
 import { usePortfolioContext } from "@/app/contextSelectors";
 import { usePositionGuidance } from "@/app/hooks/usePositionGuidance";
+import { useResearchSymbolHeader } from "@/app/research/[symbol]/ResearchSymbolHeaderContext";
 import { useResearchSymbolIntelligence } from "@/app/research/[symbol]/ResearchSymbolIntelligenceContext";
 import type {
   PositionGuidanceItem,
@@ -317,8 +318,11 @@ function decisionDrivers(
   return drivers.slice(0, 3);
 }
 
-function reviewMetrics(positions: Position[]): ReviewMetric[] {
-  const price = estimateCurrentPrice(positions);
+function reviewMetrics(
+  positions: Position[],
+  authoritativePrice: number | null | undefined,
+): ReviewMetric[] {
+  const price = authoritativePrice ?? estimateCurrentPrice(positions);
   const avgCost = averageCost(positions);
   const openPL = sumOpenProfitLoss(positions);
   const costBasis = sumCostBasis(positions);
@@ -553,12 +557,14 @@ function PositionReviewHero({
   guidance,
   loading,
   drivers,
+  currentPrice,
 }: {
   symbol: string;
   positions: Position[];
   guidance: SymbolPositionGuidance | null | undefined;
   loading: boolean;
   drivers: DecisionDriver[];
+  currentPrice?: number | null;
 }) {
   const primary = primaryGuidance(guidance);
   const verdict = primary ? VERDICT_LABEL[primary.verdict] : "Review";
@@ -622,7 +628,7 @@ function PositionReviewHero({
       </div>
 
       <div className="mt-8">
-        <MetricStrip metrics={reviewMetrics(positions)} />
+        <MetricStrip metrics={reviewMetrics(positions, currentPrice)} />
       </div>
     </section>
   );
@@ -775,6 +781,7 @@ export function SymbolPositionContent({ symbol }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
   const symbolUpper = symbol.toUpperCase();
+  const { snapshot } = useResearchSymbolHeader();
 
   const intelligence = useResearchSymbolIntelligence()?.intelligence ?? null;
   const {
@@ -824,6 +831,7 @@ export function SymbolPositionContent({ symbol }: Props) {
         guidance={guidance}
         loading={guidanceLoading}
         drivers={drivers}
+        currentPrice={snapshot?.price}
       />
 
       <DecisionDriversSection drivers={drivers} />

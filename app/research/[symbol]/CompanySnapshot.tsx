@@ -14,6 +14,7 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { iconButtonClass } from "@/components/ui/IconButton";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { WatchlistButton } from "@/components/WatchlistButton";
+import { quoteFreshnessLabel } from "@/lib/researchSnapshot";
 import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
 import { useResearchAssetTypeContext } from "./ResearchAssetTypeContext";
@@ -66,6 +67,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
   }
 
   const positiveChange = snapshot.changePct >= 0;
+  const freshness = quoteFreshnessLabel(snapshot);
   if (compact) {
     return (
       <header className="flex items-center justify-between gap-3">
@@ -107,25 +109,30 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
         <div className="flex shrink-0 items-center gap-2">
           <WatchlistButton symbol={upperSymbol} iconOnly />
           <div className="flex items-baseline gap-2 text-sm">
-            <span className="font-semibold tabular-nums">
-              ${snapshot.price.toLocaleString()}
-            </span>
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 text-xs font-medium",
-                positiveChange ? "text-success" : "text-danger",
-              )}
-            >
-              {positiveChange ? (
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              ) : (
-                <ArrowDownRight className="h-3.5 w-3.5" />
-              )}
-              <span className="tabular-nums">
-                {positiveChange ? "+" : ""}
-                {snapshot.changePct.toFixed(2)}%
+            <div className="text-right">
+              <span className="font-semibold tabular-nums">
+                ${snapshot.price.toLocaleString()}
               </span>
-            </span>
+              <span
+                className={cn(
+                  "ml-2 inline-flex items-center gap-0.5 text-xs font-medium",
+                  positiveChange ? "text-success" : "text-danger",
+                )}
+              >
+                {positiveChange ? (
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                ) : (
+                  <ArrowDownRight className="h-3.5 w-3.5" />
+                )}
+                <span className="tabular-nums">
+                  {positiveChange ? "+" : ""}
+                  {snapshot.changePct.toFixed(2)}%
+                </span>
+              </span>
+              <p className="mt-0.5 text-[10px] font-medium text-muted">
+                {freshness}
+              </p>
+            </div>
           </div>
         </div>
       </header>
@@ -181,6 +188,7 @@ export function CompanySnapshot({ symbol, compact = false }: Props) {
             </span>
           </span>
         </div>
+        <p className="mt-1 text-[11px] font-medium text-muted">{freshness}</p>
       </div>
     </header>
   );

@@ -634,6 +634,7 @@ export function SymbolIntelligencePanel({
 
 type SymbolOptionsWorkspaceProps = {
   intelligence: SymbolIntelligence | null;
+  authoritativeUnderlyingPrice?: number | null;
   loading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
@@ -644,6 +645,7 @@ type SymbolOptionsWorkspaceProps = {
 
 export function SymbolOptionsWorkspace({
   intelligence,
+  authoritativeUnderlyingPrice,
   loading = false,
   error = null,
   onRefresh,
@@ -653,7 +655,14 @@ export function SymbolOptionsWorkspace({
 }: SymbolOptionsWorkspaceProps) {
   const hasContent = hasSymbolOptionsContent(intelligence);
   const options = intelligence?.optionsScorecard;
-  const optionChain = intelligence?.optionChainPreview;
+  const optionChain = intelligence?.optionChainPreview
+    ? {
+        ...intelligence.optionChainPreview,
+        underlyingPrice:
+          authoritativeUnderlyingPrice ??
+          intelligence.optionChainPreview.underlyingPrice,
+      }
+    : null;
   const rollSuggestions = intelligence?.rollSuggestions ?? [];
   const symbol = intelligence?.symbol;
 
@@ -820,7 +829,9 @@ export function SymbolOptionsWorkspace({
                   <OptionsCandidateTable
                     title="Covered call candidates"
                     symbol={symbol}
-                    underlyingPrice={options.underlyingPrice}
+                    underlyingPrice={
+                      authoritativeUnderlyingPrice ?? options.underlyingPrice
+                    }
                     candidates={options.coveredCallCandidates.slice(0, 3)}
                     onAnalyzeOption={onAnalyzeOption}
                   />
@@ -830,7 +841,9 @@ export function SymbolOptionsWorkspace({
                   <OptionsCandidateTable
                     title="Cash-secured put candidates"
                     symbol={symbol}
-                    underlyingPrice={options.underlyingPrice}
+                    underlyingPrice={
+                      authoritativeUnderlyingPrice ?? options.underlyingPrice
+                    }
                     candidates={options.cspCandidates.slice(0, 3)}
                     onAnalyzeOption={onAnalyzeOption}
                     className="mt-3"

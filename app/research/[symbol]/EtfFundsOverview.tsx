@@ -15,6 +15,7 @@ import {
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { formatExpenseRatio } from "@/lib/etfHoldings";
+import { quoteFreshnessLabel } from "@/lib/researchSnapshot";
 import { formatCompactNumber } from "@/lib/streetAnalysisUtils";
 import { formatCompactVolume, formatSnapshotPercent } from "@/lib/tickerKeyStats";
 import { cn } from "@/lib/utils";
@@ -186,7 +187,9 @@ export function EtfFundsOverview({ symbol, className }: EtfFundsOverviewProps) {
               {
                 label: "Current price",
                 value: formatMoney(snapshot?.price),
-                note: `Daily move ${formatMove(snapshot?.changePct)}`,
+                note: snapshot
+                  ? `${quoteFreshnessLabel(snapshot)} · Daily move ${formatMove(snapshot.changePct)}`
+                  : undefined,
               },
               {
                 label: "Expense ratio",

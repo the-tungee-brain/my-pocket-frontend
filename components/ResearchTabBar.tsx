@@ -130,6 +130,12 @@ const allTabs: Tab[] = [
   },
 ];
 
+const standaloneResearchPageLabels: Record<string, string> = {
+  "long-term": "Long-Term",
+  "swing-trade": "Swing Trade",
+  "day-trade": "Day Trade",
+};
+
 function tabsForAssetType(
   assetType: AssetType | null | undefined,
   isEtf = false,
@@ -378,7 +384,7 @@ export function ResearchTabBar({
           top: moreMenuPosition.top,
           right: moreMenuPosition.right,
         }}
-        className="fixed z-[50] min-w-44 overflow-hidden border border-border bg-background py-1 shadow-lg"
+        className="fixed z-50 min-w-44 overflow-hidden border border-border bg-background py-1 shadow-lg"
       >
         {overflowTabs.map((tab) => {
           const isActive = tab.id === activeTab;
@@ -495,6 +501,11 @@ export function researchTabLabel(
     return direct.label;
   }
 
+  const standaloneLabel = standaloneResearchPageLabels[tabId];
+  if (standaloneLabel) {
+    return standaloneLabel;
+  }
+
   const tabs = tabsForAssetType(assetType, isEtf, tabId === "options");
   const found = tabs.find((entry) => entry.id === tabId);
   return found?.label ?? "Overview";
@@ -504,5 +515,5 @@ export function researchTabLabel(
 export function researchBreadcrumbLabel(tab: string | undefined): string {
   const tabId = (tab as ResearchTabId | undefined) ?? "overview";
   const direct = allTabs.find((entry) => entry.id === tabId);
-  return direct?.label ?? "Overview";
+  return direct?.label ?? standaloneResearchPageLabels[tabId] ?? "Overview";
 }

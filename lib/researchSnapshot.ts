@@ -8,6 +8,10 @@ export type ResearchSnapshot = {
   country: string;
   price: number;
   changePct: number;
+  quoteAsOf?: string | null;
+  quoteSource?: string | null;
+  quoteStatus?: string | null;
+  quoteFetchedAt?: number | null;
   marketCap: string;
   range52w?: string | null;
   logo?: string;
@@ -21,16 +25,16 @@ export type ResearchSnapshot = {
   expenseRatioPct?: number | null;
 };
 
-const STORAGE_KEY = "powerpocket-research-snapshots-v9";
+const STORAGE_KEY = "powerpocket-research-snapshots-v10";
 const LEGACY_SESSION_KEY = "powerpocket-research-snapshots";
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 type StoredEntry = {
   data: ResearchSnapshot;
   fetchedAt: number;
 };
 
-const memoryCache = new Map<string, ResearchSnapshot>();
+const memoryCache = new Map<string, StoredEntry>();
 const inflightRequests = new Map<string, Promise<ResearchSnapshot | null>>();
 
 function normalizeKey(symbol: string): string {
@@ -57,6 +61,21 @@ function readNumber(value: unknown): number | null {
   if (value == null) return null;
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function readTimestamp(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const millis = value > 10_000_000_000 ? value : value * 1000;
+    const date = new Date(millis);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  }
+  if (typeof value !== "string" || !value.trim()) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value.trim() : date.toISOString();
 }
 
 function normalizeDividendYieldPct(
@@ -88,6 +107,35 @@ function normalizeSnapshot(data: Record<string, unknown>): ResearchSnapshot {
     country: String(data.country ?? ""),
     price: readNumber(data.price) ?? 0,
     changePct: readNumber(data.changePct ?? data.change_pct) ?? 0,
+    quoteAsOf: readTimestamp(
+      data.quoteAsOf ??
+        data.quote_as_of ??
+        data.quoteTimestamp ??
+        data.quote_timestamp ??
+        data.asOf ??
+        data.as_of ??
+        data.updatedAt ??
+        data.updated_at ??
+        data.lastUpdated ??
+        data.last_updated,
+    ),
+    quoteSource: readString(
+      data.quoteSource ??
+        data.quote_source ??
+        data.quoteProvider ??
+        data.quote_provider ??
+        data.provider ??
+        data.source,
+    ),
+    quoteStatus: readString(
+      data.quoteStatus ??
+        data.quote_status ??
+        data.quoteFreshness ??
+        data.quote_freshness ??
+        data.priceStatus ??
+        data.price_status,
+    ),
+    quoteFetchedAt: readNumber(data.quoteFetchedAt ?? data.quote_fetched_at),
     marketCap: String(data.marketCap ?? data.market_cap ?? "N/A"),
     range52w:
       typeof data.range52w === "string"
@@ -154,12 +202,42 @@ function getValidPersistentEntry(key: string): ResearchSnapshot | null {
     return null;
   }
 
-  return entry.data;
+  return {
+    ...entry.data,
+    quoteFetchedAt: entry.data.quoteFetchedAt ?? entry.fetchedAt,
+  };
+}
+
+function getValidMemoryEntry(key: string): ResearchSnapshot | null {
+  const entry = memoryCache.get(key);
+  if (!entry?.data) return null;
+
+  if (Date.now() - entry.fetchedAt > CACHE_TTL_MS) {
+    memoryCache.delete(key);
+    return null;
+  }
+
+  return {
+    ...entry.data,
+    quoteFetchedAt: entry.data.quoteFetchedAt ?? entry.fetchedAt,
+  };
+}
+
+function saveMemoryEntry(key: string, data: ResearchSnapshot): void {
+  const fetchedAt = Date.now();
+  memoryCache.set(key, {
+    data: { ...data, quoteFetchedAt: data.quoteFetchedAt ?? fetchedAt },
+    fetchedAt,
+  });
 }
 
 function savePersistentEntry(key: string, data: ResearchSnapshot): void {
   const store = readPersistentStore();
-  store[key] = { data, fetchedAt: Date.now() };
+  const fetchedAt = Date.now();
+  store[key] = {
+    data: { ...data, quoteFetchedAt: data.quoteFetchedAt ?? fetchedAt },
+    fetchedAt,
+  };
   writePersistentStore(store);
 }
 
@@ -175,18 +253,55 @@ export function snapshotNeedsRefresh(snapshot: ResearchSnapshot): boolean {
   );
 }
 
+function formatTime(value: string | number | null | undefined): string | null {
+  if (value == null) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function normalizeQuoteStatusLabel(status: string | null | undefined): string | null {
+  if (!status) return null;
+  const normalized = status.trim().toLowerCase().replace(/[_-]+/g, " ");
+  if (normalized.includes("live") || normalized.includes("real time")) {
+    return "Live";
+  }
+  if (normalized.includes("delay")) return status;
+  if (normalized.includes("previous") || normalized.includes("close")) {
+    return "Previous close";
+  }
+  return status;
+}
+
+export function quoteFreshnessLabel(snapshot: ResearchSnapshot): string {
+  const status = normalizeQuoteStatusLabel(snapshot.quoteStatus);
+  const source = snapshot.quoteSource ? ` · ${snapshot.quoteSource}` : "";
+  if (status) return `${status}${source}`;
+
+  const asOfTime = formatTime(snapshot.quoteAsOf);
+  if (asOfTime) return `Last updated ${asOfTime}${source}`;
+
+  const fetchedTime = formatTime(snapshot.quoteFetchedAt);
+  if (fetchedTime) return `Last checked ${fetchedTime}${source}`;
+
+  return `Quote freshness unavailable${source}`;
+}
+
 export function getCachedResearchSnapshot(
   symbol: string,
 ): ResearchSnapshot | null {
   const key = normalizeKey(symbol);
   if (!key) return null;
 
-  const fromMemory = memoryCache.get(key);
+  const fromMemory = getValidMemoryEntry(key);
   if (fromMemory && !snapshotNeedsRefresh(fromMemory)) return fromMemory;
 
   const fromStorage = getValidPersistentEntry(key);
   if (fromStorage && !snapshotNeedsRefresh(fromStorage)) {
-    memoryCache.set(key, fromStorage);
+    saveMemoryEntry(key, fromStorage);
     return fromStorage;
   }
 
@@ -199,7 +314,7 @@ export function seedResearchSnapshotCache(
 ): void {
   const key = normalizeKey(symbol);
   if (!key || snapshotNeedsRefresh(snapshot)) return;
-  memoryCache.set(key, snapshot);
+  saveMemoryEntry(key, snapshot);
   savePersistentEntry(key, snapshot);
 }
 
@@ -224,9 +339,11 @@ async function fetchResearchSnapshotFromApi(
         ? (raw as Record<string, unknown>)
         : {},
     );
-    memoryCache.set(key, data);
-    savePersistentEntry(key, data);
-    return data;
+    const fetchedAt = Date.now();
+    const snapshot = { ...data, quoteFetchedAt: data.quoteFetchedAt ?? fetchedAt };
+    saveMemoryEntry(key, snapshot);
+    savePersistentEntry(key, snapshot);
+    return snapshot;
   } catch {
     return null;
   }
