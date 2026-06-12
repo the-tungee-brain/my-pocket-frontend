@@ -1,8 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { TradeReplayWorkflow } from "@/app/types/tradeReplay";
-import { fetchTradeReplay, refreshTradeReplay } from "@/lib/apiClient";
+import type {
+  MissedMovesRange,
+  MissedMovesSort,
+  TradeReplayWorkflow,
+} from "@/app/types/tradeReplay";
+import {
+  fetchMissedMovesSummary,
+  fetchTradeReplay,
+  refreshTradeReplay,
+} from "@/lib/apiClient";
 import { normalizeTradeReplayResponse } from "@/lib/tradeReplay";
 
 export const tradeReplayQueryKey = (
@@ -10,6 +18,7 @@ export const tradeReplayQueryKey = (
   symbol: string,
   workflow: TradeReplayWorkflow,
   date: string,
+  missedMoveId?: string | number | null,
 ) =>
   [
     "trade-replay",
@@ -17,11 +26,14 @@ export const tradeReplayQueryKey = (
     symbol.toUpperCase(),
     workflow,
     date,
+    missedMoveId ?? "",
   ] as const;
 
 type Options = {
   enabled?: boolean;
   refreshOnLoad?: boolean;
+  date?: string;
+  missedMoveId?: string | number | null;
 };
 
 function todayLocalDate(): string {
@@ -40,7 +52,7 @@ export function useTradeReplay(
 ) {
   const { enabled = true, refreshOnLoad = true } = options;
   const symbolUpper = symbol?.toUpperCase().trim() ?? "";
-  const date = todayLocalDate();
+  const date = options.date ?? todayLocalDate();
 
   const query = useQuery({
     queryKey: tradeReplayQueryKey(
@@ -48,10 +60,16 @@ export function useTradeReplay(
       symbolUpper,
       workflow,
       date,
+      options.missedMoveId,
     ),
     queryFn: async () => {
       if (!accessToken) throw new Error("Missing access token");
-      const request = { symbol: symbolUpper, workflow, date };
+      const request = {
+        symbol: symbolUpper,
+        workflow,
+        date,
+        missedMoveId: options.missedMoveId,
+      };
       if (refreshOnLoad) {
         await refreshTradeReplay(accessToken, request);
       }
@@ -69,6 +87,65 @@ export function useTradeReplay(
     isLoading: query.isLoading,
     isRefreshing: query.isFetching && !query.isLoading,
     error: query.isError ? "Session Replay is unavailable." : null,
+    refetch: query.refetch,
+  };
+}
+
+export const missedMovesSummaryQueryKey = (
+  accessToken: string,
+  symbol: string,
+  workflow: TradeReplayWorkflow,
+  range: MissedMovesRange,
+  sort: MissedMovesSort,
+) =>
+  [
+    "missed-moves-summary",
+    accessToken,
+    symbol.toUpperCase(),
+    workflow,
+    range,
+    sort,
+  ] as const;
+
+export function useMissedMovesSummary(
+  symbol: string | undefined,
+  accessToken: string | undefined,
+  workflow: TradeReplayWorkflow,
+  range: MissedMovesRange,
+  sort: MissedMovesSort,
+  options: { enabled?: boolean } = {},
+) {
+  const symbolUpper = symbol?.toUpperCase().trim() ?? "";
+  const { enabled = true } = options;
+
+  const query = useQuery({
+    queryKey: missedMovesSummaryQueryKey(
+      accessToken ?? "",
+      symbolUpper,
+      workflow,
+      range,
+      sort,
+    ),
+    queryFn: async () => {
+      if (!accessToken) throw new Error("Missing access token");
+      return fetchMissedMovesSummary(accessToken, {
+        symbol: symbolUpper,
+        workflow,
+        range,
+        sort,
+      });
+    },
+    enabled: Boolean(accessToken && symbolUpper && enabled),
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  return {
+    summary: query.data ?? null,
+    rows: query.data?.rows ?? [],
+    isLoading: query.isLoading,
+    isRefreshing: query.isFetching && !query.isLoading,
+    error: query.isError ? "Missed Moves summary is unavailable." : null,
     refetch: query.refetch,
   };
 }

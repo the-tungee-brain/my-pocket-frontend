@@ -15,6 +15,9 @@ import type { PortfolioNewsResponse } from "@/app/types/portfolioNews";
 import type { PressReleasesResponse } from "@/app/types/pressReleases";
 import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
 import type {
+  MissedMovesRange,
+  MissedMovesSort,
+  MissedMovesSummaryResponse,
   TradeReplayResponse,
   TradeReplayWorkflow,
 } from "@/app/types/tradeReplay";
@@ -321,6 +324,7 @@ export async function fetchTradeReplay(
     symbol: string;
     workflow: TradeReplayWorkflow;
     date: string;
+    missedMoveId?: string | number | null;
   },
 ): Promise<TradeReplayResponse> {
   const res = await apiFetch(
@@ -328,6 +332,7 @@ export async function fetchTradeReplay(
       symbol: options.symbol.toUpperCase(),
       workflow: options.workflow,
       date: options.date,
+      missed_move_id: options.missedMoveId ?? undefined,
     })}`,
     { method: "GET", accessToken },
   );
@@ -337,6 +342,32 @@ export async function fetchTradeReplay(
   }
 
   return res.json() as Promise<TradeReplayResponse>;
+}
+
+export async function fetchMissedMovesSummary(
+  accessToken: string,
+  options: {
+    symbol: string;
+    workflow: TradeReplayWorkflow;
+    range: MissedMovesRange;
+    sort: MissedMovesSort;
+  },
+): Promise<MissedMovesSummaryResponse> {
+  const res = await apiFetch(
+    `/research/trade-replay/missed-moves${buildQuery({
+      symbol: options.symbol.toUpperCase(),
+      workflow: options.workflow,
+      range: options.range,
+      sort: options.sort,
+    })}`,
+    { method: "GET", accessToken },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to load missed moves summary (${res.status})`);
+  }
+
+  return res.json() as Promise<MissedMovesSummaryResponse>;
 }
 
 export async function refreshTradeReplay(

@@ -6,6 +6,19 @@ export type TradeReplayActionability = "active" | "missed" | "invalidated";
 
 export type TradeReplaySource = "realtime" | "delayed" | "historical";
 
+export type MissedMovesRange = "today" | "last_5_trading_days";
+
+export type MissedMovesSort =
+  | "most_recent"
+  | "biggest_move"
+  | "highest_setup_quality";
+
+export type MissedMoveOutcome =
+  | "target_hit"
+  | "extended"
+  | "invalidated"
+  | "stopped";
+
 export type TradeReplayEvent = {
   id: string | number;
   plan_id?: string | number | null;
@@ -32,4 +45,26 @@ export type TradeReplayResponse = {
   source: TradeReplaySource;
   source_freshness_label?: string | null;
   events: TradeReplayEvent[];
+};
+
+export type MissedMoveSummaryRow = {
+  id: string | number;
+  date: string;
+  symbol: string;
+  workflow?: TradeReplayWorkflow | null;
+  setup_type: string;
+  trigger_price: number | null;
+  outcome: MissedMoveOutcome;
+  max_move_after_trigger_pct: number | null;
+  setup_quality_score?: number | null;
+  source?: TradeReplaySource | null;
+  source_freshness_label?: string | null;
+};
+
+export type MissedMovesSummaryResponse = {
+  range: MissedMovesRange;
+  sort: MissedMovesSort;
+  source?: TradeReplaySource | null;
+  source_freshness_label?: string | null;
+  rows: MissedMoveSummaryRow[];
 };
