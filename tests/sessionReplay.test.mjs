@@ -68,6 +68,9 @@ test("Session Replay API contract uses requested endpoints", () => {
   assert.ok(apiClient.includes("workflow: options.workflow"));
   assert.ok(apiClient.includes("date: options.date"));
   assert.ok(apiClient.includes("missed_move_id"));
+  assert.ok(apiClient.includes("direction_mode: options.directionMode"));
+  assert.ok(hook.includes("directionMode: options.directionMode"));
+  assert.ok(hook.includes("directionMode ??"));
 });
 
 test("Session Replay resolves through api/v1 base without double prefix", () => {
@@ -96,7 +99,11 @@ test("Missed Moves summary loads before historical replay timelines", () => {
 });
 
 test("Session Replay normalizes chronological deduped events", () => {
-  assert.ok(replayLib.includes(".sort((left, right) => eventTimestamp(left) - eventTimestamp(right))"));
+  assert.ok(
+    replayLib.includes(
+      ".sort((left, right) => eventTimestamp(left) - eventTimestamp(right))",
+    ),
+  );
   assert.ok(replayLib.includes("const seen = new Set<string>()"));
   assert.ok(replayLib.includes("replayDedupeKey"));
 });
@@ -176,7 +183,10 @@ test("Session Replay collapses same-candle trigger and invalidation", () => {
   });
 
   assert.equal(response.events.length, 1);
-  assert.equal(response.events[0].event_type, "long_breakout_failed_same_candle");
+  assert.equal(
+    response.events[0].event_type,
+    "long_breakout_failed_same_candle",
+  );
   assert.equal(response.events[0].actionability, "invalidated");
   assert.equal(
     response.events[0].message,
@@ -186,7 +196,10 @@ test("Session Replay collapses same-candle trigger and invalidation", () => {
 
 test("Session Replay UI uses review language and delayed-data guardrail", () => {
   assert.ok(section.includes("Today’s Missed Moves"));
-  assert.ok(section.includes("No qualifying missed moves in the selected period."));
+  assert.ok(section.includes("Setup Timeline"));
+  assert.ok(
+    section.includes("No qualifying missed moves in the selected period."),
+  );
   assert.ok(section.includes("Replay uses delayed/polled data"));
   assert.ok(section.includes("formatReplayEventTime"));
   assert.ok(section.includes("replaySessionLabel"));
@@ -206,17 +219,61 @@ test("Session Replay UI uses review language and delayed-data guardrail", () => 
   assert.ok(!section.includes("should sell"));
 });
 
+test("Day Trade UX is lifecycle-first with direction modes", () => {
+  assert.ok(horizonPages.includes("type DayTradeLifecycleState"));
+  assert.ok(horizonPages.includes('"ENTRY_TRIGGERED"'));
+  assert.ok(horizonPages.includes('"TARGET_1_HIT"'));
+  assert.ok(horizonPages.includes('"TARGET_2_HIT"'));
+  assert.ok(horizonPages.includes('"INVALIDATED"'));
+  assert.ok(horizonPages.includes('"STOP_HIT"'));
+  assert.ok(horizonPages.includes('"CLOSED"'));
+  assert.ok(horizonPages.includes('title="Current State"'));
+  assert.ok(horizonPages.includes('title="Action Levels"'));
+  assert.ok(horizonPages.includes('title="Lifecycle"'));
+  assert.ok(horizonPages.includes("DayTradeDirectionSelector"));
+  assert.ok(horizonPages.includes('params.set("direction"'));
+  assert.ok(horizonPages.includes("directionToBackendMode(direction)"));
+  assert.ok(horizonPages.includes('{ value: "long", label: "Long only" }'));
+  assert.ok(horizonPages.includes('{ value: "short", label: "Short only" }'));
+  assert.ok(horizonPages.includes('{ value: "both", label: "Long + Short" }'));
+  assert.ok(horizonPages.includes("applyDayTradeDirectionMode"));
+  assert.ok(horizonPages.includes("filterReplayEventsForDirection"));
+  assert.ok(horizonPages.includes("direction={direction}"));
+  assert.ok(section.includes("directionToBackendMode(direction)"));
+});
+
 test("Session Replay appears in Day Trade and Swing Trade placements", () => {
   assert.ok(horizonPages.includes('workflow="day_trade"'));
   assert.ok(horizonPages.includes('workflow="swing_trade"'));
 
   const dayTradeIndex = horizonPages.indexOf('workflow="day_trade"');
-  const methodologyIndex = horizonPages.indexOf("<MethodologySection", dayTradeIndex);
+  const methodologyIndex = horizonPages.indexOf(
+    "<MethodologySection",
+    dayTradeIndex,
+  );
   assert.ok(dayTradeIndex > -1);
   assert.ok(methodologyIndex > dayTradeIndex);
 
   const swingReplayIndex = horizonPages.indexOf('workflow="swing_trade"');
-  const whyLevelsIndex = horizonPages.indexOf('title="Why These Levels"', swingReplayIndex);
+  const whyLevelsIndex = horizonPages.indexOf(
+    'title="Why These Levels"',
+    swingReplayIndex,
+  );
   assert.ok(swingReplayIndex > -1);
   assert.ok(whyLevelsIndex > swingReplayIndex);
+});
+
+test("Day Trade remains enabled for ETF research pages", () => {
+  const dayTradeIndex = horizonPages.indexOf(
+    "export function DayTradeResearchPageContent",
+  );
+  const hookIndex = horizonPages.indexOf(
+    "useIntradayTradingBias(",
+    dayTradeIndex,
+  );
+  const dayTradeHookBlock = horizonPages.slice(dayTradeIndex, hookIndex + 160);
+
+  assert.ok(dayTradeIndex > -1);
+  assert.ok(hookIndex > dayTradeIndex);
+  assert.ok(!dayTradeHookBlock.includes("enabled: !isEtf"));
 });

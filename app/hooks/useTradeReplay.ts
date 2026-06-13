@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type {
+  DayTradeReplayDirectionMode,
   MissedMovesRange,
   MissedMovesSort,
   TradeReplayWorkflow,
@@ -19,6 +20,7 @@ export const tradeReplayQueryKey = (
   workflow: TradeReplayWorkflow,
   date: string,
   missedMoveId?: string | number | null,
+  directionMode?: DayTradeReplayDirectionMode | null,
 ) =>
   [
     "trade-replay",
@@ -27,6 +29,7 @@ export const tradeReplayQueryKey = (
     workflow,
     date,
     missedMoveId ?? "",
+    directionMode ?? "",
   ] as const;
 
 type Options = {
@@ -34,6 +37,7 @@ type Options = {
   refreshOnLoad?: boolean;
   date?: string;
   missedMoveId?: string | number | null;
+  directionMode?: DayTradeReplayDirectionMode | null;
 };
 
 function todayLocalDate(): string {
@@ -61,6 +65,7 @@ export function useTradeReplay(
       workflow,
       date,
       options.missedMoveId,
+      options.directionMode,
     ),
     queryFn: async () => {
       if (!accessToken) throw new Error("Missing access token");
@@ -69,6 +74,7 @@ export function useTradeReplay(
         workflow,
         date,
         missedMoveId: options.missedMoveId,
+        directionMode: options.directionMode,
       };
       if (refreshOnLoad) {
         await refreshTradeReplay(accessToken, request);

@@ -1,5 +1,10 @@
 export type TradeReplayWorkflow = "day_trade" | "swing_trade";
 
+export type DayTradeReplayDirectionMode =
+  | "long_only"
+  | "short_only"
+  | "long_and_short";
+
 export type TradeReplaySeverity = "info" | "important" | "warning";
 
 export type TradeReplayActionability = "active" | "missed" | "invalidated";
@@ -42,6 +47,7 @@ export type TradeReplayResponse = {
   symbol: string;
   date: string;
   workflow: TradeReplayWorkflow;
+  direction_mode?: DayTradeReplayDirectionMode | null;
   source: TradeReplaySource;
   source_freshness_label?: string | null;
   events: TradeReplayEvent[];

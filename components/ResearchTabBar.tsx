@@ -3,6 +3,8 @@
 import {
   BarChart3,
   BriefcaseBusiness,
+  CalendarClock,
+  CalendarRange,
   ChevronDown,
   CircleDollarSign,
   FileSpreadsheet,
@@ -11,7 +13,6 @@ import {
   LineChart,
   type LucideIcon,
   Newspaper,
-  ScanSearch,
   Target,
   TrendingUp,
 } from "lucide-react";
@@ -31,7 +32,9 @@ import { cn } from "@/lib/utils";
 
 export type ResearchTabId =
   | "overview"
-  | "analysis"
+  | "day-trade"
+  | "swing-trade"
+  | "long-term"
   | "position"
   | "options"
   | "news"
@@ -61,9 +64,21 @@ const allTabs: Tab[] = [
     assetTypes: "all",
   },
   {
-    id: "analysis",
-    label: "Analysis",
-    icon: ScanSearch,
+    id: "day-trade",
+    label: "Day Trade",
+    icon: CalendarClock,
+    assetTypes: "all",
+  },
+  {
+    id: "swing-trade",
+    label: "Swing Trade",
+    icon: TrendingUp,
+    assetTypes: "all",
+  },
+  {
+    id: "long-term",
+    label: "Long Term",
+    icon: CalendarRange,
     assetTypes: "all",
   },
   {
@@ -130,11 +145,7 @@ const allTabs: Tab[] = [
   },
 ];
 
-const standaloneResearchPageLabels: Record<string, string> = {
-  "long-term": "Long-Term",
-  "swing-trade": "Swing Trade",
-  "day-trade": "Day Trade",
-};
+const standaloneResearchPageLabels: Record<string, string> = {};
 
 function tabsForAssetType(
   assetType: AssetType | null | undefined,

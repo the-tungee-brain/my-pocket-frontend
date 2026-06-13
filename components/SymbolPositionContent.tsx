@@ -760,7 +760,7 @@ function PositionEmptyState({ symbol }: { symbol: string }) {
           </p>
         </Link>
         <Link
-          href={symbolHubPath(symbol, "analysis")}
+          href={symbolHubPath(symbol, "swing-trade")}
           className={cn(
             appPanelSubtleClass,
             "px-4 py-3 text-sm transition hover:bg-muted-bg",

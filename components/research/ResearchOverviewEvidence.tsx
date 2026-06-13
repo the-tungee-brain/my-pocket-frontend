@@ -159,14 +159,14 @@ export function ResearchOverviewEvidence({
           label="Chart trend"
           status={priceStructure.status}
           body={truncateSentence(priceStructure.description)}
-          href={symbolHubPath(symbol, "analysis")}
+          href={symbolHubPath(symbol, "swing-trade")}
           loading={intelligenceLoading && !intelligence}
         />
         <ResearchRow
           label="Market strength"
           status={relativeStrength.status}
           body={truncateSentence(relativeStrength.description)}
-          href={symbolHubPath(symbol, "analysis")}
+          href={symbolHubPath(symbol, "swing-trade")}
           loading={intelligenceLoading && !intelligence}
         />
         {!isEtf ? (

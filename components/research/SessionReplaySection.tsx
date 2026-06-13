@@ -7,6 +7,7 @@ import {
   useTradeReplay,
 } from "@/app/hooks/useTradeReplay";
 import type {
+  DayTradeReplayDirectionMode,
   MissedMoveOutcome,
   MissedMoveSummaryRow,
   MissedMovesRange,
@@ -35,12 +36,21 @@ type SessionReplaySectionProps = {
   workflow: TradeReplayWorkflow;
   enabled?: boolean;
   className?: string;
+  direction?: "long" | "short" | "both";
 };
 
 const RANGE_OPTIONS: { value: MissedMovesRange; label: string }[] = [
   { value: "today", label: "Today" },
   { value: "last_5_trading_days", label: "Last 5 Trading Days" },
 ];
+
+function directionToBackendMode(
+  direction: "long" | "short" | "both",
+): DayTradeReplayDirectionMode {
+  if (direction === "long") return "long_only";
+  if (direction === "short") return "short_only";
+  return "long_and_short";
+}
 
 const SORT_OPTIONS: { value: MissedMovesSort; label: string }[] = [
   { value: "most_recent", label: "Most recent" },
@@ -105,6 +115,31 @@ function sourceLabel(event: TradeReplayEvent): string | null {
   return event.source_freshness_label ?? event.source;
 }
 
+function textDirection(value: string): "long" | "short" | "neutral" {
+  const lower = value.toLowerCase();
+  if (/\bshort\b|breakdown|below|downside/.test(lower)) return "short";
+  if (/\blong\b|breakout|above|upside/.test(lower)) return "long";
+  return "neutral";
+}
+
+function eventMatchesDirection(
+  event: TradeReplayEvent,
+  direction: "long" | "short" | "both",
+): boolean {
+  if (direction === "both") return true;
+  const inferred = textDirection(`${event.event_type} ${event.message}`);
+  return inferred === "neutral" || inferred === direction;
+}
+
+function summaryRowMatchesDirection(
+  row: MissedMoveSummaryRow,
+  direction: "long" | "short" | "both",
+): boolean {
+  if (direction === "both") return true;
+  const inferred = textDirection(row.setup_type);
+  return inferred === "neutral" || inferred === direction;
+}
+
 function SessionReplaySkeleton() {
   return (
     <div className="space-y-3" aria-hidden>
@@ -129,7 +164,12 @@ function SessionReplayEventRow({ event }: { event: TradeReplayEvent }) {
   const session = replaySessionLabel(event.event_time);
 
   return (
-    <li className={cn("grid gap-3 border-l pl-4 sm:grid-cols-[7rem_minmax(0,1fr)]", severityClass(event.severity))}>
+    <li
+      className={cn(
+        "grid gap-3 border-l pl-4 sm:grid-cols-[7rem_minmax(0,1fr)]",
+        severityClass(event.severity),
+      )}
+    >
       <div className="space-y-1">
         <time className="block text-xs font-medium tabular-nums text-muted">
           {formatReplayEventTime(event.event_time)}
@@ -255,6 +295,7 @@ export function SessionReplaySection({
   workflow,
   enabled = true,
   className,
+  direction = "both",
 }: SessionReplaySectionProps) {
   const [range, setRange] = useState<MissedMovesRange>("today");
   const [sort, setSort] = useState<MissedMovesSort>("most_recent");
@@ -263,11 +304,20 @@ export function SessionReplaySection({
   );
   const summaryEnabled = enabled && range === "last_5_trading_days";
   const selectedWorkflow = selectedRow?.workflow ?? workflow;
+  const directionMode =
+    workflow === "day_trade" ? directionToBackendMode(direction) : undefined;
+  const selectedDirectionMode =
+    selectedWorkflow === "day_trade"
+      ? directionToBackendMode(direction)
+      : undefined;
   const { replay, isLoading, isRefreshing, error, refetch } = useTradeReplay(
     symbol,
     accessToken ?? undefined,
     workflow,
-    { enabled: enabled && range === "today" },
+    {
+      enabled: enabled && range === "today",
+      directionMode,
+    },
   );
   const summary = useMissedMovesSummary(
     symbol,
@@ -286,18 +336,25 @@ export function SessionReplaySection({
       refreshOnLoad: false,
       date: selectedRow?.date,
       missedMoveId: selectedRow?.id,
+      directionMode: selectedDirectionMode,
     },
   );
-  const events = replay?.events ?? [];
+  const events = (replay?.events ?? []).filter((event) =>
+    eventMatchesDirection(event, direction),
+  );
   const delayed =
     replay?.source === "delayed" ||
     events.some((event) => event.source === "delayed");
-  const selectedEvents = selectedReplay.replay?.events ?? [];
+  const selectedEvents = (selectedReplay.replay?.events ?? []).filter((event) =>
+    eventMatchesDirection(event, direction),
+  );
   const selectedDelayed =
     selectedReplay.replay?.source === "delayed" ||
     selectedEvents.some((event) => event.source === "delayed");
   const selectedRowKey = selectedRow ? String(selectedRow.id) : null;
-  const rows = summary.rows;
+  const rows = summary.rows.filter((row) =>
+    summaryRowMatchesDirection(row, direction),
+  );
   const rangeTabs = useMemo(
     () =>
       RANGE_OPTIONS.map((option) => (
@@ -323,7 +380,9 @@ export function SessionReplaySection({
 
   return (
     <ResearchSection
-      title="Today’s Missed Moves"
+      title={
+        workflow === "day_trade" ? "Setup Timeline" : "Today’s Missed Moves"
+      }
       className={className}
       action={
         <button

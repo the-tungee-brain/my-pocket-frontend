@@ -1,10 +1,19 @@
 "use client";
 
+import {
+  ArrowDown,
+  ArrowUp,
+  Circle,
+  CircleCheck,
+  CircleDot,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useSession } from "next-auth/react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useFundamentals } from "@/app/hooks/useFundamentals";
 import { useIntradayTradingBias } from "@/app/hooks/useIntradayTradingBias";
 import { useStreetAnalysis } from "@/app/hooks/useStreetAnalysis";
+import { useTradeReplay } from "@/app/hooks/useTradeReplay";
 import { useTraderPlaybook } from "@/app/hooks/useTraderPlaybook";
 import type {
   IntradayTradingBiasResponse,
@@ -13,6 +22,7 @@ import type {
   TraderPlaybookStatus,
   TradingBiasConfidence,
 } from "@/app/types/research";
+import type { TradeReplayEvent } from "@/app/types/tradeReplay";
 import {
   ResearchRow,
   ResearchSection,
@@ -23,7 +33,6 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { appStackClass } from "@/lib/appUi";
 import { pageSectionClass } from "@/lib/pageLayout";
-import { quoteFreshnessLabel } from "@/lib/researchSnapshot";
 import { hasStreetAnalysis } from "@/lib/streetAnalysisUtils";
 import { cn } from "@/lib/utils";
 import { EtfFundsOverview } from "./EtfFundsOverview";
@@ -241,7 +250,9 @@ function alignmentTone(
   return undefined;
 }
 
-function sideFromPlaybook(data: TraderPlaybookResponse): SwingTradePlan["side"] {
+function sideFromPlaybook(
+  data: TraderPlaybookResponse,
+): SwingTradePlan["side"] {
   if (data.side) return data.side;
   if (data.status === "NoSetup" || data.bestSetup === "None") return "NoTrade";
   return data.direction === "Bearish" ? "Short" : "Long";
@@ -281,7 +292,9 @@ function deriveFallbackTarget(
   if (data.levels.target1 != null) return data.levels.target1;
   if (data.levels.target2 != null) return data.levels.target2;
   if (side === "Long" && data.levels.resistance != null) {
-    return data.levels.resistance > (entry ?? 0) ? data.levels.resistance : null;
+    return data.levels.resistance > (entry ?? 0)
+      ? data.levels.resistance
+      : null;
   }
   if (side === "Short" && data.levels.support != null) {
     return data.levels.support < (entry ?? Number.POSITIVE_INFINITY)
@@ -650,9 +663,7 @@ function SwingTradePlanContent({
               <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
                 {formatMoney(level.value)}
               </p>
-              <p className={cn("mt-1", researchMemo.rowBody)}>
-                {level.reason}
-              </p>
+              <p className={cn("mt-1", researchMemo.rowBody)}>{level.reason}</p>
             </div>
           ))}
           {triggered ? (
@@ -683,7 +694,10 @@ function SwingTradePlanContent({
       <ResearchSection title="Setup Validation" className={pageSectionClass}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {plan.validation.map((item) => (
-            <div key={item.label} className="min-w-0 border-l border-border/60 pl-3">
+            <div
+              key={item.label}
+              className="min-w-0 border-l border-border/60 pl-3"
+            >
               <p className={researchMemo.rowLabel}>{item.label}</p>
               <p
                 className={cn(
@@ -779,6 +793,19 @@ export function SwingTradeResearchPageContent({ symbol }: Props) {
 }
 
 type DayTradeStatus = "No trade" | "Watch" | "Long setup" | "Short setup";
+type DayTradeDirectionMode = "long" | "short" | "both";
+type DayTradeLifecycleState =
+  | "NO_TRADE"
+  | "WATCH"
+  | "LONG_SETUP"
+  | "SHORT_SETUP"
+  | "ENTRY_TRIGGERED"
+  | "IN_TRADE"
+  | "TARGET_1_HIT"
+  | "TARGET_2_HIT"
+  | "INVALIDATED"
+  | "STOP_HIT"
+  | "CLOSED";
 
 type DayTradeLevel = {
   label: string;
@@ -818,6 +845,29 @@ type DayTradePlan = {
   ladder: DayTradeLevel[];
   warnings: string[];
 };
+
+type DayTradeLifecycleViewModel = {
+  state: DayTradeLifecycleState;
+  label: string;
+  nextAction: string;
+  actionDetail: string;
+  side: "Long" | "Short" | null;
+  activePlan: DayTradeScenarioPlan | null;
+  progress: Array<{
+    key: DayTradeLifecycleState;
+    label: string;
+    status: "complete" | "current" | "pending";
+  }>;
+};
+
+const DAY_TRADE_DIRECTION_OPTIONS: Array<{
+  value: DayTradeDirectionMode;
+  label: string;
+}> = [
+  { value: "long", label: "Long only" },
+  { value: "short", label: "Short only" },
+  { value: "both", label: "Long + Short" },
+];
 
 function isNumber(value: number | null | undefined): value is number {
   return typeof value === "number" && Number.isFinite(value);
@@ -1121,6 +1171,283 @@ function buildDayTradePlan(data: IntradayTradingBiasResponse): DayTradePlan {
   };
 }
 
+function scenarioMatchesDirection(
+  scenario: DayTradeScenarioPlan,
+  direction: DayTradeDirectionMode,
+): boolean {
+  if (direction === "both") return true;
+  return direction === "long"
+    ? scenario.side === "Long"
+    : scenario.side === "Short";
+}
+
+function triggerMatchesDirection(
+  trigger: DayTradeTrigger,
+  direction: DayTradeDirectionMode,
+): boolean {
+  if (direction === "both") return true;
+  return direction === "long"
+    ? trigger.side === "Long"
+    : trigger.side === "Short";
+}
+
+function applyDayTradeDirectionMode(
+  plan: DayTradePlan,
+  direction: DayTradeDirectionMode,
+): DayTradePlan {
+  if (direction === "both") return plan;
+
+  const conditionalPlans = plan.conditionalPlans.filter((scenario) =>
+    scenarioMatchesDirection(scenario, direction),
+  );
+  const watchTriggers = plan.watchTriggers.filter((trigger) =>
+    triggerMatchesDirection(trigger, direction),
+  );
+  const selectedSide = direction === "long" ? "Long" : "Short";
+  const sideBlocked =
+    (plan.status === "Long setup" && direction === "short") ||
+    (plan.status === "Short setup" && direction === "long");
+
+  if (!sideBlocked) {
+    return { ...plan, conditionalPlans, watchTriggers };
+  }
+
+  return {
+    ...plan,
+    status: "No trade",
+    headline: `No ${selectedSide.toLowerCase()} setup right now.`,
+    explanation:
+      "The selected direction does not have a valid setup. Switch modes to review the other side.",
+    levels: [],
+    watchTriggers: [],
+    conditionalPlans: [],
+    risk: { riskPerShare: null, rewardPerShare: null, rMultiple: null },
+  };
+}
+
+function eventDirection(
+  event: TradeReplayEvent,
+): DayTradeDirectionMode | "neutral" {
+  const text = `${event.event_type} ${event.message}`.toLowerCase();
+  if (/\bshort\b|breakdown|below|downside/.test(text)) return "short";
+  if (/\blong\b|breakout|above|upside/.test(text)) return "long";
+  return "neutral";
+}
+
+function filterReplayEventsForDirection(
+  events: TradeReplayEvent[],
+  direction: DayTradeDirectionMode,
+): TradeReplayEvent[] {
+  if (direction === "both") return events;
+  return events.filter((event) => {
+    const inferred = eventDirection(event);
+    return inferred === "neutral" || inferred === direction;
+  });
+}
+
+function latestReplayState(
+  events: TradeReplayEvent[],
+): DayTradeLifecycleState | null {
+  let state: DayTradeLifecycleState | null = null;
+  for (const event of events) {
+    if (event.event_type === "stop_hit") state = "STOP_HIT";
+    else if (
+      event.event_type === "setup_invalidated" ||
+      event.event_type === "opening_range_failed" ||
+      event.event_type === "long_breakout_failed_same_candle"
+    ) {
+      state = "INVALIDATED";
+    } else if (event.event_type === "target_2_hit") state = "TARGET_2_HIT";
+    else if (
+      event.event_type === "target_1_hit" ||
+      event.event_type === "target_hit"
+    ) {
+      state = "TARGET_1_HIT";
+    } else if (
+      event.event_type === "entry_triggered" ||
+      event.event_type === "long_trigger_activated" ||
+      event.event_type === "short_trigger_activated" ||
+      event.event_type === "opening_range_broke"
+    ) {
+      state = "ENTRY_TRIGGERED";
+    } else if (
+      event.event_type === "closed" ||
+      event.event_type === "close_exit"
+    ) {
+      state = "CLOSED";
+    }
+  }
+  return state;
+}
+
+function activeScenarioForPlan(
+  plan: DayTradePlan,
+  direction: DayTradeDirectionMode,
+  events: TradeReplayEvent[],
+): DayTradeScenarioPlan | null {
+  if (plan.conditionalPlans.length === 1) return plan.conditionalPlans[0];
+  const triggered = [...events]
+    .reverse()
+    .find((event) =>
+      [
+        "entry_triggered",
+        "long_trigger_activated",
+        "short_trigger_activated",
+        "opening_range_broke",
+      ].includes(event.event_type),
+    );
+  if (triggered) {
+    const inferred = eventDirection(triggered);
+    if (inferred === "long") {
+      return (
+        plan.conditionalPlans.find((scenario) => scenario.side === "Long") ??
+        null
+      );
+    }
+    if (inferred === "short") {
+      return (
+        plan.conditionalPlans.find((scenario) => scenario.side === "Short") ??
+        null
+      );
+    }
+  }
+  if (direction === "long") {
+    return (
+      plan.conditionalPlans.find((scenario) => scenario.side === "Long") ?? null
+    );
+  }
+  if (direction === "short") {
+    return (
+      plan.conditionalPlans.find((scenario) => scenario.side === "Short") ??
+      null
+    );
+  }
+  return null;
+}
+
+function lifecycleStateFromPlan(plan: DayTradePlan): DayTradeLifecycleState {
+  if (plan.status === "Long setup") return "LONG_SETUP";
+  if (plan.status === "Short setup") return "SHORT_SETUP";
+  if (plan.status === "Watch") return "WATCH";
+  return "NO_TRADE";
+}
+
+function lifecycleLabel(state: DayTradeLifecycleState): string {
+  const labels: Record<DayTradeLifecycleState, string> = {
+    NO_TRADE: "No Trade",
+    WATCH: "Watch",
+    LONG_SETUP: "Long Setup",
+    SHORT_SETUP: "Short Setup",
+    ENTRY_TRIGGERED: "Entry Triggered",
+    IN_TRADE: "In Trade",
+    TARGET_1_HIT: "Target 1 Hit",
+    TARGET_2_HIT: "Target 2 Hit",
+    INVALIDATED: "Invalidated",
+    STOP_HIT: "Stop Hit",
+    CLOSED: "Closed",
+  };
+  return labels[state];
+}
+
+function buildLifecycleProgress(state: DayTradeLifecycleState) {
+  const terminal =
+    state === "INVALIDATED" || state === "STOP_HIT" || state === "CLOSED"
+      ? state
+      : state === "TARGET_2_HIT"
+        ? "TARGET_2_HIT"
+        : null;
+  const steps: Array<{ key: DayTradeLifecycleState; label: string }> = [
+    { key: "WATCH", label: "Watch" },
+    { key: "ENTRY_TRIGGERED", label: "Entry Triggered" },
+    { key: "TARGET_1_HIT", label: "Target 1" },
+    {
+      key: terminal ?? "TARGET_2_HIT",
+      label: lifecycleLabel(terminal ?? "TARGET_2_HIT"),
+    },
+  ];
+  const currentIndex = Math.max(
+    0,
+    steps.findIndex((step) => step.key === state),
+  );
+  return steps.map((step, index) => ({
+    ...step,
+    status:
+      index < currentIndex
+        ? ("complete" as const)
+        : index === currentIndex
+          ? ("current" as const)
+          : ("pending" as const),
+  }));
+}
+
+function buildLifecycleViewModel(
+  plan: DayTradePlan,
+  direction: DayTradeDirectionMode,
+  replayEvents: TradeReplayEvent[],
+): DayTradeLifecycleViewModel {
+  const events = filterReplayEventsForDirection(replayEvents, direction);
+  const replayState = latestReplayState(events);
+  const activePlan = activeScenarioForPlan(plan, direction, events);
+  const state = replayState ?? lifecycleStateFromPlan(plan);
+  const side =
+    activePlan?.side ??
+    (state === "LONG_SETUP"
+      ? "Long"
+      : state === "SHORT_SETUP"
+        ? "Short"
+        : null);
+  const entryLabel = side === "Short" ? "Short trigger" : "Long trigger";
+  const entry = activePlan ? levelValue(activePlan, entryLabel) : null;
+  const stop = activePlan ? levelValue(activePlan, "Stop loss") : null;
+
+  const nextActionByState: Record<DayTradeLifecycleState, string> = {
+    NO_TRADE: "Do not enter",
+    WATCH: "Wait for breakout",
+    LONG_SETUP: "Wait for close above trigger",
+    SHORT_SETUP: "Wait for close below trigger",
+    ENTRY_TRIGGERED: "Monitor stop",
+    IN_TRADE: "Hold position",
+    TARGET_1_HIT: "Review Target 2",
+    TARGET_2_HIT: "Trade complete",
+    INVALIDATED: "Do not enter",
+    STOP_HIT: "Trade stopped out",
+    CLOSED: "Trade complete",
+  };
+  const detailByState: Record<DayTradeLifecycleState, string> = {
+    NO_TRADE: "No valid setup exists for the selected direction.",
+    WATCH: entry
+      ? `Wait for a confirmed move through ${formatMoney(entry)}.`
+      : "Wait for price to break and hold outside the opening range.",
+    LONG_SETUP: entry
+      ? `Wait for close above ${formatMoney(entry)}.`
+      : "Wait for a confirmed long breakout.",
+    SHORT_SETUP: entry
+      ? `Wait for close below ${formatMoney(entry)}.`
+      : "Wait for a confirmed short breakdown.",
+    ENTRY_TRIGGERED: stop
+      ? `Trade active. Monitor stop at ${formatMoney(stop)}.`
+      : "Trade active. Monitor the stop level.",
+    IN_TRADE: stop
+      ? `Hold position while stop at ${formatMoney(stop)} is intact.`
+      : "Hold position while the setup remains valid.",
+    TARGET_1_HIT: "Target 1 achieved. Review remaining risk.",
+    TARGET_2_HIT: "Target 2 achieved. Trade complete.",
+    INVALIDATED: "Setup failed. No entry.",
+    STOP_HIT: "Trade stopped out.",
+    CLOSED: "Trade complete.",
+  };
+
+  return {
+    state,
+    label: lifecycleLabel(state),
+    nextAction: nextActionByState[state],
+    actionDetail: detailByState[state],
+    side,
+    activePlan,
+    progress: buildLifecycleProgress(state),
+  };
+}
+
 function DayTradeMetric({
   label,
   value,
@@ -1180,6 +1507,244 @@ function DayTradeScenarioCard({ plan }: { plan: DayTradeScenarioPlan }) {
         <DayTradeMetric label="R/R" value={formatR(plan.risk.rMultiple)} />
       </div>
     </div>
+  );
+}
+
+function directionFromSearchParam(value: string | null): DayTradeDirectionMode {
+  if (value === "short") return "short";
+  if (value === "both") return "both";
+  return "long";
+}
+
+function directionToSearchParam(value: DayTradeDirectionMode): string {
+  if (value === "short") return "short";
+  if (value === "both") return "both";
+  return "long";
+}
+
+function directionToBackendMode(
+  value: DayTradeDirectionMode,
+): "long_only" | "short_only" | "long_and_short" {
+  if (value === "short") return "short_only";
+  if (value === "both") return "long_and_short";
+  return "long_only";
+}
+
+function DirectionIcon({ side }: { side: "Long" | "Short" | null }) {
+  if (side === "Short") return <ArrowDown className="h-5 w-5" aria-hidden />;
+  return <ArrowUp className="h-5 w-5" aria-hidden />;
+}
+
+function DayTradeDirectionSelector({
+  value,
+  onChange,
+}: {
+  value: DayTradeDirectionMode;
+  onChange: (value: DayTradeDirectionMode) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="inline-grid grid-cols-3 border border-border bg-background">
+        {DAY_TRADE_DIRECTION_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "px-3 py-2 text-xs font-semibold transition sm:px-4",
+              value === option.value
+                ? "bg-muted-bg text-foreground"
+                : "text-muted hover:text-foreground",
+            )}
+            aria-pressed={value === option.value}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs leading-relaxed text-muted">
+        Choose whether this strategy looks for upside breakouts, downside
+        breakdowns, or both.
+      </p>
+    </div>
+  );
+}
+
+function lifecycleTone(
+  state: DayTradeLifecycleState,
+  side: "Long" | "Short" | null,
+): string {
+  if (state === "INVALIDATED" || state === "STOP_HIT") {
+    return "border-danger/40 text-danger";
+  }
+  if (
+    state === "TARGET_1_HIT" ||
+    state === "TARGET_2_HIT" ||
+    state === "CLOSED"
+  ) {
+    return "border-success/40 text-success";
+  }
+  if (side === "Short" || state === "SHORT_SETUP")
+    return "border-danger/40 text-danger";
+  if (
+    side === "Long" ||
+    state === "LONG_SETUP" ||
+    state === "ENTRY_TRIGGERED"
+  ) {
+    return "border-success/40 text-success";
+  }
+  if (state === "WATCH") return "border-warning/50 text-warning";
+  return "border-border text-muted";
+}
+
+function CurrentStateCard({
+  lifecycle,
+  plan,
+}: {
+  lifecycle: DayTradeLifecycleViewModel;
+  plan: DayTradePlan;
+}) {
+  return (
+    <ResearchSection
+      title="Current State"
+      className={pageSectionClass}
+      bodyClassName="space-y-5"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "inline-flex h-11 w-11 items-center justify-center border",
+              lifecycleTone(lifecycle.state, lifecycle.side),
+            )}
+          >
+            <DirectionIcon side={lifecycle.side} />
+          </span>
+          <div>
+            <p className="text-2xl font-semibold tracking-normal text-foreground">
+              {lifecycle.label}
+            </p>
+            <p className="mt-1 text-sm font-medium text-muted">
+              {plan.confidence} confidence · {plan.setupLabel}
+            </p>
+          </div>
+        </div>
+        <span
+          className={cn(
+            "inline-flex border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide",
+            lifecycleTone(lifecycle.state, lifecycle.side),
+          )}
+        >
+          {lifecycle.side ?? "No Direction"}
+        </span>
+      </div>
+      <div className="border-l border-accent/60 pl-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+          Next Action
+        </p>
+        <p className="mt-1 text-xl font-semibold text-foreground">
+          {lifecycle.nextAction}
+        </p>
+        <p className="mt-1 text-sm leading-relaxed text-muted">
+          {lifecycle.actionDetail}
+        </p>
+      </div>
+    </ResearchSection>
+  );
+}
+
+function ActionLevelsGrid({ plan }: { plan: DayTradeScenarioPlan | null }) {
+  const triggerLabel =
+    plan?.side === "Short" ? "Short trigger" : "Long trigger";
+  const target1 = plan ? levelValue(plan, "Target 1") : null;
+  const target2 = plan ? levelValue(plan, "Target 2") : null;
+  const items = [
+    { label: "Entry", value: plan ? levelValue(plan, triggerLabel) : null },
+    { label: "Stop", value: plan ? levelValue(plan, "Stop loss") : null },
+    { label: "Target 1", value: target1 },
+    { label: "Target 2", value: target2 },
+    { label: "Risk / Reward", value: formatR(plan?.risk.rMultiple) },
+  ];
+
+  return (
+    <ResearchSection title="Action Levels" className={pageSectionClass}>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className="border border-border bg-background p-4"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+              {item.label}
+            </p>
+            <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
+              {typeof item.value === "number"
+                ? formatMoney(item.value)
+                : (item.value ?? "-")}
+            </p>
+          </div>
+        ))}
+      </div>
+    </ResearchSection>
+  );
+}
+
+function LifecycleTracker({
+  lifecycle,
+}: {
+  lifecycle: DayTradeLifecycleViewModel;
+}) {
+  return (
+    <ResearchSection title="Lifecycle" className={pageSectionClass}>
+      <div className="grid gap-2 sm:grid-cols-4">
+        {lifecycle.progress.map((step) => (
+          <div
+            key={`${step.key}-${step.label}`}
+            className={cn(
+              "flex items-center gap-2 border px-3 py-3 text-sm font-semibold",
+              step.status === "current"
+                ? "border-accent/70 bg-muted-bg text-foreground"
+                : step.status === "complete"
+                  ? "border-success/40 text-success"
+                  : "border-border text-muted",
+            )}
+          >
+            {step.status === "complete" ? (
+              <CircleCheck className="h-4 w-4" aria-hidden />
+            ) : step.status === "current" ? (
+              <CircleDot className="h-4 w-4" aria-hidden />
+            ) : (
+              <Circle className="h-4 w-4" aria-hidden />
+            )}
+            <span>{step.label}</span>
+          </div>
+        ))}
+      </div>
+    </ResearchSection>
+  );
+}
+
+function EvidenceSection({ plan }: { plan: DayTradePlan }) {
+  const primaryWarning = plan.warnings[0];
+
+  return (
+    <ResearchSection
+      title="Evidence / Reasoning"
+      className={pageSectionClass}
+      bodyClassName="space-y-4"
+    >
+      <div>
+        <p className="text-lg font-semibold text-foreground">{plan.headline}</p>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+          {plan.explanation}
+        </p>
+      </div>
+      {primaryWarning ? (
+        <p className="border-l border-warning/50 pl-3 text-sm font-medium text-warning">
+          {primaryWarning}
+        </p>
+      ) : null}
+    </ResearchSection>
   );
 }
 
@@ -1251,60 +1816,48 @@ function DayTradePlanContent({
   symbol: string;
   accessToken?: string | null;
 }) {
-  const plan = buildDayTradePlan(data);
-  const { snapshot } = useResearchSymbolHeader();
-  const primaryWarning = plan.warnings[0];
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const direction = directionFromSearchParam(searchParams.get("direction"));
+  const basePlan = buildDayTradePlan(data);
+  const plan = applyDayTradeDirectionMode(basePlan, direction);
+  const replayQuery = useTradeReplay(
+    symbol,
+    accessToken ?? undefined,
+    "day_trade",
+    {
+      enabled: Boolean(accessToken),
+      refreshOnLoad: false,
+      directionMode: directionToBackendMode(direction),
+    },
+  );
+  const replayEvents = filterReplayEventsForDirection(
+    replayQuery.replay?.events ?? [],
+    direction,
+  );
+  const lifecycle = buildLifecycleViewModel(plan, direction, replayEvents);
+
+  function updateDirection(next: DayTradeDirectionMode) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("direction", directionToSearchParam(next));
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   return (
     <>
-      <ResearchSection
-        title="Day Trade Verdict"
-        className={pageSectionClass}
-        bodyClassName="space-y-5"
-      >
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <span
-              className={cn(
-                "inline-flex border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide",
-                plan.status === "Long setup"
-                  ? "border-success/40 text-success"
-                  : plan.status === "Short setup"
-                    ? "border-danger/40 text-danger"
-                    : plan.status === "Watch"
-                      ? "border-warning/50 text-warning"
-                      : "border-border text-muted",
-              )}
-            >
-              {plan.status}
-            </span>
-            <span className="text-sm font-medium text-muted">
-              {plan.confidence} confidence · {plan.setupLabel}
-            </span>
-            {snapshot ? (
-              <span className="text-sm font-medium text-muted">
-                Quote {formatMoney(snapshot.price)} ·{" "}
-                {quoteFreshnessLabel(snapshot)}
-              </span>
-            ) : null}
-          </div>
-          <div>
-            <p className="text-2xl font-semibold tracking-normal text-foreground">
-              {plan.headline}
-            </p>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
-              {plan.explanation}
-            </p>
-          </div>
-        </div>
-        {primaryWarning ? (
-          <p className="border-l border-warning/50 pl-3 text-sm font-medium text-warning">
-            {primaryWarning}
-          </p>
-        ) : null}
+      <ResearchSection title="Day Trade Mode" className={pageSectionClass}>
+        <DayTradeDirectionSelector
+          value={direction}
+          onChange={updateDirection}
+        />
       </ResearchSection>
 
-      <PriceLadder levels={plan.ladder} />
+      <CurrentStateCard lifecycle={lifecycle} plan={plan} />
+
+      <ActionLevelsGrid plan={lifecycle.activePlan} />
+
+      <LifecycleTracker lifecycle={lifecycle} />
 
       <ResearchSection title="Trade Plans" className={pageSectionClass}>
         {plan.conditionalPlans.length ? (
@@ -1315,17 +1868,22 @@ function DayTradePlanContent({
           </div>
         ) : (
           <p className="text-sm leading-relaxed text-muted">
-            No trade. Wait for complete opening range and VWAP levels before
-            planning an intraday entry.
+            No trade for the selected direction. Switch modes to review other
+            possible setups.
           </p>
         )}
       </ResearchSection>
+
+      <EvidenceSection plan={plan} />
+
+      <PriceLadder levels={plan.ladder} />
 
       <SessionReplaySection
         symbol={symbol}
         accessToken={accessToken}
         workflow="day_trade"
         className={pageSectionClass}
+        direction={direction}
       />
 
       <MethodologySection hasWarnings={plan.warnings.length > 0} />
@@ -1336,13 +1894,9 @@ function DayTradePlanContent({
 export function DayTradeResearchPageContent({ symbol }: Props) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
-  const { isEtf } = useResearchAssetTypeContext();
   const { intradayTradingBias, isLoading, error } = useIntradayTradingBias(
     symbol,
     accessToken,
-    {
-      enabled: !isEtf,
-    },
   );
 
   return (

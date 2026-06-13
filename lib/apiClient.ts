@@ -2,7 +2,10 @@ import { API_BASE_URL } from "./config";
 import { isAbortError } from "./isAbortError";
 import { readSchwabReauthFromResponse } from "./schwabReauth";
 import type { SchwabReauthDetail } from "./schwabReauth";
-import type { AccountPositionsResponse, RecentOrdersResponse } from "@/app/types/schwab";
+import type {
+  AccountPositionsResponse,
+  RecentOrdersResponse,
+} from "@/app/types/schwab";
 import type {
   MorningBrief,
   PatternIntelligence,
@@ -15,6 +18,7 @@ import type { PortfolioNewsResponse } from "@/app/types/portfolioNews";
 import type { PressReleasesResponse } from "@/app/types/pressReleases";
 import type { ResearchOverviewBundle } from "@/app/types/researchOverview";
 import type {
+  DayTradeReplayDirectionMode,
   MissedMovesRange,
   MissedMovesSort,
   MissedMovesSummaryResponse,
@@ -72,7 +76,9 @@ type RecentOrdersOptions = {
   refresh?: boolean;
 };
 
-function buildQuery(params: Record<string, string | number | boolean | undefined>) {
+function buildQuery(
+  params: Record<string, string | number | boolean | undefined>,
+) {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === null || value === "") continue;
@@ -325,6 +331,7 @@ export async function fetchTradeReplay(
     workflow: TradeReplayWorkflow;
     date: string;
     missedMoveId?: string | number | null;
+    directionMode?: DayTradeReplayDirectionMode | null;
   },
 ): Promise<TradeReplayResponse> {
   const res = await apiFetch(
@@ -333,6 +340,7 @@ export async function fetchTradeReplay(
       workflow: options.workflow,
       date: options.date,
       missed_move_id: options.missedMoveId ?? undefined,
+      direction_mode: options.directionMode ?? undefined,
     })}`,
     { method: "GET", accessToken },
   );
@@ -376,6 +384,7 @@ export async function refreshTradeReplay(
     symbol: string;
     workflow: TradeReplayWorkflow;
     date: string;
+    directionMode?: DayTradeReplayDirectionMode | null;
   },
 ): Promise<void> {
   const res = await apiFetch("/research/trade-replay/refresh", {
@@ -385,6 +394,7 @@ export async function refreshTradeReplay(
       symbol: options.symbol.toUpperCase(),
       workflow: options.workflow,
       date: options.date,
+      direction_mode: options.directionMode ?? undefined,
     }),
   });
 
@@ -496,7 +506,7 @@ async function streamPost(
 }
 
 export async function streamAnalysis(
-  body: any,
+  body: unknown,
   accessToken: string,
   onChunk: (text: string) => void,
 ): Promise<{ chatSessionId: string | null }> {
@@ -658,7 +668,7 @@ export async function getChatSessionMessages(
     throw new Error(`Failed to load chat messages (${res.status})`);
   }
 
-    return res.json() as Promise<ChatSessionMessagesResponse>;
+  return res.json() as Promise<ChatSessionMessagesResponse>;
 }
 
 export async function deleteChatSession(
@@ -912,7 +922,9 @@ export async function fetchResearchOverviewFast(
   }
 
   if (!res.ok) {
-    throw new Error(`Failed to load research overview fast path (${res.status})`);
+    throw new Error(
+      `Failed to load research overview fast path (${res.status})`,
+    );
   }
 
   const bundle = normalizeResearchOverviewBundle(
@@ -932,7 +944,9 @@ export async function fetchResearchOverviewEnrichment(
 ): Promise<ResearchOverviewBundleFetchResult> {
   const symbolUpper = symbol.toUpperCase();
   const includeSummary = options.includeSummary ?? false;
-  const sections = options.sections?.length ? options.sections.join(",") : undefined;
+  const sections = options.sections?.length
+    ? options.sections.join(",")
+    : undefined;
   const res = await apiFetch(
     `/research/overview-enrichment${buildQuery({
       symbol: symbolUpper,
