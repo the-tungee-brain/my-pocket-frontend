@@ -85,7 +85,7 @@ export function AssignmentRiskSummary({
           return (
             <li
               key={`${entry.symbol}-${entry.expiration}-${entry.strike}`}
-              className="flex items-start justify-between gap-3 px-4 py-3 sm:px-5"
+              className="flex items-start justify-between gap-3 py-3"
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">

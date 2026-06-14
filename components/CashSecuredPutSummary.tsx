@@ -74,7 +74,7 @@ export function CashSecuredPutSummary({
             label="Reserved"
             value={formatUsd(reserved)}
             tone="positive"
-            className="border border-accent/25 bg-secondary/70 px-3.5 py-2.5"
+            className="px-3.5 py-2.5"
           />
           {available != null && (
             <KpiStat
@@ -87,7 +87,7 @@ export function CashSecuredPutSummary({
 
         {cashBalance != null && cashBalance > 0 && (
           <CardBody className="border-t border-border/80 pt-0">
-            <div className="mb-1.5 flex items-center justify-between text-xs text-muted">
+            <div className="mb-1.5 flex items-center justify-between text-xs text-muted mt-3">
               <span>Reserved vs cash</span>
               <span className="tabular-nums">{reservedPct}% reserved</span>
             </div>
@@ -120,7 +120,7 @@ export function CashSecuredPutSummary({
                 return (
                   <li
                     key={`${item.symbol}-${item.strike}-${item.contracts}`}
-                    className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5"
+                    className="flex items-center justify-between gap-3 py-3"
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
