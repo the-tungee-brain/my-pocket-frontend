@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
-import type { InvestmentStrategy, StrategyNextAction } from "@/app/types/strategy";
 import {
   streamAnalysis,
   streamPlaybookAsk,
@@ -81,7 +80,7 @@ export function useChatState({
   );
 
   const ensureSymbolChatState = useCallback(
-    (key: string, base?: Partial<SymbolChatState>): SymbolChatState => ({
+    (_key: string, base?: Partial<SymbolChatState>): SymbolChatState => ({
       loading: false,
       input: "",
       messages: [],
@@ -127,7 +126,7 @@ export function useChatState({
         return next;
       });
     },
-    [chatUserId, ensureSymbolChatState, resolveChatModel],
+    [chatUserId, ensureSymbolChatState, plan, planLoading],
   );
 
   const setChatModelMenuOpen = useCallback(
@@ -218,6 +217,7 @@ export function useChatState({
     });
   }, [chatUserId, plan, planLoading]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: chatBySymbol intentionally triggers debounced persistence through chatBySymbolRef.
   useEffect(() => {
     if (!chatUserId || chatHydratedUserRef.current !== chatUserId) return;
 

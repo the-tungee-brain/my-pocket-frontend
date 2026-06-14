@@ -23,7 +23,7 @@ type UseStockDataOptions = {
   symbol?: string | null;
   accessToken?: string | null;
   enabled?: boolean;
-  period?: string;   // "1d" | "5d" | "1mo" | "3mo" | ...
+  period?: string; // "1d" | "5d" | "1mo" | "3mo" | ...
   interval?: string; // "1m" | "15m" | "1d" | ...
 };
 
@@ -49,6 +49,7 @@ export function useStockData({
     setRetryCount((count) => count + 1);
   }, [symbol, period, interval]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retryCount intentionally retriggers this effect after refetch clears the cache.
   useEffect(() => {
     if (!enabled || !symbol || !accessToken) {
       setData(null);
@@ -74,53 +75,53 @@ export function useStockData({
     const controller = new AbortController();
 
     async function fetchStock() {
-        if (!symbol || !accessToken) return
-        try {
-            const params = new URLSearchParams({
-            symbol,
-            period,
-            interval,
-            });
+      if (!symbol || !accessToken) return;
+      try {
+        const params = new URLSearchParams({
+          symbol,
+          period,
+          interval,
+        });
 
-            const res = await apiFetch(`/get-stock-data?${params.toString()}`, {
-            method: "GET",
-            accessToken,
-            signal: controller.signal,
-            cache: "no-store",
-            });
+        const res = await apiFetch(`/get-stock-data?${params.toString()}`, {
+          method: "GET",
+          accessToken,
+          signal: controller.signal,
+          cache: "no-store",
+        });
 
-            if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(`Failed to fetch stock data: ${res.status} ${text}`);
-            }
-
-            const json: StockResponse = await res.json();
-
-            if (!cancelled) {
-            stockCache.set(key, json);
-            setData(json);
-            setError(null);
-            }
-        } catch (e) {
-            if (e instanceof Error && e.name === "AbortError") return;
-            if (!cancelled) {
-            setError(e instanceof Error ? e : new Error("Unknown error"));
-            setData(null);
-            }
-        } finally {
-            if (!cancelled) {
-            setLoading(false);
-            }
-        }
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`Failed to fetch stock data: ${res.status} ${text}`);
         }
 
-        fetchStock();
+        const json: StockResponse = await res.json();
 
-        return () => {
-        cancelled = true;
-        controller.abort();
-        };
-    }, [symbol, accessToken, enabled, period, interval, retryCount]);
+        if (!cancelled) {
+          stockCache.set(key, json);
+          setData(json);
+          setError(null);
+        }
+      } catch (e) {
+        if (e instanceof Error && e.name === "AbortError") return;
+        if (!cancelled) {
+          setError(e instanceof Error ? e : new Error("Unknown error"));
+          setData(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
 
-    return { data, loading, error, refetch };
+    fetchStock();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [symbol, accessToken, enabled, period, interval, retryCount]);
+
+  return { data, loading, error, refetch };
 }
