@@ -33,6 +33,8 @@ import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
 import { RecentActivitySection } from "@/components/RecentActivitySection";
 import { SchwabConnectionBanner } from "@/components/SchwabConnectionBanner";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { LoadingRegion } from "@/components/ui/LoadingRegion";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { appStackClass } from "@/lib/appUi";
 import { parsePositionsSyncedAt } from "@/lib/dataFreshness";
 import {
@@ -139,6 +141,296 @@ function PortfolioNewsPreview({
         </p>
       )}
     </section>
+  );
+}
+
+function SectionHeadingSkeleton({
+  descriptionWidth = "max-w-sm",
+}: {
+  descriptionWidth?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <Skeleton className="h-3 w-36" />
+      <Skeleton className={cn("h-4 w-full", descriptionWidth)} />
+    </div>
+  );
+}
+
+function PortfolioMetricSkeleton() {
+  return (
+    <div className="min-w-0 space-y-2">
+      <Skeleton className="h-3 w-20" />
+      <Skeleton className="h-6 w-24 sm:w-28" />
+    </div>
+  );
+}
+
+function AllocationRowSkeleton({ index }: { index: number }) {
+  const labelWidths = ["w-16", "w-20", "w-14", "w-24", "w-12"];
+  return (
+    <div className="grid gap-3 py-3 sm:grid-cols-[6rem_minmax(0,1fr)_8rem_8rem] sm:items-center">
+      <Skeleton
+        className={cn("h-4", labelWidths[index % labelWidths.length])}
+      />
+      <Skeleton className="h-2 w-full" />
+      <Skeleton className="h-4 w-16 sm:ml-auto" />
+      <div className="space-y-1 sm:text-right">
+        <Skeleton className="h-4 w-20 sm:ml-auto" />
+        {index < 2 ? <Skeleton className="h-3 w-24 sm:ml-auto" /> : null}
+      </div>
+    </div>
+  );
+}
+
+function PortfolioHoldingsTableSkeleton() {
+  const rows = Array.from({ length: 6 }, (_, index) => index);
+
+  return (
+    <>
+      <div className="hidden overflow-x-auto scrollbar-dark md:block">
+        <table className="w-full table-fixed text-sm">
+          <colgroup>
+            <col className="w-[34%]" />
+            <col className="w-[10%]" />
+            <col className="w-[18%]" />
+            <col className="w-[18%]" />
+            <col className="w-[20%]" />
+          </colgroup>
+          <thead className="border-b border-border/60">
+            <tr>
+              {[0, 1, 2, 3, 4].map((index) => (
+                <th key={index} className="py-2.5">
+                  <Skeleton
+                    className={cn("h-3", index === 0 ? "w-14" : "ml-auto w-16")}
+                  />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((index) => (
+              <tr key={index} className="border-t border-border/60">
+                <td className="py-3">
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-14" />
+                    {index < 3 ? <Skeleton className="h-3 w-32" /> : null}
+                  </div>
+                </td>
+                <td className="py-3">
+                  <Skeleton className="ml-auto h-4 w-12" />
+                </td>
+                <td className="py-3">
+                  <Skeleton className="ml-auto h-4 w-20" />
+                </td>
+                <td className="py-3">
+                  <Skeleton className="ml-auto h-4 w-20" />
+                </td>
+                <td className="py-3">
+                  <div className="space-y-1.5">
+                    <Skeleton className="ml-auto h-4 w-20" />
+                    {index % 2 === 0 ? (
+                      <Skeleton className="ml-auto h-3 w-14" />
+                    ) : null}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="divide-y divide-border/60 md:hidden">
+        {rows.slice(0, 5).map((index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between gap-3 py-3"
+          >
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-14" />
+              <Skeleton className="h-3 w-28" />
+              {index < 2 ? <Skeleton className="h-3 w-36" /> : null}
+            </div>
+            <div className="shrink-0 space-y-1.5">
+              <Skeleton className="ml-auto h-4 w-20" />
+              <Skeleton className="ml-auto h-3 w-16" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function PortfolioPageSkeleton({
+  showAccountSections,
+}: {
+  showAccountSections: boolean;
+}) {
+  const metrics = Array.from({ length: 6 }, (_, index) => index);
+  const scoreRows = Array.from({ length: 5 }, (_, index) => index);
+  const allocationRows = Array.from({ length: 6 }, (_, index) => index);
+  const sectorRows = Array.from({ length: 5 }, (_, index) => index);
+  const newsRows = Array.from({ length: 3 }, (_, index) => index);
+
+  return (
+    <LoadingRegion
+      label="Loading portfolio dashboard"
+      className={appStackClass}
+    >
+      <section className={cn(sectionClass, "space-y-5")}>
+        <header className="flex flex-col gap-4 border-b border-border/60 pb-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0 space-y-2">
+            <Skeleton className="h-3 w-32" />
+            <div className="flex flex-wrap items-center gap-2">
+              <Skeleton className="h-3 w-36" />
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-28" />
+        </header>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3 xl:grid-cols-6">
+          {metrics.map((index) => (
+            <PortfolioMetricSkeleton key={index} />
+          ))}
+        </div>
+      </section>
+
+      <section className={cn(sectionClass, "space-y-4")}>
+        <div className="flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-36" />
+            <div className="flex flex-wrap items-end gap-2">
+              <Skeleton className="h-9 w-24" />
+              <Skeleton className="h-5 w-28" />
+            </div>
+          </div>
+          <div className="w-full max-w-md space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-4/5" />
+          </div>
+        </div>
+        <div className="divide-y divide-border/60">
+          {scoreRows.map((index) => (
+            <div
+              key={index}
+              className="grid gap-2 py-3 sm:grid-cols-[11rem_minmax(0,1fr)_5.5rem] sm:items-start"
+            >
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-16 sm:ml-auto" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={cn(sectionClass, "space-y-4")}>
+        <SectionHeadingSkeleton />
+        <div className="divide-y divide-border/60 border-t border-border/60">
+          {allocationRows.map((index) => (
+            <AllocationRowSkeleton key={index} index={index} />
+          ))}
+        </div>
+      </section>
+
+      <section className={cn(sectionClass, "space-y-4")}>
+        <SectionHeadingSkeleton descriptionWidth="max-w-lg" />
+        <div className="divide-y divide-border/60 border-t border-border/60">
+          {sectorRows.map((index) => (
+            <div
+              key={index}
+              className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(10rem,20rem)_4.5rem] sm:items-center"
+            >
+              <div className="min-w-0 space-y-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-44 max-w-full" />
+              </div>
+              <Skeleton className="h-2 w-full" />
+              <Skeleton className="h-4 w-14 sm:ml-auto" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={cn(sectionClass, "space-y-4")}>
+        <SectionHeadingSkeleton />
+        <div className="divide-y divide-border/60 border-t border-border/60">
+          {[0, 1, 2].map((index) => (
+            <div
+              key={index}
+              className="grid gap-2 py-3 sm:grid-cols-[3rem_minmax(0,1fr)_8rem]"
+            >
+              <Skeleton className="h-4 w-6" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-52 max-w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+              </div>
+              <div className="space-y-1.5 sm:text-right">
+                <Skeleton className="h-4 w-16 sm:ml-auto" />
+                <Skeleton className="h-3 w-14 sm:ml-auto" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={cn(sectionClass, "space-y-4")}>
+        <SectionHeadingSkeleton />
+        <PortfolioHoldingsTableSkeleton />
+        <div className="grid gap-4 border-t border-border/60 pt-4 md:grid-cols-2">
+          {[0, 1].map((index) => (
+            <div
+              key={index}
+              className="space-y-3 border-t border-border/60 pt-4"
+            >
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-5 w-36" />
+              <div className="grid grid-cols-2 gap-3">
+                <Skeleton className="h-12" />
+                <Skeleton className="h-12" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {showAccountSections && (
+        <>
+          <section className={cn(sectionClass, "space-y-4")}>
+            <SectionHeadingSkeleton descriptionWidth="max-w-md" />
+            <div className="divide-y divide-border/60 border-t border-border/60">
+              {[0, 1, 2].map((index) => (
+                <div
+                  key={index}
+                  className="grid gap-3 py-3 sm:grid-cols-[8rem_minmax(0,1fr)_7rem] sm:items-center"
+                >
+                  <Skeleton className="h-4 w-24" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-56 max-w-full" />
+                    <Skeleton className="h-3 w-40 max-w-full" />
+                  </div>
+                  <Skeleton className="h-4 w-20 sm:ml-auto" />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className={cn(sectionClass, "space-y-4")}>
+            <SectionHeadingSkeleton descriptionWidth="max-w-xs" />
+            <div className="divide-y divide-border/60 border-t border-border/60">
+              {newsRows.map((index) => (
+                <div key={index} className="space-y-2 py-3">
+                  <Skeleton className="h-4 w-full max-w-2xl" />
+                  <Skeleton className="h-3 w-40" />
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+    </LoadingRegion>
   );
 }
 
@@ -274,14 +566,17 @@ export default function PortfolioPage() {
 
       {error && !schwabReauth && <ErrorBanner message={error} />}
 
+      {loading && (
+        <PortfolioPageSkeleton showAccountSections={!!sessionAccessToken} />
+      )}
+
       {!showContent && !loading && (
         <PortfolioOnboarding className={sectionClass} />
       )}
 
-      {(showContent || loading) && (
+      {showContent && (
         <PortfolioSnapshot
           className={sectionClass}
-          loading={loading}
           allPositions={allPositions}
           symbols={symbols}
           account={account}
