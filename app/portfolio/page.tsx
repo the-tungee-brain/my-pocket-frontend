@@ -50,6 +50,41 @@ import { cn } from "@/lib/utils";
 const sectionClass = pageSectionClass;
 const portfolioSectionTitleClass =
   "text-[11px] font-semibold uppercase tracking-wide text-muted";
+const portfolioChapterClass =
+  "mx-0 w-full max-w-none scroll-mt-24 border-t border-border/60 pt-8 first:border-t-0 first:pt-0";
+
+function PortfolioChapter({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  const titleId = `${id}-title`;
+
+  return (
+    <section
+      id={id}
+      aria-labelledby={titleId}
+      className={cn(portfolioChapterClass, "space-y-5")}
+    >
+      <div className="max-w-3xl">
+        <h2
+          id={titleId}
+          className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
+        >
+          {title}
+        </h2>
+        <p className="mt-1 text-sm text-muted">{description}</p>
+      </div>
+      <div className="space-y-8">{children}</div>
+    </section>
+  );
+}
 
 function PortfolioSectionHeader({
   title,
@@ -157,12 +192,63 @@ function SectionHeadingSkeleton({
   );
 }
 
+function ChapterHeadingSkeleton({ width = "w-48" }: { width?: string }) {
+  return (
+    <div className="space-y-2">
+      <Skeleton className={cn("h-6", width)} />
+      <Skeleton className="h-4 w-full max-w-lg" />
+    </div>
+  );
+}
+
 function PortfolioMetricSkeleton() {
   return (
     <div className="min-w-0 space-y-2">
       <Skeleton className="h-3 w-20" />
       <Skeleton className="h-6 w-24 sm:w-28" />
     </div>
+  );
+}
+
+function PortfolioHeaderSkeleton() {
+  return (
+    <section className={cn(sectionClass, "space-y-5")}>
+      <header className="flex flex-col gap-3 border-b border-border/60 pb-4 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0 space-y-2">
+          <Skeleton className="h-3 w-32" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-3 w-36" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+        </div>
+        <Skeleton className="h-7 w-24" />
+      </header>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.75fr)] lg:items-start">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-36" />
+            <Skeleton className="h-11 w-60 max-w-full sm:h-12" />
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+            {[0, 1, 2].map((index) => (
+              <PortfolioMetricSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+        <div className="space-y-3 border-t border-border/60 pt-4 lg:border-t-0 lg:pt-0">
+          <div className="flex items-center justify-between gap-3">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-5 w-28" />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[0, 1, 2].map((index) => (
+              <Skeleton key={index} className="h-14" />
+            ))}
+          </div>
+          <Skeleton className="h-3 w-40" />
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -267,7 +353,6 @@ function PortfolioPageSkeleton({
 }: {
   showAccountSections: boolean;
 }) {
-  const metrics = Array.from({ length: 6 }, (_, index) => index);
   const scoreRows = Array.from({ length: 5 }, (_, index) => index);
   const allocationRows = Array.from({ length: 6 }, (_, index) => index);
   const sectorRows = Array.from({ length: 5 }, (_, index) => index);
@@ -278,126 +363,128 @@ function PortfolioPageSkeleton({
       label="Loading portfolio dashboard"
       className={appStackClass}
     >
-      <section className={cn(sectionClass, "space-y-5")}>
-        <header className="flex flex-col gap-4 border-b border-border/60 pb-4 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0 space-y-2">
-            <Skeleton className="h-3 w-32" />
-            <div className="flex flex-wrap items-center gap-2">
+      <section className={cn(portfolioChapterClass, "space-y-5")}>
+        <ChapterHeadingSkeleton width="w-44" />
+        <PortfolioHeaderSkeleton />
+      </section>
+
+      <section className={cn(portfolioChapterClass, "space-y-5")}>
+        <ChapterHeadingSkeleton width="w-40" />
+        <div className={cn(sectionClass, "space-y-4")}>
+          <div className="flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-2">
               <Skeleton className="h-3 w-36" />
-              <Skeleton className="h-3 w-28" />
-              <Skeleton className="h-3 w-24" />
+              <div className="flex flex-wrap items-end gap-2">
+                <Skeleton className="h-9 w-24" />
+                <Skeleton className="h-5 w-28" />
+              </div>
             </div>
-          </div>
-          <Skeleton className="h-8 w-28" />
-        </header>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3 xl:grid-cols-6">
-          {metrics.map((index) => (
-            <PortfolioMetricSkeleton key={index} />
-          ))}
-        </div>
-      </section>
-
-      <section className={cn(sectionClass, "space-y-4")}>
-        <div className="flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-3 w-36" />
-            <div className="flex flex-wrap items-end gap-2">
-              <Skeleton className="h-9 w-24" />
-              <Skeleton className="h-5 w-28" />
-            </div>
-          </div>
-          <div className="w-full max-w-md space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-4/5" />
-          </div>
-        </div>
-        <div className="divide-y divide-border/60">
-          {scoreRows.map((index) => (
-            <div
-              key={index}
-              className="grid gap-2 py-3 sm:grid-cols-[11rem_minmax(0,1fr)_5.5rem] sm:items-start"
-            >
-              <Skeleton className="h-4 w-36" />
+            <div className="w-full max-w-md space-y-2">
               <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-16 sm:ml-auto" />
+              <Skeleton className="h-4 w-4/5" />
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className={cn(sectionClass, "space-y-4")}>
-        <SectionHeadingSkeleton />
-        <div className="divide-y divide-border/60 border-t border-border/60">
-          {allocationRows.map((index) => (
-            <AllocationRowSkeleton key={index} index={index} />
-          ))}
-        </div>
-      </section>
-
-      <section className={cn(sectionClass, "space-y-4")}>
-        <SectionHeadingSkeleton descriptionWidth="max-w-lg" />
-        <div className="divide-y divide-border/60 border-t border-border/60">
-          {sectorRows.map((index) => (
-            <div
-              key={index}
-              className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(10rem,20rem)_4.5rem] sm:items-center"
-            >
-              <div className="min-w-0 space-y-1.5">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-44 max-w-full" />
-              </div>
-              <Skeleton className="h-2 w-full" />
-              <Skeleton className="h-4 w-14 sm:ml-auto" />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className={cn(sectionClass, "space-y-4")}>
-        <SectionHeadingSkeleton />
-        <div className="divide-y divide-border/60 border-t border-border/60">
-          {[0, 1, 2].map((index) => (
-            <div
-              key={index}
-              className="grid gap-2 py-3 sm:grid-cols-[3rem_minmax(0,1fr)_8rem]"
-            >
-              <Skeleton className="h-4 w-6" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-52 max-w-full" />
+          </div>
+          <div className="divide-y divide-border/60">
+            {scoreRows.map((index) => (
+              <div
+                key={index}
+                className="grid gap-2 py-3 sm:grid-cols-[11rem_minmax(0,1fr)_5.5rem] sm:items-start"
+              >
+                <Skeleton className="h-4 w-36" />
                 <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-              </div>
-              <div className="space-y-1.5 sm:text-right">
                 <Skeleton className="h-4 w-16 sm:ml-auto" />
-                <Skeleton className="h-3 w-14 sm:ml-auto" />
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className={cn(sectionClass, "space-y-4")}>
-        <SectionHeadingSkeleton />
-        <PortfolioHoldingsTableSkeleton />
-        <div className="grid gap-4 border-t border-border/60 pt-4 md:grid-cols-2">
-          {[0, 1].map((index) => (
-            <div
-              key={index}
-              className="space-y-3 border-t border-border/60 pt-4"
-            >
-              <Skeleton className="h-3 w-28" />
-              <Skeleton className="h-5 w-36" />
-              <div className="grid grid-cols-2 gap-3">
-                <Skeleton className="h-12" />
-                <Skeleton className="h-12" />
+      <section className={cn(portfolioChapterClass, "space-y-5")}>
+        <ChapterHeadingSkeleton width="w-44" />
+        <section className={cn(sectionClass, "space-y-4")}>
+          <SectionHeadingSkeleton />
+          <div className="divide-y divide-border/60 border-t border-border/60">
+            {allocationRows.map((index) => (
+              <AllocationRowSkeleton key={index} index={index} />
+            ))}
+          </div>
+        </section>
+      </section>
+
+      <section className={cn(portfolioChapterClass, "space-y-5")}>
+        <ChapterHeadingSkeleton width="w-56" />
+        <section className={cn(sectionClass, "space-y-4")}>
+          <SectionHeadingSkeleton descriptionWidth="max-w-lg" />
+          <div className="divide-y divide-border/60 border-t border-border/60">
+            {sectorRows.map((index) => (
+              <div
+                key={index}
+                className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(10rem,20rem)_4.5rem] sm:items-center"
+              >
+                <div className="min-w-0 space-y-1.5">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-44 max-w-full" />
+                </div>
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-4 w-14 sm:ml-auto" />
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
+      </section>
+
+      <section className={cn(portfolioChapterClass, "space-y-5")}>
+        <ChapterHeadingSkeleton width="w-28" />
+        <section className={cn(sectionClass, "space-y-4")}>
+          <SectionHeadingSkeleton />
+          <PortfolioHoldingsTableSkeleton />
+          <div className="grid gap-4 border-t border-border/60 pt-4 md:grid-cols-2">
+            {[0, 1].map((index) => (
+              <div
+                key={index}
+                className="space-y-3 border-t border-border/60 pt-4"
+              >
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="h-5 w-36" />
+                <div className="grid grid-cols-2 gap-3">
+                  <Skeleton className="h-12" />
+                  <Skeleton className="h-12" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </section>
+
+      <section className={cn(portfolioChapterClass, "space-y-5")}>
+        <ChapterHeadingSkeleton width="w-64" />
+        <section className={cn(sectionClass, "space-y-4")}>
+          <SectionHeadingSkeleton />
+          <div className="divide-y divide-border/60 border-t border-border/60">
+            {[0, 1, 2].map((index) => (
+              <div
+                key={index}
+                className="grid gap-2 py-3 sm:grid-cols-[3rem_minmax(0,1fr)_8rem]"
+              >
+                <Skeleton className="h-4 w-6" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-52 max-w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+                <div className="space-y-1.5 sm:text-right">
+                  <Skeleton className="h-4 w-16 sm:ml-auto" />
+                  <Skeleton className="h-3 w-14 sm:ml-auto" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </section>
 
       {showAccountSections && (
-        <>
+        <section className={cn(portfolioChapterClass, "space-y-5")}>
+          <ChapterHeadingSkeleton width="w-44" />
           <section className={cn(sectionClass, "space-y-4")}>
             <SectionHeadingSkeleton descriptionWidth="max-w-md" />
             <div className="divide-y divide-border/60 border-t border-border/60">
@@ -428,7 +515,7 @@ function PortfolioPageSkeleton({
               ))}
             </div>
           </section>
-        </>
+        </section>
       )}
     </LoadingRegion>
   );
@@ -575,53 +662,38 @@ export default function PortfolioPage() {
       )}
 
       {showContent && (
-        <PortfolioSnapshot
-          className={sectionClass}
-          allPositions={allPositions}
-          symbols={symbols}
-          account={account}
-          cashSecuredPutSummary={cashSecuredPutSummary}
-          portfolioMetrics={portfolioMetrics}
-          briefPending={positionsDataFreshness?.briefStatus === "pending"}
-          positionsSyncedAt={parsePositionsSyncedAt(
-            positionsDataFreshness?.positionsSyncedAt,
-          )}
-        />
+        <PortfolioChapter
+          id="portfolio-summary"
+          title="Portfolio Summary"
+          description="Your account value, performance, and cash position"
+        >
+          <PortfolioSnapshot
+            className={sectionClass}
+            allPositions={allPositions}
+            symbols={symbols}
+            account={account}
+            cashSecuredPutSummary={cashSecuredPutSummary}
+            portfolioMetrics={portfolioMetrics}
+            portfolioOptimization={optimization ?? localOptimization}
+            briefPending={positionsDataFreshness?.briefStatus === "pending"}
+            positionsSyncedAt={parsePositionsSyncedAt(
+              positionsDataFreshness?.positionsSyncedAt,
+            )}
+          />
+        </PortfolioChapter>
       )}
 
       {showContent && (
         <>
-          <DiversificationScoreSection
-            className={sectionClass}
-            optimization={optimization}
-            loading={optimizationLoading && !optimization}
-          />
-
-          <StockDiversificationSection
-            className={sectionClass}
-            stockWeights={optimization?.stockWeights ?? []}
-          />
-
-          <SectorDiversificationRows
-            className={sectionClass}
-            sectors={sectorWeights}
-          />
-
-          <OptimizationSuggestionsSection
-            className={sectionClass}
-            optimization={optimization}
-          />
-
-          <section className={cn(sectionClass, "space-y-4")}>
-            <div>
-              <h2 className={portfolioSectionTitleClass}>Holdings detail</h2>
-              <p className="mt-1 text-sm text-muted">
-                Full position table for review after the allocation summary.
-              </p>
-            </div>
-            <PortfolioHoldingsTable
-              summaries={symbolSummaries}
-              symbolAlertMap={symbolAlertMap}
+          <PortfolioChapter
+            id="portfolio-health"
+            title="Portfolio Health"
+            description="Diversification, concentration risk, and portfolio quality"
+          >
+            <DiversificationScoreSection
+              className={sectionClass}
+              optimization={optimization}
+              loading={optimizationLoading && !optimization}
             />
             <PortfolioRiskSection
               cashSecuredPutSummary={cashSecuredPutSummary}
@@ -630,25 +702,80 @@ export default function PortfolioPage() {
                 account?.securitiesAccount.currentBalances.cashBalance
               }
             />
-          </section>
+          </PortfolioChapter>
 
-          {sessionAccessToken && (
-            <RecentActivitySection
+          <PortfolioChapter
+            id="stock-allocation"
+            title="Stock Allocation"
+            description="How your portfolio is distributed across individual holdings"
+          >
+            <StockDiversificationSection
               className={sectionClass}
-              accessToken={sessionAccessToken}
-              summary={recentActivity}
-              onRefresh={() => refreshPositions(true)}
-              onRunSuggestedAction={handleSuggestedAction}
-              compact
-              hideSuggestedActions
+              stockWeights={optimization?.stockWeights ?? []}
             />
-          )}
+          </PortfolioChapter>
+
+          <PortfolioChapter
+            id="sector-diversification"
+            title="Sector Diversification"
+            description="Exposure across market sectors"
+          >
+            <SectorDiversificationRows
+              className={sectionClass}
+              sectors={sectorWeights}
+            />
+          </PortfolioChapter>
+
+          <PortfolioChapter
+            id="holdings"
+            title="Holdings"
+            description="Detailed positions and performance"
+          >
+            <section className={cn(sectionClass, "space-y-4")}>
+              <div>
+                <h3 className={portfolioSectionTitleClass}>Holdings detail</h3>
+                <p className="mt-1 text-sm text-muted">
+                  Full position table for review after the allocation summary.
+                </p>
+              </div>
+              <PortfolioHoldingsTable
+                summaries={symbolSummaries}
+                symbolAlertMap={symbolAlertMap}
+              />
+            </section>
+          </PortfolioChapter>
+
+          <PortfolioChapter
+            id="optimization-suggestions"
+            title="Optimization Suggestions"
+            description="Potential actions to improve diversification and reduce risk"
+          >
+            <OptimizationSuggestionsSection
+              className={sectionClass}
+              optimization={optimization}
+            />
+          </PortfolioChapter>
 
           {sessionAccessToken && (
-            <PortfolioNewsPreview
-              items={portfolioNewsItems}
-              loading={portfolioNewsLoading}
-            />
+            <PortfolioChapter
+              id="portfolio-insights"
+              title="Portfolio Insights"
+              description="Recent account activity and headlines from larger holdings"
+            >
+              <RecentActivitySection
+                className={sectionClass}
+                accessToken={sessionAccessToken}
+                summary={recentActivity}
+                onRefresh={() => refreshPositions(true)}
+                onRunSuggestedAction={handleSuggestedAction}
+                compact
+                hideSuggestedActions
+              />
+              <PortfolioNewsPreview
+                items={portfolioNewsItems}
+                loading={portfolioNewsLoading}
+              />
+            </PortfolioChapter>
           )}
         </>
       )}

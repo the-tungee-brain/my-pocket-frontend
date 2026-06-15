@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { SectorWeight } from "@/app/types/intelligence";
 import type {
   PortfolioOptimizationBreakdown,
@@ -9,6 +10,7 @@ import type {
 } from "@/app/types/portfolioOptimization";
 import { formatUsd } from "@/lib/formatCurrency";
 import { formatSectorLabel } from "@/lib/intelligence";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
 
 const titleClass =
@@ -164,9 +166,12 @@ export function StockDiversificationSection({
               key={item.symbol}
               className="grid gap-3 py-3 sm:grid-cols-[6rem_minmax(0,1fr)_8rem_8rem] sm:items-center"
             >
-              <p className="font-mono text-sm font-medium text-foreground">
+              <Link
+                href={symbolHubPath(item.symbol, "overview")}
+                className="font-mono text-sm font-medium text-foreground hover:underline"
+              >
                 {item.symbol}
-              </p>
+              </Link>
               <div className="h-2 bg-border/50">
                 <div
                   className="h-full bg-foreground"
