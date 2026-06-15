@@ -1,10 +1,12 @@
 "use client";
 
 import { Timer } from "lucide-react";
+import Link from "next/link";
 import type { AssignmentRiskSummary as AssignmentRiskSummaryData } from "@/app/types/schwab";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { formatUsd } from "@/lib/formatCurrency";
 import { formatOptionExpiration } from "@/lib/dateUtils";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -89,17 +91,22 @@ export function AssignmentRiskSummary({
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">
-                  <span className="font-mono">{label}</span>
-                  <span className="text-muted"> · </span>
-                  <span className="text-muted">
-                    {entry.strike != null
-                      ? formatUsd(entry.strike, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 2,
-                        })
-                      : "—"}{" "}
-                    {optionType}
-                  </span>
+                  <Link
+                    href={symbolHubPath(label, "position")}
+                    className="hover:underline"
+                  >
+                    <span className="font-mono">{label}</span>
+                    <span className="text-muted"> · </span>
+                    <span className="text-muted">
+                      {entry.strike != null
+                        ? formatUsd(entry.strike, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })
+                        : "—"}{" "}
+                      {optionType}
+                    </span>
+                  </Link>
                 </p>
                 <p className="mt-0.5 text-xs text-muted">
                   {formatStrategy(entry.strategy)} ·{" "}

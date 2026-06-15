@@ -26,7 +26,6 @@ import {
   DiversificationScoreSection,
   OptimizationSuggestionsSection,
   SectorDiversificationRows,
-  StockDiversificationSection,
 } from "@/components/PortfolioOptimizationSection";
 import { PortfolioRiskSection } from "@/components/PortfolioRiskSection";
 import { PortfolioSnapshot } from "@/components/PortfolioSnapshot";
@@ -252,23 +251,6 @@ function PortfolioHeaderSkeleton() {
   );
 }
 
-function AllocationRowSkeleton({ index }: { index: number }) {
-  const labelWidths = ["w-16", "w-20", "w-14", "w-24", "w-12"];
-  return (
-    <div className="grid gap-3 py-3 sm:grid-cols-[6rem_minmax(0,1fr)_8rem_8rem] sm:items-center">
-      <Skeleton
-        className={cn("h-4", labelWidths[index % labelWidths.length])}
-      />
-      <Skeleton className="h-2 w-full" />
-      <Skeleton className="h-4 w-16 sm:ml-auto" />
-      <div className="space-y-1 sm:text-right">
-        <Skeleton className="h-4 w-20 sm:ml-auto" />
-        {index < 2 ? <Skeleton className="h-3 w-24 sm:ml-auto" /> : null}
-      </div>
-    </div>
-  );
-}
-
 function PortfolioHoldingsTableSkeleton() {
   const rows = Array.from({ length: 6 }, (_, index) => index);
 
@@ -277,18 +259,26 @@ function PortfolioHoldingsTableSkeleton() {
       <div className="hidden overflow-x-auto scrollbar-dark md:block">
         <table className="w-full table-fixed text-sm">
           <colgroup>
-            <col className="w-[34%]" />
+            <col className="w-[28%]" />
+            <col className="w-[16%]" />
             <col className="w-[10%]" />
-            <col className="w-[18%]" />
-            <col className="w-[18%]" />
-            <col className="w-[20%]" />
+            <col className="w-[15%]" />
+            <col className="w-[15%]" />
+            <col className="w-[16%]" />
           </colgroup>
           <thead className="border-b border-border/60">
             <tr>
-              {[0, 1, 2, 3, 4].map((index) => (
+              {[0, 1, 2, 3, 4, 5].map((index) => (
                 <th key={index} className="py-2.5">
                   <Skeleton
-                    className={cn("h-3", index === 0 ? "w-14" : "ml-auto w-16")}
+                    className={cn(
+                      "h-3",
+                      index === 0
+                        ? "w-14"
+                        : index === 1
+                          ? "w-20"
+                          : "ml-auto w-16",
+                    )}
                   />
                 </th>
               ))}
@@ -302,6 +292,9 @@ function PortfolioHoldingsTableSkeleton() {
                     <Skeleton className="h-4 w-14" />
                     {index < 3 ? <Skeleton className="h-3 w-32" /> : null}
                   </div>
+                </td>
+                <td className="py-3">
+                  <Skeleton className="h-2 w-full" />
                 </td>
                 <td className="py-3">
                   <Skeleton className="ml-auto h-4 w-12" />
@@ -335,6 +328,7 @@ function PortfolioHoldingsTableSkeleton() {
             <div className="min-w-0 flex-1 space-y-1.5">
               <Skeleton className="h-4 w-14" />
               <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-1.5 w-36 max-w-full" />
               {index < 2 ? <Skeleton className="h-3 w-36" /> : null}
             </div>
             <div className="shrink-0 space-y-1.5">
@@ -354,7 +348,6 @@ function PortfolioPageSkeleton({
   showAccountSections: boolean;
 }) {
   const scoreRows = Array.from({ length: 5 }, (_, index) => index);
-  const allocationRows = Array.from({ length: 6 }, (_, index) => index);
   const sectorRows = Array.from({ length: 5 }, (_, index) => index);
   const newsRows = Array.from({ length: 3 }, (_, index) => index);
 
@@ -403,11 +396,7 @@ function PortfolioPageSkeleton({
         <ChapterHeadingSkeleton width="w-44" />
         <section className={cn(sectionClass, "space-y-4")}>
           <SectionHeadingSkeleton />
-          <div className="divide-y divide-border/60 border-t border-border/60">
-            {allocationRows.map((index) => (
-              <AllocationRowSkeleton key={index} index={index} />
-            ))}
-          </div>
+          <PortfolioHoldingsTableSkeleton />
         </section>
       </section>
 
@@ -427,29 +416,6 @@ function PortfolioPageSkeleton({
                 </div>
                 <Skeleton className="h-2 w-full" />
                 <Skeleton className="h-4 w-14 sm:ml-auto" />
-              </div>
-            ))}
-          </div>
-        </section>
-      </section>
-
-      <section className={cn(portfolioChapterClass, "space-y-5")}>
-        <ChapterHeadingSkeleton width="w-28" />
-        <section className={cn(sectionClass, "space-y-4")}>
-          <SectionHeadingSkeleton />
-          <PortfolioHoldingsTableSkeleton />
-          <div className="grid gap-4 border-t border-border/60 pt-4 md:grid-cols-2">
-            {[0, 1].map((index) => (
-              <div
-                key={index}
-                className="space-y-3 border-t border-border/60 pt-4"
-              >
-                <Skeleton className="h-3 w-28" />
-                <Skeleton className="h-5 w-36" />
-                <div className="grid grid-cols-2 gap-3">
-                  <Skeleton className="h-12" />
-                  <Skeleton className="h-12" />
-                </div>
               </div>
             ))}
           </div>
@@ -705,37 +671,15 @@ export default function PortfolioPage() {
           </PortfolioChapter>
 
           <PortfolioChapter
-            id="stock-allocation"
-            title="Stock Allocation"
-            description="How your portfolio is distributed across individual holdings"
-          >
-            <StockDiversificationSection
-              className={sectionClass}
-              stockWeights={optimization?.stockWeights ?? []}
-            />
-          </PortfolioChapter>
-
-          <PortfolioChapter
-            id="sector-diversification"
-            title="Sector Diversification"
-            description="Exposure across market sectors"
-          >
-            <SectorDiversificationRows
-              className={sectionClass}
-              sectors={sectorWeights}
-            />
-          </PortfolioChapter>
-
-          <PortfolioChapter
-            id="holdings"
-            title="Holdings"
-            description="Detailed positions and performance"
+            id="holdings-allocation"
+            title="Holdings & Allocation"
+            description="What you own and how much each position contributes to the portfolio."
           >
             <section className={cn(sectionClass, "space-y-4")}>
               <div>
-                <h3 className={portfolioSectionTitleClass}>Holdings detail</h3>
+                <h3 className={portfolioSectionTitleClass}>All holdings</h3>
                 <p className="mt-1 text-sm text-muted">
-                  Full position table for review after the allocation summary.
+                  Full review table with weight, value, and performance.
                 </p>
               </div>
               <PortfolioHoldingsTable
@@ -743,6 +687,17 @@ export default function PortfolioPage() {
                 symbolAlertMap={symbolAlertMap}
               />
             </section>
+          </PortfolioChapter>
+
+          <PortfolioChapter
+            id="sector-diversification"
+            title="Sector Diversification"
+            description="Where your portfolio risk is concentrated by sector"
+          >
+            <SectorDiversificationRows
+              className={sectionClass}
+              sectors={sectorWeights}
+            />
           </PortfolioChapter>
 
           <PortfolioChapter

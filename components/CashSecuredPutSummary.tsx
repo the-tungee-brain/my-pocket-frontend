@@ -1,10 +1,12 @@
 "use client";
 
 import { LockKeyhole } from "lucide-react";
+import Link from "next/link";
 import type { CashSecuredPutSummary as CashSecuredPutSummaryData } from "@/app/types/schwab";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { KpiStat } from "@/components/ui/KpiStat";
 import { formatUsd } from "@/lib/formatCurrency";
+import { symbolHubPath } from "@/lib/symbolRoutes";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -124,11 +126,16 @@ export function CashSecuredPutSummary({
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
-                        <span className="font-mono">{label}</span>
-                        <span className="text-muted"> · </span>
-                        <span className="text-muted">
-                          {formatStrike(item.strike)} put
-                        </span>
+                        <Link
+                          href={symbolHubPath(label, "position")}
+                          className="hover:underline"
+                        >
+                          <span className="font-mono">{label}</span>
+                          <span className="text-muted"> · </span>
+                          <span className="text-muted">
+                            {formatStrike(item.strike)} put
+                          </span>
+                        </Link>
                       </p>
                       <p className="mt-0.5 text-xs text-muted">
                         {contractLabel}

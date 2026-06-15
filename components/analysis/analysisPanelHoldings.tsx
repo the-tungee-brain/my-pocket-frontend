@@ -175,15 +175,17 @@ export function PortfolioHoldingsTable({
       <div className="hidden overflow-x-auto scrollbar-dark md:block">
         <table className="w-full table-fixed text-sm">
           <colgroup>
-            <col className="w-[34%]" />
+            <col className="w-[28%]" />
+            <col className="w-[16%]" />
             <col className="w-[10%]" />
-            <col className="w-[18%]" />
-            <col className="w-[18%]" />
-            <col className="w-[20%]" />
+            <col className="w-[15%]" />
+            <col className="w-[15%]" />
+            <col className="w-[16%]" />
           </colgroup>
           <thead className="border-b border-border/60 text-[11px] font-medium uppercase tracking-wide text-muted">
             <tr>
               <th className="py-2.5 text-left">Symbol</th>
+              <th className="py-2.5 text-left">Allocation</th>
               <th className="whitespace-nowrap py-2.5 text-right">Weight</th>
               <th className={HOLDINGS_METRIC_TH_CLASS}>Value</th>
               <th className={HOLDINGS_METRIC_TH_CLASS}>Today P/L</th>
@@ -231,6 +233,22 @@ export function PortfolioHoldingsTable({
                               }`}
                           </p>
                         )}
+                      </div>
+                    </td>
+                    <td className="py-3">
+                      <div className="h-2 bg-border/50" aria-hidden="true">
+                        <div
+                          className="h-full bg-foreground"
+                          style={{
+                            width:
+                              weightPct != null
+                                ? `${Math.max(
+                                    0,
+                                    Math.min(100, weightPct),
+                                  )}%`
+                                : "0%",
+                          }}
+                        />
                       </div>
                     </td>
                     <td className="whitespace-nowrap py-3 text-right tabular-nums text-muted">
@@ -299,6 +317,20 @@ export function PortfolioHoldingsTable({
                   {weightPct != null ? `${weightPct.toFixed(1)}% · ` : ""}
                   {formatUsd(totalValue)}
                 </p>
+                <div
+                  className="mt-2 h-1.5 w-36 max-w-full bg-border/50"
+                  aria-hidden="true"
+                >
+                  <div
+                    className="h-full bg-foreground"
+                    style={{
+                      width:
+                        weightPct != null
+                          ? `${Math.max(0, Math.min(100, weightPct))}%`
+                          : "0%",
+                    }}
+                  />
+                </div>
                 {(concentration || symbolAlertMap[symbol]) && (
                   <p
                     className={cn(
