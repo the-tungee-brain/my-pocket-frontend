@@ -67,6 +67,14 @@ export type PortfolioOptimizationSuggestion = {
   estimatedShares?: number | null;
   impactScore: number;
   estimatedScoreImprovement: number;
+  estimatedScoreBreakdown?: Array<{
+    label: string;
+    points: number;
+  }>;
+  planDetails?: Array<{
+    label: string;
+    value: string;
+  }>;
   symbols: string[];
 };
 

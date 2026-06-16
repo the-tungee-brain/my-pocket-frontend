@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { SectorWeight } from "@/app/types/intelligence";
 import type {
   PortfolioOptimizationBreakdown,
   PortfolioOptimizationBreakdownItem,
   PortfolioOptimizationResponse,
   PortfolioOptimizationScoreTone,
-  PortfolioOptimizationSuggestion,
   PortfolioStockWeight,
 } from "@/app/types/portfolioOptimization";
 import { formatUsd } from "@/lib/formatCurrency";
@@ -96,7 +96,9 @@ function scoreChipClass(tone: PortfolioOptimizationScoreTone) {
 }
 
 function scoreColorStyle(optimization: PortfolioOptimizationResponse) {
-  return optimization.scoreColor ? { color: optimization.scoreColor } : undefined;
+  return optimization.scoreColor
+    ? { color: optimization.scoreColor }
+    : undefined;
 }
 
 function formatAllocation(value: number | null | undefined) {
@@ -109,18 +111,44 @@ function formatApproxUsd(value: number | null | undefined) {
   return `~${formatUsd(value, { maximumFractionDigits: 0 })}`;
 }
 
-function formatCurrentTarget(item: PortfolioOptimizationSuggestion) {
-  const currentAllocation = formatAllocation(item.currentAllocationPct);
-  const targetAllocation = formatAllocation(item.targetAllocationPct);
-  if (!currentAllocation || !targetAllocation) return null;
+function formatAllocationValue(
+  allocation: number | null | undefined,
+  value: number | null | undefined,
+) {
+  const allocationLabel = formatAllocation(allocation);
+  if (!allocationLabel) return null;
 
-  const currentValue = formatApproxUsd(item.currentValue);
-  const targetValue = formatApproxUsd(item.targetValue);
-  const current = currentValue
-    ? `${currentAllocation} / ${currentValue}`
-    : currentAllocation;
-  const target = targetValue ? `${targetAllocation} / ${targetValue}` : targetAllocation;
-  return `${current} -> ${target}`;
+  const valueLabel = formatApproxUsd(value);
+  return valueLabel ? `${allocationLabel} · ${valueLabel}` : allocationLabel;
+}
+
+function formatScoreDelta(value: number) {
+  const rounded = Math.round(value);
+  return Number.isInteger(value) || Math.abs(value - rounded) < 0.05
+    ? String(rounded)
+    : value.toFixed(1);
+}
+
+function formatScoreImpact(currentScore: number, improvement: number) {
+  const nextScore = Math.min(100, Math.round(currentScore + improvement));
+  return `${currentScore} → ${nextScore} (+${formatScoreDelta(improvement)})`;
+}
+
+function SuggestionField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+        {label}
+      </p>
+      <div className="mt-1 text-sm text-foreground">{children}</div>
+    </div>
+  );
 }
 
 export function DiversificationScoreSection({
@@ -366,44 +394,113 @@ export function OptimizationSuggestionsSection({
         <h2 className={titleClass}>Optimization suggestions</h2>
         <p className="mt-1 text-sm text-muted">
           Highest-impact changes ranked by estimated score improvement.
+          Suggestions may overlap. Completing one action may partially satisfy
+          others.
         </p>
       </div>
       {suggestions.length ? (
         <div className="divide-y divide-border/60 border-t border-border/60">
-          {suggestions.map((item) => (
-            <div
-              key={`${item.rank}-${item.category}-${item.title}`}
-              className="grid gap-2 py-3 sm:grid-cols-[3rem_minmax(0,1fr)_8rem]"
-            >
-              <p className="text-sm text-muted">{item.rank}.</p>
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {item.title}
-                </p>
-                {formatCurrentTarget(item) ? (
-                  <p className="mt-1 text-xs font-medium tabular-nums text-foreground">
-                    Current → Target: {formatCurrentTarget(item)}
+          {suggestions.map((item) => {
+            const current = formatAllocationValue(
+              item.currentAllocationPct,
+              item.currentValue,
+            );
+            const target = formatAllocationValue(
+              item.targetAllocationPct,
+              item.targetValue,
+            );
+            const scoreBreakdown = item.estimatedScoreBreakdown ?? [];
+            const planDetails = item.planDetails ?? [];
+
+            return (
+              <div
+                key={`${item.rank}-${item.category}-${item.title}`}
+                className="py-4"
+              >
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-foreground">
+                    {item.title}
                   </p>
-                ) : null}
-                <p className="mt-1 text-sm text-muted">
-                  Action: {item.action}
-                </p>
-                <p className="mt-1 text-sm text-muted">{item.why}</p>
+
+                  {current || target ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {current ? (
+                        <SuggestionField label="Current">
+                          <span className="tabular-nums">{current}</span>
+                        </SuggestionField>
+                      ) : null}
+                      {target ? (
+                        <SuggestionField label="Target">
+                          <span className="tabular-nums">{target}</span>
+                        </SuggestionField>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  <SuggestionField label="Suggested action">
+                    <p className="text-muted">{item.action}</p>
+                  </SuggestionField>
+
+                  {planDetails.length ? (
+                    <SuggestionField label="Plan details">
+                      <dl className="grid gap-2 text-muted sm:grid-cols-2">
+                        {planDetails.map((detail) => (
+                          <div key={`${item.rank}-${detail.label}`}>
+                            <dt className="text-xs text-muted">
+                              {detail.label}
+                            </dt>
+                            <dd className="mt-0.5 text-sm text-foreground">
+                              {detail.value}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </SuggestionField>
+                  ) : null}
+
+                  <SuggestionField label="Estimated score impact">
+                    <p className="font-medium tabular-nums">
+                      {formatScoreImpact(
+                        currentScore,
+                        item.estimatedScoreImprovement,
+                      )}
+                    </p>
+                  </SuggestionField>
+
+                  {scoreBreakdown.length ? (
+                    <SuggestionField label="Breakdown">
+                      <ul className="space-y-1 text-muted">
+                        {scoreBreakdown.map((breakdownItem) => (
+                          <li
+                            key={`${item.rank}-${breakdownItem.label}`}
+                            className="flex gap-2"
+                          >
+                            <span className="min-w-0 flex-1">
+                              {breakdownItem.label}
+                            </span>
+                            <span className="tabular-nums text-foreground">
+                              +{formatScoreDelta(breakdownItem.points)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </SuggestionField>
+                  ) : null}
+
+                  <SuggestionField label="Why">
+                    <p className="text-muted">{item.why}</p>
+                  </SuggestionField>
+
+                  <SuggestionField label="Note">
+                    <p className="text-muted">
+                      Suggestions may overlap, so score improvements should not
+                      be added together.
+                    </p>
+                  </SuggestionField>
+                </div>
               </div>
-              <div className="text-left sm:text-right">
-                <p className="text-sm font-medium tabular-nums text-foreground">
-                  {currentScore} →{" "}
-                  {Math.min(
-                    100,
-                    Math.round(currentScore + item.estimatedScoreImprovement),
-                  )}
-                </p>
-                <p className="mt-0.5 text-[11px] text-muted">
-                  +{item.estimatedScoreImprovement.toFixed(1)} pts
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <p className="border-t border-border/60 py-3 text-sm text-muted">

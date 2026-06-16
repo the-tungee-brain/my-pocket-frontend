@@ -83,8 +83,26 @@ function dollarPhrase(value: number) {
 }
 
 function sharesPhrase(value: number) {
-  if (value === Math.round(value)) return `${Math.round(value)} shares`;
-  return `${value.toFixed(2)} shares`;
+  return `${Math.round(value)} shares`;
+}
+
+function pctPhrase(value: number) {
+  return `${value.toFixed(1)}%`;
+}
+
+function scoreBreakdown(
+  items: Array<{ label: string; points: number }>,
+): Array<{ label: string; points: number }> {
+  return items
+    .map((item) => ({ ...item, points: Math.round(item.points) }))
+    .filter((item) => item.points > 0);
+}
+
+function sectorRedirectPhrase(sector: string) {
+  if (sector === UNKNOWN_SECTOR_LABEL) {
+    return "Healthcare, Financials, Industrials, Consumer Staples, or broad-market ETFs as sector metadata improves";
+  }
+  return `Healthcare, Financials, Industrials, Consumer Staples, broad-market ETFs, and other non-${sector} exposure`;
 }
 
 function emptyOptimization(dataGaps: string[]): PortfolioOptimizationResponse {
@@ -134,13 +152,18 @@ function positionRows(positions: Position[]): HoldingRow[] {
       quantity:
         (existing?.quantity ?? 0) +
         (instrument.assetType === "EQUITY"
-          ? Math.abs((position.longQuantity ?? 0) - (position.shortQuantity ?? 0))
+          ? Math.abs(
+              (position.longQuantity ?? 0) - (position.shortQuantity ?? 0),
+            )
           : 0),
       latestPrice:
         instrument.assetType === "EQUITY" &&
-        Math.abs((position.longQuantity ?? 0) - (position.shortQuantity ?? 0)) > 0
+        Math.abs((position.longQuantity ?? 0) - (position.shortQuantity ?? 0)) >
+          0
           ? Math.abs(position.marketValue) /
-            Math.abs((position.longQuantity ?? 0) - (position.shortQuantity ?? 0))
+            Math.abs(
+              (position.longQuantity ?? 0) - (position.shortQuantity ?? 0),
+            )
           : existing?.latestPrice,
     });
   }
@@ -281,6 +304,11 @@ export function buildLocalPortfolioOptimization({
   const suggestions: PortfolioOptimizationResponse["rankedSuggestions"] = [];
   const rowsBySymbol = new Map(rows.map((row) => [row.symbol, row]));
   const topStock = stockWeights[0] ?? null;
+  const targetEtfWeight = 25;
+  const shouldMergeConcentrationPlan =
+    !!topStock &&
+    topStock.portfolioWeightPct >= 50 &&
+    etfWeight < targetEtfWeight;
   if (topStock && topStock.portfolioWeightPct >= 20) {
     const target =
       topStock.portfolioWeightPct >= 70
@@ -295,14 +323,30 @@ export function buildLocalPortfolioOptimization({
       row?.assetType === "EQUITY" && row.latestPrice && row.latestPrice > 0
         ? Math.round((Math.abs(deltaValue) / row.latestPrice) * 100) / 100
         : null;
+    const estimatedScoreImprovement = Math.round(
+      Math.min(30, Math.max(topStock.portfolioWeightPct - target, 0) * 0.5),
+    );
+    const targetEtfValue = allocationValue(liquidationValue, targetEtfWeight);
+    const etfDeltaValue =
+      targetEtfValue - allocationValue(liquidationValue, etfWeight);
     suggestions.push({
       rank: 1,
-      category: "stockConcentration",
-      title: `Trim ${topStock.symbol} toward ${target}%`,
-      why: `${topStock.symbol} is the main source of single-name concentration risk.`,
-      action: `Educational estimate: trim about ${dollarPhrase(deltaValue)} of ${topStock.symbol}${
-        estimatedShares ? `, roughly ${sharesPhrase(estimatedShares)}` : ""
-      } to move toward ${target.toFixed(1)}%.`,
+      category: shouldMergeConcentrationPlan
+        ? "portfolioRebalance"
+        : "stockConcentration",
+      title: shouldMergeConcentrationPlan
+        ? `Trim ${topStock.symbol} and diversify into broad-market ETFs`
+        : `Trim ${topStock.symbol} toward ${target}%`,
+      why: shouldMergeConcentrationPlan
+        ? `${topStock.symbol} is the main concentration risk; using part of the trim to build broad ETF exposure also reduces sector and single-stock dependence.`
+        : `${topStock.symbol} is the main source of single-name concentration risk.`,
+      action: shouldMergeConcentrationPlan
+        ? `Trim approximately ${dollarPhrase(deltaValue)} of ${topStock.symbol}${
+            estimatedShares ? `, about ${sharesPhrase(estimatedShares)}` : ""
+          }. Fund this by trimming concentrated positions, redirecting future contributions, or reallocating excess cash.`
+        : `Trim approximately ${dollarPhrase(deltaValue)} of ${topStock.symbol}${
+            estimatedShares ? `, about ${sharesPhrase(estimatedShares)}` : ""
+          }.`,
       currentAllocationPct: topStock.portfolioWeightPct,
       targetAllocationPct: target,
       currentValue: topStock.marketValue,
@@ -310,55 +354,136 @@ export function buildLocalPortfolioOptimization({
       deltaValue,
       estimatedShares,
       impactScore: Math.min(100, topStock.portfolioWeightPct * 1.4),
-      estimatedScoreImprovement: Math.round(
-        Math.min(30, Math.max(topStock.portfolioWeightPct - target, 0) * 0.5),
-      ),
+      estimatedScoreImprovement,
+      estimatedScoreBreakdown: scoreBreakdown([
+        {
+          label: "Single-name concentration",
+          points: estimatedScoreImprovement * 0.7,
+        },
+        {
+          label: "Sector diversification",
+          points: estimatedScoreImprovement * 0.2,
+        },
+        {
+          label: "ETF exposure",
+          points: estimatedScoreImprovement * 0.1,
+        },
+      ]),
+      planDetails: [
+        {
+          label: `${topStock.symbol} allocation`,
+          value: `${pctPhrase(topStock.portfolioWeightPct)} -> ${pctPhrase(target)}`,
+        },
+        {
+          label: "Trim amount",
+          value: estimatedShares
+            ? `${dollarPhrase(deltaValue)} / about ${sharesPhrase(estimatedShares)}`
+            : dollarPhrase(deltaValue),
+        },
+        ...(shouldMergeConcentrationPlan
+          ? [
+              {
+                label: "Target ETF exposure",
+                value: `${pctPhrase(targetEtfWeight)} · ${dollarPhrase(targetEtfValue)}`,
+              },
+              {
+                label: "ETF funding gap",
+                value: dollarPhrase(etfDeltaValue),
+              },
+              {
+                label: "Destinations",
+                value:
+                  "Broad-market ETFs plus Healthcare, Financials, Industrials, and Consumer Staples exposure.",
+              },
+            ]
+          : []),
+      ],
       symbols: [topStock.symbol],
     });
   }
-  if (topSector && topSector.weightPct >= 35) {
+  if (topSector && topSector.weightPct >= 35 && !shouldMergeConcentrationPlan) {
     const target = topSector.weightPct >= 60 ? 60 : 35;
     const currentValue = allocationValue(liquidationValue, topSector.weightPct);
     const targetValue = allocationValue(liquidationValue, target);
     const deltaValue = targetValue - currentValue;
+    const estimatedScoreImprovement = Math.round(
+      Math.min(25, Math.max(topSector.weightPct - target, 0) * 0.3),
+    );
     suggestions.push({
       rank: suggestions.length + 1,
       category: "sectorConcentration",
       title: `Bring ${topSector.sector} below ${target}%`,
       why: "Portfolio risk is concentrated in one sector, which can make outcomes depend on the same market drivers.",
-      action: `Educational estimate: redirect about ${dollarPhrase(deltaValue)} of ${topSector.sector} exposure into other sectors over time.`,
+      action: `Redirect approximately ${dollarPhrase(deltaValue)} of ${topSector.sector} exposure into ${sectorRedirectPhrase(topSector.sector)}.`,
       currentAllocationPct: topSector.weightPct,
       targetAllocationPct: target,
       currentValue,
       targetValue,
       deltaValue,
       impactScore: Math.min(100, topSector.weightPct * 1.2),
-      estimatedScoreImprovement: Math.round(
-        Math.min(25, Math.max(topSector.weightPct - target, 0) * 0.3),
-      ),
+      estimatedScoreImprovement,
+      estimatedScoreBreakdown: scoreBreakdown([
+        {
+          label: "Sector diversification",
+          points: estimatedScoreImprovement * 0.75,
+        },
+        {
+          label: "Single-name concentration",
+          points: estimatedScoreImprovement * 0.15,
+        },
+        {
+          label: "ETF exposure",
+          points: estimatedScoreImprovement * 0.1,
+        },
+      ]),
+      planDetails: [
+        {
+          label: "Example destinations",
+          value: sectorRedirectPhrase(topSector.sector),
+        },
+      ],
       symbols: topSector.symbols.slice(0, 5),
     });
   }
-  if (etfWeight < 25) {
-    const target = 25;
+  if (etfWeight < targetEtfWeight && !shouldMergeConcentrationPlan) {
+    const target = targetEtfWeight;
     const currentValue = allocationValue(liquidationValue, etfWeight);
     const targetValue = allocationValue(liquidationValue, target);
     const deltaValue = targetValue - currentValue;
+    const estimatedScoreImprovement = Math.round(
+      Math.min(15, (target - etfWeight) * 0.3),
+    );
     suggestions.push({
       rank: suggestions.length + 1,
       category: "etfDiversification",
       title: `Increase broad ETF exposure to ${target}%`,
       why: "Broad ETFs reduce dependence on single-stock outcomes.",
-      action: `Educational estimate: buy about ${dollarPhrase(deltaValue)} of broad-market ETFs such as VOO, VTI, or SCHB.`,
+      action: `Fund approximately ${dollarPhrase(deltaValue)} of broad-market ETFs such as VOO, VTI, or SCHB. Fund this by trimming concentrated positions, redirecting future contributions, or reallocating excess cash.`,
       currentAllocationPct: etfWeight,
       targetAllocationPct: target,
       currentValue,
       targetValue,
       deltaValue,
       impactScore: Math.min(100, 70 - etfWeight),
-      estimatedScoreImprovement: Math.round(
-        Math.min(15, (target - etfWeight) * 0.3),
-      ),
+      estimatedScoreImprovement,
+      estimatedScoreBreakdown: scoreBreakdown([
+        { label: "ETF exposure", points: estimatedScoreImprovement * 0.65 },
+        {
+          label: "Single-name concentration",
+          points: estimatedScoreImprovement * 0.2,
+        },
+        {
+          label: "Sector diversification",
+          points: estimatedScoreImprovement * 0.15,
+        },
+      ]),
+      planDetails: [
+        {
+          label: "Funding source",
+          value:
+            "Trim concentrated positions, redirect future contributions, or reallocate excess cash.",
+        },
+      ],
       symbols: [],
     });
   }
