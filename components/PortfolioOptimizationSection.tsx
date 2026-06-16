@@ -111,17 +111,6 @@ function formatApproxUsd(value: number | null | undefined) {
   return `~${formatUsd(value, { maximumFractionDigits: 0 })}`;
 }
 
-function formatAllocationValue(
-  allocation: number | null | undefined,
-  value: number | null | undefined,
-) {
-  const allocationLabel = formatAllocation(allocation);
-  if (!allocationLabel) return null;
-
-  const valueLabel = formatApproxUsd(value);
-  return valueLabel ? `${allocationLabel} · ${valueLabel}` : allocationLabel;
-}
-
 function formatScoreDelta(value: number) {
   const rounded = Math.round(value);
   return Number.isInteger(value) || Math.abs(value - rounded) < 0.05
@@ -129,24 +118,66 @@ function formatScoreDelta(value: number) {
     : value.toFixed(1);
 }
 
-function formatScoreImpact(currentScore: number, improvement: number) {
-  const nextScore = Math.min(100, Math.round(currentScore + improvement));
-  return `${currentScore} → ${nextScore} (+${formatScoreDelta(improvement)})`;
+function formatApproxShares(value: number | null | undefined) {
+  if (value == null) return null;
+  return `~${Math.round(value)} shares`;
 }
 
-function SuggestionField({
+function trimActionLabel(category: string) {
+  if (category === "sectorConcentration") return "Reallocate";
+  if (category === "etfDiversification") return "Buy";
+  return "Trim";
+}
+
+function actionPrimary(
+  item: PortfolioOptimizationResponse["rankedSuggestions"][number],
+) {
+  if (item.deltaValue == null) return item.action;
+  const amount = formatApproxUsd(Math.abs(item.deltaValue));
+  if (item.category === "etfDiversification") {
+    return amount ? `${amount} ETFs` : item.action;
+  }
+  return amount ?? item.action;
+}
+
+function actionSecondary(
+  item: PortfolioOptimizationResponse["rankedSuggestions"][number],
+) {
+  if (
+    item.category === "stockConcentration" ||
+    item.category === "portfolioRebalance"
+  ) {
+    return formatApproxShares(item.estimatedShares);
+  }
+  if (item.category === "sectorConcentration") {
+    return "Healthcare, Financials, Industrials, Staples, ETFs";
+  }
+  if (item.category === "etfDiversification") {
+    return "VOO, VTI, SCHB, or similar";
+  }
+  return null;
+}
+
+function MetricTile({
   label,
   children,
+  compact = false,
 }: {
   label: string;
   children: ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+    <div
+      className={cn(
+        "border border-border/60 bg-card/40",
+        compact ? "p-2.5" : "p-3",
+      )}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
         {label}
       </p>
-      <div className="mt-1 text-sm text-foreground">{children}</div>
+      <div className="mt-1 min-w-0">{children}</div>
     </div>
   );
 }
@@ -385,122 +416,123 @@ export function OptimizationSuggestionsSection({
   optimization: PortfolioOptimizationResponse | null;
   className?: string;
 }) {
-  const currentScore = optimization?.diversificationScore ?? 0;
   const suggestions = optimization?.rankedSuggestions.slice(0, 3) ?? [];
+  const highestImpact = suggestions.slice(0, 1);
+  const diversificationOpportunities = suggestions.slice(1);
+  const suggestionGroups = [
+    { label: "Highest Impact", items: highestImpact },
+    {
+      label: "Diversification Opportunities",
+      items: diversificationOpportunities,
+    },
+  ].filter((group) => group.items.length > 0);
 
   return (
     <section className={cn(sectionClass, className)}>
       <div>
         <h2 className={titleClass}>Optimization suggestions</h2>
         <p className="mt-1 text-sm text-muted">
-          Highest-impact changes ranked by estimated score improvement.
           Suggestions may overlap. Completing one action may partially satisfy
           others.
         </p>
       </div>
       {suggestions.length ? (
-        <div className="divide-y divide-border/60 border-t border-border/60">
-          {suggestions.map((item) => {
-            const current = formatAllocationValue(
-              item.currentAllocationPct,
-              item.currentValue,
-            );
-            const target = formatAllocationValue(
-              item.targetAllocationPct,
-              item.targetValue,
-            );
-            const scoreBreakdown = item.estimatedScoreBreakdown ?? [];
-            const planDetails = item.planDetails ?? [];
-
-            return (
+        <div className="space-y-5 border-t border-border/60 pt-3">
+          {suggestionGroups.map((group) => (
+            <div key={group.label} className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                {group.label}
+              </p>
               <div
-                key={`${item.rank}-${item.category}-${item.title}`}
-                className="py-4"
+                className={cn(
+                  group.label === "Highest Impact"
+                    ? "space-y-0"
+                    : "divide-y divide-border/50",
+                )}
               >
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-foreground">
-                    {item.title}
-                  </p>
-
-                  {current || target ? (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {current ? (
-                        <SuggestionField label="Current">
-                          <span className="tabular-nums">{current}</span>
-                        </SuggestionField>
-                      ) : null}
-                      {target ? (
-                        <SuggestionField label="Target">
-                          <span className="tabular-nums">{target}</span>
-                        </SuggestionField>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  <SuggestionField label="Suggested action">
-                    <p className="text-muted">{item.action}</p>
-                  </SuggestionField>
-
-                  {planDetails.length ? (
-                    <SuggestionField label="Plan details">
-                      <dl className="grid gap-2 text-muted sm:grid-cols-2">
-                        {planDetails.map((detail) => (
-                          <div key={`${item.rank}-${detail.label}`}>
-                            <dt className="text-xs text-muted">
-                              {detail.label}
-                            </dt>
-                            <dd className="mt-0.5 text-sm text-foreground">
-                              {detail.value}
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </SuggestionField>
-                  ) : null}
-
-                  <SuggestionField label="Estimated score impact">
-                    <p className="font-medium tabular-nums">
-                      {formatScoreImpact(
-                        currentScore,
-                        item.estimatedScoreImprovement,
+                {group.items.map((item) => {
+                  const isPrimary = group.label === "Highest Impact";
+                  return (
+                    <div
+                      key={`${item.rank}-${item.category}-${item.title}`}
+                      className={cn(
+                        "space-y-2.5 first:pt-0",
+                        isPrimary
+                          ? "py-2"
+                          : "py-3 opacity-90 transition-opacity hover:opacity-100",
                       )}
-                    </p>
-                  </SuggestionField>
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3
+                          className={cn(
+                            "min-w-0 flex-1 font-medium text-foreground",
+                            isPrimary ? "text-base" : "text-sm",
+                          )}
+                        >
+                          {item.title}
+                        </h3>
+                        <span className="inline-flex h-6 items-center border border-success/30 bg-success/10 px-2 text-xs font-semibold tabular-nums text-success">
+                          +{formatScoreDelta(item.estimatedScoreImprovement)}{" "}
+                          pts
+                        </span>
+                      </div>
 
-                  {scoreBreakdown.length ? (
-                    <SuggestionField label="Breakdown">
-                      <ul className="space-y-1 text-muted">
-                        {scoreBreakdown.map((breakdownItem) => (
-                          <li
-                            key={`${item.rank}-${breakdownItem.label}`}
-                            className="flex gap-2"
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        <MetricTile label="Current" compact={!isPrimary}>
+                          <p
+                            className={cn(
+                              "font-semibold tabular-nums text-foreground",
+                              isPrimary ? "text-lg" : "text-base",
+                            )}
                           >
-                            <span className="min-w-0 flex-1">
-                              {breakdownItem.label}
-                            </span>
-                            <span className="tabular-nums text-foreground">
-                              +{formatScoreDelta(breakdownItem.points)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </SuggestionField>
-                  ) : null}
+                            {formatAllocation(item.currentAllocationPct) ?? "—"}
+                          </p>
+                          <p className="mt-0.5 text-xs tabular-nums text-muted">
+                            {formatApproxUsd(item.currentValue) ?? "—"}
+                          </p>
+                        </MetricTile>
 
-                  <SuggestionField label="Why">
-                    <p className="text-muted">{item.why}</p>
-                  </SuggestionField>
+                        <MetricTile label="Target" compact={!isPrimary}>
+                          <p
+                            className={cn(
+                              "font-semibold tabular-nums text-foreground",
+                              isPrimary ? "text-lg" : "text-base",
+                            )}
+                          >
+                            {formatAllocation(item.targetAllocationPct) ?? "—"}
+                          </p>
+                          <p className="mt-0.5 text-xs tabular-nums text-muted">
+                            {formatApproxUsd(item.targetValue) ?? "—"}
+                          </p>
+                        </MetricTile>
 
-                  <SuggestionField label="Note">
-                    <p className="text-muted">
-                      Suggestions may overlap, so score improvements should not
-                      be added together.
-                    </p>
-                  </SuggestionField>
-                </div>
+                        <MetricTile
+                          label={trimActionLabel(item.category)}
+                          compact={!isPrimary}
+                        >
+                          <p
+                            className={cn(
+                              "truncate font-semibold tabular-nums text-foreground",
+                              isPrimary ? "text-lg" : "text-base",
+                            )}
+                          >
+                            {actionPrimary(item)}
+                          </p>
+                          {actionSecondary(item) ? (
+                            <p className="mt-0.5 truncate text-xs text-muted">
+                              {actionSecondary(item)}
+                            </p>
+                          ) : null}
+                        </MetricTile>
+                      </div>
+
+                      <p className="text-sm text-muted">{item.why}</p>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       ) : (
         <p className="border-t border-border/60 py-3 text-sm text-muted">

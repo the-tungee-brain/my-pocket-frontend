@@ -334,18 +334,14 @@ export function buildLocalPortfolioOptimization({
       category: shouldMergeConcentrationPlan
         ? "portfolioRebalance"
         : "stockConcentration",
-      title: shouldMergeConcentrationPlan
-        ? `Trim ${topStock.symbol} and diversify into broad-market ETFs`
-        : `Trim ${topStock.symbol} toward ${target}%`,
-      why: shouldMergeConcentrationPlan
-        ? `${topStock.symbol} is the main concentration risk; using part of the trim to build broad ETF exposure also reduces sector and single-stock dependence.`
-        : `${topStock.symbol} is the main source of single-name concentration risk.`,
+      title: `Trim ${topStock.symbol} toward ${target}%`,
+      why: "Primary concentration risk driver.",
       action: shouldMergeConcentrationPlan
-        ? `Trim approximately ${dollarPhrase(deltaValue)} of ${topStock.symbol}${
-            estimatedShares ? `, about ${sharesPhrase(estimatedShares)}` : ""
+        ? `Trim ~${dollarPhrase(deltaValue)}${
+            estimatedShares ? ` (~${sharesPhrase(estimatedShares)})` : ""
           }. Fund this by trimming concentrated positions, redirecting future contributions, or reallocating excess cash.`
-        : `Trim approximately ${dollarPhrase(deltaValue)} of ${topStock.symbol}${
-            estimatedShares ? `, about ${sharesPhrase(estimatedShares)}` : ""
+        : `Trim ~${dollarPhrase(deltaValue)}${
+            estimatedShares ? ` (~${sharesPhrase(estimatedShares)})` : ""
           }.`,
       currentAllocationPct: topStock.portfolioWeightPct,
       targetAllocationPct: target,
@@ -413,8 +409,8 @@ export function buildLocalPortfolioOptimization({
       rank: suggestions.length + 1,
       category: "sectorConcentration",
       title: `Bring ${topSector.sector} below ${target}%`,
-      why: "Portfolio risk is concentrated in one sector, which can make outcomes depend on the same market drivers.",
-      action: `Redirect approximately ${dollarPhrase(deltaValue)} of ${topSector.sector} exposure into ${sectorRedirectPhrase(topSector.sector)}.`,
+      why: "Reduces dependence on one sector.",
+      action: `Reallocate ~${dollarPhrase(deltaValue)}`,
       currentAllocationPct: topSector.weightPct,
       targetAllocationPct: target,
       currentValue,
@@ -457,8 +453,8 @@ export function buildLocalPortfolioOptimization({
       rank: suggestions.length + 1,
       category: "etfDiversification",
       title: `Increase broad ETF exposure to ${target}%`,
-      why: "Broad ETFs reduce dependence on single-stock outcomes.",
-      action: `Fund approximately ${dollarPhrase(deltaValue)} of broad-market ETFs such as VOO, VTI, or SCHB. Fund this by trimming concentrated positions, redirecting future contributions, or reallocating excess cash.`,
+      why: "Reduces single-stock dependence.",
+      action: `Buy ~${dollarPhrase(deltaValue)} of diversified ETFs`,
       currentAllocationPct: etfWeight,
       targetAllocationPct: target,
       currentValue,
