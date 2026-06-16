@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { CalendarClock, CalendarRange, TrendingUp } from "lucide-react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useResearchEvents } from "@/app/hooks/useResearchEvents";
 import type { EventTimelineEntry } from "@/app/types/intelligence";
@@ -90,29 +90,33 @@ function EventsWarningsSection({
 
 type HorizonCardProps = {
   title: string;
+  subtitle: string;
   href: string;
   icon: typeof CalendarRange;
 };
 
-function HorizonCard({ title, href, icon: Icon }: HorizonCardProps) {
+function HorizonCard({ title, subtitle, href, icon: Icon }: HorizonCardProps) {
   return (
     <Link
       href={href}
       className={cn(
-        "group flex min-h-54 flex-col items-center justify-center gap-6 border border-border/70 bg-background px-6 py-7 text-center transition hover:-translate-y-0.5 hover:border-accent/45 hover:bg-muted-bg/25 hover:shadow-sm",
+        "group flex min-h-36 flex-col items-center justify-center gap-3 border border-border/70 bg-background px-5 py-4 text-center transition hover:-translate-y-0.5 hover:border-accent/45 hover:bg-muted-bg/25 hover:shadow-sm",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
       )}
     >
       <article className="contents">
         <div
-          className="flex h-24 w-24 items-center justify-center text-accent-strong transition group-hover:scale-105 group-hover:text-foreground"
+          className="flex h-20 w-20 items-center justify-center text-accent-strong transition group-hover:scale-105 group-hover:text-foreground"
           aria-hidden
         >
-          <Icon className="h-16 w-16 stroke-[1.5]" />
+          <Icon className="h-20 w-20 stroke-[1.35]" />
         </div>
-        <h3 className="text-lg font-semibold tracking-tight text-foreground">
-          {title}
-        </h3>
+        <div>
+          <h3 className="text-base font-semibold tracking-tight text-foreground">
+            {title}
+          </h3>
+          <p className="mt-0.5 text-xs text-muted">{subtitle}</p>
+        </div>
       </article>
     </Link>
   );
@@ -132,16 +136,19 @@ function DecisionHorizonsSection({
       <div className="grid gap-4 lg:grid-cols-3">
         <HorizonCard
           title="Day Trade"
+          subtitle="Intraday setup"
           href={`/research/${encodeURIComponent(symbolUpper)}/day-trade`}
           icon={CalendarClock}
         />
         <HorizonCard
           title="Swing Trade"
+          subtitle="Days to weeks"
           href={`/research/${encodeURIComponent(symbolUpper)}/swing-trade`}
           icon={TrendingUp}
         />
         <HorizonCard
           title="Long Term Investment"
+          subtitle="Multi-quarter thesis"
           href={`/research/${encodeURIComponent(symbolUpper)}/long-term`}
           icon={CalendarRange}
         />
