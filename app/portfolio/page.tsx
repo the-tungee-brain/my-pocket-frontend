@@ -675,7 +675,8 @@ export default function PortfolioPage() {
             title="Holdings"
             description="What you own and how much each position contributes to the portfolio."
           >
-            <section className={cn(sectionClass, "space-y-4")}>
+            <section className={cn(sectionClass, "space-y-6")}>
+              <SectorDiversificationRows sectors={sectorWeights} />
               <div>
                 <h3 className={portfolioSectionTitleClass}>All holdings</h3>
                 <p className="mt-1 text-sm text-muted">
@@ -687,17 +688,6 @@ export default function PortfolioPage() {
                 symbolAlertMap={symbolAlertMap}
               />
             </section>
-          </PortfolioChapter>
-
-          <PortfolioChapter
-            id="sector-diversification"
-            title="Sector Diversification"
-            description="Where your portfolio risk is concentrated by sector"
-          >
-            <SectorDiversificationRows
-              className={sectionClass}
-              sectors={sectorWeights}
-            />
           </PortfolioChapter>
 
           <PortfolioChapter

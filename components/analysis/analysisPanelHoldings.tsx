@@ -205,12 +205,12 @@ export function PortfolioHoldingsTable({
                     role="link"
                     tabIndex={0}
                     onClick={() =>
-                      router.push(symbolHubPath(symbol, "overview"))
+                      router.push(symbolHubPath(symbol, "position"))
                     }
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        router.push(symbolHubPath(symbol, "overview"));
+                        router.push(symbolHubPath(symbol, "position"));
                       }
                     }}
                     className="cursor-pointer border-t border-border/60 transition-colors hover:bg-muted-bg/30"
@@ -242,10 +242,7 @@ export function PortfolioHoldingsTable({
                           style={{
                             width:
                               weightPct != null
-                                ? `${Math.max(
-                                    0,
-                                    Math.min(100, weightPct),
-                                  )}%`
+                                ? `${Math.max(0, Math.min(100, weightPct))}%`
                                 : "0%",
                           }}
                         />
@@ -304,7 +301,7 @@ export function PortfolioHoldingsTable({
           return (
             <Link
               key={symbol}
-              href={symbolHubPath(symbol, "overview")}
+              href={symbolHubPath(symbol, "position")}
               className="flex items-center justify-between gap-3 py-3 transition hover:bg-muted-bg/40"
             >
               <div className="min-w-0">
