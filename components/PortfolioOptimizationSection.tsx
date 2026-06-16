@@ -6,6 +6,8 @@ import type {
   PortfolioOptimizationBreakdown,
   PortfolioOptimizationBreakdownItem,
   PortfolioOptimizationResponse,
+  PortfolioOptimizationScoreTone,
+  PortfolioOptimizationSuggestion,
   PortfolioStockWeight,
 } from "@/app/types/portfolioOptimization";
 import { formatUsd } from "@/lib/formatCurrency";
@@ -53,6 +55,74 @@ function formatScorePoints(item: PortfolioOptimizationBreakdownItem) {
   return `${Math.round(item.score)} / ${item.maxScore}`;
 }
 
+function scoreTone(
+  optimization: PortfolioOptimizationResponse,
+): PortfolioOptimizationScoreTone {
+  if (optimization.scoreTone) return optimization.scoreTone;
+  const score = optimization.diversificationScore;
+  if (score >= 85) return "excellent";
+  if (score >= 70) return "good";
+  if (score >= 55) return "fair";
+  if (score >= 40) return "weak";
+  return "poor";
+}
+
+function scoreToneClass(tone: PortfolioOptimizationScoreTone) {
+  switch (tone) {
+    case "excellent":
+    case "good":
+      return "text-success";
+    case "fair":
+      return "text-warning";
+    case "weak":
+      return "text-accent-highlight";
+    case "poor":
+      return "text-danger";
+  }
+}
+
+function scoreChipClass(tone: PortfolioOptimizationScoreTone) {
+  switch (tone) {
+    case "excellent":
+    case "good":
+      return "border-success/30 bg-success/10 text-success";
+    case "fair":
+      return "border-warning/30 bg-warning-muted text-warning";
+    case "weak":
+      return "border-accent-highlight/30 bg-accent-muted text-accent-highlight";
+    case "poor":
+      return "border-danger/30 bg-danger/10 text-danger";
+  }
+}
+
+function scoreColorStyle(optimization: PortfolioOptimizationResponse) {
+  return optimization.scoreColor ? { color: optimization.scoreColor } : undefined;
+}
+
+function formatAllocation(value: number | null | undefined) {
+  if (value == null) return null;
+  return `${value.toFixed(1)}%`;
+}
+
+function formatApproxUsd(value: number | null | undefined) {
+  if (value == null) return null;
+  return `~${formatUsd(value, { maximumFractionDigits: 0 })}`;
+}
+
+function formatCurrentTarget(item: PortfolioOptimizationSuggestion) {
+  const currentAllocation = formatAllocation(item.currentAllocationPct);
+  const targetAllocation = formatAllocation(item.targetAllocationPct);
+  if (!currentAllocation || !targetAllocation) return null;
+
+  const currentValue = formatApproxUsd(item.currentValue);
+  const targetValue = formatApproxUsd(item.targetValue);
+  const current = currentValue
+    ? `${currentAllocation} / ${currentValue}`
+    : currentAllocation;
+  const target = targetValue ? `${targetAllocation} / ${targetValue}` : targetAllocation;
+  return `${current} -> ${target}`;
+}
+
 export function DiversificationScoreSection({
   optimization,
   loading,
@@ -72,12 +142,26 @@ export function DiversificationScoreSection({
               Calculating diversification…
             </p>
           ) : optimization ? (
-            <p className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-              {optimization.diversificationScore} / 100
-              <span className="ml-2 text-lg font-medium text-muted">
-                · {optimization.rating}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <p className="text-3xl font-semibold tracking-tight text-foreground">
+                <span
+                  className={scoreToneClass(scoreTone(optimization))}
+                  style={scoreColorStyle(optimization)}
+                >
+                  {optimization.diversificationScore}
+                </span>
+                {" / 100"}
+              </p>
+              <span
+                className={cn(
+                  "inline-flex h-6 items-center border px-2 text-xs font-semibold leading-none",
+                  scoreChipClass(scoreTone(optimization)),
+                )}
+                style={scoreColorStyle(optimization)}
+              >
+                {optimization.rating}
               </span>
-            </p>
+            </div>
           ) : (
             <p className="mt-2 text-sm text-muted">
               Diversification score is not available yet.
@@ -296,8 +380,15 @@ export function OptimizationSuggestionsSection({
                 <p className="text-sm font-medium text-foreground">
                   {item.title}
                 </p>
+                {formatCurrentTarget(item) ? (
+                  <p className="mt-1 text-xs font-medium tabular-nums text-foreground">
+                    Current → Target: {formatCurrentTarget(item)}
+                  </p>
+                ) : null}
+                <p className="mt-1 text-sm text-muted">
+                  Action: {item.action}
+                </p>
                 <p className="mt-1 text-sm text-muted">{item.why}</p>
-                <p className="mt-1 text-sm text-muted">{item.action}</p>
               </div>
               <div className="text-left sm:text-right">
                 <p className="text-sm font-medium tabular-nums text-foreground">

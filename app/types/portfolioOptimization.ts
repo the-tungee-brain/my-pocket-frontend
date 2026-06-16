@@ -14,6 +14,13 @@ export type PortfolioOptimizationStatus =
   | "poor"
   | "unavailable";
 
+export type PortfolioOptimizationScoreTone =
+  | "excellent"
+  | "good"
+  | "fair"
+  | "weak"
+  | "poor";
+
 export type PortfolioStockWeight = {
   symbol: string;
   portfolioWeightPct: number;
@@ -52,6 +59,12 @@ export type PortfolioOptimizationSuggestion = {
   title: string;
   why: string;
   action: string;
+  currentAllocationPct?: number | null;
+  targetAllocationPct?: number | null;
+  currentValue?: number | null;
+  targetValue?: number | null;
+  deltaValue?: number | null;
+  estimatedShares?: number | null;
   impactScore: number;
   estimatedScoreImprovement: number;
   symbols: string[];
@@ -60,6 +73,8 @@ export type PortfolioOptimizationSuggestion = {
 export type PortfolioOptimizationResponse = {
   diversificationScore: number;
   rating: PortfolioOptimizationRating;
+  scoreTone?: PortfolioOptimizationScoreTone;
+  scoreColor?: string;
   stockWeights: PortfolioStockWeight[];
   sectorWeights: SectorWeight[];
   breakdown: PortfolioOptimizationBreakdown;

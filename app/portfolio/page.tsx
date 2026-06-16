@@ -672,7 +672,7 @@ export default function PortfolioPage() {
 
           <PortfolioChapter
             id="holdings-allocation"
-            title="Holdings & Allocation"
+            title="Holdings"
             description="What you own and how much each position contributes to the portfolio."
           >
             <section className={cn(sectionClass, "space-y-4")}>

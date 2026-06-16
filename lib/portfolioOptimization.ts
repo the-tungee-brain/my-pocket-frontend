@@ -1,6 +1,10 @@
 import type { SectorWeight } from "@/app/types/intelligence";
-import type { PortfolioOptimizationResponse } from "@/app/types/portfolioOptimization";
+import type {
+  PortfolioOptimizationResponse,
+  PortfolioOptimizationScoreTone,
+} from "@/app/types/portfolioOptimization";
 import type { Position, SchwabAccounts } from "@/app/types/schwab";
+import { formatUsd } from "@/lib/formatCurrency";
 
 const UNKNOWN_SECTOR_LABEL = "Unknown";
 const FUND_ASSET_TYPES = new Set(["ETF", "FUND", "MUTUALFUND", "MUTUAL_FUND"]);
@@ -9,6 +13,8 @@ type HoldingRow = {
   symbol: string;
   marketValue: number;
   assetType?: string | null;
+  quantity?: number | null;
+  latestPrice?: number | null;
 };
 
 function clamp(value: number, low = 0, high = 100) {
@@ -36,6 +42,18 @@ function rating(score: number): PortfolioOptimizationResponse["rating"] {
   return "Poor";
 }
 
+function scoreTone(score: number): PortfolioOptimizationScoreTone {
+  return rating(score).toLowerCase() as PortfolioOptimizationScoreTone;
+}
+
+function scoreColor(score: number) {
+  if (score >= 85) return "#16a34a";
+  if (score >= 70) return "#22c55e";
+  if (score >= 55) return "#ca8a04";
+  if (score >= 40) return "#f97316";
+  return "#dc2626";
+}
+
 function stockLevel(weightPct: number) {
   if (weightPct >= 50) return "critical" as const;
   if (weightPct >= 30) return "high" as const;
@@ -56,6 +74,19 @@ function effectiveNames(weights: { portfolioWeightPct: number }[]) {
   return hhi > 0 ? Math.round((1 / hhi) * 100) / 100 : 0;
 }
 
+function allocationValue(totalValue: number, allocationPct: number) {
+  return Math.round(totalValue * (allocationPct / 100) * 100) / 100;
+}
+
+function dollarPhrase(value: number) {
+  return formatUsd(Math.abs(value), { maximumFractionDigits: 0 });
+}
+
+function sharesPhrase(value: number) {
+  if (value === Math.round(value)) return `${Math.round(value)} shares`;
+  return `${value.toFixed(2)} shares`;
+}
+
 function emptyOptimization(dataGaps: string[]): PortfolioOptimizationResponse {
   const unavailable = {
     score: null,
@@ -66,6 +97,8 @@ function emptyOptimization(dataGaps: string[]): PortfolioOptimizationResponse {
   return {
     diversificationScore: 0,
     rating: "Poor",
+    scoreTone: "poor",
+    scoreColor: scoreColor(0),
     stockWeights: [],
     sectorWeights: [],
     breakdown: {
@@ -98,6 +131,17 @@ function positionRows(positions: Position[]): HoldingRow[] {
       marketValue:
         (existing?.marketValue ?? 0) + Math.abs(position.marketValue),
       assetType: existing?.assetType ?? instrument.assetType,
+      quantity:
+        (existing?.quantity ?? 0) +
+        (instrument.assetType === "EQUITY"
+          ? Math.abs((position.longQuantity ?? 0) - (position.shortQuantity ?? 0))
+          : 0),
+      latestPrice:
+        instrument.assetType === "EQUITY" &&
+        Math.abs((position.longQuantity ?? 0) - (position.shortQuantity ?? 0)) > 0
+          ? Math.abs(position.marketValue) /
+            Math.abs((position.longQuantity ?? 0) - (position.shortQuantity ?? 0))
+          : existing?.latestPrice,
     });
   }
   return [...rows.values()];
@@ -234,22 +278,37 @@ export function buildLocalPortfolioOptimization({
       : []),
   ].sort((a, b) => b.impactScore - a.impactScore);
 
-  const suggestions = [];
+  const suggestions: PortfolioOptimizationResponse["rankedSuggestions"] = [];
+  const rowsBySymbol = new Map(rows.map((row) => [row.symbol, row]));
   const topStock = stockWeights[0] ?? null;
   if (topStock && topStock.portfolioWeightPct >= 20) {
     const target =
       topStock.portfolioWeightPct >= 70
-        ? 50
+        ? 40
         : topStock.portfolioWeightPct >= 50
           ? 30
           : 20;
+    const targetValue = allocationValue(liquidationValue, target);
+    const deltaValue = targetValue - topStock.marketValue;
+    const row = rowsBySymbol.get(topStock.symbol);
+    const estimatedShares =
+      row?.assetType === "EQUITY" && row.latestPrice && row.latestPrice > 0
+        ? Math.round((Math.abs(deltaValue) / row.latestPrice) * 100) / 100
+        : null;
     suggestions.push({
       rank: 1,
       category: "stockConcentration",
-      title: `Reduce ${topStock.symbol} below ${target}%`,
-      why: `${topStock.symbol} is ${topStock.portfolioWeightPct.toFixed(1)}% of portfolio value.`,
-      action:
-        "Trim or avoid adding until the position falls below the target weight.",
+      title: `Trim ${topStock.symbol} toward ${target}%`,
+      why: `${topStock.symbol} is the main source of single-name concentration risk.`,
+      action: `Educational estimate: trim about ${dollarPhrase(deltaValue)} of ${topStock.symbol}${
+        estimatedShares ? `, roughly ${sharesPhrase(estimatedShares)}` : ""
+      } to move toward ${target.toFixed(1)}%.`,
+      currentAllocationPct: topStock.portfolioWeightPct,
+      targetAllocationPct: target,
+      currentValue: topStock.marketValue,
+      targetValue,
+      deltaValue,
+      estimatedShares,
       impactScore: Math.min(100, topStock.portfolioWeightPct * 1.4),
       estimatedScoreImprovement: Math.round(
         Math.min(30, Math.max(topStock.portfolioWeightPct - target, 0) * 0.5),
@@ -258,31 +317,47 @@ export function buildLocalPortfolioOptimization({
     });
   }
   if (topSector && topSector.weightPct >= 35) {
+    const target = topSector.weightPct >= 60 ? 60 : 35;
+    const currentValue = allocationValue(liquidationValue, topSector.weightPct);
+    const targetValue = allocationValue(liquidationValue, target);
+    const deltaValue = targetValue - currentValue;
     suggestions.push({
       rank: suggestions.length + 1,
       category: "sectorConcentration",
-      title: `Reduce ${topSector.sector} exposure`,
-      why: `${topSector.sector} represents ${topSector.weightPct.toFixed(1)}% of portfolio value.`,
-      action:
-        "Direct new capital away from this sector until exposure normalizes.",
+      title: `Bring ${topSector.sector} below ${target}%`,
+      why: "Portfolio risk is concentrated in one sector, which can make outcomes depend on the same market drivers.",
+      action: `Educational estimate: redirect about ${dollarPhrase(deltaValue)} of ${topSector.sector} exposure into other sectors over time.`,
+      currentAllocationPct: topSector.weightPct,
+      targetAllocationPct: target,
+      currentValue,
+      targetValue,
+      deltaValue,
       impactScore: Math.min(100, topSector.weightPct * 1.2),
       estimatedScoreImprovement: Math.round(
-        Math.min(25, Math.max(topSector.weightPct - 35, 0) * 0.3),
+        Math.min(25, Math.max(topSector.weightPct - target, 0) * 0.3),
       ),
       symbols: topSector.symbols.slice(0, 5),
     });
   }
-  if (etfWeight < 30) {
+  if (etfWeight < 25) {
+    const target = 25;
+    const currentValue = allocationValue(liquidationValue, etfWeight);
+    const targetValue = allocationValue(liquidationValue, target);
+    const deltaValue = targetValue - currentValue;
     suggestions.push({
       rank: suggestions.length + 1,
       category: "etfDiversification",
-      title: "Increase broad-market ETF exposure",
-      why: `ETF exposure is ${etfWeight.toFixed(1)}%, leaving diversification dependent on single names.`,
-      action:
-        "Use future contributions or trim proceeds for broad ETF exposure.",
+      title: `Increase broad ETF exposure to ${target}%`,
+      why: "Broad ETFs reduce dependence on single-stock outcomes.",
+      action: `Educational estimate: buy about ${dollarPhrase(deltaValue)} of broad-market ETFs such as VOO, VTI, or SCHB.`,
+      currentAllocationPct: etfWeight,
+      targetAllocationPct: target,
+      currentValue,
+      targetValue,
+      deltaValue,
       impactScore: Math.min(100, 70 - etfWeight),
       estimatedScoreImprovement: Math.round(
-        Math.min(15, (30 - etfWeight) * 0.3),
+        Math.min(15, (target - etfWeight) * 0.3),
       ),
       symbols: [],
     });
@@ -291,6 +366,8 @@ export function buildLocalPortfolioOptimization({
   return {
     diversificationScore: clamp(score),
     rating: rating(score),
+    scoreTone: scoreTone(score),
+    scoreColor: scoreColor(score),
     stockWeights,
     sectorWeights,
     breakdown: {
