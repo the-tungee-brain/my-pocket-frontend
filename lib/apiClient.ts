@@ -334,16 +334,24 @@ export async function fetchTradeReplay(
     directionMode?: DayTradeReplayDirectionMode | null;
   },
 ): Promise<TradeReplayResponse> {
-  const res = await apiFetch(
-    `/research/trade-replay${buildQuery({
+  const path = `/research/trade-replay${buildQuery({
+    symbol: options.symbol.toUpperCase(),
+    workflow: options.workflow,
+    date: options.date,
+    missed_move_id: options.missedMoveId ?? undefined,
+    direction_mode: options.directionMode ?? undefined,
+  })}`;
+  if (process.env.NODE_ENV !== "production") {
+    console.debug("[trade-replay] request", {
+      url: path,
       symbol: options.symbol.toUpperCase(),
       workflow: options.workflow,
       date: options.date,
-      missed_move_id: options.missedMoveId ?? undefined,
-      direction_mode: options.directionMode ?? undefined,
-    })}`,
-    { method: "GET", accessToken },
-  );
+      missedMoveId: options.missedMoveId ?? null,
+      directionMode: options.directionMode ?? null,
+    });
+  }
+  const res = await apiFetch(path, { method: "GET", accessToken });
 
   if (!res.ok) {
     throw new Error(`Failed to load trade replay (${res.status})`);
@@ -361,15 +369,22 @@ export async function fetchMissedMovesSummary(
     sort: MissedMovesSort;
   },
 ): Promise<MissedMovesSummaryResponse> {
-  const res = await apiFetch(
-    `/research/trade-replay/missed-moves${buildQuery({
+  const path = `/research/trade-replay/missed-moves${buildQuery({
+    symbol: options.symbol.toUpperCase(),
+    workflow: options.workflow,
+    range: options.range,
+    sort: options.sort,
+  })}`;
+  if (process.env.NODE_ENV !== "production") {
+    console.debug("[missed-moves-summary] request", {
+      url: path,
       symbol: options.symbol.toUpperCase(),
       workflow: options.workflow,
       range: options.range,
       sort: options.sort,
-    })}`,
-    { method: "GET", accessToken },
-  );
+    });
+  }
+  const res = await apiFetch(path, { method: "GET", accessToken });
 
   if (!res.ok) {
     throw new Error(`Failed to load missed moves summary (${res.status})`);
@@ -387,6 +402,15 @@ export async function refreshTradeReplay(
     directionMode?: DayTradeReplayDirectionMode | null;
   },
 ): Promise<void> {
+  if (process.env.NODE_ENV !== "production") {
+    console.debug("[trade-replay-refresh] request", {
+      url: "/research/trade-replay/refresh",
+      symbol: options.symbol.toUpperCase(),
+      workflow: options.workflow,
+      date: options.date,
+      directionMode: options.directionMode ?? null,
+    });
+  }
   const res = await apiFetch("/research/trade-replay/refresh", {
     method: "POST",
     accessToken,

@@ -89,10 +89,11 @@ test("Session Replay refreshes before fetching events", () => {
   assert.ok(hook.includes("refreshOnLoad = true"));
 });
 
-test("Missed Moves summary loads before historical replay timelines", () => {
+test("Missed Moves summary backs Today and historical replay timelines", () => {
   assert.ok(hook.includes("fetchMissedMovesSummary"));
   assert.ok(hook.includes('"missed-moves-summary"'));
-  assert.ok(section.includes('range === "last_5_trading_days"'));
+  assert.ok(section.includes("const summaryEnabled = enabled;"));
+  assert.ok(section.includes("range,"));
   assert.ok(section.includes("useMissedMovesSummary"));
   assert.ok(section.includes("selectedRow?.id"));
   assert.ok(section.includes("refreshOnLoad: false"));

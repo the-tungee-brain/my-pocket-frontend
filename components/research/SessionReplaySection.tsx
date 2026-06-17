@@ -18,7 +18,6 @@ import type {
 } from "@/app/types/tradeReplay";
 import {
   ResearchSection,
-  researchMemo,
 } from "@/components/research/ResearchMemoPrimitives";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
@@ -136,7 +135,7 @@ function summaryRowMatchesDirection(
   direction: "long" | "short" | "both",
 ): boolean {
   if (direction === "both") return true;
-  const inferred = textDirection(row.setup_type);
+  const inferred = row.direction ?? textDirection(row.setup_type);
   return inferred === "neutral" || inferred === direction;
 }
 
@@ -302,7 +301,7 @@ export function SessionReplaySection({
   const [selectedRow, setSelectedRow] = useState<MissedMoveSummaryRow | null>(
     null,
   );
-  const summaryEnabled = enabled && range === "last_5_trading_days";
+  const summaryEnabled = enabled;
   const selectedWorkflow = selectedRow?.workflow ?? workflow;
   const directionMode =
     workflow === "day_trade" ? directionToBackendMode(direction) : undefined;
@@ -310,12 +309,12 @@ export function SessionReplaySection({
     selectedWorkflow === "day_trade"
       ? directionToBackendMode(direction)
       : undefined;
-  const { replay, isLoading, isRefreshing, error, refetch } = useTradeReplay(
+  const { isRefreshing, refetch } = useTradeReplay(
     symbol,
     accessToken ?? undefined,
     workflow,
     {
-      enabled: enabled && range === "today",
+      enabled: false,
       directionMode,
     },
   );
@@ -323,7 +322,7 @@ export function SessionReplaySection({
     symbol,
     accessToken ?? undefined,
     workflow,
-    "last_5_trading_days",
+    range,
     sort,
     { enabled: summaryEnabled },
   );
@@ -339,12 +338,6 @@ export function SessionReplaySection({
       directionMode: selectedDirectionMode,
     },
   );
-  const events = (replay?.events ?? []).filter((event) =>
-    eventMatchesDirection(event, direction),
-  );
-  const delayed =
-    replay?.source === "delayed" ||
-    events.some((event) => event.source === "delayed");
   const selectedEvents = (selectedReplay.replay?.events ?? []).filter((event) =>
     eventMatchesDirection(event, direction),
   );
@@ -389,13 +382,15 @@ export function SessionReplaySection({
           type="button"
           onClick={() => {
             if (range === "today") {
-              void refetch();
+              void (async () => {
+                await refetch();
+                await summary.refetch();
+              })();
               return;
             }
             void summary.refetch();
           }}
           disabled={
-            isLoading ||
             isRefreshing ||
             summary.isLoading ||
             summary.isRefreshing
@@ -415,99 +410,77 @@ export function SessionReplaySection({
       }
     >
       <div className="mb-4 flex flex-wrap items-center gap-2">{rangeTabs}</div>
-      {range === "today" ? (
-        isLoading ? (
-          <SessionReplaySkeleton />
-        ) : error ? (
-          <p className="text-sm leading-relaxed text-muted">{error}</p>
-        ) : events.length ? (
-          <SessionReplayTimeline events={events} delayed={delayed} />
-        ) : (
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">
-              No qualifying missed moves in the selected period.
-            </p>
-            <p className={researchMemo.rowBody}>
-              Tomcrest will show triggered entries, targets, stops, and
-              invalidations here as bars update.
-            </p>
-          </div>
-        )
-      ) : (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <MissedMovesDisclaimer />
-            <label className="flex items-center gap-2 text-xs font-medium text-muted">
-              Sort
-              <select
-                value={sort}
-                onChange={(event) => {
-                  setSort(event.target.value as MissedMovesSort);
-                  setSelectedRow(null);
-                }}
-                className="border border-border bg-background px-2 py-1.5 text-xs font-semibold text-foreground"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          {summary.isLoading ? (
-            <SessionReplaySkeleton />
-          ) : summary.error ? (
-            <p className="text-sm leading-relaxed text-muted">
-              {summary.error}
-            </p>
-          ) : rows.length ? (
-            <div className="space-y-3">
-              <div className="hidden grid-cols-[5.5rem_4rem_minmax(0,1fr)_6rem_6rem] gap-3 px-3 text-[10px] font-semibold uppercase tracking-wide text-muted sm:grid">
-                <span>Date</span>
-                <span>Symbol</span>
-                <span>Setup type</span>
-                <span>Max move</span>
-                <span>Outcome</span>
-              </div>
-              <div className="space-y-2">
-                {rows.map((row) => (
-                  <MissedMoveSummaryItem
-                    key={row.id}
-                    row={row}
-                    selected={selectedRowKey === String(row.id)}
-                    onSelect={() => setSelectedRow(row)}
-                  />
-                ))}
-              </div>
-              {selectedRow ? (
-                <div className="border-t border-border pt-4">
-                  {selectedReplay.isLoading ? (
-                    <SessionReplaySkeleton />
-                  ) : selectedReplay.error ? (
-                    <p className="text-sm leading-relaxed text-muted">
-                      {selectedReplay.error}
-                    </p>
-                  ) : selectedEvents.length ? (
-                    <SessionReplayTimeline
-                      events={selectedEvents}
-                      delayed={selectedDelayed}
-                    />
-                  ) : (
-                    <p className="text-sm font-semibold text-foreground">
-                      No qualifying missed moves in the selected period.
-                    </p>
-                  )}
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <p className="text-sm font-semibold text-foreground">
-              No qualifying missed moves in the selected period.
-            </p>
-          )}
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <MissedMovesDisclaimer />
+          <label className="flex items-center gap-2 text-xs font-medium text-muted">
+            Sort
+            <select
+              value={sort}
+              onChange={(event) => {
+                setSort(event.target.value as MissedMovesSort);
+                setSelectedRow(null);
+              }}
+              className="border border-border bg-background px-2 py-1.5 text-xs font-semibold text-foreground"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-      )}
+        {summary.isLoading ? (
+          <SessionReplaySkeleton />
+        ) : summary.error ? (
+          <p className="text-sm leading-relaxed text-muted">{summary.error}</p>
+        ) : rows.length ? (
+          <div className="space-y-3">
+            <div className="hidden grid-cols-[5.5rem_4rem_minmax(0,1fr)_6rem_6rem] gap-3 px-3 text-[10px] font-semibold uppercase tracking-wide text-muted sm:grid">
+              <span>Date</span>
+              <span>Symbol</span>
+              <span>Setup type</span>
+              <span>Max move</span>
+              <span>Outcome</span>
+            </div>
+            <div className="space-y-2">
+              {rows.map((row) => (
+                <MissedMoveSummaryItem
+                  key={row.id}
+                  row={row}
+                  selected={selectedRowKey === String(row.id)}
+                  onSelect={() => setSelectedRow(row)}
+                />
+              ))}
+            </div>
+            {selectedRow ? (
+              <div className="border-t border-border pt-4">
+                {selectedReplay.isLoading ? (
+                  <SessionReplaySkeleton />
+                ) : selectedReplay.error ? (
+                  <p className="text-sm leading-relaxed text-muted">
+                    {selectedReplay.error}
+                  </p>
+                ) : selectedEvents.length ? (
+                  <SessionReplayTimeline
+                    events={selectedEvents}
+                    delayed={selectedDelayed}
+                  />
+                ) : (
+                  <p className="text-sm font-semibold text-foreground">
+                    No qualifying missed moves in the selected period.
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className="text-sm font-semibold text-foreground">
+            No qualifying missed moves in the selected period.
+          </p>
+        )}
+      </div>
     </ResearchSection>
   );
 }
